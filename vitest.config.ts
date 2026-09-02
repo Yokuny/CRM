@@ -32,7 +32,11 @@ export default defineConfig({
       {
         test: {
           name: 'integration',
-          include: ['packages/db/src/**/*.int.test.ts', 'apps/crm-api/src/**/*.int.test.ts'],
+          include: [
+            'packages/db/src/**/*.int.test.ts',
+            'apps/crm-api/src/**/*.int.test.ts',
+            'apps/crm-api/tests/**/*.int.test.ts',
+          ],
           passWithNoTests: true,
           globalSetup: ['packages/db/tests/setup/globalSetup.ts'],
           // Sem MONGODB_URI aqui de propósito: o globalSetup injeta a URI real
@@ -40,6 +44,15 @@ export default defineConfig({
           // (ver packages/db/tests/setup/globalSetup.ts) — sobrescrever com um
           // valor estático quebraria a conexão real dos testes de integração.
           env: crmApiBaseEnv,
+          // Todos os arquivos de integração compartilham UMA única instância
+          // do MongoMemoryServer (injetada pelo globalSetup acima). Rodar os
+          // arquivos em paralelo faz o afterEach/afterAll de um arquivo
+          // (deleteMany global) apagar dados que outro arquivo, em execução
+          // concorrente, acabou de escrever — falso 401/403 intermitente.
+          // Descoberto ao adicionar platform.router.int.test.ts (T21), que
+          // tornou a corrida praticamente sempre reprodutível. Corrigido aqui
+          // (infra compartilhada), não nos testes.
+          fileParallelism: false,
         },
       },
       {
