@@ -209,9 +209,9 @@ T26 → T27 → T28 → T29 → T30
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `connect(uri inválida)` rejeita a Promise (não lança síncrono)
-- [ ] `globalSetup` sobe o `MongoMemoryServer` e injeta a URI antes de qualquer teste do project `integration`
-- [ ] `clearCollections()` limpa todas as collections entre testes
+- [x] `connect(uri inválida)` rejeita a Promise (não lança síncrono)
+- [x] `globalSetup` sobe o `MongoMemoryServer` e injeta a URI antes de qualquer teste do project `integration`
+- [x] `clearCollections()` limpa todas as collections entre testes
 
 **Tests**: none aqui — infra é validada implicitamente por T8-T11 rodando contra ela
 **Gate**: build
@@ -230,8 +230,8 @@ T26 → T27 → T28 → T29 → T30
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Índice único em `document` provado (segundo insert com mesmo `document` rejeita)
-- [ ] `provisioned → active` aceito; transição fora da máquina de estados retorna `null` (guarda é a query)
+- [x] Índice único em `document` provado (segundo insert com mesmo `document` rejeita)
+- [x] `provisioned → active` aceito; transição fora da máquina de estados retorna `null` (guarda é a query)
 
 **Tests**: integration (`MongoMemoryServer`) — índice único + transição válida/inválida (FND-19)
 **Gate**: full
@@ -250,8 +250,8 @@ T26 → T27 → T28 → T29 → T30
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] E-mail duplicado rejeitado pelo índice único (case-insensitive por normalização no `pre-save`)
-- [ ] Criar `User` sem `Tenant` e sem `isPlatformAdmin: true` falha a validação de schema
+- [x] E-mail duplicado rejeitado pelo índice único (case-insensitive por normalização no `pre-save`)
+- [x] Criar `User` sem `Tenant` e sem `isPlatformAdmin: true` falha a validação de schema
 
 **Tests**: integration — índice único de e-mail + validação condicional Tenant/isPlatformAdmin (AD-016)
 **Gate**: full
@@ -270,9 +270,9 @@ T26 → T27 → T28 → T29 → T30
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Dois `insert` de convite `pending` para o mesmo par `Tenant+email` — o segundo falha pelo índice parcial
-- [ ] `hashToken` determinístico (mesmo input → mesmo hash)
-- [ ] Nenhum índice TTL declarado (verificado por não-presença — é a decisão do design)
+- [x] Dois `insert` de convite `pending` para o mesmo par `Tenant+email` — o segundo falha pelo índice parcial
+- [x] `hashToken` determinístico (mesmo input → mesmo hash)
+- [x] Nenhum índice TTL declarado (verificado por não-presença — é a decisão do design)
 
 **Tests**: integration — índice parcial único provado com 2 inserts; `hashToken` puro testado em unit dentro do mesmo arquivo de teste do model (camada mais alta = integration)
 **Gate**: full
@@ -291,8 +291,8 @@ T26 → T27 → T28 → T29 → T30
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `listIndexes()` mostra o índice TTL em `expiresAt` com `expireAfterSeconds: 0`
-- [ ] `deleteMany({user})` remove todas as sessões daquele usuário
+- [x] `listIndexes()` mostra o índice TTL em `expiresAt` com `expireAfterSeconds: 0`
+- [x] `deleteMany({user})` remove todas as sessões daquele usuário
 
 **Tests**: integration — índice TTL existe (FND-16); `deleteMany({user})` remove N sessões de um usuário e nenhuma de outro
 **Gate**: full
@@ -311,8 +311,8 @@ T26 → T27 → T28 → T29 → T30
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Chamar `tenantScoped` com um filtro sem `Tenant` é erro de **tipo** (`// @ts-expect-error` comprova)
-- [ ] `syncIndexes()` chama `createIndexes` dos 4 models
+- [x] Chamar `tenantScoped` com um filtro sem `Tenant` é erro de **tipo** (`// @ts-expect-error` comprova)
+- [x] `syncIndexes()` chama `createIndexes` dos 4 models
 
 **Tests**: unit — teste de tipo (compilação falha sem `Tenant` no filtro) + teste de runtime do passthrough (filtro válido retorna idêntico)
 **Gate**: quick
