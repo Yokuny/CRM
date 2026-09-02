@@ -20,7 +20,15 @@ importers:
 
   apps/ai-gateway: {}
 
-  apps/crm-api: {}
+  apps/crm-api:
+    dependencies:
+      zod:
+        specifier: ^4.5.4
+        version: 4.5.4
+    devDependencies:
+      '@types/node':
+        specifier: 26.4.1
+        version: 26.4.1
 
   apps/web: {}
 
