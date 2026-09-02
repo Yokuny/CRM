@@ -1,8 +1,11 @@
 {
   "name": "crm",
   "private": true,
+  "type": "module",
   "packageManager": "pnpm@11.11.0",
   "devDependencies": {
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "vitest": "^4.1.11",
+    "@biomejs/biome": "^2.5.11"
   }
 }
