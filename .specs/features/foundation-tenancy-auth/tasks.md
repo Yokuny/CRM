@@ -130,7 +130,7 @@ T26 → T27 → T28 → T29 → T30
 
 **Done when**:
 - [x] `docker compose config` valida sem erro
-- [ ] `.env.example` cobre 100% das chaves que `envSchema` (T13) vai exigir — revisitar depois de T13
+- [x] `.env.example` cobre 100% das chaves que `envSchema` (T13) vai exigir — revisitar depois de T13
 
 **Tests**: none
 **Gate**: build (`docker compose config`)
@@ -331,8 +331,8 @@ T26 → T27 → T28 → T29 → T30
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Remover uma variável obrigatória do `.env` de teste faz o parse falhar citando o **nome** dela
-- [ ] Env completo (do `.env.example` de T3) faz o parse passar
+- [x] Remover uma variável obrigatória do `.env` de teste faz o parse falhar citando o **nome** dela
+- [x] Env completo (do `.env.example` de T3) faz o parse passar
 
 **Tests**: unit — env sem 1 variável → mensagem nomeia a variável; env completo → ok
 **Gate**: quick
@@ -351,8 +351,8 @@ T26 → T27 → T28 → T29 → T30
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Body com 2 campos inválidos retorna 400 com **uma** mensagem agregando os 2
-- [ ] Nenhum `ERR_HTTP_HEADERS_SENT` (só 1 chamada de `next(err)` por request)
+- [x] Body com 2 campos inválidos retorna 400 com **uma** mensagem agregando os 2
+- [x] Nenhum `ERR_HTTP_HEADERS_SENT` (só 1 chamada de `next(err)` por request)
 
 **Tests**: unit — 2 campos inválidos → 1 chamada de `next(err)` com issues agregados; schema válido → `next()` sem erro
 **Gate**: quick
@@ -371,8 +371,8 @@ T26 → T27 → T28 → T29 → T30
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Erro não tratado responde 500 com `badRespObj`; stack só no log estruturado, nunca no corpo da resposta
-- [ ] `responseTime` registra a métrica por request
+- [x] Erro não tratado responde 500 com `badRespObj`; stack só no log estruturado, nunca no corpo da resposta
+- [x] `responseTime` registra a métrica por request
 
 **Tests**: unit — erro genérico → 500 + corpo sem stack; log estruturado chamado com `requestId`
 **Gate**: quick
@@ -391,10 +391,10 @@ T26 → T27 → T28 → T29 → T30
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Nenhum `console.log` do header `Authorization`, token ou `deviceInfo` completo
-- [ ] `extractToken` correto nos 4 casos (ausente, scheme errado, partes erradas, válido) + o caso do spec: cookie ausente + `Authorization` presente
-- [ ] `user-agent` divergente do da sessão derruba **todas** as sessões do usuário (`deleteMany`) e loga `{event: 'session.device_mismatch', userId}`
-- [ ] Sessão ausente do banco responde 401 e loga `{event: 'session.replay', userId}`
+- [x] Nenhum `console.log` do header `Authorization`, token ou `deviceInfo` completo
+- [x] `extractToken` correto nos 4 casos (ausente, scheme errado, partes erradas, válido) + o caso do spec: cookie ausente + `Authorization` presente
+- [x] `user-agent` divergente do da sessão derruba **todas** as sessões do usuário (`deleteMany`) e loga `{event: 'session.device_mismatch', userId}`
+- [x] Sessão ausente do banco responde 401 e loga `{event: 'session.replay', userId}`
 
 **Tests**: integration (inclui as 5 unidades de `extractToken` no mesmo arquivo — camada mais alta do task vence) — FND-05 (`tenantUser` do banco), FND-06 (device mismatch), FND-17 (campos do evento)
 **Gate**: full
@@ -413,9 +413,9 @@ T26 → T27 → T28 → T29 → T30
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Matriz papel×rota cobre os 3 papéis (`admin`, `gestor`, `operador`)
-- [ ] `tenantAssignmentCheck` responde 424 exatamente quando `req.tenantUser.tenant` está ausente
-- [ ] `platformAdminOnly` responde 403 antes de qualquer chamada ao controller
+- [x] Matriz papel×rota cobre os 3 papéis (`admin`, `gestor`, `operador`)
+- [x] `tenantAssignmentCheck` responde 424 exatamente quando `req.tenantUser.tenant` está ausente
+- [x] `platformAdminOnly` responde 403 antes de qualquer chamada ao controller
 
 **Tests**: unit — matriz papel×rota (FND-08); 424 sem Tenant vinculado (FND-05/AC4); 403 sem `isPlatformAdmin` (FND-01/AC3)
 **Gate**: quick
@@ -434,7 +434,7 @@ T26 → T27 → T28 → T29 → T30
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] N+1 tentativas do mesmo e-mail (dentro da janela) respondem 429 com mensagem legível em pt-BR
+- [x] N+1 tentativas do mesmo e-mail (dentro da janela) respondem 429 com mensagem legível em pt-BR
 
 **Tests**: integration — supertest com N+1 chamadas contra um app mínimo montando só o rate limiter
 **Gate**: full
@@ -453,8 +453,8 @@ T26 → T27 → T28 → T29 → T30
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Transporte `nodemailer` mockado rejeitando → `send` retorna `{sent: false}`, nunca lança
-- [ ] `log` sempre retorna `{sent: true}` e escreve no log estruturado
+- [x] Transporte `nodemailer` mockado rejeitando → `send` retorna `{sent: false}`, nunca lança
+- [x] `log` sempre retorna `{sent: true}` e escreve no log estruturado
 
 **Tests**: unit — `log` determinístico; `nodemailer` com transporte mockado rejeitando não lança
 **Gate**: quick
@@ -473,9 +473,9 @@ T26 → T27 → T28 → T29 → T30
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Mongo indisponível no `start()` termina o processo com código 1 e log explícito
-- [ ] `buildApp()` é testável via supertest sem abrir porta
-- [ ] `GET /health` responde `{success: true, data: {...}}`
+- [x] Mongo indisponível no `start()` termina o processo com código 1 e log explícito
+- [x] `buildApp()` é testável via supertest sem abrir porta
+- [x] `GET /health` responde `{success: true, data: {...}}`
 
 **Tests**: unit (env/exit com `connect` mockado rejeitando) + integration (`/health` real contra `MongoMemoryServer`) — camada mais alta vence
 **Gate**: full
