@@ -72,6 +72,8 @@ Ninguém escreve na collection do outro.
 | `processTemplates`, `processTemplateVersions` | `crm-api` | ambos |
 | `products`, `orders` | `crm-api` | ambos |
 | `tenants`, `users`, `channels` | `crm-api` | ambos |
+| `invites` | `crm-api` | `crm-api` |
+| `sessions` | `crm-api` | `crm-api` |
 | `boards` (kanban) | `crm-api` | `crm-api` |
 
 ---

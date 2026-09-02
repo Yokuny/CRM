@@ -40,14 +40,17 @@ empresa dele. Nenhuma outra feature começa antes disso fechar.
 
 | Assumption / decisão | Default escolhido | Racional | Confirmado? |
 | --- | --- | --- | --- |
-| Escopo de auth | Porte do DentalEase sem passkey: JWT de acesso + refresh em cookie httpOnly com device binding | Padrão já provado em `authentication.middleware.ts`; passkey é subsistema à parte | **sim** |
+| Escopo de auth | Porte do DentalEase sem passkey: sessão em cookie httpOnly com device binding, verificada no banco a cada request (revisado no Design — ver AD-014; a redação original citava um access token separado, descartado por não poupar leitura) | Padrão já provado em `authentication.middleware.ts`; passkey é subsistema à parte | **sim** |
 | Entrada de Tenant | Convite — plataforma provisiona o tenant e convida o primeiro admin | Casa com 1 número de WhatsApp por tenant, que exige setup manual na Meta | **sim** |
 | Papéis | `admin`, `gestor`, `operador` | Quem aprova venda (gestor) não é necessariamente quem administra o sistema | **sim** |
-| A feature inclui front-end? | Sim, o mínimo: login, aceitar-convite e shell autenticado com nome do tenant | O tip da skill exige P1 = fatia vertical demo-ável; o shell completo continua na feature 4 | não |
-| Quem é "admin da plataforma"? | Um flag `isPlatformAdmin` no `User`, sem tenant vinculado — não um papel dentro de tenant | Evita criar um segundo sistema de identidade só para provisionar | não |
-| Identificação do Tenant na URL | Nenhuma — o tenant vem sempre do token, nunca de path ou subdomínio | AD-010: tenant jamais aceito de entrada controlável pelo cliente | não |
-| Hash de senha | bcrypt, como no DentalEase | Consistência com o stack existente; sem motivo para divergir | não |
-| Idioma das mensagens de erro | pt-BR, padrão `{ success, data?, message? }` | Consistência com o back-end de referência | não |
+| A feature inclui front-end? | Sim, o mínimo: login, aceitar-convite e shell autenticado com nome do tenant | O tip da skill exige P1 = fatia vertical demo-ável; o shell completo continua na feature 4 | **sim** (Design) |
+| Quem é "admin da plataforma"? | Um flag `isPlatformAdmin` no `User`, sem tenant vinculado — não um papel dentro de tenant | Evita criar um segundo sistema de identidade só para provisionar | **sim** (Design) |
+| Identificação do Tenant na URL | Nenhuma — o tenant vem sempre do token, nunca de path ou subdomínio | AD-010: tenant jamais aceito de entrada controlável pelo cliente | **sim** (conformidade AD-010) |
+| Hash de senha | bcrypt (cost 10), como no DentalEase | Consistência com o stack existente; sem motivo para divergir | **sim** (Design) |
+| Idioma das mensagens de erro | pt-BR, padrão `{ success, data?, message? }` | Consistência com o back-end de referência | **sim** (Design) |
+| Modelo de sessão | Token único DB-verificado; sem access token separado (AD-014) | FND-05 obriga leitura do banco em todo request, o que anula o ganho do access token | **sim** (Design) |
+| Unicidade de e-mail | Global; um `User` pertence a um único `Tenant` (AD-016) | `POST /auth/signin` recebe só e-mail e senha e nenhum AC prevê seletor de empresa. Satisfaz o AC4 de P1-1 e não deixa o login ambíguo | **sim** (Design) |
+| Runner de testes | Vitest 4 em workspace, um gate para tudo (AD-015) | Cobre back-ends, packages isomórficos e `web` sem ts-jest nem atrito de ESM | **sim** (Design) |
 
 **Open questions:** nenhuma — tudo resolvido ou registrado acima.
 
@@ -212,30 +215,30 @@ apagar os dados dela.
 
 | ID | Story | Fase | Status |
 | --- | --- | --- | --- |
-| FND-01 | P1: Provisionar Tenant | Design | Pending |
-| FND-02 | P1: Convidar primeiro admin | Design | Pending |
-| FND-03 | P1: Aceitar convite e criar usuário | Design | Pending |
-| FND-04 | P1: Login e emissão de sessão | Design | Pending |
-| FND-05 | P1: Injeção de `tenantUser` a partir do banco | Design | Pending |
-| FND-06 | P1: Device binding e revogação em cascata | Design | Pending |
-| FND-07 | P1: Tenant nunca aceito de entrada externa | Design | Pending |
-| FND-08 | P1: Autorização por papel | Design | Pending |
-| FND-09 | P1: Isolamento entre tenants provado por teste | Design | Pending |
-| FND-10 | P1: Front mínimo — aceite, login, shell | Design | Pending |
-| FND-11 | Dimensão: validação de entrada | Design | Pending |
-| FND-12 | Dimensão: falha parcial no convite | Design | Pending |
-| FND-13 | Dimensão: idempotência de convite | Design | Pending |
-| FND-14 | Dimensão: rate limit em login e convite | Design | Pending |
-| FND-15 | Dimensão: aceite concorrente | Design | Pending |
-| FND-16 | Dimensão: TTL de convite e token | Design | Pending |
-| FND-17 | Dimensão: métrica e log de anomalia | Design | Pending |
-| FND-18 | Dimensão: SMTP e Mongo indisponíveis | Design | Pending |
-| FND-19 | Dimensão: transições de `Tenant` e `Invite` | Design | Pending |
-| FND-20 | P2: Gestão de usuários pelo admin do tenant | — | Pending |
-| FND-21 | P2: Logout e revogação | — | Pending |
-| FND-22 | P3: Suspender e reativar Tenant | — | Pending |
+| FND-01 | P1: Provisionar Tenant | Tasks | Designed |
+| FND-02 | P1: Convidar primeiro admin | Tasks | Designed |
+| FND-03 | P1: Aceitar convite e criar usuário | Tasks | Designed |
+| FND-04 | P1: Login e emissão de sessão | Tasks | Designed |
+| FND-05 | P1: Injeção de `tenantUser` a partir do banco | Tasks | Designed |
+| FND-06 | P1: Device binding e revogação em cascata | Tasks | Designed |
+| FND-07 | P1: Tenant nunca aceito de entrada externa | Tasks | Designed |
+| FND-08 | P1: Autorização por papel | Tasks | Designed |
+| FND-09 | P1: Isolamento entre tenants provado por teste | Tasks | Designed |
+| FND-10 | P1: Front mínimo — aceite, login, shell | Tasks | Designed |
+| FND-11 | Dimensão: validação de entrada | Tasks | Designed |
+| FND-12 | Dimensão: falha parcial no convite | Tasks | Designed |
+| FND-13 | Dimensão: idempotência de convite | Tasks | Designed |
+| FND-14 | Dimensão: rate limit em login e convite | Tasks | Designed |
+| FND-15 | Dimensão: aceite concorrente | Tasks | Designed |
+| FND-16 | Dimensão: TTL de convite e token | Tasks | Designed |
+| FND-17 | Dimensão: métrica e log de anomalia | Tasks | Designed |
+| FND-18 | Dimensão: SMTP e Mongo indisponíveis | Tasks | Designed |
+| FND-19 | Dimensão: transições de `Tenant` e `Invite` | Tasks | Designed |
+| FND-20 | P2: Gestão de usuários pelo admin do tenant | — | Fora do escopo da execução (costura documentada no design) |
+| FND-21 | P2: Logout e revogação | — | Fora do escopo da execução (costura documentada no design) |
+| FND-22 | P3: Suspender e reativar Tenant | — | Fora do escopo da execução (costura documentada no design) |
 
-**Cobertura:** 22 requisitos · 0 mapeados para tasks · 22 pendentes de Design
+**Cobertura:** 22 requisitos · 19 desenhados (FND-01..19, aguardando Tasks) · 3 fora do escopo de execução desta feature (FND-20..22)
 
 ---
 

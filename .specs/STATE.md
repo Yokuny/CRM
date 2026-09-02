@@ -109,6 +109,30 @@ Detalhamento completo (contexto, consequências, alternativas) em [`docs/adr/`](
 - **Date**: 2026-09-02
 - **Status**: active
 
+### AD-014
+- **Decision**: Sessão de token único verificada no banco — o cookie httpOnly `refreshToken` é a credencial de todo request; não existe access token separado.
+- **Reason**: o contrato de sessão exige carregar `tenantUser` do banco em toda requisição (FND-05), então um access token curto não pouparia leitura; pouparia apenas a verificação de assinatura, ao custo de rotação, corrida de 401 e fila de retry no cliente.
+- **Trade-off**: cada request faz duas leituras (`sessions` + `users`/`tenants`); sem stateless. Em troca, papel revogado, usuário desativado e tenant suspenso passam a valer no request seguinte.
+- **Scope**: `crm-api`, `apps/web`, `packages/contracts`.
+- **Date**: 2026-09-02
+- **Status**: active
+
+### AD-015
+- **Decision**: Vitest 4 é o único runner de testes do monorepo, configurado por `projects` na raiz.
+- **Reason**: o gate de testes decide se uma task fechou, e um runner só cobre back-ends, packages isomórficos e o `web` sem transform ts-jest nem atrito de ESM em pnpm workspace.
+- **Trade-off**: desvio do Jest + ts-jest do `DentalEase-BackEnd` — os testes portados de lá precisam de tradução de API (mínima) e o padrão de referência deixa de ser copiável literalmente.
+- **Scope**: todo o projeto, incluindo `evals/`.
+- **Date**: 2026-09-02
+- **Status**: active
+
+### AD-016
+- **Decision**: E-mail é globalmente único e um `User` pertence a exatamente um `Tenant`; `isPlatformAdmin` é a única exceção a ter `Tenant` ausente.
+- **Reason**: `POST /auth/signin` recebe só e-mail e senha e nenhum requisito prevê seletor de empresa no login; unicidade global mantém a resolução de identidade determinística.
+- **Trade-off**: a mesma pessoa atuando em duas empresas precisa de dois e-mails. Suportar identidade compartilhada depois exige seletor de tenant no login e migração do índice.
+- **Scope**: `crm-api`, `packages/db`, `packages/contracts`.
+- **Date**: 2026-09-02
+- **Status**: active
+
 ---
 
 ## Handoff
