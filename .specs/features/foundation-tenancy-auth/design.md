@@ -1,7 +1,7 @@
 # Foundation: Tenancy & Auth — Design
 
 **Spec**: `.specs/features/foundation-tenancy-auth/spec.md`
-**Status**: Draft
+**Status**: Approved
 **Escopo de execução**: FND-01..19. FND-20 (P2), FND-21 (P2) e FND-22 (P3) não têm fase
 atribuída na tabela de rastreabilidade do spec — este design deixa a costura pronta e
 documentada para cada um, sem implementá-los.
