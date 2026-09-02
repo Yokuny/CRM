@@ -3,5 +3,12 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "exports": "./src/index.ts"
+  "exports": "./src/index.ts",
+  "dependencies": {
+    "mongoose": "9.9.4"
+  },
+  "devDependencies": {
+    "mongodb-memory-server": "11.2.0",
+    "@types/node": "26.4.1"
+  }
 }

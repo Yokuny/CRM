@@ -16,6 +16,7 @@ export default defineConfig({
           name: 'integration',
           include: ['packages/db/src/**/*.int.test.ts', 'apps/crm-api/src/**/*.int.test.ts'],
           passWithNoTests: true,
+          globalSetup: ['packages/db/tests/setup/globalSetup.ts'],
         },
       },
       {
