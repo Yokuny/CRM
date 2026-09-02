@@ -87,9 +87,9 @@ T26 → T27 → T28 → T29 → T30
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `pnpm install` roda sem erro na raiz vazia
-- [ ] `typescript` pinado em `5.9.3` exato (não `^5.9.3`)
-- [ ] `bcrypt` e `mongodb-memory-server` compilam sem prompt manual
+- [x] `pnpm install` roda sem erro na raiz vazia
+- [x] `typescript` pinado em `5.9.3` exato (não `^5.9.3`)
+- [x] `bcrypt` e `mongodb-memory-server` compilam sem prompt manual
 
 **Tests**: none
 **Gate**: build (`pnpm install`)
@@ -108,9 +108,9 @@ T26 → T27 → T28 → T29 → T30
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `pnpm -r exec tsc --noEmit` passa nos stubs vazios
-- [ ] `pnpm biome check .` passa
-- [ ] `pnpm vitest run` roda sem erro com 0 arquivos (`passWithNoTests` habilitado nos 4 projects)
+- [x] `pnpm -r exec tsc --noEmit` passa nos stubs vazios
+- [x] `pnpm biome check .` passa
+- [x] `pnpm vitest run` roda sem erro com 0 arquivos (`passWithNoTests` habilitado nos 4 projects)
 
 **Tests**: none
 **Gate**: build (`pnpm -r exec tsc --noEmit && pnpm biome check . && pnpm vitest run`)
@@ -129,7 +129,7 @@ T26 → T27 → T28 → T29 → T30
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `docker compose config` valida sem erro
+- [x] `docker compose config` valida sem erro
 - [ ] `.env.example` cobre 100% das chaves que `envSchema` (T13) vai exigir — revisitar depois de T13
 
 **Tests**: none
@@ -149,8 +149,8 @@ T26 → T27 → T28 → T29 → T30
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] 4 helpers exportados com tipos genéricos corretos para `success`/`data`/`message`
-- [ ] `badRespObj` nunca inclui campo de stack/erro cru
+- [x] 4 helpers exportados com tipos genéricos corretos para `success`/`data`/`message`
+- [x] `badRespObj` nunca inclui campo de stack/erro cru
 
 **Tests**: unit — cada helper testado no caso de sucesso e de erro
 **Gate**: quick
@@ -169,8 +169,8 @@ T26 → T27 → T28 → T29 → T30
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Tipos exportados do barrel de `packages/contracts`
-- [ ] `idSchema` rejeita string que não seja hex de 24 chars
+- [x] Tipos exportados do barrel de `packages/contracts`
+- [x] `idSchema` rejeita string que não seja hex de 24 chars
 
 **Tests**: none (Entity/config layer — build gate only)
 **Gate**: build
@@ -189,8 +189,8 @@ T26 → T27 → T28 → T29 → T30
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Os 4 schemas rejeitam qualquer campo extra (incl. `Tenant`/`tenantId`/`orgId`) via `.strict()`
-- [ ] Os 4 aparecem em `schemaRegistry`
+- [x] Os 4 schemas rejeitam qualquer campo extra (incl. `Tenant`/`tenantId`/`orgId`) via `.strict()`
+- [x] Os 4 aparecem em `schemaRegistry`
 
 **Tests**: unit — 1 teste por schema afirmando rejeição de campo forjado (FND-07) + 1 happy path por schema
 **Gate**: quick
