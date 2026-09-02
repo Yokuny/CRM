@@ -18,7 +18,13 @@ export const createPlatformRouter = (deps: PlatformRouterDeps): Router => {
   const controller = createPlatformController(deps);
   const router = Router();
 
-  router.post('/tenants', deps.validToken, platformAdminOnly, validBody(provisionTenantSchema), controller.provisionTenant);
+  router.post(
+    '/tenants',
+    deps.validToken,
+    platformAdminOnly,
+    validBody(provisionTenantSchema),
+    controller.provisionTenant,
+  );
 
   router.post(
     '/tenants/:id/invites',

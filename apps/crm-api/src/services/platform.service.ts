@@ -1,6 +1,6 @@
+import crypto from 'node:crypto';
 import type { CreateInvite, ProvisionTenant } from '@crm/contracts';
 import { hashToken } from '@crm/db';
-import crypto from 'node:crypto';
 import { CustomError } from '../middlewares/errorHandler.middleware.js';
 import type { MailProvider } from '../providers/mail/index.js';
 import * as platformRepository from '../repositories/platform.repository.js';

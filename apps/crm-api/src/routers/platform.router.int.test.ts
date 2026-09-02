@@ -63,7 +63,10 @@ const buildTestApp = (mailProvider: MailProvider) => {
   app.use(cookieParser());
   app.use(express.json());
   const { validToken } = createAuthMiddleware(buildAuthDeps());
-  app.use('/platform', createPlatformRouter({ validToken, mailProvider, inviteBaseUrl: 'http://localhost:5173/invite' }));
+  app.use(
+    '/platform',
+    createPlatformRouter({ validToken, mailProvider, inviteBaseUrl: 'http://localhost:5173/invite' }),
+  );
   app.use(errorHandler);
   return app;
 };

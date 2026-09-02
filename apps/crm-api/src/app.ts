@@ -12,6 +12,7 @@ import { responseTime } from './middlewares/responseTime.middleware.js';
 import type { MailProvider } from './providers/mail/index.js';
 import { createLogMailProvider } from './providers/mail/log.mailProvider.js';
 import { createNodemailerMailProvider } from './providers/mail/nodemailer.mailProvider.js';
+import { inviteRouter } from './routers/invite.router.js';
 import { createPlatformRouter } from './routers/platform.router.js';
 
 // Adaptador real de AuthDeps sobre @crm/db — a única fonte de req.tenantUser
@@ -74,6 +75,7 @@ export const buildApp = (): Express => {
   });
 
   app.use('/platform', createPlatformRouter({ validToken, mailProvider, inviteBaseUrl }));
+  app.use('/invites', inviteRouter);
 
   app.use(errorHandler);
 
