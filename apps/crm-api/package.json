@@ -5,7 +5,8 @@
   "type": "module",
   "exports": "./src/index.ts",
   "scripts": {
-    "dev": "tsx watch src/server.ts"
+    "dev": "tsx watch src/server.ts",
+    "seed:platform-admin": "tsx scripts/seed-platform-admin.ts"
   },
   "dependencies": {
     "@crm/contracts": "workspace:*",
