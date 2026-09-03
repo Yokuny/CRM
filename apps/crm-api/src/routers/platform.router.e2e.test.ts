@@ -1,5 +1,15 @@
 import crypto from 'node:crypto';
-import { connect, disconnect, hashToken, Invite, Session, Tenant, User } from '@crm/db';
+import {
+  connect,
+  disconnect,
+  FieldTemplate,
+  FieldTemplateVersion,
+  hashToken,
+  Invite,
+  Session,
+  Tenant,
+  User,
+} from '@crm/db';
 import cookieParser from 'cookie-parser';
 import express from 'express';
 import * as jwt from 'jsonwebtoken';
@@ -9,7 +19,9 @@ import { env } from '../config/env.config.js';
 import type { AuthDeps } from '../middlewares/authentication.middleware.js';
 import { createAuthMiddleware } from '../middlewares/authentication.middleware.js';
 import { errorHandler } from '../middlewares/errorHandler.middleware.js';
+import { createNoopFieldValueStore } from '../providers/fieldValueStore/index.js';
 import type { MailProvider } from '../providers/mail/index.js';
+import { createFieldTemplateRouter } from './fieldTemplate.router.js';
 import { createPlatformRouter } from './platform.router.js';
 
 const DEVICE = 'test-agent';
@@ -60,6 +72,15 @@ const buildTestApp = (mailProvider: MailProvider) => {
     '/platform',
     createPlatformRouter({ validToken, mailProvider, inviteBaseUrl: 'http://localhost:5173/invite' }),
   );
+  // Montado no MESMO app da provisão: a prova de FLD-09 é ler o template pela
+  // rota real logo após provisionar, sem nenhuma chamada de setup no meio.
+  app.use(
+    '/field-templates',
+    createFieldTemplateRouter({
+      validToken,
+      fieldValueStores: { customer: createNoopFieldValueStore(), process: createNoopFieldValueStore() },
+    }),
+  );
   app.use(errorHandler);
   return app;
 };
@@ -72,7 +93,14 @@ describe('platform routes', () => {
   });
 
   afterEach(async () => {
-    await Promise.all([Invite.deleteMany({}), Session.deleteMany({}), User.deleteMany({}), Tenant.deleteMany({})]);
+    await Promise.all([
+      FieldTemplateVersion.deleteMany({}),
+      FieldTemplate.deleteMany({}),
+      Invite.deleteMany({}),
+      Session.deleteMany({}),
+      User.deleteMany({}),
+      Tenant.deleteMany({}),
+    ]);
   });
 
   afterAll(async () => {
@@ -126,6 +154,64 @@ describe('platform routes', () => {
 
       expect(res.status).toBe(403);
       expect(await Tenant.countDocuments()).toBe(before);
+    });
+
+    // FLD-09: entre a provisão e a leitura NÃO existe nenhuma chamada de
+    // setup de template — é exatamente isso que o Independent Test do spec
+    // pede ("sem nenhuma chamada extra de setup"). O leitor é um `operador`
+    // recém-vinculado, o papel mais fraco: se o seed não tivesse rodado na
+    // provisão, esta rota devolveria 404.
+    it('seeds the default customer template on provisioning: GET /field-templates/current returns the status field with its 3 default options, with no extra setup call (FLD-09)', async () => {
+      const app = buildTestApp(alwaysSentMailProvider);
+      const platformAdmin = await User.create({
+        name: 'Root Admin',
+        email: 'root@platform.com',
+        password: 'hash',
+        isPlatformAdmin: true,
+        role: [],
+      });
+      const platformCookie = await issueSessionCookie(platformAdmin.id);
+
+      const provisionRes = await request(app)
+        .post('/platform/tenants')
+        .set('Cookie', platformCookie)
+        .set('User-Agent', DEVICE)
+        .send({ name: 'Empresa Semeada', document: '77777777000177' });
+      expect(provisionRes.status).toBe(201);
+      const tenantId = provisionRes.body.data.id as string;
+
+      const member = await User.create({
+        name: 'Operador',
+        email: 'operador@empresa-semeada.com',
+        password: 'hash',
+        Tenant: tenantId,
+        role: ['operador'],
+      });
+      const memberCookie = await issueSessionCookie(member.id);
+
+      const res = await request(app)
+        .get('/field-templates/current')
+        .query({ targetType: 'customer', key: 'default' })
+        .set('Cookie', memberCookie)
+        .set('User-Agent', DEVICE);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.template.name).toBe('Cliente');
+      expect(res.body.data.template.currentVersion).toBe(1);
+      expect(res.body.data.template.archived).toBe(false);
+      expect(res.body.data.fields).toEqual([
+        {
+          fieldId: 'status',
+          label: 'Status',
+          type: 'status',
+          required: true,
+          options: [
+            { key: 'novo', label: 'Novo', color: '#3B82F6', order: 0 },
+            { key: 'ativo', label: 'Ativo', color: '#22C55E', order: 1 },
+            { key: 'inativo', label: 'Inativo', color: '#94A3B8', order: 2 },
+          ],
+        },
+      ]);
     });
   });
 

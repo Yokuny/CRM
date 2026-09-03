@@ -583,9 +583,9 @@ já devolve o campo `status`.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Provisionar um tenant e chamar `GET /field-templates/current?targetType=customer&key=default` sem nenhuma chamada de setup adicional devolve o campo `status` com as 3 opções padrão
-- [ ] Gate check passa: `pnpm vitest run --project e2e`
-- [ ] Test count: ≥ 1 teste novo passa (suíte inteira do arquivo continua verde)
+- [x] Provisionar um tenant e chamar `GET /field-templates/current?targetType=customer&key=default` sem nenhuma chamada de setup adicional devolve o campo `status` com as 3 opções padrão
+- [x] Gate check passa: `pnpm vitest run --project e2e`
+- [x] Test count: ≥ 1 teste novo passa (suíte inteira do arquivo continua verde)
 
 **Tests**: e2e
 **Gate**: full

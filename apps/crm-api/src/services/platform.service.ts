@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import type { CreateInvite, ProvisionTenant } from '@crm/contracts';
-import { hashToken } from '@crm/db';
+import { hashToken, seedDefaultCustomerTemplate } from '@crm/db';
 import { CustomError } from '../middlewares/errorHandler.middleware.js';
 import type { MailProvider } from '../providers/mail/index.js';
 import * as platformRepository from '../repositories/platform.repository.js';
@@ -10,8 +10,14 @@ const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 const isDuplicateKeyError = (e: unknown): boolean =>
   typeof e === 'object' && e !== null && 'code' in e && (e as { code: unknown }).code === 11000;
 
+// FLD-09: o template padrão de `customer` é dado de bootstrap do Tenant —
+// nasce junto com ele, nunca por uma rota de setup (AD-018). O seed é
+// idempotente por índice único (FLD-10) e nunca sobrescreve customização
+// (FLD-11), então reprocessar a provisão é seguro.
 export const provisionTenant = async (data: ProvisionTenant): Promise<{ id: string }> => {
-  return platformRepository.createTenant(data);
+  const tenant = await platformRepository.createTenant(data);
+  await seedDefaultCustomerTemplate(tenant.id);
+  return tenant;
 };
 
 export type InviteResult = { id: string; sent: boolean };
