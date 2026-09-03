@@ -497,9 +497,9 @@ ponteiro", não desfazer o que já foi escrito)
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Cada controller segue o padrão try/`respObj`/`catch(e){next(e)}` de `platform.controller.ts`
-- [ ] Status codes corretos por caminho (201 criação, 200 leitura/bump/archive, 404 quando o service devolve `null` na leitura)
-- [ ] Gate check passa: `pnpm -r exec tsc --noEmit`
+- [x] Cada controller segue o padrão try/`respObj`/`catch(e){next(e)}` de `platform.controller.ts`
+- [x] Status codes corretos por caminho (201 criação, 200 leitura/bump/archive, 404 quando o service devolve `null` na leitura)
+- [x] Gate check passa: `pnpm -r exec tsc --noEmit`
 
 **Tests**: none (coberto transitivamente pelo e2e de T17)
 **Gate**: quick
