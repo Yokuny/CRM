@@ -14,6 +14,9 @@ const translations: Record<string, string> = {
   'invite.accept.submit': 'Criar conta',
   'invite.accept.missing_token': 'Link de convite inválido.',
   'invite.accept.invited_to': 'Convite para',
+  'invite.accept.error': 'Não foi possível concluir o cadastro.',
+  'invite.accept.invalid': 'Convite inválido.',
+  loading: 'Carregando…',
   'private.role': 'Papel',
 };
 
