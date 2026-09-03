@@ -1,0 +1,20 @@
+// SPEC_DEVIATION: i18n completo é escopo da feature 4 (crm-web-shell;
+// spec.md, Out of Scope: "i18n completo"). Esta é a forma mínima da
+// convenção obrigatória (t() em toda string voltada ao usuário — CLAUDE.md
+// do front de referência): um dicionário fixo pt-BR só com as chaves que as
+// telas desta feature usam, sem troca de idioma.
+const translations: Record<string, string> = {
+  email: 'E-mail',
+  password: 'Senha',
+  name: 'Nome',
+  'auth.signin.title': 'Entrar',
+  'auth.signin.submit': 'Entrar',
+  'auth.signin.error': 'Não foi possível entrar.',
+  'invite.accept.title': 'Aceitar convite',
+  'invite.accept.submit': 'Criar conta',
+  'invite.accept.missing_token': 'Link de convite inválido.',
+  'invite.accept.invited_to': 'Convite para',
+  'private.role': 'Papel',
+};
+
+export const t = (key: string): string => translations[key] ?? key;
