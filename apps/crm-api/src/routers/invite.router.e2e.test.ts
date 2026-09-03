@@ -5,9 +5,6 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { errorHandler } from '../middlewares/errorHandler.middleware.js';
 import { inviteRouter } from './invite.router.js';
 
-// SPEC_DEVIATION: suffix `.int.test.ts` em vez de `.e2e.test.ts` — mesma
-// razão documentada em platform.router.int.test.ts (project "e2e" não tem
-// MongoMemoryServer; "integration" tem, via globalSetup).
 const buildTestApp = () => {
   const app = express();
   app.use(express.json());

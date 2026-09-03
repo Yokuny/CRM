@@ -9,8 +9,6 @@ import { createAuthMiddleware } from '../middlewares/authentication.middleware.j
 import { errorHandler } from '../middlewares/errorHandler.middleware.js';
 import { createAuthRouter } from './auth.router.js';
 
-// SPEC_DEVIATION: mesma razão de platform.router.int.test.ts (suffix
-// `.int.test.ts` em vez de `.e2e.test.ts` — project "e2e" não tem Mongo real).
 const buildAuthDeps = (): AuthDeps => ({
   findSessionByHash: async (tokenHash) => {
     const session = await Session.findOne({ tokenHash }).lean();

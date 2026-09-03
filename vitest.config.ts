@@ -60,7 +60,14 @@ export default defineConfig({
           name: 'e2e',
           include: ['apps/*/src/**/*.e2e.test.ts'],
           passWithNoTests: true,
-          env: crmApiTestEnv,
+          globalSetup: ['packages/db/tests/setup/globalSetup.ts'],
+          // Sem MONGODB_URI aqui de propósito — mesmo motivo do project
+          // "integration": o globalSetup injeta a URI real do
+          // MongoMemoryServer antes de qualquer teste rodar.
+          env: crmApiBaseEnv,
+          // Mesma razão do project "integration": arquivos de e2e
+          // compartilham UMA instância de MongoMemoryServer.
+          fileParallelism: false,
         },
       },
       {

@@ -12,13 +12,6 @@ import { errorHandler } from '../middlewares/errorHandler.middleware.js';
 import type { MailProvider } from '../providers/mail/index.js';
 import { createPlatformRouter } from './platform.router.js';
 
-// SPEC_DEVIATION: tasks.md rotula a camada de rota como "e2e"
-// (apps/*/src/**/*.e2e.test.ts), mas o project "e2e" do vitest.config.ts
-// (herdado do Batch 1-3) declara explicitamente que nenhum dos seus testes
-// conecta no Mongo de verdade — só o project "integration" recebe o
-// MongoMemoryServer via globalSetup. Testar rota+banco real exige o suffix
-// `.int.test.ts` (mesmo padrão já usado por authentication.middleware.int.test.ts,
-// que também é um teste HTTP completo via supertest). Reportado ao orquestrador.
 const DEVICE = 'test-agent';
 
 const buildAuthDeps = (): AuthDeps => ({
