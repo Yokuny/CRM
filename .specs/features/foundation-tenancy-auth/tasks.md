@@ -596,7 +596,7 @@ T26 → T27 → T28 → T29 → T30
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `/health` responde com Mongo conectado (`MongoMemoryServer` no teste)
+- [x] `/health` responde com Mongo conectado (`MongoMemoryServer` no teste)
 
 **Tests**: e2e — `/health` contra `MongoMemoryServer`
 **Gate**: full
@@ -615,8 +615,8 @@ T26 → T27 → T28 → T29 → T30
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `request()` tipa a resposta a partir de `ApiResponse<T>` de `packages/contracts`
-- [ ] `sessionQuery` chama `GET /auth/session` com `staleTime` compatível com o guard de rota (T30)
+- [x] `request()` tipa a resposta a partir de `ApiResponse<T>` de `packages/contracts`
+- [x] `sessionQuery` chama `GET /auth/session` com `staleTime` compatível com o guard de rota (T30)
 
 **Tests**: unit — `client.api` com `fetch` mockado (sucesso e erro); `sessionQuery` chama o endpoint certo
 **Gate**: quick
@@ -635,8 +635,8 @@ T26 → T27 → T28 → T29 → T30
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Erro do back-end exibe a `message` do `ApiResponse`, nunca um erro cru
-- [ ] Login bem-sucedido redireciona para a área privada
+- [x] Erro do back-end exibe a `message` do `ApiResponse`, nunca um erro cru
+- [x] Login bem-sucedido redireciona para a área privada
 
 **Tests**: unit de componente — submit válido chama `client.api`; erro do back-end renderiza `message`
 **Gate**: quick
@@ -655,8 +655,8 @@ T26 → T27 → T28 → T29 → T30
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Token ausente/inválido/expirado mostra a `message` do 410 sem quebrar a tela
-- [ ] Token válido mostra nome do tenant + e-mail antes do formulário
+- [x] Token ausente/inválido/expirado mostra a `message` do 410 sem quebrar a tela
+- [x] Token válido mostra nome do tenant + e-mail antes do formulário
 
 **Tests**: unit de componente — render com token válido mostra nome+email; 410 mostra a mensagem certa
 **Gate**: quick
@@ -675,8 +675,8 @@ T26 → T27 → T28 → T29 → T30
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Sessão revogada/expirada redireciona ao login **uma vez**, sem loop
-- [ ] Shell mostra nome do tenant e papel vindos de `GET /auth/session`
+- [x] Sessão revogada/expirada redireciona ao login **uma vez**, sem loop
+- [x] Shell mostra nome do tenant e papel vindos de `GET /auth/session`
 
 **Tests**: unit — guard com `queryClient` mockado (sessão válida passa; inválida redireciona uma vez, não em loop)
 **Gate**: quick
