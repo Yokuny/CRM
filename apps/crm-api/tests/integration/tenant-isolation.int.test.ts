@@ -5,9 +5,6 @@ import request from 'supertest';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { buildApp } from '../../src/app.js';
 
-// SPEC_DEVIATION: mesma razão documentada nos demais *.router.int.test.ts —
-// suffix `.int.test.ts` (não `.e2e.test.ts`) para rodar contra o
-// MongoMemoryServer real do project "integration".
 const DEVICE = 'isolation-agent';
 
 // Extrai o token opaco do e-mail "enviado" pelo MailProvider `log` (o único
