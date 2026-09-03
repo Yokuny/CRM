@@ -266,11 +266,11 @@ mapeamento de `issue.path` do mesmo arquivo
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Uma regra testada por cada um dos 11 tipos (violação → erro; valor válido → sem erro)
-- [ ] Erros vêm chaveados por `fieldId` (incluindo path aninhado em `array`/`group`)
-- [ ] Entrada malformada (tipo errado de JS, não só regra de negócio) nunca lança exceção
-- [ ] Gate check passa: `pnpm vitest run --project unit`
-- [ ] Test count: ≥ 14 testes passam
+- [x] Uma regra testada por cada um dos 11 tipos (violação → erro; valor válido → sem erro)
+- [x] Erros vêm chaveados por `fieldId` (incluindo path aninhado em `array`/`group`)
+- [x] Entrada malformada (tipo errado de JS, não só regra de negócio) nunca lança exceção
+- [x] Gate check passa: `pnpm vitest run --project unit`
+- [x] Test count: ≥ 14 testes passam
 
 **Tests**: unit
 **Gate**: quick
