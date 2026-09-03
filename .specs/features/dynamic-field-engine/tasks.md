@@ -191,12 +191,12 @@ já provou que um schema esquecido aqui é o exato gap que o sweep estrutural pe
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `targetType:'process'` sem `key` é rejeitado; `targetType:'customer'` com `key` custom é aceito mas o service (T15) ignora — schema só valida forma, não a regra de negócio
-- [ ] Corpo com `Tenant`/`tenantId`/`orgId` é rejeitado por `.strict()`
-- [ ] Ambos os schemas aparecem em `schemaRegistry`
-- [ ] `tests/structural/schema-registry.structural.test.ts` passa sem alteração de código do teste
-- [ ] Gate check passa: `pnpm vitest run --project unit --project structural`
-- [ ] Test count: ≥ 8 testes novos passam
+- [x] `targetType:'process'` sem `key` é rejeitado; `targetType:'customer'` com `key` custom é aceito mas o service (T15) ignora — schema só valida forma, não a regra de negócio
+- [x] Corpo com `Tenant`/`tenantId`/`orgId` é rejeitado por `.strict()`
+- [x] Ambos os schemas aparecem em `schemaRegistry`
+- [x] `tests/structural/schema-registry.structural.test.ts` passa sem alteração de código do teste
+- [x] Gate check passa: `pnpm vitest run --project unit --project structural`
+- [x] Test count: ≥ 8 testes novos passam
 
 **Tests**: unit
 **Gate**: quick

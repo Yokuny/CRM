@@ -5,8 +5,8 @@ describe('schemaRegistry', () => {
   // Corrigido por T25 (teste estrutural): idSchema e inviteTokenParamSchema
   // também são exports Zod de um *.schema.ts e precisam estar aqui — a
   // varredura de tests/structural/schema-registry.structural.test.ts falha
-  // caso algum dos 6 saia da lista.
-  it('registers exactly the 6 input schemas by name', () => {
+  // caso algum dos 10 saia da lista.
+  it('registers exactly the 10 input schemas by name', () => {
     const names = schemaRegistry.map((entry) => entry.name).sort();
     expect(names).toEqual(
       [
@@ -16,6 +16,10 @@ describe('schemaRegistry', () => {
         'signinSchema',
         'idSchema',
         'inviteTokenParamSchema',
+        'fieldDefSchema',
+        'migrationActionSchema',
+        'createFieldTemplateSchema',
+        'bumpFieldTemplateSchema',
       ].sort(),
     );
   });
