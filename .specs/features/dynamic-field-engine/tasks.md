@@ -557,9 +557,9 @@ para `'customer'` e `'process'` no composition root.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `buildApp()` monta o router em `/field-templates`
-- [ ] `apps/crm-api/src/server.int.test.ts` (smoke test de boot já existente) continua passando sem alteração
-- [ ] Gate check passa: `pnpm vitest run --project integration`
+- [x] `buildApp()` monta o router em `/field-templates`
+- [x] `apps/crm-api/src/server.int.test.ts` (smoke test de boot já existente) continua passando sem alteração
+- [x] Gate check passa: `pnpm vitest run --project integration`
 
 **Tests**: integration (smoke existente, sem teste novo dedicado)
 **Gate**: full

@@ -9,12 +9,15 @@ import type { AuthDeps } from './middlewares/authentication.middleware.js';
 import { createAuthMiddleware } from './middlewares/authentication.middleware.js';
 import { errorHandler } from './middlewares/errorHandler.middleware.js';
 import { responseTime } from './middlewares/responseTime.middleware.js';
+import { createNoopFieldValueStore } from './providers/fieldValueStore/index.js';
 import type { MailProvider } from './providers/mail/index.js';
 import { createLogMailProvider } from './providers/mail/log.mailProvider.js';
 import { createNodemailerMailProvider } from './providers/mail/nodemailer.mailProvider.js';
 import { createAuthRouter } from './routers/auth.router.js';
+import { createFieldTemplateRouter } from './routers/fieldTemplate.router.js';
 import { inviteRouter } from './routers/invite.router.js';
 import { createPlatformRouter } from './routers/platform.router.js';
+import type { FieldValueStores } from './services/fieldTemplate.service.js';
 
 // Adaptador real de AuthDeps sobre @crm/db — a única fonte de req.tenantUser
 // (FND-05). Construído aqui (composition root) e reusado por toda rota que
@@ -71,6 +74,14 @@ export const buildApp = (): Express => {
   const mailProvider = buildMailProvider();
   const inviteBaseUrl = `${env.CORS_ORIGIN}/invite`;
 
+  // Um store por targetType (AD-021). Nesta feature nenhum Customer/Process
+  // existe ainda, então o adapter de produção é o no-op; crm-core troca só
+  // esta injeção, sem tocar em fieldTemplate.service.ts.
+  const fieldValueStores: FieldValueStores = {
+    customer: createNoopFieldValueStore(),
+    process: createNoopFieldValueStore(),
+  };
+
   app.get('/health', (_req, res) => {
     res.json(respObj({ data: { service: 'crm-api' } }));
   });
@@ -78,6 +89,7 @@ export const buildApp = (): Express => {
   app.use('/platform', createPlatformRouter({ validToken, mailProvider, inviteBaseUrl }));
   app.use('/invites', inviteRouter);
   app.use('/auth', createAuthRouter({ validToken }));
+  app.use('/field-templates', createFieldTemplateRouter({ validToken, fieldValueStores }));
 
   app.use(errorHandler);
 
