@@ -6,6 +6,7 @@
   "exports": "./src/index.ts",
   "dependencies": {
     "@crm/contracts": "workspace:*",
+    "@crm/field-engine": "workspace:*",
     "mongoose": "9.9.4"
   },
   "devDependencies": {

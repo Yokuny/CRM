@@ -191,6 +191,9 @@ importers:
       '@crm/contracts':
         specifier: workspace:*
         version: link:../contracts
+      '@crm/field-engine':
+        specifier: workspace:*
+        version: link:../field-engine
       mongoose:
         specifier: 9.9.4
         version: 9.9.4

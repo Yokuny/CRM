@@ -396,11 +396,11 @@ guardados com `$setOnInsert`+`upsert:true` (algoritmo exato do `design.md`);
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Chamado 2x para o mesmo tenant cria exatamente um `FieldTemplate` e uma `FieldTemplateVersion`
-- [ ] Depois de um bump manual para v2 no teste, chamar o seed de novo NÃO reverte `currentVersion` para 1
-- [ ] `syncIndexes()` inclui os dois models novos
-- [ ] Gate check passa: `pnpm vitest run --project integration`
-- [ ] Test count: ≥ 4 testes passam
+- [x] Chamado 2x para o mesmo tenant cria exatamente um `FieldTemplate` e uma `FieldTemplateVersion`
+- [x] Depois de um bump manual para v2 no teste, chamar o seed de novo NÃO reverte `currentVersion` para 1
+- [x] `syncIndexes()` inclui os dois models novos
+- [x] Gate check passa: `pnpm vitest run --project integration`
+- [x] Test count: ≥ 4 testes passam
 
 **Tests**: integration
 **Gate**: full
