@@ -192,7 +192,7 @@ describe('platform routes', () => {
       expect(invite?.sentAt).toBeUndefined();
     });
 
-    it('responds 409 and does not duplicate when the same e-mail already has a pending invite in the same Tenant', async () => {
+    it('reissues the invite when the same e-mail already has a pending one in the same Tenant, revoking the old token (FND-13)', async () => {
       const { tenant, cookie } = await seedAdminAndTenant();
       const app = buildTestApp(alwaysSentMailProvider);
 
@@ -209,8 +209,23 @@ describe('platform routes', () => {
         .set('User-Agent', DEVICE)
         .send({ email: 'duplicado@empresa.com', role: 'admin' });
 
-      expect(second.status).toBe(409);
-      expect(await Invite.countDocuments({ Tenant: tenant._id, email: 'duplicado@empresa.com' })).toBe(1);
+      // Reaproveita: 201 de novo (nunca 409), um segundo Invite é criado, e o
+      // primeiro é revogado — nunca dois `pending` válidos ao mesmo tempo.
+      expect(second.status).toBe(201);
+      expect(second.body.data.id).not.toBe(first.body.data.id);
+
+      const oldInvite = await Invite.findById(first.body.data.id).lean();
+      expect(oldInvite?.status).toBe('revoked');
+
+      const newInvite = await Invite.findById(second.body.data.id).lean();
+      expect(newInvite?.status).toBe('pending');
+
+      const pendingForPair = await Invite.countDocuments({
+        Tenant: tenant._id,
+        email: 'duplicado@empresa.com',
+        status: 'pending',
+      });
+      expect(pendingForPair).toBe(1);
     });
 
     it('responds 409 when the invited e-mail already belongs to a user of this same Tenant (FND-01/AC4)', async () => {

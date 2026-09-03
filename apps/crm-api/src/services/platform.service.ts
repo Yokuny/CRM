@@ -35,6 +35,12 @@ export const inviteToTenant = async (
   const tokenHash = hashToken(token);
   const expiresAt = new Date(Date.now() + SEVEN_DAYS_MS);
 
+  // FND-13: reenviar para um e-mail com convite pending reaproveita — revoga
+  // o anterior e emite um novo, nunca deixando dois válidos. O catch abaixo
+  // continua como rede de segurança para a corrida genuína (duas revogações
+  // concorrentes seguidas de dois creates); não é mais o caminho normal.
+  await platformRepository.revokePendingInvites(tenantId, data.email);
+
   // O papel é sempre 'admin' neste endpoint, nunca o que o cliente enviar —
   // este módulo convida especificamente o primeiro admin do Tenant (FND-02/AC2).
   // Convite de gestor/operador por um admin do tenant é FND-20 (fora do escopo
