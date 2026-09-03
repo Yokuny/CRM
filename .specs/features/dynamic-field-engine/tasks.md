@@ -445,9 +445,9 @@ todos envolvidos em `withDbTiming`.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Toda função exportada passa por `withDbTiming` com um nome de operação único
-- [ ] `claimVersionSlot` propaga o erro `E11000` sem tratá-lo (o service decide o 409)
-- [ ] Gate check passa: `pnpm -r exec tsc --noEmit`
+- [x] Toda função exportada passa por `withDbTiming` com um nome de operação único
+- [x] `claimVersionSlot` propaga o erro `E11000` sem tratá-lo (o service decide o 409)
+- [x] Gate check passa: `pnpm -r exec tsc --noEmit`
 
 **Tests**: none (coberto transitivamente pelo e2e de T17 — mesma convenção de `platform.repository.ts`)
 **Gate**: quick
