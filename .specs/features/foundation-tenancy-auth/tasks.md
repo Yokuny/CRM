@@ -494,9 +494,9 @@ T26 → T27 → T28 → T29 → T30
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Usuário sem `isPlatformAdmin` recebe 403 e nada é criado
-- [ ] E-mail já convidado no mesmo Tenant responde 409 sem convite duplicado
-- [ ] SMTP fora → 202 e convite persistido com `sentAt` ausente
+- [x] Usuário sem `isPlatformAdmin` recebe 403 e nada é criado
+- [x] E-mail já convidado no mesmo Tenant responde 409 sem convite duplicado
+- [x] SMTP fora → 202 e convite persistido com `sentAt` ausente
 
 **Tests**: e2e — 201+403 (FND-01), `Invite` com hash/papel `admin`/`expiresAt`+7d (FND-02), 202 com SMTP mockado falhando (FND-12), 429 no rate limit (FND-14)
 **Gate**: full
@@ -515,8 +515,8 @@ T26 → T27 → T28 → T29 → T30
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Token expirado, `accepted` ou inexistente respondem 410 com mensagens **distintas**, nunca ecoando o e-mail
-- [ ] Aceite concorrente (`Promise.all` de dois `accept` do mesmo token) cria exatamente 1 usuário; o perdedor recebe 410
+- [x] Token expirado, `accepted` ou inexistente respondem 410 com mensagens **distintas**, nunca ecoando o e-mail
+- [x] Aceite concorrente (`Promise.all` de dois `accept` do mesmo token) cria exatamente 1 usuário; o perdedor recebe 410
 
 **Tests**: e2e — aceite cria user+cookie (FND-03/AC2), reuso→410 distinguindo expirado/inválido (FND-03/AC3), 2 aceites concorrentes → 1 user + 1×410 (FND-15)
 **Gate**: full
@@ -535,9 +535,9 @@ T26 → T27 → T28 → T29 → T30
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `signin` seguido imediatamente de `GET /auth/session` na mesma sequência nunca retorna 401 (prova o `await`)
-- [ ] Senha errada → 401
-- [ ] `tenantUser` de `GET /auth/session` vem do banco, não do payload do token
+- [x] `signin` seguido imediatamente de `GET /auth/session` na mesma sequência nunca retorna 401 (prova o `await`)
+- [x] Senha errada → 401
+- [x] `tenantUser` de `GET /auth/session` vem do banco, não do payload do token
 
 **Tests**: e2e — cookie emitido + senha errada→401 (FND-04); signin→session imediato sem 401 (Risk 5); tenantUser populado do banco (FND-05)
 **Gate**: full
@@ -556,8 +556,8 @@ T26 → T27 → T28 → T29 → T30
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Nenhuma das 3 rotas (platform/invite/auth) devolve registro de tenant diferente do da sessão
-- [ ] Body com `Tenant` forjado não altera o tenant resolvido em nenhuma das 3
+- [x] Nenhuma das 3 rotas (platform/invite/auth) devolve registro de tenant diferente do da sessão
+- [x] Body com `Tenant` forjado não altera o tenant resolvido em nenhuma das 3
 
 **Tests**: integration — dois tenants espelhados, zero cruzamento (FND-09); `Tenant` forjado ignorado (FND-07)
 **Gate**: full
@@ -576,8 +576,8 @@ T26 → T27 → T28 → T29 → T30
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Um schema Zod exportado e não registrado no `schemaRegistry` falha o teste (fixture criado e removido no próprio teste)
-- [ ] Um `import ... from 'mongoose'` dentro de `apps/**` falha o teste
+- [x] Um schema Zod exportado e não registrado no `schemaRegistry` falha o teste (fixture criado e removido no próprio teste)
+- [x] Um `import ... from 'mongoose'` dentro de `apps/**` falha o teste
 
 **Tests**: structural — os 2 cenários acima
 **Gate**: build
