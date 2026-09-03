@@ -63,6 +63,9 @@ importers:
       '@crm/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@crm/field-engine':
+        specifier: workspace:*
+        version: link:../../packages/field-engine
       bcrypt:
         specifier: 6.0.0
         version: 6.0.0

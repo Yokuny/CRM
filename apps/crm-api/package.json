@@ -11,6 +11,7 @@
   "dependencies": {
     "@crm/contracts": "workspace:*",
     "@crm/db": "workspace:*",
+    "@crm/field-engine": "workspace:*",
     "bcrypt": "6.0.0",
     "cookie-parser": "1.4.7",
     "cors": "2.8.6",

@@ -471,12 +471,12 @@ ponteiro", não desfazer o que já foi escrito)
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `targetType==='customer'` força `key=DEFAULT_CUSTOMER_TEMPLATE_KEY` mesmo se o body mandar outro
-- [ ] Bump destrutivo sem `migration` cobrindo toda `DestructiveChange` lança `CustomError(400,...)` ANTES de qualquer escrita
-- [ ] `claimVersionSlot` com `E11000` vira `CustomError(409,...)`
-- [ ] Migração destrutiva bem-sucedida loga estruturado (`event`, `tenant`, `template`, `fromVersion`, `toVersion`, `fieldsAffected`, `recordsMigrated`, `actor`) e só DEPOIS avança `currentVersion`
-- [ ] `FieldValueStore.migrateValues` lançando não avança `currentVersion` (a versão N+1 já criada fica órfã, aceito)
-- [ ] Gate check passa: `pnpm -r exec tsc --noEmit`
+- [x] `targetType==='customer'` força `key=DEFAULT_CUSTOMER_TEMPLATE_KEY` mesmo se o body mandar outro
+- [x] Bump destrutivo sem `migration` cobrindo toda `DestructiveChange` lança `CustomError(400,...)` ANTES de qualquer escrita
+- [x] `claimVersionSlot` com `E11000` vira `CustomError(409,...)`
+- [x] Migração destrutiva bem-sucedida loga estruturado (`event`, `tenant`, `template`, `fromVersion`, `toVersion`, `fieldsAffected`, `recordsMigrated`, `actor`) e só DEPOIS avança `currentVersion`
+- [x] `FieldValueStore.migrateValues` lançando não avança `currentVersion` (a versão N+1 já criada fica órfã, aceito)
+- [x] Gate check passa: `pnpm -r exec tsc --noEmit`
 
 **Tests**: none (coberto transitivamente pelo e2e de T17)
 **Gate**: quick
