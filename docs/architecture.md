@@ -69,7 +69,7 @@ Ninguém escreve na collection do outro.
 | `aiSessions` | `ai-gateway` | `ai-gateway` |
 | `customers` | `crm-api` | ambos |
 | `processes` | `crm-api` | ambos |
-| `processTemplates`, `processTemplateVersions` | `crm-api` | ambos |
+| `fieldTemplates`, `fieldTemplateVersions` | `crm-api` | ambos |
 | `products`, `orders` | `crm-api` | ambos |
 | `tenants`, `users`, `channels` | `crm-api` | ambos |
 | `invites` | `crm-api` | `crm-api` |
@@ -120,18 +120,31 @@ crm-api: poller ~2s sobre messages, updatedAt > lastTick,
 Definição e valor vivem separados; o render junta os dois
 ([ADR-0003](adr/0003-definicao-e-valor-separados.md)).
 
-```ts
-// processTemplates — mutável, aponta a versão corrente
-{ _id, Tenant, key: 'compra', name, currentVersion: 3, stages, archived }
+O motor é **genérico por tipo de entidade** (AD-019): as mesmas duas collections servem
+`customer` e `process`, discriminadas por `targetType` — um único par, nunca um par por
+entidade (AD-020).
 
-// processTemplateVersions — snapshot IMUTÁVEL
-{ _id, Tenant, template, version: 3, fields: FieldDef[] }
+```ts
+// fieldTemplates — mutável, aponta a versão corrente
+{ _id, Tenant, targetType: 'process', key: 'compra', name, currentVersion: 3, archived }
+{ _id, Tenant, targetType: 'customer', key: 'default', name, currentVersion: 1, archived }
+
+// fieldTemplateVersions — snapshot IMUTÁVEL
+{ _id, Tenant, template, targetType: 'process', version: 3, fields: FieldDef[] }
 
 // processes — só os valores
 { _id, Tenant, template: 'compra', templateVersion: 3, Customer,
   stage: 'aguardando_pagamento',
   values: { f1: 'urgente', f2: { assetId, filename, mime, size }, f3: [2, 5] } }
+
+// customers — núcleo fixo mais os valores
+{ _id, Tenant, name, phone, template, templateVersion: 1,
+  values: { status: 'novo' } }
 ```
+
+Todo Tenant recém-provisionado nasce com um `fieldTemplates` de `targetType: 'customer'`,
+`key: 'default'`, versão 1, contendo o campo `status` — seed idempotente, nunca uma rota.
+`process` não tem template padrão: o tipo de processo é decisão de negócio do tenant.
 
 ### Tipos de campo (v1)
 

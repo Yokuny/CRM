@@ -61,7 +61,7 @@ Ver [ADR-0005](adr/0005-meta-cloud-api.md).
 
 **Template (WhatsApp / HSM)**
 Mensagem pré-aprovada pela Meta, única forma de iniciar conversa ou responder fora da
-janela de 24h. **Não confundir com ProcessTemplate.**
+janela de 24h. **Não confundir com FieldTemplate.**
 
 **Outbox**
 Mensagens `out` com `status: 'queued'` aguardando claim do `ai-gateway`. Não é uma
@@ -76,30 +76,39 @@ consumidores de enviarem a mesma mensagem duas vezes.
 
 ## CRM e campos dinâmicos
 
-**ProcessTemplate**
-Definição de um tipo de processo (compra, agendamento, aviso, resposta a informação):
-árvore de campos + estágios. Mutável; aponta para a versão corrente.
+**FieldTemplate**
+Definição da árvore de campos de um tipo de entidade, por Tenant. `targetType` diz a
+quem ela serve — `customer` (um único template por Tenant, `key: 'default'`, semeado na
+provisão) ou `process` (um por tipo de processo do tenant: compra, agendamento, aviso,
+resposta a informação; no caso de `process`, também os estágios). Mutável; aponta para a
+versão corrente. Um único par de collections serve os dois `targetType`, nunca um par por
+entidade (AD-019 / AD-020).
 
-**ProcessTemplateVersion**
-Snapshot **imutável** dos campos de uma versão do template. Registros antigos renderizam
-contra a versão que usaram, sem duplicar a definição dentro de cada documento.
+**FieldTemplateVersion**
+Snapshot **imutável** dos campos de uma versão de um FieldTemplate. Registros antigos
+renderizam contra a versão que usaram, sem duplicar a definição dentro de cada documento.
 Ver [ADR-0003](adr/0003-definicao-e-valor-separados.md).
 
+**targetType**
+Discriminador do FieldTemplate: `'customer' | 'process'`. É o que permite uma máquina só
+de definição/versão/migração servir mais de um tipo de entidade.
+
 **Process**
-Instância de um ProcessTemplate para um Customer. Guarda `values` por `fieldId`,
-`templateVersion` e o `stage` atual. É o objeto de trabalho do CRM.
+Instância de um FieldTemplate de `targetType: 'process'` para um Customer. Guarda `values`
+por `fieldId`, `templateVersion` e o `stage` atual. É o objeto de trabalho do CRM.
 
 **Stage**
-Etapa dentro de um ProcessTemplate (ex.: `aguardando_pagamento`). **Não confundir com
-o `status` de um card de kanban**, que é outra coisa, nem com o tipo de campo `status`.
+Etapa dentro de um FieldTemplate de `targetType: 'process'` (ex.:
+`aguardando_pagamento`). **Não confundir com o `status` de um card de kanban**, que é
+outra coisa, nem com o tipo de campo `status`.
 
 **FieldDef**
 Nó da árvore de definição: tipo mais configuração. Recursivo em `array` (que tem `of`)
 e `group` (que tem `fields`). Nunca contém valor.
 
 **FieldValues**
-Mapa `fieldId → valor` gravado no Process. Nunca contém label, tipo ou configuração —
-só o valor.
+Mapa `fieldId → valor` gravado no registro (Customer ou Process). Nunca contém label,
+tipo ou configuração — só o valor.
 
 **RenderNode**
 Resultado de `hydrate(fields, values)`: um `FieldDef` acrescido da key `value`.
@@ -179,9 +188,9 @@ dinheiro sob aprovação, e preço citado só a partir de tool result desta conv
 
 | Termo | Sentido A | Sentido B |
 |---|---|---|
-| **Template** | ProcessTemplate (definição de campos) | Template HSM da Meta (mensagem aprovada) |
+| **Template** | FieldTemplate (definição de campos) | Template HSM da Meta (mensagem aprovada) |
 | **Status** | Tipo de campo `status` do field-engine | `status` de card do kanban · `status` de Message |
-| **Stage** | Etapa do ProcessTemplate | — (não usar para kanban; lá é coluna/`status`) |
+| **Stage** | Etapa do FieldTemplate de `process` | — (não usar para kanban; lá é coluna/`status`) |
 
-Sempre qualificar na UI e nos nomes de variável. `processTemplate` e `waTemplate`,
+Sempre qualificar na UI e nos nomes de variável. `fieldTemplate` e `waTemplate`,
 nunca `template` solto.

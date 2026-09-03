@@ -113,9 +113,9 @@ discriminado por `targetType`, conforme AD-019/AD-020 e `design.md`.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `docs/architecture.md` mostra `fieldTemplates`/`fieldTemplateVersions` com `targetType` no exemplo de shape e na tabela de propriedade de escrita
-- [ ] `docs/glossary.md` atualiza `ProcessTemplate`/`ProcessTemplateVersion` para o termo generalizado, mantendo a nota "Não confundir com Template HSM"
-- [ ] Gate check passa: `pnpm -r exec tsc --noEmit && pnpm biome check . && pnpm vitest run`
+- [x] `docs/architecture.md` mostra `fieldTemplates`/`fieldTemplateVersions` com `targetType` no exemplo de shape e na tabela de propriedade de escrita
+- [x] `docs/glossary.md` atualiza `ProcessTemplate`/`ProcessTemplateVersion` para o termo generalizado, mantendo a nota "Não confundir com Template HSM"
+- [x] Gate check passa: `pnpm -r exec tsc --noEmit && pnpm biome check . && pnpm vitest run`
 
 **Tests**: none
 **Gate**: build
