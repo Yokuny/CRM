@@ -217,9 +217,9 @@ já provou que um schema esquecido aqui é o exato gap que o sweep estrutural pe
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `pnpm install` resolve o novo workspace member
-- [ ] `emptyValueFor` cobre os 11 tipos conforme a tabela do `design.md` (`text`→`''`, `number`/`percent`/`currency`→`null`, `boolean`→`false`, `date`/`datetime`→`null`, `select`/`reference` `multiple`→`[]`, não-`multiple`→`null`, `status`→`null`, `document`→`null`)
-- [ ] Gate check passa: `pnpm -r exec tsc --noEmit`
+- [x] `pnpm install` resolve o novo workspace member
+- [x] `emptyValueFor` cobre os 11 tipos conforme a tabela do `design.md` (`text`→`''`, `number`/`percent`/`currency`→`null`, `boolean`→`false`, `date`/`datetime`→`null`, `select`/`reference` `multiple`→`[]`, não-`multiple`→`null`, `status`→`null`, `document`→`null`)
+- [x] Gate check passa: `pnpm -r exec tsc --noEmit`
 
 **Tests**: unit
 **Gate**: quick
