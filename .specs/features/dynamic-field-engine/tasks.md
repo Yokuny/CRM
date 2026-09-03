@@ -343,10 +343,10 @@ como aditivo.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Segundo `create` com o mesmo `{Tenant,targetType,key}` rejeita com `E11000`
-- [ ] `archiveFieldTemplate` num template já `archived:true` é no-op (devolve `null`, não lança)
-- [ ] Gate check passa: `pnpm vitest run --project integration`
-- [ ] Test count: ≥ 5 testes passam
+- [x] Segundo `create` com o mesmo `{Tenant,targetType,key}` rejeita com `E11000`
+- [x] `archiveFieldTemplate` num template já `archived:true` é no-op (devolve `null`, não lança)
+- [x] Gate check passa: `pnpm vitest run --project integration`
+- [x] Test count: ≥ 5 testes passam
 
 **Tests**: integration
 **Gate**: full
