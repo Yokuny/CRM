@@ -5,6 +5,7 @@
   "type": "module",
   "exports": "./src/index.ts",
   "dependencies": {
+    "@crm/contracts": "workspace:*",
     "mongoose": "9.9.4"
   },
   "devDependencies": {

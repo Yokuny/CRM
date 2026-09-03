@@ -370,10 +370,10 @@ inline por quê
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Segundo `create` com o mesmo `{template,version}` rejeita com `E11000`
-- [ ] `fields` grava e lê de volta uma árvore com `array`/`group` aninhados sem perda
-- [ ] Gate check passa: `pnpm vitest run --project integration`
-- [ ] Test count: ≥ 4 testes passam
+- [x] Segundo `create` com o mesmo `{template,version}` rejeita com `E11000`
+- [x] `fields` grava e lê de volta uma árvore com `array`/`group` aninhados sem perda
+- [x] Gate check passa: `pnpm vitest run --project integration`
+- [x] Test count: ≥ 4 testes passam
 
 **Tests**: integration
 **Gate**: full

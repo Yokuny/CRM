@@ -188,6 +188,9 @@ importers:
 
   packages/db:
     dependencies:
+      '@crm/contracts':
+        specifier: workspace:*
+        version: link:../contracts
       mongoose:
         specifier: 9.9.4
         version: 9.9.4
