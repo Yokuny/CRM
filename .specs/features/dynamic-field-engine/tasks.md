@@ -293,10 +293,10 @@ comparando saída estruturalmente idêntica (prova de isomorfismo Node vs. brows
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] JSONSchema resultante nunca contém nenhuma chave `tenant`/`Tenant`/`tenantId` em nenhum nível, para uma árvore com os 11 tipos
-- [ ] `isomorphism.browser.unit.test.ts` roda sob `jsdom` e produz exatamente o mesmo resultado (`toEqual`) que o teste default sob Node, para a MESMA fixture (`array` de `group` de `array`)
-- [ ] Gate check passa: `pnpm vitest run --project unit`
-- [ ] Test count: ≥ 6 testes passam
+- [x] JSONSchema resultante nunca contém nenhuma chave `tenant`/`Tenant`/`tenantId` em nenhum nível, para uma árvore com os 11 tipos
+- [x] `isomorphism.browser.unit.test.ts` roda sob `jsdom` e produz exatamente o mesmo resultado (`toEqual`) que o teste default sob Node, para a MESMA fixture (`array` de `group` de `array`)
+- [x] Gate check passa: `pnpm vitest run --project unit`
+- [x] Test count: ≥ 6 testes passam
 
 **Tests**: unit
 **Gate**: quick
