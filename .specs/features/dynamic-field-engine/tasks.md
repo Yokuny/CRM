@@ -421,10 +421,10 @@ guardados com `$setOnInsert`+`upsert:true` (algoritmo exato do `design.md`);
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `countByTemplateVersion` sempre resolve `0`
-- [ ] `migrateValues` sempre resolve `{migrated:0}` e nunca lança
-- [ ] Gate check passa: `pnpm vitest run --project unit`
-- [ ] Test count: ≥ 3 testes passam
+- [x] `countByTemplateVersion` sempre resolve `0`
+- [x] `migrateValues` sempre resolve `{migrated:0}` e nunca lança
+- [x] Gate check passa: `pnpm vitest run --project unit`
+- [x] Test count: ≥ 3 testes passam
 
 **Tests**: unit
 **Gate**: quick
