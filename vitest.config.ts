@@ -4,12 +4,16 @@ import { defineConfig } from 'vitest/config';
 // validado no IMPORT do módulo (fail-fast — FND-18). Sem isso, qualquer teste
 // que importe (direta ou transitivamente) esse módulo falharia na coleta, já
 // que o processo do Vitest não carrega o .env real.
+// Compartilhado entre os projects que fazem import (direto ou transitivo) de
+// apps/crm-api/src/config/env.config.ts E/OU apps/ai-gateway/src/config/env.config.ts
+// — ambos validados por Zod no import do módulo (fail-fast, FND-18).
 const crmApiBaseEnv = {
   NODE_ENV: 'test',
   CRM_API_PORT: '8080',
   SESSION_JWT_SECRET: 'test-secret',
   CORS_ORIGIN: 'http://localhost:5173',
   MAIL_PROVIDER: 'log',
+  AI_GATEWAY_PORT: '8081',
 };
 
 // unit/e2e/structural não têm globalSetup — precisam de um MONGODB_URI
