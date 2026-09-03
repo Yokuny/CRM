@@ -137,12 +137,12 @@ FieldDef = z.infer<typeof fieldDefSchema>`.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Os 11 tipos (`text`,`number`,`currency`,`percent`,`boolean`,`date`,`datetime`,`select`,`status`,`document`,`reference`,`array`,`group`) validam com a config de cada um conforme `docs/architecture.md`
-- [ ] `array`/`group` recursam corretamente (`of`/`fields`); árvore com profundidade 6 é rejeitada; árvore com 101 campos é rejeitada
-- [ ] `fieldId` com `.` ou `$` é rejeitado
-- [ ] Exportado de `packages/contracts/src/index.ts`
-- [ ] Gate check passa: `pnpm vitest run --project unit`
-- [ ] Test count: ≥ 16 testes (11 tipos + depth + count + fieldId válido/inválido) passam
+- [x] Os 11 tipos (`text`,`number`,`currency`,`percent`,`boolean`,`date`,`datetime`,`select`,`status`,`document`,`reference`,`array`,`group`) validam com a config de cada um conforme `docs/architecture.md`
+- [x] `array`/`group` recursam corretamente (`of`/`fields`); árvore com profundidade 6 é rejeitada; árvore com 101 campos é rejeitada
+- [x] `fieldId` com `.` ou `$` é rejeitado
+- [x] Exportado de `packages/contracts/src/index.ts`
+- [x] Gate check passa: `pnpm vitest run --project unit`
+- [x] Test count: ≥ 16 testes (11 tipos + depth + count + fieldId válido/inválido) passam
 
 **Tests**: unit
 **Gate**: quick

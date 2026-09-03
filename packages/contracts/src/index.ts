@@ -2,6 +2,7 @@ export * from './registry.js';
 export * from './response/index.js';
 export * from './schemas/acceptInvite.schema.js';
 export * from './schemas/createInvite.schema.js';
+export * from './schemas/fieldDef.schema.js';
 export * from './schemas/id.schema.js';
 export * from './schemas/inviteToken.schema.js';
 export * from './schemas/provisionTenant.schema.js';
