@@ -318,11 +318,11 @@ como aditivo.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Cada mudança aditiva listada no spec (campo opcional novo, label, ordem, opção nova) classifica `'additive'`
-- [ ] Cada mudança destrutiva listada no spec (campo removido, tipo trocado, opção removida em uso) classifica `'destructive'` com o(s) `fieldId`(s) afetado(s)
-- [ ] Árvore idêntica classifica `'additive'` com `changes` vazio (não é erro, é no-op)
-- [ ] Gate check passa: `pnpm vitest run --project unit`
-- [ ] Test count: ≥ 8 testes passam
+- [x] Cada mudança aditiva listada no spec (campo opcional novo, label, ordem, opção nova) classifica `'additive'`
+- [x] Cada mudança destrutiva listada no spec (campo removido, tipo trocado, opção removida em uso) classifica `'destructive'` com o(s) `fieldId`(s) afetado(s)
+- [x] Árvore idêntica classifica `'additive'` com `changes` vazio (não é erro, é no-op)
+- [x] Gate check passa: `pnpm vitest run --project unit`
+- [x] Test count: ≥ 8 testes passam
 
 **Tests**: unit
 **Gate**: quick
