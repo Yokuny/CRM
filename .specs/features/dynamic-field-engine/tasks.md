@@ -239,11 +239,11 @@ já provou que um schema esquecido aqui é o exato gap que o sweep estrutural pe
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `array` de `group` de `array` hidrata sem perder tipo (fixture citada em `docs/architecture.md`)
-- [ ] Valor ausente vira o vazio de `emptyValueFor`, nunca `undefined`
-- [ ] Cada nó carrega todas as chaves do `FieldDef` original + `value`
-- [ ] Gate check passa: `pnpm vitest run --project unit`
-- [ ] Test count: ≥ 8 testes passam
+- [x] `array` de `group` de `array` hidrata sem perder tipo (fixture citada em `docs/architecture.md`)
+- [x] Valor ausente vira o vazio de `emptyValueFor`, nunca `undefined`
+- [x] Cada nó carrega todas as chaves do `FieldDef` original + `value`
+- [x] Gate check passa: `pnpm vitest run --project unit`
+- [x] Test count: ≥ 8 testes passam
 
 **Tests**: unit
 **Gate**: quick
