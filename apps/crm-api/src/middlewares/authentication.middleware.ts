@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import type { Role, TenantUser } from '@crm/contracts';
 import type { NextFunction, Request, Response } from 'express';
-import * as jwt from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import { env } from '../config/env.config.js';
 import { CustomError } from './errorHandler.middleware.js';
 

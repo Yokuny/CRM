@@ -1,7 +1,7 @@
 import type { SignIn, TenantUser } from '@crm/contracts';
 import { hashToken } from '@crm/db';
 import bcrypt from 'bcrypt';
-import * as jwt from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import { env } from '../config/env.config.js';
 import { CustomError } from '../middlewares/errorHandler.middleware.js';
 import * as authRepository from '../repositories/auth.repository.js';
