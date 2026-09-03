@@ -1,6 +1,8 @@
 import type { ZodType } from 'zod';
 import { acceptInviteSchema } from './schemas/acceptInvite.schema.js';
 import { createInviteSchema } from './schemas/createInvite.schema.js';
+import { idSchema } from './schemas/id.schema.js';
+import { inviteTokenParamSchema } from './schemas/inviteToken.schema.js';
 import { provisionTenantSchema } from './schemas/provisionTenant.schema.js';
 import { signinSchema } from './schemas/signin.schema.js';
 
@@ -14,9 +16,16 @@ export const TENANT_FORBIDDEN_KEYS = [
   'company',
 ] as const;
 
+// T25 (teste estrutural) descobriu que idSchema e inviteTokenParamSchema —
+// já existentes desde T5, também exportados de um *.schema.ts — nunca tinham
+// sido registrados aqui. É exatamente o gap que a varredura estrutural
+// existe para pegar (design.md, Risk "registry dá falso verde"); corrigido
+// junto com o teste que o descobriu.
 export const schemaRegistry: ReadonlyArray<{ name: string; schema: ZodType }> = [
   { name: 'provisionTenantSchema', schema: provisionTenantSchema },
   { name: 'createInviteSchema', schema: createInviteSchema },
   { name: 'acceptInviteSchema', schema: acceptInviteSchema },
   { name: 'signinSchema', schema: signinSchema },
+  { name: 'idSchema', schema: idSchema },
+  { name: 'inviteTokenParamSchema', schema: inviteTokenParamSchema },
 ];

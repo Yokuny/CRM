@@ -2,9 +2,22 @@ import { describe, expect, it } from 'vitest';
 import { schemaRegistry, TENANT_FORBIDDEN_KEYS } from './registry.js';
 
 describe('schemaRegistry', () => {
-  it('registers exactly the 4 input schemas by name', () => {
+  // Corrigido por T25 (teste estrutural): idSchema e inviteTokenParamSchema
+  // também são exports Zod de um *.schema.ts e precisam estar aqui — a
+  // varredura de tests/structural/schema-registry.structural.test.ts falha
+  // caso algum dos 6 saia da lista.
+  it('registers exactly the 6 input schemas by name', () => {
     const names = schemaRegistry.map((entry) => entry.name).sort();
-    expect(names).toEqual(['acceptInviteSchema', 'createInviteSchema', 'provisionTenantSchema', 'signinSchema'].sort());
+    expect(names).toEqual(
+      [
+        'acceptInviteSchema',
+        'createInviteSchema',
+        'provisionTenantSchema',
+        'signinSchema',
+        'idSchema',
+        'inviteTokenParamSchema',
+      ].sort(),
+    );
   });
 });
 
