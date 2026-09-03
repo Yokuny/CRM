@@ -3,6 +3,10 @@
   "private": true,
   "type": "module",
   "packageManager": "pnpm@11.11.0",
+  "scripts": {
+    "check": "pnpm -r exec tsc --noEmit && pnpm biome check . && pnpm vitest run",
+    "format": "biome format . --write"
+  },
   "devDependencies": {
     "typescript": "5.9.3",
     "vitest": "^4.1.11",
