@@ -9,13 +9,20 @@ const emailAndIpKeyGenerator = (req: Request): string => {
   return `${email}:${ipKeyGenerator(req.ip ?? 'unknown')}`;
 };
 
-const rejectWithTooManyRequests = (message: string) => {
+// Rotas autenticadas de mutação de template não têm e-mail no corpo — a chave
+// é o par tenant+IP (FLD-16). Divergência consciente do gerador acima.
+const tenantAndIpKeyGenerator = (req: Request): string => {
+  const tenant = req.tenantUser?.tenant ?? 'sem-tenant';
+  return `${tenant}:${ipKeyGenerator(req.ip ?? 'unknown')}`;
+};
+
+const rejectWithTooManyRequests = (message: string, keyGenerator = emailAndIpKeyGenerator) => {
   return rateLimit({
     windowMs: 15 * 60 * 1000,
     limit: 5,
     standardHeaders: 'draft-7',
     legacyHeaders: false,
-    keyGenerator: emailAndIpKeyGenerator,
+    keyGenerator,
     handler: (_req, _res, next) => {
       next(new CustomError(message, 429));
     },
@@ -28,4 +35,10 @@ export const signinRateLimit = rejectWithTooManyRequests(
 );
 export const inviteRateLimit = rejectWithTooManyRequests(
   'Muitos convites enviados. Tente novamente em alguns minutos.',
+);
+
+// FLD-16: mutação estrutural de template, por tenant + IP.
+export const fieldTemplateRateLimit = rejectWithTooManyRequests(
+  'Muitas alterações de template. Tente novamente em alguns minutos.',
+  tenantAndIpKeyGenerator,
 );

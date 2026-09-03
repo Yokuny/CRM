@@ -528,16 +528,16 @@ FLD-15, FLD-16, FLD-17, FLD-19
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `POST /field-templates` cria v1 (201); duplicata de `{targetType,key}` → 409; `gestor`/`operador` → 403
-- [ ] Bump aditivo (200, sem `migration`); bump destrutivo sem `migration` completa → 400, nada persistido; bump destrutivo com `migration` completa → 200, `FieldValueStore.migrateValues` chamado, log estruturado emitido
-- [ ] `Promise.all` de dois bumps concorrentes na mesma `expectedVersion` → um 200 + um 409
-- [ ] Fault injection no fake `FieldValueStore` durante migração → 500, `currentVersion` NÃO avança (nova leitura confirma)
-- [ ] `POST /field-templates/:id/archive` → 200; registro de teste que já usa a versão continua hidratando normalmente após archive (chamando `hydrate` do `field-engine` diretamente no teste, sobre a versão lida)
-- [ ] `GET /field-templates/current` sem template existente → 404
-- [ ] N+1 mutações da mesma rota → 429
-- [ ] Corpo com `Tenant`/`tenantId`/`orgId` forjado → 400 (schema `.strict()`)
-- [ ] Gate check passa: `pnpm vitest run --project e2e`
-- [ ] Test count: ≥ 14 testes passam
+- [x] `POST /field-templates` cria v1 (201); duplicata de `{targetType,key}` → 409; `gestor`/`operador` → 403
+- [x] Bump aditivo (200, sem `migration`); bump destrutivo sem `migration` completa → 400, nada persistido; bump destrutivo com `migration` completa → 200, `FieldValueStore.migrateValues` chamado, log estruturado emitido
+- [x] `Promise.all` de dois bumps concorrentes na mesma `expectedVersion` → um 200 + um 409
+- [x] Fault injection no fake `FieldValueStore` durante migração → 500, `currentVersion` NÃO avança (nova leitura confirma)
+- [x] `POST /field-templates/:id/archive` → 200; registro de teste que já usa a versão continua hidratando normalmente após archive (chamando `hydrate` do `field-engine` diretamente no teste, sobre a versão lida)
+- [x] `GET /field-templates/current` sem template existente → 404
+- [x] N+1 mutações da mesma rota → 429
+- [x] Corpo com `Tenant`/`tenantId`/`orgId` forjado → 400 (schema `.strict()`)
+- [x] Gate check passa: `pnpm vitest run --project e2e`
+- [x] Test count: ≥ 14 testes passam
 
 **Tests**: e2e
 **Gate**: full
