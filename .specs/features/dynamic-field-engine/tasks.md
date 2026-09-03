@@ -606,9 +606,9 @@ nenhuma leitura de um vaza para o outro.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Dois tenants com nomes/campos customizados de template `customer` — `GET /field-templates/current` de cada sessão só vê o seu próprio
-- [ ] Gate check passa: `pnpm vitest run --project integration`
-- [ ] Test count: ≥ 1 teste novo passa (suíte inteira do arquivo continua verde)
+- [x] Dois tenants com nomes/campos customizados de template `customer` — `GET /field-templates/current` de cada sessão só vê o seu próprio
+- [x] Gate check passa: `pnpm vitest run --project integration`
+- [x] Test count: ≥ 1 teste novo passa (suíte inteira do arquivo continua verde)
 
 **Tests**: integration
 **Gate**: full

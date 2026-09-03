@@ -1,4 +1,5 @@
-import { connect, disconnect, Invite, Session, Tenant, User } from '@crm/db';
+import type { FieldDef } from '@crm/contracts';
+import { connect, disconnect, FieldTemplate, FieldTemplateVersion, Invite, Session, Tenant, User } from '@crm/db';
 import bcrypt from 'bcrypt';
 import type { Express } from 'express';
 import request from 'supertest';
@@ -94,7 +95,14 @@ describe('cross-tenant isolation (FND-07, FND-09)', () => {
   });
 
   afterEach(async () => {
-    await Promise.all([Session.deleteMany({}), Invite.deleteMany({}), User.deleteMany({}), Tenant.deleteMany({})]);
+    await Promise.all([
+      FieldTemplateVersion.deleteMany({}),
+      FieldTemplate.deleteMany({}),
+      Session.deleteMany({}),
+      Invite.deleteMany({}),
+      User.deleteMany({}),
+      Tenant.deleteMany({}),
+    ]);
   });
 
   afterAll(async () => {
@@ -208,5 +216,98 @@ describe('cross-tenant isolation (FND-07, FND-09)', () => {
     expect(await Invite.countDocuments({ email: 'forjado@empresa.com' })).toBe(0);
     expect(await Invite.countDocuments({ Tenant: tenantAId })).toBe(0);
     expect(await Invite.countDocuments({ Tenant: tenantBId })).toBe(0);
+  });
+
+  // Campo opcional novo = mudança aditiva: o bump não pede plano de migração,
+  // então cada tenant customiza o próprio template com uma única chamada.
+  const NOTA_A: FieldDef = { fieldId: 'notaA', label: 'Nota do Tenant A', type: 'text', maxLength: 200 };
+  const NOTA_B: FieldDef = { fieldId: 'notaB', label: 'Nota do Tenant B', type: 'text', maxLength: 200 };
+
+  it('keeps each tenant customized customer field template private to its own session, by targetType+key and by id (FLD-09)', async () => {
+    const app = buildApp();
+    const platformCookie = await seedPlatformAdminCookie(app);
+
+    const adminA = await provisionAndAcceptAdmin(
+      app,
+      platformCookie,
+      'Tenant Field A',
+      '77777777000177',
+      'field-a@empresa-a.com',
+      'Admin A',
+    );
+    const adminB = await provisionAndAcceptAdmin(
+      app,
+      platformCookie,
+      'Tenant Field B',
+      '88888888000188',
+      'field-b@empresa-b.com',
+      'Admin B',
+    );
+
+    const currentTemplate = (cookie: string) =>
+      request(app)
+        .get('/field-templates/current')
+        .query({ targetType: 'customer', key: 'default' })
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE);
+
+    const bump = (cookie: string, templateId: string, body: object) =>
+      request(app)
+        .post(`/field-templates/${templateId}/versions`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE)
+        .send(body);
+
+    // Ponto de partida espelhado: os dois tenants nascem com o mesmo template
+    // semeado na provisão, então toda diferença adiante vem exclusivamente da
+    // customização de cada um — e nunca de vazamento.
+    const seededA = await currentTemplate(adminA.cookie);
+    const seededB = await currentTemplate(adminB.cookie);
+    expect(seededA.status).toBe(200);
+    expect(seededB.status).toBe(200);
+    expect(seededA.body.data.fields.map((field: FieldDef) => field.fieldId)).toEqual(['status']);
+    expect(seededB.body.data.fields.map((field: FieldDef) => field.fieldId)).toEqual(['status']);
+
+    const templateAId = seededA.body.data.template.id as string;
+    const templateBId = seededB.body.data.template.id as string;
+    expect(templateAId).not.toBe(templateBId);
+
+    const bumpA = await bump(adminA.cookie, templateAId, {
+      expectedVersion: 1,
+      fields: [...seededA.body.data.fields, NOTA_A],
+    });
+    const bumpB = await bump(adminB.cookie, templateBId, {
+      expectedVersion: 1,
+      fields: [...seededB.body.data.fields, NOTA_B],
+    });
+    expect(bumpA.status).toBe(200);
+    expect(bumpB.status).toBe(200);
+
+    const afterA = await currentTemplate(adminA.cookie);
+    expect(afterA.body.data.template.id).toBe(templateAId);
+    expect(afterA.body.data.template.currentVersion).toBe(2);
+    expect(afterA.body.data.fields).toEqual([...seededA.body.data.fields, NOTA_A]);
+    expect(afterA.body.data.fields).not.toContainEqual(NOTA_B);
+
+    const afterB = await currentTemplate(adminB.cookie);
+    expect(afterB.body.data.template.id).toBe(templateBId);
+    expect(afterB.body.data.template.currentVersion).toBe(2);
+    expect(afterB.body.data.fields).toEqual([...seededB.body.data.fields, NOTA_B]);
+    expect(afterB.body.data.fields).not.toContainEqual(NOTA_A);
+
+    // Ler/mutar pelo id do outro tenant também não vaza: o filtro do
+    // repositório carrega o Tenant da sessão (AD-010), então o template de B
+    // simplesmente não existe para A — 404, e a versão de B fica intacta.
+    const crossBump = await bump(adminA.cookie, templateBId, {
+      expectedVersion: 2,
+      fields: [...seededB.body.data.fields, NOTA_A],
+    });
+    expect(crossBump.status).toBe(404);
+
+    const templateB = await FieldTemplate.findById(templateBId).lean();
+    expect(templateB?.currentVersion).toBe(2);
+    expect(await FieldTemplateVersion.countDocuments({ template: templateBId })).toBe(2);
+    expect(await FieldTemplate.countDocuments({ Tenant: adminA.tenantId })).toBe(1);
+    expect(await FieldTemplate.countDocuments({ Tenant: adminB.tenantId })).toBe(1);
   });
 });
