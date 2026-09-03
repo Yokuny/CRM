@@ -141,15 +141,23 @@ Detalhamento completo (contexto, consequências, alternativas) em [`docs/adr/`](
 - **Date**: 2026-09-02
 - **Status**: active
 
+### AD-018
+- **Decision**: Um único `.env` na raiz do monorepo para todo dev local — backends leem `process.env` direto; `apps/web` lê o mesmo arquivo via `envDir: '../../'` no `vite.config.ts` (nunca `.env` duplicado por app). Cada app Node expõe `"dev": "tsx watch src/server.ts"` no seu `package.json`. Dado de bootstrap que não pode vir de rota (ex.: primeiro `isPlatformAdmin`) é seed idempotente em `apps/<app>/scripts/`, nunca endpoint.
+- **Reason**: nenhuma task da feature 1 cobriu como o ambiente de dev realmente sobe (só testes automatizados contra `MongoMemoryServer`/apps mínimos via supertest) — sem isso `pnpm dev` não funcionava em nenhum dos 3 apps e o percurso manual do Success Criteria do spec (convite → senha → login → área privada no navegador) não rodava. Descoberto e corrigido pelo orquestrador na verificação pós-Execute da feature 1.
+- **Trade-off**: variáveis de ambiente perdem isolamento por app — nomes precisam ser únicos globalmente (o front já usa prefixo `VITE_` para isso). Um seed script por dado de bootstrap é mais uma peça de tooling para manter, mas evita abrir uma segunda via de escrita para um campo que uma rota nunca deveria aceitar (AD-010).
+- **Scope**: todo o projeto — toda feature futura que adicionar um app Node ou telas no `web` segue esta convenção sem redecidir.
+- **Date**: 2026-09-03
+- **Status**: active
+
 ---
 
 ## Handoff
 
 - **Feature**: `foundation-tenancy-auth` (.specs/features/foundation-tenancy-auth) — feature 1 de 11
-- **Phase / Task**: Specify **concluído**. Próxima fase: Design (escopo Large exige Design + Tasks).
-- **Completed**: planejamento arquitetural aprovado; ADRs 0001-0013; `docs/glossary.md`; `docs/architecture.md`; `.specs/STATE.md` com AD-001..AD-013; `spec.md` da feature 1 com 22 requisitos `FND-01..22` e closure gate fechado.
-- **In-progress**: nenhum arquivo em edição. O repositório ainda **não tem código** — nem `package.json` na raiz.
-- **Next step**: rodar a fase Design da feature `foundation-tenancy-auth` (`tlc-spec-driven/references/design.md`), produzindo `design.md` com arquitetura, componentes e a matriz de cobertura de testes; depois Tasks, depois Execute.
-- **Blockers**: nenhum. Duas assumptions do spec seguem não-confirmadas e são baratas de reverter: front-end mínimo incluído na feature 1 (para a fatia ser vertical) e `isPlatformAdmin` como flag no `User` em vez de papel de tenant.
-- **Uncommitted files**: `docs/`, `.specs/`, `grill-with-docs/`, `tlc-spec-driven/` — nada commitado ainda.
-- **Branch**: main
+- **Phase / Task**: Execute **concluído e verificado**. `tasks.md` Status: Approved, 30/30 tasks `[x]`. Verifier independente rodou 2 iterações: iteração 1 FAIL (2 gaps: FND-13, FND-17-parcial), iteração 2 PASS (27/27 ACs/dimensões, 125 testes, sensor 5+2 mutações mortas). `validation.md` reflete o PASS final.
+- **Completed**: monorepo pnpm completo (`apps/{crm-api,ai-gateway,web}`, `packages/{contracts,db}`); percurso ponta-a-ponta provisionar→convidar→aceitar→login→área privada verificado manualmente com Playwright contra os 3 serviços reais + Mongo real (docker compose); 3 bugs reais encontrados e corrigidos fora do automatizado (jwt import quebrado em runtime real, role de convite não forçado a admin, FND-13 nunca implementado) — todos com commit próprio e lição registrada em `.specs/LESSONS.md` (fallback sem `scripts/lessons.py`, que não existe neste repo). AD-018 registrado (convenção de dev tooling: `.env` único na raiz, `tsx watch` como script `dev`, seed idempotente para bootstrap que não pode vir de rota).
+- **In-progress**: nenhum arquivo em edição. `git status` limpo na branch `feature/foundation-tenancy-auth` (50 commits à frente de `main`). Ambiente de dev ainda de pé nesta máquina: `docker compose` (Mongo, saudável), `crm-api` (:8080), `ai-gateway` (:8081), `web`/Vite (:5173) rodando em background via `tsx watch`/`vite` (não gerenciados pelo harness — ver PIDs com `ps aux | grep tsx`); admin de plataforma semeado (`admin@platform.local` / `plataforma123` via `pnpm --filter crm-api seed:platform-admin`).
+- **Next step**: a feature está pronta para PR/merge — falta só abrir o PR de `feature/foundation-tenancy-auth` para `main` (não pushado ainda) e decidir se os 3 serviços de dev ficam de pé ou são encerrados. Depois: Specify da feature 2 (`dynamic-field-engine`, conforme o roadmap de 11 features).
+- **Blockers**: nenhum.
+- **Uncommitted files**: nenhum.
+- **Branch**: `feature/foundation-tenancy-auth`

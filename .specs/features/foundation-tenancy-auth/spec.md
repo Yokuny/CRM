@@ -15,11 +15,11 @@ empresa dele. Nenhuma outra feature começa antes disso fechar.
 
 ## Goals
 
-- [ ] Monorepo pnpm com os 3 apps e 2 dos 4 packages (`contracts`, `db`) rodando `pnpm check` limpo
-- [ ] `Tenant` presente e obrigatório em todo model criado a partir daqui, injetado por middleware
-- [ ] Login funcional end-to-end: provisionar → convidar → aceitar → autenticar → ver o app
-- [ ] Autorização por papel (`admin`, `gestor`, `operador`) aplicável em qualquer rota
-- [ ] Teste estrutural de isolamento entre tenants rodando no CI desde o primeiro dia
+- [x] Monorepo pnpm com os 3 apps e 2 dos 4 packages (`contracts`, `db`) rodando `pnpm check` limpo
+- [x] `Tenant` presente e obrigatório em todo model criado a partir daqui, injetado por middleware
+- [x] Login funcional end-to-end: provisionar → convidar → aceitar → autenticar → ver o app
+- [x] Autorização por papel (`admin`, `gestor`, `operador`) aplicável em qualquer rota
+- [ ] Teste estrutural de isolamento entre tenants rodando no CI desde o primeiro dia — **teste existe e passa localmente** (`tests/structural/`), mas nenhum pipeline de CI foi criado por nenhuma das 30 tasks nem pela verificação pós-Execute; ver nota no Handoff de `.specs/STATE.md`
 
 ## Out of Scope
 
@@ -215,39 +215,39 @@ apagar os dados dela.
 
 | ID | Story | Fase | Status |
 | --- | --- | --- | --- |
-| FND-01 | P1: Provisionar Tenant | Tasks | Designed |
-| FND-02 | P1: Convidar primeiro admin | Tasks | Designed |
-| FND-03 | P1: Aceitar convite e criar usuário | Tasks | Designed |
-| FND-04 | P1: Login e emissão de sessão | Tasks | Designed |
-| FND-05 | P1: Injeção de `tenantUser` a partir do banco | Tasks | Designed |
-| FND-06 | P1: Device binding e revogação em cascata | Tasks | Designed |
-| FND-07 | P1: Tenant nunca aceito de entrada externa | Tasks | Designed |
-| FND-08 | P1: Autorização por papel | Tasks | Designed |
-| FND-09 | P1: Isolamento entre tenants provado por teste | Tasks | Designed |
-| FND-10 | P1: Front mínimo — aceite, login, shell | Tasks | Designed |
-| FND-11 | Dimensão: validação de entrada | Tasks | Designed |
-| FND-12 | Dimensão: falha parcial no convite | Tasks | Designed |
-| FND-13 | Dimensão: idempotência de convite | Tasks | Designed |
-| FND-14 | Dimensão: rate limit em login e convite | Tasks | Designed |
-| FND-15 | Dimensão: aceite concorrente | Tasks | Designed |
-| FND-16 | Dimensão: TTL de convite e token | Tasks | Designed |
-| FND-17 | Dimensão: métrica e log de anomalia | Tasks | Designed |
-| FND-18 | Dimensão: SMTP e Mongo indisponíveis | Tasks | Designed |
-| FND-19 | Dimensão: transições de `Tenant` e `Invite` | Tasks | Designed |
+| FND-01 | P1: Provisionar Tenant | Execute | ✅ Verified |
+| FND-02 | P1: Convidar primeiro admin | Execute | ✅ Verified |
+| FND-03 | P1: Aceitar convite e criar usuário | Execute | ✅ Verified |
+| FND-04 | P1: Login e emissão de sessão | Execute | ✅ Verified |
+| FND-05 | P1: Injeção de `tenantUser` a partir do banco | Execute | ✅ Verified |
+| FND-06 | P1: Device binding e revogação em cascata | Execute | ✅ Verified |
+| FND-07 | P1: Tenant nunca aceito de entrada externa | Execute | ✅ Verified |
+| FND-08 | P1: Autorização por papel | Execute | ✅ Verified |
+| FND-09 | P1: Isolamento entre tenants provado por teste | Execute | ✅ Verified |
+| FND-10 | P1: Front mínimo — aceite, login, shell | Execute | ✅ Verified |
+| FND-11 | Dimensão: validação de entrada | Execute | ✅ Verified |
+| FND-12 | Dimensão: falha parcial no convite | Execute | ✅ Verified |
+| FND-13 | Dimensão: idempotência de convite | Execute | ✅ Verified |
+| FND-14 | Dimensão: rate limit em login e convite | Execute | ✅ Verified |
+| FND-15 | Dimensão: aceite concorrente | Execute | ✅ Verified |
+| FND-16 | Dimensão: TTL de convite e token | Execute | ✅ Verified |
+| FND-17 | Dimensão: métrica e log de anomalia | Execute | ✅ Verified |
+| FND-18 | Dimensão: SMTP e Mongo indisponíveis | Execute | ✅ Verified |
+| FND-19 | Dimensão: transições de `Tenant` e `Invite` | Execute | ✅ Verified |
 | FND-20 | P2: Gestão de usuários pelo admin do tenant | — | Fora do escopo da execução (costura documentada no design) |
 | FND-21 | P2: Logout e revogação | — | Fora do escopo da execução (costura documentada no design) |
 | FND-22 | P3: Suspender e reativar Tenant | — | Fora do escopo da execução (costura documentada no design) |
 
-**Cobertura:** 22 requisitos · 19 desenhados (FND-01..19, aguardando Tasks) · 3 fora do escopo de execução desta feature (FND-20..22)
+**Cobertura:** 22 requisitos · 19 verificados (FND-01..19 — ver `.specs/features/foundation-tenancy-auth/validation.md`) · 3 fora do escopo de execução desta feature (FND-20..22)
 
 ---
 
 ## Success Criteria
 
-- [ ] `pnpm check` e `pnpm run format` limpos nos 3 apps e 2 packages
-- [ ] `docker compose up` sobe Mongo e os serviços; `/health` responde nos dois back-ends
-- [ ] Percurso convite → senha → login → área privada funciona no navegador
-- [ ] Teste de dois tenants espelhados prova zero cruzamento de dados
-- [ ] Teste estrutural varre `input_schema`/bodies e falha se algum aceitar campo de tenant
-- [ ] Aceite concorrente do mesmo convite gera exatamente um usuário sob teste de corrida
-- [ ] Nenhum model Mongoose declarado fora de `packages/db`
+- [x] `pnpm check` e `pnpm run format` limpos nos 3 apps e 2 packages
+- [ ] `docker compose up` sobe Mongo e os serviços; `/health` responde nos dois back-ends — **parcial**: `docker compose up` sobe só o Mongo (nenhuma task criou Dockerfile/serviço de `crm-api`/`ai-gateway` no compose); os dois `/health` foram verificados manualmente respondendo com os apps rodando via `pnpm dev` (`tsx watch`), não via container
+- [x] Percurso convite → senha → login → área privada funciona no navegador — verificado manualmente com Playwright contra os 3 serviços reais
+- [x] Teste de dois tenants espelhados prova zero cruzamento de dados
+- [x] Teste estrutural varre `input_schema`/bodies e falha se algum aceitar campo de tenant
+- [x] Aceite concorrente do mesmo convite gera exatamente um usuário sob teste de corrida
+- [x] Nenhum model Mongoose declarado fora de `packages/db`
