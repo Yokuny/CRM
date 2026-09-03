@@ -157,15 +157,31 @@ Detalhamento completo (contexto, consequências, alternativas) em [`docs/adr/`](
 - **Date**: 2026-09-03
 - **Status**: active
 
+### AD-020
+- **Decision**: Motor de campos dinâmicos generalizado (AD-019) persiste em **um único par de collections** discriminado por `targetType` — `fieldTemplates`/`fieldTemplateVersions` com `targetType: 'customer' | 'process'` — em vez de dois pares paralelos (`customerTemplates`/`processTemplates`).
+- **Reason**: Confirmado com o usuário no Design de `dynamic-field-engine`. Estende ao nível de dados a mesma unificação que AD-019 já exige do motor: um único repositório e uma única máquina de migração, não duas mantidas em lockstep manualmente.
+- **Trade-off**: toda query precisa filtrar por `targetType`; índice único `{Tenant,targetType,key}` um pouco mais largo que um índice dedicado por collection.
+- **Scope**: `packages/db`, `apps/crm-api` (`dynamic-field-engine`), `crm-core` (feature 3, que consome como `customer`/`process`).
+- **Date**: 2026-09-03
+- **Status**: active
+
+### AD-021
+- **Decision**: A migração destrutiva de template (FLD-05/12/13) roda contra uma interface `FieldValueStore` (`countByTemplateVersion`, `migrateValues`) injetada por `targetType`. `dynamic-field-engine` registra um adapter no-op em produção (nenhum `Customer`/`Process` existe ainda) e prova a mecânica (diff, rejeição, rollback, log) contra um fake em memória nos testes. `crm-core` (feature 3) escreve os adapters reais sobre `customers`/`processes` e troca a injeção em `app.ts`, sem tocar `packages/field-engine` nem `field-template.service.ts`.
+- **Reason**: Confirmado com o usuário no Design de `dynamic-field-engine`. Evita invadir o escopo de `crm-core` — `Customer` precisa do núcleo fixo (nome/telefone/documento) no MESMO documento que `values`, o que uma collection genérica de valores criada agora não serviria sem retrabalho.
+- **Trade-off**: mais uma peça de DI a manter (mesmo molde de `MailProvider`); a materialização Mongo real da migração transacional (sem transação nativa — `MongoMemoryServer` é standalone) fica para o Design de `crm-core` resolver.
+- **Scope**: `apps/crm-api` (`dynamic-field-engine`, `crm-core`).
+- **Date**: 2026-09-03
+- **Status**: active
+
 ---
 
 ## Handoff
 
-- **Feature**: `dynamic-field-engine` (.specs/features/dynamic-field-engine) e `crm-core` (.specs/features/crm-core) — features 2 e 3 de 11
-- **Phase / Task**: Specify **concluído** para ambas (spec.md + context.md escritos, closure gate aplicado, Discuss conduzido via perguntas ao usuário). Escopo: Large/Complex. Próxima fase: Design — nenhuma das duas tem design.md/tasks.md ainda.
-- **Completed**: reordenação de escopo confirmada com o usuário — um documento de investigação sobre porte de UI (`crm-web-shell-identidade-visual-context.md`, fora do repo) motivou puxar `Customer`+`Process` reais para as features 2/3 em vez de mock na feature 4. Discuss resolveu: (1) escopo travado em Customer+Process só, sem `Event`/calendário nem model de Board/kanban separado; (2) o "kanban" pedido é uma visão da listagem de Customer agrupada por `status`, não o Board/Card do ADR-0011 (que continua sendo a feature `kanban-tool`, intocada); (3) listagem de Customer é server-side (busca/ordenação/paginação); (4) `Customer.status` generaliza o AD-003 — motor de campos dinâmicos deixa de ser Process-only, vira reutilizável por `customer` e `process`, com seed automático só para Customer na provisão do Tenant. AD-019 registrado.
-- **In-progress**: nenhuma implementação começou (fase Specify apenas). `spec.md` e `context.md` de ambas as features escritos nesta sessão.
-- **Next step**: Design de `dynamic-field-engine` primeiro (feature 3 depende dela), depois Design de `crm-core`. Ambos os spec.md têm Assumptions não confirmadas com o usuário (conteúdo exato do seed de `status`, nome de collection generalizada, unicidade de Customer) — revisar no Design ou confirmar antes se preferir.
+- **Feature**: `dynamic-field-engine` (.specs/features/dynamic-field-engine) — feature 2 de 11. `crm-core` (.specs/features/crm-core, feature 3) segue atrás, ainda só Specify.
+- **Phase / Task**: Design e Tasks **fechados e aprovados pelo usuário**; `tasks.md` marcado `Status: Approved`. A pergunta obrigatória de MCP/Skill por task foi respondida: **nenhuma** das 20 tasks precisa de MCP externo ou skill adicional (todas `MCP: NONE · Skill: NONE`, referência de contexto `./CLAUDE.md`). Execute autorizado a começar em T1.
+- **Completed**: (sessões anteriores) Specify de `dynamic-field-engine`/`crm-core` + AD-019; Design com AD-020 (par único de collections `fieldTemplates`/`fieldTemplateVersions` por `targetType`) e AD-021 (`FieldValueStore` injetado, no-op nesta feature) confirmados com o usuário; branch `feature/dynamic-field-engine` criada a partir do commit "feat: F2 specs". Tasks: Test Coverage Matrix derivada de AD-017 + amostragem de 15 arquivos reais (achado: `services`/`repositories`/`controllers` de `crm-api` não têm teste dedicado em nenhum módulo existente — só o `*.router.e2e.test.ts` — piso real respeitado em vez do default genérico da tabela); 20 tasks (T1..T20) em 6 fases: docs sync → `contracts` → `field-engine` → `db` → `crm-api` módulo `field-template` → wiring/provas finais; as 3 checagens de pré-aprovação (granularidade, cross-check de diagrama, co-localização de teste) todas ✅.
+- **In-progress**: Execute iniciando em T1. Nenhuma implementação escrita ainda.
+- **Next step**: Execute T1→T20 em 3 batches de sub-agentes (20 tasks > ~8, batch budget ~7, cortes só em fronteira de fase): batch 1 = fases 1-3 (T1..T9), batch 2 = fases 4-5 (T10..T17), batch 3 = fase 6 (T18..T20). Verifier independente roda automaticamente depois de T20. `crm-core` (feature 3) só entra em Design depois.
 - **Blockers**: nenhum.
-- **Uncommitted files**: `.specs/features/dynamic-field-engine/{spec.md,context.md}`, `.specs/features/crm-core/{spec.md,context.md}`, `.specs/STATE.md` (este arquivo) — **nenhum commit feito ainda**. Atenção: estes arquivos foram criados na branch `feature/foundation-tenancy-auth`, que ainda não foi mergeada/PR'd (ver decisão anterior) — considerar branch própria para as features 2/3 antes de commitar, para não misturar o PR da feature 1 com Specify de features novas.
-- **Branch**: `feature/foundation-tenancy-auth` (mesma branch da feature 1 — ver nota acima em Uncommitted files)
+- **Uncommitted files**: nenhum — `design.md`, `tasks.md`, `spec.md` (traceability) e este arquivo commitados em `docs(dynamic-field-engine): finalize design and approve tasks breakdown`.
+- **Branch**: `feature/dynamic-field-engine` (criada a partir de `feature/foundation-tenancy-auth`, que fica intocada a partir daqui).

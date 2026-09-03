@@ -216,30 +216,31 @@ estruturado.
 
 | ID | Story | Fase | Status |
 | --- | --- | --- | --- |
-| FLD-01 | P1: Motor — `hydrate` recursivo com defaults vazios | Design | Pending |
-| FLD-02 | P1: Motor — `validate` por tipo, erro por `fieldId` | Design | Pending |
-| FLD-03 | P1: Motor — `toToolSchema` sem Tenant + isomorfismo | Design | Pending |
-| FLD-04 | P1: Template — criação e bump aditivo sem migração | Design | Pending |
-| FLD-05 | P1: Template — bump destrutivo bloqueado sem migração | Design | Pending |
-| FLD-06 | P1: Template — registro antigo renderiza versão antiga | Design | Pending |
-| FLD-07 | P1: Template — RBAC, só `admin` muta | Design | Pending |
-| FLD-08 | P1: Template — arquivamento não quebra registros existentes | Design | Pending |
-| FLD-09 | P1: Seed — template `customer` padrão na provisão (FND-01) | Design | Pending |
-| FLD-10 | P1: Seed — idempotente | Design | Pending |
-| FLD-11 | P1: Seed — customização do tenant sobrevive a reseed | Design | Pending |
-| FLD-12 | P2: Migração destrutiva — transacional (rollback completo) | Design | Pending |
-| FLD-13 | P2: Migração destrutiva — log estruturado | Design | Pending |
-| FLD-14 | Dimensão: validação de entrada da árvore `FieldDef` | Design | Pending |
-| FLD-15 | Dimensão: idempotência de retry no bump de versão | Design | Pending |
-| FLD-16 | Dimensão: rate limit em mutação de template | Design | Pending |
-| FLD-17 | Dimensão: concorrência no bump de versão (guard otimista) | Design | Pending |
-| FLD-18 | Dimensão: observabilidade (`dbReqResTime` + log) | Design | Pending |
-| FLD-19 | Dimensão: transições guardadas (bump/arquivamento) | Design | Pending |
+| FLD-01 | P1: Motor — `hydrate` recursivo com defaults vazios | Tasks | In Tasks |
+| FLD-02 | P1: Motor — `validate` por tipo, erro por `fieldId` | Tasks | In Tasks |
+| FLD-03 | P1: Motor — `toToolSchema` sem Tenant + isomorfismo | Tasks | In Tasks |
+| FLD-04 | P1: Template — criação e bump aditivo sem migração | Tasks | In Tasks |
+| FLD-05 | P1: Template — bump destrutivo bloqueado sem migração | Tasks | In Tasks |
+| FLD-06 | P1: Template — registro antigo renderiza versão antiga | Tasks | In Tasks |
+| FLD-07 | P1: Template — RBAC, só `admin` muta | Tasks | In Tasks |
+| FLD-08 | P1: Template — arquivamento não quebra registros existentes | Tasks | In Tasks |
+| FLD-09 | P1: Seed — template `customer` padrão na provisão (FND-01) | Tasks | In Tasks |
+| FLD-10 | P1: Seed — idempotente | Tasks | In Tasks |
+| FLD-11 | P1: Seed — customização do tenant sobrevive a reseed | Tasks | In Tasks |
+| FLD-12 | P2: Migração destrutiva — transacional (rollback completo) | Tasks | In Tasks |
+| FLD-13 | P2: Migração destrutiva — log estruturado | Tasks | In Tasks |
+| FLD-14 | Dimensão: validação de entrada da árvore `FieldDef` | Tasks | In Tasks |
+| FLD-15 | Dimensão: idempotência de retry no bump de versão | Tasks | In Tasks |
+| FLD-16 | Dimensão: rate limit em mutação de template | Tasks | In Tasks |
+| FLD-17 | Dimensão: concorrência no bump de versão (guard otimista) | Tasks | In Tasks |
+| FLD-18 | Dimensão: observabilidade (`dbReqResTime` + log) | Tasks | In Tasks |
+| FLD-19 | Dimensão: transições guardadas (bump/arquivamento) | Tasks | In Tasks |
 
 **ID format:** `FLD-[NUMBER]`. **Status values:** Pending → In Design → In Tasks →
 Implementing → Verified.
 
-**Coverage:** 19 requisitos · 0 mapeados (spec recém-criada, aguardando Design).
+**Coverage:** 19 requisitos · 19 mapeados em `tasks.md` (20 tasks / 6 fases; aguardando
+aprovação do usuário antes de Execute).
 
 ---
 
