@@ -149,15 +149,23 @@ Detalhamento completo (contexto, consequências, alternativas) em [`docs/adr/`](
 - **Date**: 2026-09-03
 - **Status**: active
 
+### AD-019
+- **Decision**: O motor de campos dinâmicos (AD-003) deixa de ser exclusivo de `Process` — generaliza para um mecanismo único de template/versão/valores reutilizado por qualquer tipo de entidade que precise de campos definidos pelo tenant. Nesta rodada, `customer` e `process` são os dois `targetType`. Só `Customer` ganha um template padrão semeado automaticamente na provisão do Tenant (FND-01); `Process` não tem default universal.
+- **Reason**: `docs/glossary.md` já previa "Customer: núcleo fixo... mais campos dinâmicos definidos pelo tenant", mas nenhuma feature havia confirmado que isso usa a mesma máquina de `Process`. Confirmado na sessão de Discuss da feature `dynamic-field-engine`: o campo `status` do Customer (usado tanto no filtro da listagem quanto na visão kanban — `crm-core`) precisa ser configurável pelo tenant, não fixo, e a UI que o renderiza deve ser a mesma função recursiva usada por `Process` — não uma segunda implementação.
+- **Trade-off**: exige generalizar as collections `processTemplates`/`processTemplateVersions` (nome exato — discriminador `targetType` único vs. pares paralelos que compartilham a lib — decidido no Design de `dynamic-field-engine`) em vez de manter a forma Process-only original do AD-003. Ganha-se reuso e uma única implementação de motor; perde-se a simplicidade de um nome de collection dedicado a Process.
+- **Scope**: `packages/field-engine`, `packages/db`, `crm-api`, `apps/web` (feature 4 em diante).
+- **Date**: 2026-09-03
+- **Status**: active
+
 ---
 
 ## Handoff
 
-- **Feature**: `foundation-tenancy-auth` (.specs/features/foundation-tenancy-auth) — feature 1 de 11
-- **Phase / Task**: Execute **concluído e verificado**. `tasks.md` Status: Approved, 30/30 tasks `[x]`. Verifier independente rodou 2 iterações: iteração 1 FAIL (2 gaps: FND-13, FND-17-parcial), iteração 2 PASS (27/27 ACs/dimensões, 125 testes, sensor 5+2 mutações mortas). `validation.md` reflete o PASS final.
-- **Completed**: monorepo pnpm completo (`apps/{crm-api,ai-gateway,web}`, `packages/{contracts,db}`); percurso ponta-a-ponta provisionar→convidar→aceitar→login→área privada verificado manualmente com Playwright contra os 3 serviços reais + Mongo real (docker compose); 3 bugs reais encontrados e corrigidos fora do automatizado (jwt import quebrado em runtime real, role de convite não forçado a admin, FND-13 nunca implementado) — todos com commit próprio e lição registrada em `.specs/LESSONS.md` (fallback sem `scripts/lessons.py`, que não existe neste repo). AD-018 registrado (convenção de dev tooling: `.env` único na raiz, `tsx watch` como script `dev`, seed idempotente para bootstrap que não pode vir de rota).
-- **In-progress**: nenhum arquivo em edição. `git status` limpo na branch `feature/foundation-tenancy-auth` (50 commits à frente de `main`). Ambiente de dev ainda de pé nesta máquina: `docker compose` (Mongo, saudável), `crm-api` (:8080), `ai-gateway` (:8081), `web`/Vite (:5173) rodando em background via `tsx watch`/`vite` (não gerenciados pelo harness — ver PIDs com `ps aux | grep tsx`); admin de plataforma semeado (`admin@platform.local` / `plataforma123` via `pnpm --filter crm-api seed:platform-admin`).
-- **Next step**: a feature está pronta para PR/merge — falta só abrir o PR de `feature/foundation-tenancy-auth` para `main` (não pushado ainda) e decidir se os 3 serviços de dev ficam de pé ou são encerrados. Depois: Specify da feature 2 (`dynamic-field-engine`, conforme o roadmap de 11 features).
+- **Feature**: `dynamic-field-engine` (.specs/features/dynamic-field-engine) e `crm-core` (.specs/features/crm-core) — features 2 e 3 de 11
+- **Phase / Task**: Specify **concluído** para ambas (spec.md + context.md escritos, closure gate aplicado, Discuss conduzido via perguntas ao usuário). Escopo: Large/Complex. Próxima fase: Design — nenhuma das duas tem design.md/tasks.md ainda.
+- **Completed**: reordenação de escopo confirmada com o usuário — um documento de investigação sobre porte de UI (`crm-web-shell-identidade-visual-context.md`, fora do repo) motivou puxar `Customer`+`Process` reais para as features 2/3 em vez de mock na feature 4. Discuss resolveu: (1) escopo travado em Customer+Process só, sem `Event`/calendário nem model de Board/kanban separado; (2) o "kanban" pedido é uma visão da listagem de Customer agrupada por `status`, não o Board/Card do ADR-0011 (que continua sendo a feature `kanban-tool`, intocada); (3) listagem de Customer é server-side (busca/ordenação/paginação); (4) `Customer.status` generaliza o AD-003 — motor de campos dinâmicos deixa de ser Process-only, vira reutilizável por `customer` e `process`, com seed automático só para Customer na provisão do Tenant. AD-019 registrado.
+- **In-progress**: nenhuma implementação começou (fase Specify apenas). `spec.md` e `context.md` de ambas as features escritos nesta sessão.
+- **Next step**: Design de `dynamic-field-engine` primeiro (feature 3 depende dela), depois Design de `crm-core`. Ambos os spec.md têm Assumptions não confirmadas com o usuário (conteúdo exato do seed de `status`, nome de collection generalizada, unicidade de Customer) — revisar no Design ou confirmar antes se preferir.
 - **Blockers**: nenhum.
-- **Uncommitted files**: nenhum.
-- **Branch**: `feature/foundation-tenancy-auth`
+- **Uncommitted files**: `.specs/features/dynamic-field-engine/{spec.md,context.md}`, `.specs/features/crm-core/{spec.md,context.md}`, `.specs/STATE.md` (este arquivo) — **nenhum commit feito ainda**. Atenção: estes arquivos foram criados na branch `feature/foundation-tenancy-auth`, que ainda não foi mergeada/PR'd (ver decisão anterior) — considerar branch própria para as features 2/3 antes de commitar, para não misturar o PR da feature 1 com Specify de features novas.
+- **Branch**: `feature/foundation-tenancy-auth` (mesma branch da feature 1 — ver nota acima em Uncommitted files)
