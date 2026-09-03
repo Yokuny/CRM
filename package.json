@@ -8,6 +8,7 @@
     "vitest": "^4.1.11",
     "@biomejs/biome": "^2.5.11",
     "zod": "^4.5.4",
-    "@crm/contracts": "workspace:*"
+    "@crm/contracts": "workspace:*",
+    "tsx": "^4.19.2"
   }
 }
