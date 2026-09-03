@@ -163,10 +163,10 @@ Record<string, MigrationAction>`.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] As três ações validam com seus campos exigidos; ação com `action` desconhecido é rejeitada
-- [ ] Exportado de `packages/contracts/src/index.ts`
-- [ ] Gate check passa: `pnpm vitest run --project unit`
-- [ ] Test count: ≥ 4 testes passam
+- [x] As três ações validam com seus campos exigidos; ação com `action` desconhecido é rejeitada
+- [x] Exportado de `packages/contracts/src/index.ts`
+- [x] Gate check passa: `pnpm vitest run --project unit`
+- [x] Test count: ≥ 4 testes passam
 
 **Tests**: unit
 **Gate**: quick
