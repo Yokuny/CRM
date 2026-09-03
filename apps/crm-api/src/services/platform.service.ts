@@ -35,12 +35,16 @@ export const inviteToTenant = async (
   const tokenHash = hashToken(token);
   const expiresAt = new Date(Date.now() + SEVEN_DAYS_MS);
 
+  // O papel é sempre 'admin' neste endpoint, nunca o que o cliente enviar —
+  // este módulo convida especificamente o primeiro admin do Tenant (FND-02/AC2).
+  // Convite de gestor/operador por um admin do tenant é FND-20 (fora do escopo
+  // de execução) e vive num endpoint tenant-scoped à parte.
   let invite: { id: string };
   try {
     invite = await platformRepository.createInvite({
       tenant: tenantId,
       email: data.email,
-      role: data.role,
+      role: 'admin',
       tokenHash,
       expiresAt,
       invitedBy,

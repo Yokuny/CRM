@@ -147,11 +147,16 @@ describe('platform routes', () => {
       const { tenant, cookie } = await seedAdminAndTenant();
       const before = Date.now();
 
+      // Envia 'operador' de propósito: este endpoint convida especificamente
+      // o primeiro admin (FND-02/AC2) — o papel do body nunca deve vazar para
+      // o Invite criado, mesmo que o schema aceite outros papéis (reuso futuro
+      // de FND-20). Se o servidor apenas repassasse `data.role`, este teste
+      // pegaria a regressão.
       const res = await request(buildTestApp(alwaysSentMailProvider))
         .post(`/platform/tenants/${tenant.id}/invites`)
         .set('Cookie', cookie)
         .set('User-Agent', DEVICE)
-        .send({ email: 'convidado@empresa.com', role: 'admin' });
+        .send({ email: 'convidado@empresa.com', role: 'operador' });
 
       expect(res.status).toBe(201);
 
