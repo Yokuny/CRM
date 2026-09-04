@@ -18,6 +18,7 @@ import * as jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { env } from '../config/env.config.js';
+import { dbReqResTime } from '../metrics/db.metric.js';
 import type { AuthDeps } from '../middlewares/authentication.middleware.js';
 import { createAuthMiddleware } from '../middlewares/authentication.middleware.js';
 import { errorHandler } from '../middlewares/errorHandler.middleware.js';
@@ -682,6 +683,67 @@ describe('field-template routes', () => {
       expect(res.status).toBe(403);
       const template = await FieldTemplate.findById(created.body.data.id).lean();
       expect(template?.archived).toBe(false);
+    });
+  });
+
+  describe('observability (FLD-18)', () => {
+    // Prova que `withDbTiming` (FND-17) realmente envolve as operações do
+    // repositório, não só o wrapper genérico já testado por
+    // `db.metric.unit.test.ts`. Achado do Verifier independente
+    // (validation.md, M8/M9): remover TODOS os `withDbTiming` do repositório
+    // deixava a suíte inteira verde — nenhuma assertion observava a
+    // instrumentação das operações novas.
+    it('records dbReqResTime for every fieldTemplate repository operation exercised by a full flow', async () => {
+      const { cookie } = await seedTenantUser(['admin']);
+      const app = buildTestApp(buildStores(createFakeFieldValueStore()));
+
+      const created = await createTemplate(app, cookie, {
+        targetType: 'customer',
+        name: 'Cliente',
+        fields: [STATUS_FIELD],
+      });
+      const id = created.body.data.id as string;
+      await getCurrent(app, cookie, 'customer', 'default');
+      await bumpTemplate(app, cookie, id, { expectedVersion: 1, fields: [STATUS_FIELD, OBS_FIELD] });
+      await request(app).post(`/field-templates/${id}/archive`).set('Cookie', cookie).set('User-Agent', DEVICE).send();
+
+      const metric = await dbReqResTime.get();
+      const recordedOperations = new Set(metric.values.map((value) => value.labels.operation));
+
+      for (const operation of [
+        'fieldTemplate.createTemplate',
+        'fieldTemplate.claimVersionSlot',
+        'fieldTemplate.findTemplateByTargetKey',
+        'fieldTemplate.findCurrentVersion',
+        'fieldTemplate.findTemplateById',
+        'fieldTemplate.updateCurrentVersion',
+        'fieldTemplate.archiveTemplate',
+      ]) {
+        expect(recordedOperations, `esperava "${operation}" instrumentado`).toContain(operation);
+      }
+    });
+
+    it('records dbReqResTime for releaseVersionSlot when a destructive migration fails', async () => {
+      const { cookie } = await seedTenantUser(['admin']);
+      const store = createFakeFieldValueStore([{ id: 'r1', templateVersion: 1 }]);
+      const app = buildTestApp(buildStores(store));
+      const created = await createTemplate(app, cookie, {
+        targetType: 'process',
+        key: 'compra',
+        name: 'Compra',
+        fields: [STATUS_FIELD, OBS_FIELD],
+      });
+      store.failOnMigrate = true;
+
+      await bumpTemplate(app, cookie, created.body.data.id, {
+        expectedVersion: 1,
+        fields: [STATUS_FIELD],
+        migration: { obs: { action: 'discard' } },
+      });
+
+      const metric = await dbReqResTime.get();
+      const recordedOperations = new Set(metric.values.map((value) => value.labels.operation));
+      expect(recordedOperations).toContain('fieldTemplate.releaseVersionSlot');
     });
   });
 });
