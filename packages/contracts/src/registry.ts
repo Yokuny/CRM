@@ -11,6 +11,8 @@ import { inviteTokenParamSchema } from './schemas/inviteToken.schema.js';
 import { migrationActionSchema } from './schemas/migrationAction.schema.js';
 import { provisionTenantSchema } from './schemas/provisionTenant.schema.js';
 import { signinSchema } from './schemas/signin.schema.js';
+import { updateProcessStageSchema } from './schemas/updateProcessStage.schema.js';
+import { updateProcessValuesSchema } from './schemas/updateProcessValues.schema.js';
 
 export const TENANT_FORBIDDEN_KEYS = [
   'tenant',
@@ -40,4 +42,6 @@ export const schemaRegistry: ReadonlyArray<{ name: string; schema: ZodType }> = 
   { name: 'bumpFieldTemplateSchema', schema: bumpFieldTemplateSchema },
   { name: 'createCustomerSchema', schema: createCustomerSchema },
   { name: 'createProcessSchema', schema: createProcessSchema },
+  { name: 'updateProcessValuesSchema', schema: updateProcessValuesSchema },
+  { name: 'updateProcessStageSchema', schema: updateProcessStageSchema },
 ];
