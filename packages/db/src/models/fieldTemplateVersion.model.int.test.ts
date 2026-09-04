@@ -1,4 +1,5 @@
 import type { FieldDef } from '@crm/contracts';
+import { hydrate } from '@crm/field-engine';
 import mongoose from 'mongoose';
 import { describe, expect, it } from 'vitest';
 import { useTestDb } from '../../tests/helpers/db.helper.js';
@@ -80,6 +81,52 @@ describe('FieldTemplateVersion model', () => {
     const reloaded = await FieldTemplateVersion.findById(created._id).lean();
 
     expect(reloaded?.fields).toEqual(nestedFields);
+  });
+
+  // FLD-06/AC4: um registro antigo aponta pra uma templateVersion anterior e
+  // `hydrate` precisa renderizá-la fiel MESMO DEPOIS do template ter avançado
+  // várias versões — a conjunção exata que o AC pede, não só "a versão antiga
+  // não foi sobrescrita" (já provado acima). Sem rota HTTP: nenhuma desta
+  // feature serve uma versão arbitrária (design.md só expõe a corrente), e o
+  // spec fala do MOTOR (`hydrate`) renderizando o registro antigo, não de uma
+  // API — provar direto no model, sem inventar endpoint fora do design.
+  it('hydrates fields exactly as v1 defined them after the template has advanced to v3 (FLD-06/AC4)', async () => {
+    const template = new mongoose.Types.ObjectId();
+    const v1Fields: FieldDef[] = [
+      {
+        fieldId: 'status',
+        label: 'Status',
+        type: 'status',
+        options: [{ key: 'novo', label: 'Novo', color: '#3B82F6', order: 0 }],
+      },
+    ];
+    await FieldTemplateVersion.create({ ...baseVersion(template), version: 1, fields: v1Fields });
+    await FieldTemplateVersion.create({
+      ...baseVersion(template),
+      version: 2,
+      fields: [...v1Fields, { fieldId: 'obs', label: 'Observação', type: 'text', maxLength: 200 }],
+    });
+    await FieldTemplateVersion.create({
+      ...baseVersion(template),
+      version: 3,
+      fields: [
+        {
+          fieldId: 'status',
+          label: 'Situação',
+          type: 'status',
+          options: [{ key: 'ativo', label: 'Ativo', color: '#22C55E', order: 0 }],
+        },
+      ],
+    });
+
+    // Um registro fictício aponta para a v1 (nunca migrou) — o template já
+    // está em v3, com o MESMO fieldId 'status' redefinido (label e opções
+    // diferentes). Se `hydrate` usasse a definição corrente por engano, o
+    // label seria 'Situação' e a opção seria 'ativo', não 'novo'.
+    const oldVersion = await FieldTemplateVersion.findOne({ template, version: 1 }).lean();
+    const rendered = hydrate(oldVersion?.fields as FieldDef[], { status: 'novo' });
+
+    expect(rendered).toEqual([{ ...v1Fields[0], value: 'novo' }]);
   });
 
   it('declares the {Tenant,targetType} lookup index', async () => {
