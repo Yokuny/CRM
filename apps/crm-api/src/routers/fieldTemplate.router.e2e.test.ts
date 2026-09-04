@@ -537,6 +537,40 @@ describe('field-template routes', () => {
       expect(template?.currentVersion).toBe(2);
     });
 
+    // A guarda de concorrência precisa cobrir o caminho DESTRUTIVO, não só o
+    // aditivo do teste acima: claimVersionSlot roda ANTES de migrateValues
+    // (design.md), então só quem venceu a corrida do índice único chega a
+    // migrar. Se a ordem fosse invertida, as duas requisições migrariam antes
+    // de qualquer claim — nenhum teste que só conta status HTTP pegaria isso,
+    // por isso a asserção central aqui é sobre `store.calls`, não sobre status.
+    it('claims the version slot before running a concurrent destructive migration, never twice (FLD-17)', async () => {
+      const { cookie } = await seedTenantUser(['admin']);
+      const store = createFakeFieldValueStore([
+        { id: 'r1', templateVersion: 1 },
+        { id: 'r2', templateVersion: 1 },
+      ]);
+      const app = buildTestApp(buildStores(store));
+      const id = await seedTemplate(app, cookie, [STATUS_FIELD, OBS_FIELD]);
+
+      const destructiveBump = {
+        expectedVersion: 1,
+        fields: [STATUS_FIELD],
+        migration: { obs: { action: 'discard' as const } },
+      };
+      const results = await Promise.all([
+        bumpTemplate(app, cookie, id, destructiveBump),
+        bumpTemplate(app, cookie, id, destructiveBump),
+      ]);
+
+      expect(results.map((result) => result.status).sort()).toEqual([200, 409]);
+      // Só o vencedor do claim chega a migrar — a migração nunca roda duas
+      // vezes para o mesmo bump concorrente.
+      expect(store.calls).toHaveLength(1);
+      expect(await FieldTemplateVersion.countDocuments({ template: id })).toBe(2);
+      const template = await FieldTemplate.findById(id).lean();
+      expect(template?.currentVersion).toBe(2);
+    });
+
     it('responds 403 for a non-admin without touching the template (FLD-07)', async () => {
       const admin = await seedTenantUser(['admin']);
       const app = buildTestApp(buildStores(createFakeFieldValueStore()));
