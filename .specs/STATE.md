@@ -181,15 +181,47 @@ Detalhamento completo (contexto, consequências, alternativas) em [`docs/adr/`](
 - **Date**: 2026-09-03
 - **Status**: active
 
+### AD-023
+- **Decision**: `FieldTemplateVersion` gains an additive `stages?: string[]` field, required (non-empty, unique) only when `targetType === 'process'`; absent for `customer`. Threaded through `createFieldTemplateSchema`/`bumpFieldTemplateSchema` (contracts) and `fieldTemplate.service`/`repository` (apps/crm-api).
+- **Reason**: AD-019/AD-020 generalized `FieldTemplate`/`FieldTemplateVersion` across `customer`/`process`, but that generalization silently dropped the `stages` concept that `docs/glossary.md` ("Stage: etapa dentro de um FieldTemplate de targetType process") and ADR-0003 already assumed existed. Discovered mid-Design of `crm-core` (feature 3), which needs a versioned source of truth for the `Process.stage` transition guard (CORE-09/CORE-17). Confirmed with the user: keep it on `FieldTemplateVersion` (one source of truth, correctly versioned) rather than a second collection in `crm-core` that would need manual lockstep with template bumps — exactly the duplication AD-020 was created to avoid.
+- **Trade-off**: reopens a small, additive surface of the closed/Verified `dynamic-field-engine` feature (contracts + service + repository) — no behavior change for existing `customer` templates, `stages` is simply absent for them.
+- **Scope**: `packages/contracts`, `apps/crm-api` (`field-template` module, `crm-core`).
+- **Date**: 2026-09-04
+- **Status**: active
+
+### AD-024
+- **Decision**: The real `FieldValueStore` adapters (AD-021 closure, `customer`/`process`) implement `migrateValues` as an **idempotent filtered bulk update** — only documents still at `fromVersion` are touched (already-migrated ones are excluded by the query filter itself, not by external bookkeeping), and each migration action (`discard`/`mapField`/`mapOptions`) is written defensively so re-applying it is a no-op. No distributed transaction, no persisted "in-progress" marker.
+- **Reason**: AD-002/AD-006 already commit the project to a standalone MongoDB (no replica set), so native multi-document transactions aren't available. Confirmed with the user during `crm-core` Design: safety comes from combining this natural per-document idempotency with the rollback contract `fieldTemplate.service.bumpFieldTemplateVersion` already has (FLD-12, feature 2) — releasing the version slot on failure means an admin retrying the identical bump reuses the same `(fromVersion, toVersion)` pair and the retry converges on its own.
+- **Trade-off**: no crash-safe resumption bookkeeping (rejected alternative: a `pendingMigration` marker per record) — judged disproportionate complexity for a low-frequency admin action. A crash mid-batch leaves some records migrated and some not until the admin retries the same bump.
+- **Scope**: `apps/crm-api` (`providers/fieldValueStore`), any future `targetType` that reuses `FieldValueStore`.
+- **Date**: 2026-09-04
+- **Status**: active
+
+### AD-025
+- **Decision**: Querying/filtering by a tenant-defined dynamic field (e.g. `Customer.values.status`, used by both the listing filter and the kanban-column read) relies on a compound wildcard index (`{Tenant: 1, 'values.$**': 1}`) — no denormalized top-level copy of any `values.*` field is maintained for query performance.
+- **Reason**: Confirmed with the user during `crm-core` Design. Keeps a single source of truth for every tenant-defined value (zero drift risk between a denormalized copy and `values`), consistent with AD-003's original definition/value-separation intent. Judged adequate for the data volumes expected of a CRM at this stage.
+- **Trade-off**: gives up the sort/filter/pagination performance a dedicated compound index on a real column would offer; revisit (denormalize) only if profiling shows this index is actually a bottleneck, not preemptively.
+- **Scope**: `packages/db` (`customers`, and any future collection querying by a dynamic `values.*` field).
+- **Date**: 2026-09-04
+- **Status**: active
+
+### AD-026
+- **Decision**: Any business entity that consumes the field-engine (AD-019) stores its fixed core fields, its `values`, and its template pointer (`template: ObjectId` + `templateVersion: number` — not a single `templateVersionId` FK) in **one** Mongoose document, never split across collections.
+- **Reason**: Generalizes AD-021's own reasoning for `Customer` ("núcleo fixo precisa estar no MESMO documento que `values`") into an explicit, reusable convention for `crm-core`'s two entities and any future `targetType`. The `(template, templateVersion)` pointer pair (not a single FK) was chosen because it's what `FieldValueStore.countByTemplateVersion`/`migrateValues` already takes as parameters (feature 2), and what `fieldTemplate.repository.findCurrentVersion(tenantId, templateId, version)` already accepts — zero-friction reuse either way.
+- **Trade-off**: none beyond what AD-021 already accepted; this entry exists so a future feature doesn't have to re-derive the same shape from first principles.
+- **Scope**: `packages/db`, `apps/crm-api` (`crm-core` and any future field-engine consumer).
+- **Date**: 2026-09-04
+- **Status**: active
+
 ---
 
 ## Handoff
 
-- **Feature**: `dynamic-field-engine` (.specs/features/dynamic-field-engine) — feature 2 de 11, **Execute completo, Verifier PASS**. `crm-core` (.specs/features/crm-core, feature 3) é a próxima — ainda só Specify, e depende desta feature estar pronta (está).
-- **Phase / Task**: Execute concluído (T1..T20, 3 batches de sub-agentes) + ciclo fix→re-verify de 1 iteração. Verifier independente (author ≠ verifier) rodou 2 vezes: iteração 1 achou 8 gaps ranqueados (2 Blocker, 4 Major, 2 Minor) via sensor de discriminação (16 mutações, 12 mortas/4 sobreviventes); 7 fix tasks fecharam os 6 gaps acionáveis (2 Minor ficaram como deferral documentado — `SPEC_DEVIATION` para `reference`/`target`, resolução em `crm-core`); iteração 2 confirmou os 4 mutantes antes sobreviventes agora mortos, 7/7 fixes genuínos, zero regressão. **PASS final.** `spec.md` traceability FLD-01..19 → Execute/Verified; Goals e Success Criteria marcados.
-- **Completed**: Specify + Discuss (AD-019) → Design (AD-020, AD-021, confirmados com o usuário) → Tasks (20 tasks/6 fases) → Execute (T1..T20) → Verify (2 iterações, PASS). `packages/field-engine` (motor isomórfico completo: `hydrate`/`validate`/`toToolSchema`/`diffFields`), `packages/contracts` (`fieldDefSchema` + 3 schemas de API, todos em `schemaRegistry`), `packages/db` (`FieldTemplate`/`FieldTemplateVersion` + seed idempotente), `apps/crm-api` módulo `field-template` completo (router/controller/service/repository + `providers/fieldValueStore`) montado em `buildApp()`, seed plugado em `provisionTenant` (FND-01), isolamento entre tenants estendido. AD-022 registra o deferral explícito de FLD-08/AC6 ("bloquear novo uso") para `crm-core`. 281 testes passando (era 125 antes desta feature), `pnpm check` limpo.
-- **In-progress**: nenhuma — feature fechada.
-- **Next step**: iniciar Design de `crm-core` (feature 3) — consome `packages/field-engine` e o módulo `field-template` como estão; implementa `Customer`/`Process` com núcleo fixo + `values`, e os adapters reais de `FieldValueStore` (substituindo o no-op via AD-021) e a enforcement de "não usar template arquivado" (via AD-022).
+- **Feature**: `dynamic-field-engine` (feature 2 de 11) — **Execute completo, Verifier PASS**, merged em `main`. `crm-core` (.specs/features/crm-core, feature 3) é a atual — **Design e Tasks aprovados pelo usuário; Execute ainda não começou** (pedido explícito do usuário: Execute fica para um prompt separado).
+- **Phase / Task**: `crm-core` — Design aprovado (4 forks genuínos confirmados via pergunta ao usuário: AD-023 stages, AD-024 migração idempotente, AD-025 sem denormalização de `status`, e reuso do mesmo endpoint de listagem para tabela+kanban) → Tasks aprovado (21 tasks / 8 fases, Test Coverage Matrix + Gate Checks gerados, as 3 checagens de pré-aprovação passaram). Nenhuma task de Execute (T1..T21) foi iniciada.
+- **Completed**: Specify (já vinha pronto) → Design (`design.md`, AD-023..AD-026 registradas em STATE.md) → Tasks (`tasks.md`, 21 tasks atômicas com dependências, phases 1-8).
+- **In-progress**: nenhuma — aguardando o usuário iniciar Execute num prompt separado.
+- **Next step**: rodar Execute de `crm-core` a partir de `tasks.md` (T1..T21) — ativar a skill `tlc-spec-driven`, seguir o fluxo de Execute (ciclo por task, sub-agentes em batch se o usuário aceitar, Verifier automático ao final).
 - **Blockers**: nenhum.
-- **Uncommitted files**: nenhum — todo o Execute e Verify desta feature está commitado (`267559a`..`3cbcbcc` na branch, mais o fechamento de traceability que segue este commit).
-- **Branch**: `feature/dynamic-field-engine`, pronta para merge/PR a critério do usuário — não foi pedido push nem abertura de PR nesta sessão.
+- **Uncommitted files**: `.specs/features/crm-core/design.md` (novo), `.specs/features/crm-core/tasks.md` (novo), `.specs/STATE.md` (modificado — AD-023..AD-026 + este Handoff). Também `CLAUDE.md` untracked na raiz — parece conteúdo de um projeto não relacionado (DentalEase, front-end React/ShadCN), não corresponde a este monorepo (`apps/crm-api`, `packages/db`, WhatsApp/Meta/Asaas); não foi tocado nem commitado, sinalizado ao usuário para revisão. Nenhum commit foi pedido pelo usuário nesta sessão.
+- **Branch**: `feature/crm-core`, criada a partir de `main` no início desta sessão (main estava limpo, só o `CLAUDE.md` untracked acima).
