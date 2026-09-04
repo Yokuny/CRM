@@ -1,5 +1,15 @@
 # Dynamic Field Engine Validation
 
+# ✅ FINAL VERDICT: PASS after Iteration 2 (2026-09-04)
+
+Iteration 1 (below) FAILed with 8 ranked gaps (2 Blocker, 4 Major, 2 Minor). A separate
+implementer applied 7 fix commits (`a7aeee1`..`445d7e8`). Iteration 2 (see section at the
+bottom of this file) independently re-verified all 7 fixes with evidence-or-zero, re-ran the
+4 previously-surviving mutants against the fixed code, and confirmed all 4 now killed with no
+regressions. **Feature `dynamic-field-engine` — PASS after iteration 2.**
+
+---
+
 **Date**: 2026-09-03
 **Spec**: `.specs/features/dynamic-field-engine/spec.md`
 **Diff range**: `267559a..85549d3` (21 commits — T1..T20 + docs closure)
@@ -337,3 +347,104 @@ fica **vermelho** logo após qualquer `lessons.py add`. Foi corrigido aqui com
 `pnpm biome format .specs/lessons.json --write` (reformatação pura, JSON semanticamente
 idêntico), mas vai voltar a acontecer no próximo `add`. Ou o `.specs/` entra no ignore do
 `biome.json`, ou o `format` passa a ser rodado depois de cada `add`.
+
+---
+
+## Iteration 2
+
+**Date**: 2026-09-04
+**Diff range**: `85549d3..445d7e8` (7 fix commits, listed below)
+**Verifier**: independent sub-agent (author ≠ verifier), evidence-or-zero — a different
+instance from iteration 1, and did **not** author any of the 7 fixes below.
+
+### Fix commits under review
+
+| # | Commit | Claims to close |
+| - | ------ | ---------------- |
+| 1 | `a7aeee1` fix(crm-api): release the claimed version slot when destructive migration fails | Gap #3 (Major, M13/Nota D) |
+| 2 | `ef9df28` test(crm-api): cover the version-slot guard on the destructive migration path | Gap #2 (Blocker, M13) |
+| 3 | `6458af5` test(crm-api): assert the archived flag is exposed after archiving | Gap #1 (Blocker, M10) |
+| 4 | `4d70ee1` test(crm-api): prove FLD-07 RBAC with a non-admin from the SAME tenant | Gap #5 (Major, Nota E) |
+| 5 | `0c5baaf` test(crm-api): assert dbReqResTime instrumentation on field-template repository ops | Gap #4 (Major, M8/M9) |
+| 6 | `7d9631a` test(db): hydrate an old field-template version after three later bumps (FLD-06) | Gap #6 (Major, Nota F) |
+| 7 | `445d7e8` docs(field-engine): mark the reference/target gap as an explicit SPEC_DEVIATION | Gap #7 (Minor) + documents gap #8 (Minor) |
+
+### Re-check of the 4 previously-surviving mutants
+
+Each mutation was hand-applied to the **current** (post-fix) source in scratch state, the
+targeted test file (or full suite) run, then reverted with `git checkout --` and confirmed
+clean via `git status --porcelain` before the next mutation. No mutation left residue.
+
+| Mutant | Current target | Result | Killer |
+| ------ | --------------- | ------ | ------ |
+| M10 | `fieldTemplate.service.ts` — `getCurrentTemplate` hardcoded to `archived: false` | ✅ **KILLED** | `fieldTemplate.router.e2e.test.ts:636` — `expected false to be true` (the new assertion from `6458af5`) |
+| M13 | `fieldTemplate.service.ts` — `claimVersionSlot` moved to run *after* `migrateValues` in the destructive branch (full reorder, releaseVersionSlot removed since nothing is claimed before migrate) | ✅ **KILLED** | `fieldTemplate.router.e2e.test.ts:586` — `expected [...] to have a length of 1 but got 2` (the new destructive-concurrency test from `ef9df28`); also collaterally fails the FLD-18 `releaseVersionSlot` observability test from `0c5baaf` |
+| M8 (narrow, original target) | `fieldTemplate.repository.ts` — `withDbTiming` removed from **only** `updateCurrentVersion` | ✅ **KILLED** | `fieldTemplate.router.e2e.test.ts:722` — `expected [...] to include 'fieldTemplate.updateCurrentVersion'` (new test from `0c5baaf`) — confirms the fix is **not** vacuous despite `dbReqResTime` being a module-level Prometheus `Histogram` singleton that accumulates across every test in the file: removing instrumentation from one function removes that operation's label for every caller in the whole run, so cumulative state cannot mask this class of mutation |
+| M9 (escalated, all 7 `withDbTiming` + import removed) | `fieldTemplate.repository.ts` — every operation | ✅ **KILLED** | Same test as above, `expected [] to include 'fieldTemplate.createTemplate'` (fully empty set) |
+
+**All 4 previously-surviving mutants are now killed.** No previously-solid invariant (M1–M7,
+M11, M12, M14–M16) was touched by the fix commits, and none needed re-verification.
+
+### Fix-by-fix evidence
+
+| # | Fix | Verdict | Evidence |
+| - | --- | ------- | -------- |
+| 1 | Slot release on migration failure (`a7aeee1`) | ✅ **Genuine** | `apps/crm-api/src/repositories/fieldTemplate.repository.ts:101-104` adds `releaseVersionSlot` (`FieldTemplateVersion.deleteOne`, tenant-scoped); `apps/crm-api/src/services/fieldTemplate.service.ts:134-145` wraps `migrateValues` in try/catch, calling `releaseVersionSlot` before rethrow. The existing rollback test gained a slot-count assertion (`fieldTemplate.router.e2e.test.ts:508` — `countDocuments(...).toBe(1)`), and a **new** dedicated retry-after-failure test (`:513-538`) fails first with 500, then retries the identical bump and asserts `200`, `currentVersion: 2`, `countDocuments(...).toBe(2)`, and `store.records` reflecting the migration. Empirically confirmed: removing just the `releaseVersionSlot` call (keeping order intact) fails **3 separate tests** — the slot-count assertion (`expected 2 to be 1`), the retry test (`expected 409 to be 200`), and the FLD-18 observability test for `releaseVersionSlot`. |
+| 2 | Destructive-path concurrency test (`ef9df28`) | ✅ **Genuine** | `fieldTemplate.router.e2e.test.ts:566-589` fires two **identical concurrent destructive bumps** (`migration: { obs: { action: 'discard' } }`, not additive) and asserts `store.calls` (populated inside the fake store's `migrateValues`, before `failOnMigrate` is even checked — confirmed by reading the fake store helper at `:63-76`) has length 1 — i.e., only the slot's winner may migrate. This is a genuinely different signal than counting HTTP statuses. Empirically confirmed by the M13 re-check above: reordering `claimVersionSlot` after `migrateValues` makes `store.calls` length 2, failing this exact assertion. |
+| 3 | Archived flag assertion (`6458af5`) | ✅ **Genuine** | `fieldTemplate.router.e2e.test.ts:636` adds `expect(afterArchive.body.data.template.archived).toBe(true)` after archiving, reading the real field from `getCurrentTemplate` (`fieldTemplate.service.ts:73` — `archived: template.archived`, a real DB read, not hardcoded). STATE.md gained AD-022 explicitly scoping "block new use" enforcement to `crm-core` (consumer), consistent with design.md's pre-existing Error Handling Strategy — this is a legitimate scope boundary, not a dodge, since no `Customer`/`Process` model exists yet in this codebase to enforce against. Empirically confirmed killed (M10 re-check above). |
+| 4 | RBAC same-tenant test (`4d70ee1`) | ✅ **Genuine** | New helper `addUserToTenant` (`fieldTemplate.router.e2e.test.ts:150-164`) creates a `User` with `Tenant: tenant._id` — the **same** `ObjectId` passed in from a prior `seedTenantUser()` call, not a fresh tenant. Both the bump-403 test (`:594`) and the archive-403 test (`:672`) were rewired to use it. Empirically confirmed by removing `isAdmin` from both `POST /:id/versions` and `POST /:id/archive` in `fieldTemplate.router.ts`: both tests now fail with **`expected 200 to be 403`** (not `404 to be 403` as iteration 1's Nota E found) — proof the 403 is now produced by `isAdmin`, not by tenant-scoped `findTemplateById` returning null. |
+| 5 | FLD-18 dbReqResTime assertions (`0c5baaf`) | ✅ **Genuine** | Two new tests import the real `dbReqResTime` histogram (`../metrics/db.metric.js`) and assert `metric.get().values.map(v => v.labels.operation)` contains all 7 real operation names emitted by the actual repository (`fieldTemplate.createTemplate`, `.claimVersionSlot`, `.findTemplateByTargetKey`, `.findCurrentVersion`, `.findTemplateById`, `.updateCurrentVersion`, `.archiveTemplate`) plus `.releaseVersionSlot` for the failure path — not the fictitious names (`'test.success'`) that `db.metric.unit.test.ts` uses. Verified non-vacuous despite the histogram being a shared module-level singleton across the whole test file: narrowly removing instrumentation from only `updateCurrentVersion` still fails the assertion (see M8 narrow re-check above), because the mutation is a function-definition change that suppresses that operation's label for every caller for the entire test run, not just this test's own call. |
+| 6 | FLD-06 old-version hydrate test (`7d9631a`) | ✅ **Genuine** | `packages/db/src/models/fieldTemplateVersion.model.int.test.ts:86-131` creates v1/v2/v3 of the **same template id**, where v3 redefines fieldId `status` with a **different** `label` (`'Situação'` vs `'Status'`) and different `options` (`'ativo'` vs `'novo'`). It then explicitly queries `FieldTemplateVersion.findOne({ template, version: 1 })` (not the current version) and asserts `hydrate(oldVersion.fields, { status: 'novo' })` equals the **v1** definition. Because v1 and v3 redefine the same fieldId differently, this assertion would fail if `hydrate` (or the query) picked up the wrong version — it is not a value that would pass either way. Confirmed passing (6/6 tests in the file, including this one). No new HTTP route was added, correctly scoped to the engine (`hydrate`) per the spec's AC wording, not the API surface. |
+| 7 | SPEC_DEVIATION marker (`445d7e8`) | ✅ **Genuine** | `packages/field-engine/src/validate.ts:62-72` — the marker is present in the exact project convention: `// SPEC_DEVIATION: ...` followed by `// Reason: ...` within the same comment block (matching `implement.md`'s `// SPEC_DEVIATION: [what] / // Reason: [why]` format, cross-checked against the project's only other pre-existing usages in `apps/ai-gateway/src/app.ts` and `apps/web/src/lib/helpers/translate.helper.ts`). No behavior or test change, as claimed — `git show 445d7e8 --stat` touches only this one file, 11 insertions/2 deletions, all comment text. Both the reference/target gap (#7) and the pending-reference edge case (#8) are addressed at their shared root cause. |
+
+### Regression check
+
+Diffed every fix commit individually (`git show <sha>`) for weakened or removed assertions:
+`git diff 85549d3..445d7e8 -- '*.test.ts' | grep '^-.*expect('` returns **zero matches** — no
+`expect(...)` line was removed or altered across the entire fix range. The only non-additive
+test-file edits are two `it()` title renames and swapping `seedTenantUser` for `addUserToTenant`
+in the two RBAC tests (commit `4d70ee1`), which **strengthens** those tests (same-tenant instead
+of cross-tenant) rather than weakening them. Test count grew from 276 to 281 (5 new tests: retry-
+after-failure, destructive-concurrency, 2 observability tests, FLD-06 old-version hydrate); the
+archived-flag and RBAC fixes extended two existing tests in place rather than adding new ones.
+**No regressions found.**
+
+### Gate check (iteration 2)
+
+- `pnpm -r exec tsc --noEmit` → **exit 0**
+- `pnpm biome check .` → **exit 0** (156 files)
+- `pnpm vitest run` → run 3× for stability:
+  - Run 1: exit 0 — 51 files, **281 passed, 0 failed**
+  - Run 2: exit 0 — 51 files, **281 passed, 0 failed**
+  - Run 3: exit 0 — 51 files, **281 passed, 0 failed**
+  - **Stable across all 3 runs.**
+
+**Working tree integrity**: every scratch mutation (M10, M13, M8-narrow, M9-escalated, fix#1
+release-removal, fix#4 isAdmin-removal) was applied to a real source file, the targeted test(s)
+run, then reverted with `git checkout --` and confirmed via `git status --porcelain` before the
+next mutation. Final `git status --porcelain` shows only the pre-existing untracked `CLAUDE.md`
+(unrelated, ignored per task instructions); `git diff --stat` is empty. No fix was applied by
+this Verifier — only `validation.md` was edited.
+
+### Verdict
+
+# ✅ PASS
+
+All 4 previously-surviving mutants (M8, M9, M10, M13) are now killed by genuine, non-cosmetic
+assertions. Both Blockers (gap #1 AC6/archived-flag, gap #2 FLD-17 destructive concurrency) and
+all 4 Majors (gap #3 slot-release/FLD-15, gap #4 FLD-18 observability, gap #5 FLD-07 RBAC, gap #6
+FLD-06 old-version hydrate) have real evidence, each independently confirmed by re-deriving the
+same failure class the original gap described and observing it fail for the right reason. The
+2 Minor spec-precision gaps (reference/target discrimination, pending-reference edge case) remain
+intentionally deferred to `crm-core` per design.md's Error Handling Strategy, and are now marked
+with the project's `// SPEC_DEVIATION` convention as required — this is an accepted documented
+deferral, not a defect, and does not block PASS. No regression was introduced by any fix commit.
+Gate is green and stable across 3 consecutive full-suite runs.
+
+**Feature `dynamic-field-engine` — PASS after iteration 2.**
+
+### Lessons
+
+Iteration 2 is a clean PASS with no new grounded gap (all signal was already captured by
+iteration 1's L-004 through L-012). Per `lessons.md`, nothing new is recorded; `.specs/lessons.json`
+is left untouched.
