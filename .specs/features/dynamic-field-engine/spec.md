@@ -1,6 +1,7 @@
 # Dynamic Field Engine — Specification
 
-**Escopo:** Large/Complex · **Fase seguinte:** Design (arquitetura + componentes) → Tasks → Execute
+**Escopo:** Large/Complex · **Status:** Execute completo — Verifier PASS (iteração 2, ver
+`.specs/features/dynamic-field-engine/validation.md`)
 
 ## Problem Statement
 
@@ -14,17 +15,17 @@ entidade com campos dinâmicos consome — nesta rodada, `Customer` e `Process`.
 
 ## Goals
 
-- [ ] `packages/field-engine` isomórfico (roda idêntico em `crm-api` e `web`) expõe
+- [x] `packages/field-engine` isomórfico (roda idêntico em `crm-api` e `web`) expõe
       `hydrate`, `validate`, `toToolSchema` sobre a árvore `FieldDef`, com os 11 tipos do
       v1 já fixados em `docs/architecture.md` (`text`, `number`, `currency`, `percent`,
       `boolean`, `date`/`datetime`, `select`, `status`, `document`, `reference`, `array`,
       `group`)
-- [ ] Templates de campo tenant-scoped, versionados imutavelmente (evolução aditiva sem
+- [x] Templates de campo tenant-scoped, versionados imutavelmente (evolução aditiva sem
       migração; destrutiva com migração explícita, nunca silenciosa — AD-003), reutilizados
       por mais de um tipo de entidade (`customer` e `process` nesta rodada)
-- [ ] Tenant recém-provisionado (FND-01) recebe automaticamente um template padrão de
+- [x] Tenant recém-provisionado (FND-01) recebe automaticamente um template padrão de
       `customer` com um campo `status` pronto para uso, sem configuração manual
-- [ ] `pnpm check` limpo incluindo o novo package
+- [x] `pnpm check` limpo incluindo o novo package
 
 ## Out of Scope
 
@@ -216,41 +217,43 @@ estruturado.
 
 | ID | Story | Fase | Status |
 | --- | --- | --- | --- |
-| FLD-01 | P1: Motor — `hydrate` recursivo com defaults vazios | Tasks | In Tasks |
-| FLD-02 | P1: Motor — `validate` por tipo, erro por `fieldId` | Tasks | In Tasks |
-| FLD-03 | P1: Motor — `toToolSchema` sem Tenant + isomorfismo | Tasks | In Tasks |
-| FLD-04 | P1: Template — criação e bump aditivo sem migração | Tasks | In Tasks |
-| FLD-05 | P1: Template — bump destrutivo bloqueado sem migração | Tasks | In Tasks |
-| FLD-06 | P1: Template — registro antigo renderiza versão antiga | Tasks | In Tasks |
-| FLD-07 | P1: Template — RBAC, só `admin` muta | Tasks | In Tasks |
-| FLD-08 | P1: Template — arquivamento não quebra registros existentes | Tasks | In Tasks |
-| FLD-09 | P1: Seed — template `customer` padrão na provisão (FND-01) | Tasks | In Tasks |
-| FLD-10 | P1: Seed — idempotente | Tasks | In Tasks |
-| FLD-11 | P1: Seed — customização do tenant sobrevive a reseed | Tasks | In Tasks |
-| FLD-12 | P2: Migração destrutiva — transacional (rollback completo) | Tasks | In Tasks |
-| FLD-13 | P2: Migração destrutiva — log estruturado | Tasks | In Tasks |
-| FLD-14 | Dimensão: validação de entrada da árvore `FieldDef` | Tasks | In Tasks |
-| FLD-15 | Dimensão: idempotência de retry no bump de versão | Tasks | In Tasks |
-| FLD-16 | Dimensão: rate limit em mutação de template | Tasks | In Tasks |
-| FLD-17 | Dimensão: concorrência no bump de versão (guard otimista) | Tasks | In Tasks |
-| FLD-18 | Dimensão: observabilidade (`dbReqResTime` + log) | Tasks | In Tasks |
-| FLD-19 | Dimensão: transições guardadas (bump/arquivamento) | Tasks | In Tasks |
+| FLD-01 | P1: Motor — `hydrate` recursivo com defaults vazios | Execute | ✅ Verified |
+| FLD-02 | P1: Motor — `validate` por tipo, erro por `fieldId` | Execute | ✅ Verified — `reference`/`target` é `// SPEC_DEVIATION` documentado (AD-021, resolução em `crm-core`) |
+| FLD-03 | P1: Motor — `toToolSchema` sem Tenant + isomorfismo | Execute | ✅ Verified |
+| FLD-04 | P1: Template — criação e bump aditivo sem migração | Execute | ✅ Verified |
+| FLD-05 | P1: Template — bump destrutivo bloqueado sem migração | Execute | ✅ Verified |
+| FLD-06 | P1: Template — registro antigo renderiza versão antiga | Execute | ✅ Verified |
+| FLD-07 | P1: Template — RBAC, só `admin` muta | Execute | ✅ Verified |
+| FLD-08 | P1: Template — arquivamento não quebra registros existentes | Execute | ✅ Verified — metade "bloquear novo uso" é responsabilidade do consumidor (AD-022, `crm-core`); esta feature garante a flag `archived` correta |
+| FLD-09 | P1: Seed — template `customer` padrão na provisão (FND-01) | Execute | ✅ Verified |
+| FLD-10 | P1: Seed — idempotente | Execute | ✅ Verified |
+| FLD-11 | P1: Seed — customização do tenant sobrevive a reseed | Execute | ✅ Verified |
+| FLD-12 | P2: Migração destrutiva — transacional (rollback completo) | Execute | ✅ Verified |
+| FLD-13 | P2: Migração destrutiva — log estruturado | Execute | ✅ Verified |
+| FLD-14 | Dimensão: validação de entrada da árvore `FieldDef` | Execute | ✅ Verified |
+| FLD-15 | Dimensão: idempotência de retry no bump de versão | Execute | ✅ Verified |
+| FLD-16 | Dimensão: rate limit em mutação de template | Execute | ✅ Verified |
+| FLD-17 | Dimensão: concorrência no bump de versão (guard otimista) | Execute | ✅ Verified — cobre caminho aditivo e destrutivo |
+| FLD-18 | Dimensão: observabilidade (`dbReqResTime` + log) | Execute | ✅ Verified |
+| FLD-19 | Dimensão: transições guardadas (bump/arquivamento) | Execute | ✅ Verified |
 
 **ID format:** `FLD-[NUMBER]`. **Status values:** Pending → In Design → In Tasks →
 Implementing → Verified.
 
-**Coverage:** 19 requisitos · 19 mapeados em `tasks.md` (20 tasks / 6 fases; aguardando
-aprovação do usuário antes de Execute).
+**Coverage:** 19 requisitos · 19 verificados (FLD-01..19 — ver
+`.specs/features/dynamic-field-engine/validation.md`, PASS na iteração 2 após 7 fix tasks).
 
 ---
 
 ## Success Criteria
 
-- [ ] `pnpm check` limpo incluindo `packages/field-engine`
-- [ ] `hydrate`/`validate`/`toToolSchema` rodam idênticos em teste sob `crm-api` e sob
-      `web` (mesma fixture, mesmo resultado)
-- [ ] Tenant provisionado via fluxo de FND-01 já tem template `customer` com campo
+- [x] `pnpm check` limpo incluindo `packages/field-engine`
+- [x] `hydrate`/`validate`/`toToolSchema` rodam idênticos em teste sob `crm-api` e sob
+      `web` (mesma fixture, mesmo resultado) — prova via `jsdom` (pragma
+      `// @vitest-environment jsdom`), não um bundle Vite de browser real; ver Tech
+      Decisions do `design.md`
+- [x] Tenant provisionado via fluxo de FND-01 já tem template `customer` com campo
       `status` sem nenhuma chamada extra
-- [ ] Bump destrutivo sem migração é rejeitado sob teste; bump aditivo nunca migra nada
-- [ ] Registro em versão antiga renderiza fiel após o template avançar versões
-- [ ] Nenhum model Mongoose novo declarado fora de `packages/db` (mesma regra da feature 1)
+- [x] Bump destrutivo sem migração é rejeitado sob teste; bump aditivo nunca migra nada
+- [x] Registro em versão antiga renderiza fiel após o template avançar versões
+- [x] Nenhum model Mongoose novo declarado fora de `packages/db` (mesma regra da feature 1)
