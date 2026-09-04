@@ -11,8 +11,8 @@ import { User } from './models/user.model.js';
 
 describe('syncIndexes', () => {
   it('calls createIndexes on the 8 models', async () => {
-    const spies = [Tenant, User, Invite, Session, FieldTemplate, FieldTemplateVersion, Customer, Process].map(
-      (model) => vi.spyOn(model, 'createIndexes').mockResolvedValue(undefined as never),
+    const spies = [Tenant, User, Invite, Session, FieldTemplate, FieldTemplateVersion, Customer, Process].map((model) =>
+      vi.spyOn(model, 'createIndexes').mockResolvedValue(undefined as never),
     );
 
     await syncIndexes();
