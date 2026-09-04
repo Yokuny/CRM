@@ -2,6 +2,7 @@ export * from './registry.js';
 export * from './response/index.js';
 export * from './schemas/acceptInvite.schema.js';
 export * from './schemas/bumpFieldTemplate.schema.js';
+export * from './schemas/createCustomer.schema.js';
 export * from './schemas/createFieldTemplate.schema.js';
 export * from './schemas/createInvite.schema.js';
 export * from './schemas/fieldDef.schema.js';
