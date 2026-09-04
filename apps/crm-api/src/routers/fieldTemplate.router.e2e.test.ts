@@ -249,7 +249,13 @@ describe('field-template routes', () => {
     it('responds 409 for a duplicate {targetType,key} without creating a second template', async () => {
       const { tenant, cookie } = await seedTenantUser(['admin']);
       const app = buildTestApp(buildStores(createFakeFieldValueStore()));
-      const body = { targetType: 'process', key: 'compra', name: 'Compra', fields: [STATUS_FIELD], stages: PROCESS_STAGES };
+      const body = {
+        targetType: 'process',
+        key: 'compra',
+        name: 'Compra',
+        fields: [STATUS_FIELD],
+        stages: PROCESS_STAGES,
+      };
       await createTemplate(app, cookie, body);
 
       const res = await createTemplate(app, cookie, body);
@@ -627,8 +633,16 @@ describe('field-template routes', () => {
       const id = await seedTemplate(app, cookie, [STATUS_FIELD]);
 
       const results = await Promise.all([
-        bumpTemplate(app, cookie, id, { expectedVersion: 1, fields: [STATUS_FIELD, OBS_FIELD], stages: PROCESS_STAGES }),
-        bumpTemplate(app, cookie, id, { expectedVersion: 1, fields: [STATUS_FIELD, OBS_FIELD], stages: PROCESS_STAGES }),
+        bumpTemplate(app, cookie, id, {
+          expectedVersion: 1,
+          fields: [STATUS_FIELD, OBS_FIELD],
+          stages: PROCESS_STAGES,
+        }),
+        bumpTemplate(app, cookie, id, {
+          expectedVersion: 1,
+          fields: [STATUS_FIELD, OBS_FIELD],
+          stages: PROCESS_STAGES,
+        }),
       ]);
 
       expect(results.map((result) => result.status).sort()).toEqual([200, 409]);
