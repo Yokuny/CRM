@@ -39,6 +39,9 @@ const STATUS_FIELD: FieldDef = {
   ],
 };
 const OBS_FIELD: FieldDef = { fieldId: 'obs', label: 'Observação', type: 'text', maxLength: 200 };
+// AD-023: `stages` é obrigatório para todo template/bump de targetType
+// process — reusado em todo fixture deste arquivo que cria/avança um.
+const PROCESS_STAGES = ['aberto', 'em_andamento', 'concluido'];
 
 // ---------------------------------------------------------------------------
 // Fake em memória do FieldValueStore (AD-021): guarda os "registros" numa cópia
@@ -210,6 +213,7 @@ describe('field-template routes', () => {
         key: 'compra',
         name: 'Compra',
         fields: [STATUS_FIELD],
+        stages: PROCESS_STAGES,
       });
 
       expect(res.status).toBe(201);
@@ -245,13 +249,76 @@ describe('field-template routes', () => {
     it('responds 409 for a duplicate {targetType,key} without creating a second template', async () => {
       const { tenant, cookie } = await seedTenantUser(['admin']);
       const app = buildTestApp(buildStores(createFakeFieldValueStore()));
-      const body = { targetType: 'process', key: 'compra', name: 'Compra', fields: [STATUS_FIELD] };
+      const body = { targetType: 'process', key: 'compra', name: 'Compra', fields: [STATUS_FIELD], stages: PROCESS_STAGES };
       await createTemplate(app, cookie, body);
 
       const res = await createTemplate(app, cookie, body);
 
       expect(res.status).toBe(409);
       expect(await FieldTemplate.countDocuments({ Tenant: tenant._id, targetType: 'process', key: 'compra' })).toBe(1);
+    });
+
+    // AD-023: `stages` é a fonte de verdade da guarda de transição de Process
+    // (CORE-09/17) — sem ela um template process não tem como ser usado por
+    // nenhum Process, então a criação é bloqueada antes de qualquer escrita.
+    it('responds 400 and creates nothing when targetType process is missing stages (AD-023)', async () => {
+      const { cookie } = await seedTenantUser(['admin']);
+      const app = buildTestApp(buildStores(createFakeFieldValueStore()));
+
+      const res = await createTemplate(app, cookie, {
+        targetType: 'process',
+        key: 'compra',
+        name: 'Compra',
+        fields: [STATUS_FIELD],
+      });
+
+      expect(res.status).toBe(400);
+      expect(await FieldTemplate.countDocuments()).toBe(0);
+    });
+
+    it('creates the template with stages for targetType process, and GET /current returns them (AD-023)', async () => {
+      const { cookie } = await seedTenantUser(['admin']);
+      const app = buildTestApp(buildStores(createFakeFieldValueStore()));
+
+      const created = await createTemplate(app, cookie, {
+        targetType: 'process',
+        key: 'compra',
+        name: 'Compra',
+        fields: [STATUS_FIELD],
+        stages: PROCESS_STAGES,
+      });
+      expect(created.status).toBe(201);
+
+      const version = await FieldTemplateVersion.findOne({ template: created.body.data.id, version: 1 }).lean();
+      expect(version?.stages).toEqual(PROCESS_STAGES);
+
+      const res = await getCurrent(app, cookie, 'process', 'compra');
+      expect(res.status).toBe(200);
+      expect(res.body.data.stages).toEqual(PROCESS_STAGES);
+    });
+
+    // Prova o path inteiro (schema + service + repositório) para targetType
+    // customer: `stages` continua rejeitado no request e nunca aparece na
+    // resposta — a extensão do repositório/serviço não vaza nada para o
+    // targetType que não tem `stage`.
+    it('rejects stages in the request and never returns any for targetType customer (AD-023)', async () => {
+      const { cookie } = await seedTenantUser(['admin']);
+      const app = buildTestApp(buildStores(createFakeFieldValueStore()));
+
+      const rejected = await createTemplate(app, cookie, {
+        targetType: 'customer',
+        name: 'Cliente',
+        fields: [STATUS_FIELD],
+        stages: PROCESS_STAGES,
+      });
+      expect(rejected.status).toBe(400);
+      expect(await FieldTemplate.countDocuments()).toBe(0);
+
+      await createTemplate(app, cookie, { targetType: 'customer', name: 'Cliente', fields: [STATUS_FIELD] });
+      const res = await getCurrent(app, cookie, 'customer', 'default');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.stages).toBeUndefined();
     });
 
     it('responds 403 and creates nothing for gestor and operador (FLD-07)', async () => {
@@ -373,12 +440,14 @@ describe('field-template routes', () => {
       app: express.Express,
       cookie: string,
       fields: FieldDef[] = [STATUS_FIELD, OBS_FIELD],
+      stages: string[] = PROCESS_STAGES,
     ) => {
       const res = await createTemplate(app, cookie, {
         targetType: 'process',
         key: 'compra',
         name: 'Compra',
         fields,
+        stages,
       });
       return res.body.data.id as string;
     };
@@ -389,7 +458,11 @@ describe('field-template routes', () => {
       const app = buildTestApp(buildStores(store));
       const id = await seedTemplate(app, cookie, [STATUS_FIELD]);
 
-      const res = await bumpTemplate(app, cookie, id, { expectedVersion: 1, fields: [STATUS_FIELD, OBS_FIELD] });
+      const res = await bumpTemplate(app, cookie, id, {
+        expectedVersion: 1,
+        fields: [STATUS_FIELD, OBS_FIELD],
+        stages: PROCESS_STAGES,
+      });
 
       expect(res.status).toBe(200);
       expect(res.body.data.currentVersion).toBe(2);
@@ -409,7 +482,11 @@ describe('field-template routes', () => {
       const app = buildTestApp(buildStores(store));
       const id = await seedTemplate(app, cookie);
 
-      const res = await bumpTemplate(app, cookie, id, { expectedVersion: 1, fields: [STATUS_FIELD] });
+      const res = await bumpTemplate(app, cookie, id, {
+        expectedVersion: 1,
+        fields: [STATUS_FIELD],
+        stages: PROCESS_STAGES,
+      });
 
       expect(res.status).toBe(400);
       expect(res.body.message).toContain('obs');
@@ -429,6 +506,7 @@ describe('field-template routes', () => {
       const res = await bumpTemplate(app, cookie, id, {
         expectedVersion: 1,
         fields: [STATUS_FIELD],
+        stages: PROCESS_STAGES,
         migration: { obs: { action: 'discard' } },
       });
 
@@ -462,6 +540,7 @@ describe('field-template routes', () => {
       const res = await bumpTemplate(app, cookie, id, {
         expectedVersion: 1,
         fields: [STATUS_FIELD],
+        stages: PROCESS_STAGES,
         migration: { obs: { action: 'discard' } },
       });
 
@@ -495,6 +574,7 @@ describe('field-template routes', () => {
       const res = await bumpTemplate(app, cookie, id, {
         expectedVersion: 1,
         fields: [STATUS_FIELD],
+        stages: PROCESS_STAGES,
         migration: { obs: { action: 'discard' } },
       });
 
@@ -521,6 +601,7 @@ describe('field-template routes', () => {
       const failed = await bumpTemplate(app, cookie, id, {
         expectedVersion: 1,
         fields: [STATUS_FIELD],
+        stages: PROCESS_STAGES,
         migration: { obs: { action: 'discard' } },
       });
       expect(failed.status).toBe(500);
@@ -529,6 +610,7 @@ describe('field-template routes', () => {
       const retry = await bumpTemplate(app, cookie, id, {
         expectedVersion: 1,
         fields: [STATUS_FIELD],
+        stages: PROCESS_STAGES,
         migration: { obs: { action: 'discard' } },
       });
 
@@ -545,8 +627,8 @@ describe('field-template routes', () => {
       const id = await seedTemplate(app, cookie, [STATUS_FIELD]);
 
       const results = await Promise.all([
-        bumpTemplate(app, cookie, id, { expectedVersion: 1, fields: [STATUS_FIELD, OBS_FIELD] }),
-        bumpTemplate(app, cookie, id, { expectedVersion: 1, fields: [STATUS_FIELD, OBS_FIELD] }),
+        bumpTemplate(app, cookie, id, { expectedVersion: 1, fields: [STATUS_FIELD, OBS_FIELD], stages: PROCESS_STAGES }),
+        bumpTemplate(app, cookie, id, { expectedVersion: 1, fields: [STATUS_FIELD, OBS_FIELD], stages: PROCESS_STAGES }),
       ]);
 
       expect(results.map((result) => result.status).sort()).toEqual([200, 409]);
@@ -573,6 +655,7 @@ describe('field-template routes', () => {
       const destructiveBump = {
         expectedVersion: 1,
         fields: [STATUS_FIELD],
+        stages: PROCESS_STAGES,
         migration: { obs: { action: 'discard' as const } },
       };
       const results = await Promise.all([
@@ -587,6 +670,49 @@ describe('field-template routes', () => {
       expect(await FieldTemplateVersion.countDocuments({ template: id })).toBe(2);
       const template = await FieldTemplate.findById(id).lean();
       expect(template?.currentVersion).toBe(2);
+    });
+
+    // AD-023: o schema de bump não tem `targetType` para exigir `stages`
+    // estaticamente — a regra de negócio (bump de process sempre declara
+    // stages) é do service, e roda ANTES de reivindicar qualquer slot.
+    it('rejects a process bump without stages with 400, without claiming the version slot (AD-023)', async () => {
+      const { cookie } = await seedTenantUser(['admin']);
+      const app = buildTestApp(buildStores(createFakeFieldValueStore()));
+      const id = await seedTemplate(app, cookie, [STATUS_FIELD]);
+
+      const res = await bumpTemplate(app, cookie, id, { expectedVersion: 1, fields: [STATUS_FIELD, OBS_FIELD] });
+
+      expect(res.status).toBe(400);
+      expect(await FieldTemplateVersion.countDocuments({ template: id })).toBe(1);
+      const template = await FieldTemplate.findById(id).lean();
+      expect(template?.currentVersion).toBe(1);
+
+      // Nenhum slot órfão ficou reivindicado: reaplicar o MESMO expectedVersion
+      // com stages funciona normalmente, em vez de um 409 permanente.
+      const retry = await bumpTemplate(app, cookie, id, {
+        expectedVersion: 1,
+        fields: [STATUS_FIELD, OBS_FIELD],
+        stages: PROCESS_STAGES,
+      });
+      expect(retry.status).toBe(200);
+      expect(retry.body.data.currentVersion).toBe(2);
+    });
+
+    it('persists the stages declared in a bump and returns them via GET /current (AD-023)', async () => {
+      const { cookie } = await seedTenantUser(['admin']);
+      const app = buildTestApp(buildStores(createFakeFieldValueStore()));
+      const id = await seedTemplate(app, cookie, [STATUS_FIELD]);
+      const bumpedStages = ['novo', 'finalizado'];
+
+      const res = await bumpTemplate(app, cookie, id, {
+        expectedVersion: 1,
+        fields: [STATUS_FIELD, OBS_FIELD],
+        stages: bumpedStages,
+      });
+
+      expect(res.status).toBe(200);
+      const current = await getCurrent(app, cookie, 'process', 'compra');
+      expect(current.body.data.stages).toEqual(bumpedStages);
     });
 
     it('responds 403 for a non-admin of the SAME tenant, without touching the template (FLD-07)', async () => {
@@ -732,12 +858,14 @@ describe('field-template routes', () => {
         key: 'compra',
         name: 'Compra',
         fields: [STATUS_FIELD, OBS_FIELD],
+        stages: PROCESS_STAGES,
       });
       store.failOnMigrate = true;
 
       await bumpTemplate(app, cookie, created.body.data.id, {
         expectedVersion: 1,
         fields: [STATUS_FIELD],
+        stages: PROCESS_STAGES,
         migration: { obs: { action: 'discard' } },
       });
 

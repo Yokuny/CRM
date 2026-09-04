@@ -64,12 +64,12 @@ export const findCurrentVersion = async (
   tenantId: string,
   templateId: string,
   version: number,
-): Promise<{ fields: FieldDef[] } | null> =>
+): Promise<{ fields: FieldDef[]; stages?: string[] } | null> =>
   withDbTiming('fieldTemplate.findCurrentVersion', async () => {
     const doc = await FieldTemplateVersion.findOne(
       tenantScoped({ Tenant: tenantId, template: templateId, version }),
     ).lean();
-    return doc ? { fields: doc.fields } : null;
+    return doc ? { fields: doc.fields, stages: doc.stages } : null;
   });
 
 export type ClaimVersionSlotInput = {
@@ -78,6 +78,7 @@ export type ClaimVersionSlotInput = {
   targetType: FieldTemplateTargetType;
   version: number;
   fields: FieldDef[];
+  stages?: string[];
 };
 
 // A reivindicação do slot {template, version} É a guarda de concorrência de
@@ -91,6 +92,7 @@ export const claimVersionSlot = async (data: ClaimVersionSlotInput): Promise<voi
       targetType: data.targetType,
       version: data.version,
       fields: data.fields,
+      stages: data.stages,
     });
   });
 
