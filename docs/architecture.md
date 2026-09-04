@@ -130,7 +130,8 @@ entidade (AD-020).
 { _id, Tenant, targetType: 'customer', key: 'default', name, currentVersion: 1, archived }
 
 // fieldTemplateVersions — snapshot IMUTÁVEL
-{ _id, Tenant, template, targetType: 'process', version: 3, fields: FieldDef[] }
+{ _id, Tenant, template, targetType: 'process', version: 3, fields: FieldDef[],
+  stages: ['aguardando_pagamento', 'pago', 'concluido'] }
 
 // processes — só os valores
 { _id, Tenant, template: 'compra', templateVersion: 3, Customer,
@@ -138,7 +139,7 @@ entidade (AD-020).
   values: { f1: 'urgente', f2: { assetId, filename, mime, size }, f3: [2, 5] } }
 
 // customers — núcleo fixo mais os valores
-{ _id, Tenant, name, phone, template, templateVersion: 1,
+{ _id, Tenant, name, phone, document, template, templateVersion: 1,
   values: { status: 'novo' } }
 ```
 
