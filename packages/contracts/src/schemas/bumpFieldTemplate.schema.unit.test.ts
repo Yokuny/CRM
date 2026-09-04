@@ -54,4 +54,27 @@ describe('bumpFieldTemplateSchema', () => {
       expect(result.success, `${forged} deveria ser rejeitado`).toBe(false);
     }
   });
+
+  // AD-023: o schema não tem `targetType` para decidir se stages é
+  // obrigatório — aceita a forma com ou sem o campo; a regra de negócio
+  // ("bump de process exige stages") é do service (T9), não do contrato.
+  it('accepts a bump carrying stages', () => {
+    const result = bumpFieldTemplateSchema.safeParse({
+      expectedVersion: 1,
+      fields: [textField],
+      stages: ['aguardando_pagamento', 'pago'],
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.stages).toEqual(['aguardando_pagamento', 'pago']);
+    }
+  });
+
+  it('accepts a bump without stages (schema-level only — no targetType to branch on)', () => {
+    const result = bumpFieldTemplateSchema.safeParse({ expectedVersion: 1, fields: [textField] });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.stages).toBeUndefined();
+    }
+  });
 });
