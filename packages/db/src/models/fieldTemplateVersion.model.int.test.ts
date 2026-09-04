@@ -138,4 +138,30 @@ describe('FieldTemplateVersion model', () => {
       true,
     );
   });
+
+  // AD-023: `stages` é a fonte de verdade da guarda de transição de Process.
+  it('persists and reads back stages intact for a targetType process document', async () => {
+    const created = await FieldTemplateVersion.create({
+      ...baseVersion(new mongoose.Types.ObjectId()),
+      stages: ['aguardando_pagamento', 'pago', 'concluido'],
+    });
+
+    const reloaded = await FieldTemplateVersion.findById(created._id).lean();
+
+    expect(reloaded?.stages).toEqual(['aguardando_pagamento', 'pago', 'concluido']);
+  });
+
+  it('leaves stages absent (not an empty array) for a targetType customer document with none supplied', async () => {
+    const created = await FieldTemplateVersion.create({
+      Tenant: new mongoose.Types.ObjectId(),
+      template: new mongoose.Types.ObjectId(),
+      targetType: 'customer' as const,
+      version: 1,
+      fields: [{ fieldId: 'status', label: 'Status', type: 'status', options: [] }],
+    });
+
+    const reloaded = await FieldTemplateVersion.findById(created._id).lean();
+
+    expect(reloaded?.stages).toBeUndefined();
+  });
 });
