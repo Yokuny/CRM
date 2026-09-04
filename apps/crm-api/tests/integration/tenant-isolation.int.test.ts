@@ -1,5 +1,16 @@
 import type { FieldDef } from '@crm/contracts';
-import { connect, disconnect, FieldTemplate, FieldTemplateVersion, Invite, Session, Tenant, User } from '@crm/db';
+import {
+  Customer,
+  connect,
+  disconnect,
+  FieldTemplate,
+  FieldTemplateVersion,
+  Invite,
+  Process,
+  Session,
+  Tenant,
+  User,
+} from '@crm/db';
 import bcrypt from 'bcrypt';
 import type { Express } from 'express';
 import request from 'supertest';
@@ -96,6 +107,8 @@ describe('cross-tenant isolation (FND-07, FND-09)', () => {
 
   afterEach(async () => {
     await Promise.all([
+      Process.deleteMany({}),
+      Customer.deleteMany({}),
       FieldTemplateVersion.deleteMany({}),
       FieldTemplate.deleteMany({}),
       Session.deleteMany({}),
@@ -309,5 +322,118 @@ describe('cross-tenant isolation (FND-07, FND-09)', () => {
     expect(await FieldTemplateVersion.countDocuments({ template: templateBId })).toBe(2);
     expect(await FieldTemplate.countDocuments({ Tenant: adminA.tenantId })).toBe(1);
     expect(await FieldTemplate.countDocuments({ Tenant: adminB.tenantId })).toBe(1);
+  });
+
+  // CORE-05 (estende FND-09): mesma prova de espelhamento acima, agora sobre
+  // Customer/Process (crm-core, feature 3) — dois tenants com registros de
+  // mesmo nome/telefone, e nenhuma chamada (listagem OU mutação por id)
+  // enxerga o registro do outro.
+  const OBS_FIELD: FieldDef = { fieldId: 'obs', label: 'Observação', type: 'text', maxLength: 200 };
+  const PROCESS_STAGES = ['aberto', 'concluido'];
+
+  it("keeps each tenant's Customer/Process private to its own session, through listing, filtering and mutation by id (CORE-05)", async () => {
+    const app = buildApp();
+    const platformCookie = await seedPlatformAdminCookie(app);
+
+    const adminA = await provisionAndAcceptAdmin(
+      app,
+      platformCookie,
+      'Tenant Core A',
+      '99999999000199',
+      'core-a@empresa-a.com',
+      'Admin A',
+    );
+    const adminB = await provisionAndAcceptAdmin(
+      app,
+      platformCookie,
+      'Tenant Core B',
+      '10101010000110',
+      'core-b@empresa-b.com',
+      'Admin B',
+    );
+
+    const createProcessTemplate = (cookie: string) =>
+      request(app)
+        .post('/field-templates')
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE)
+        .send({
+          targetType: 'process',
+          key: 'negociacao',
+          name: 'Negociação',
+          fields: [OBS_FIELD],
+          stages: PROCESS_STAGES,
+        });
+
+    const createCustomer = (cookie: string) =>
+      request(app)
+        .post('/customers')
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE)
+        .send({ name: 'Cliente Espelhado', phone: '11955555555', values: { status: 'novo' } });
+
+    const createProcess = (cookie: string, customerId: string) =>
+      request(app)
+        .post('/processes')
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE)
+        .send({ templateKey: 'negociacao', customerId });
+
+    const listCustomers = (cookie: string) =>
+      request(app).get('/customers').set('Cookie', cookie).set('User-Agent', DEVICE);
+
+    const listProcessesByCustomer = (cookie: string, customerId: string) =>
+      request(app).get('/processes').query({ customerId }).set('Cookie', cookie).set('User-Agent', DEVICE);
+
+    const patchStage = (cookie: string, processId: string) =>
+      request(app)
+        .patch(`/processes/${processId}/stage`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE)
+        .send({ stage: 'concluido' });
+
+    await createProcessTemplate(adminA.cookie);
+    await createProcessTemplate(adminB.cookie);
+
+    const customerA = await createCustomer(adminA.cookie);
+    const customerB = await createCustomer(adminB.cookie);
+    expect(customerA.status).toBe(201);
+    expect(customerB.status).toBe(201);
+    expect(customerA.body.data.id).not.toBe(customerB.body.data.id);
+
+    const processA = await createProcess(adminA.cookie, customerA.body.data.id);
+    const processB = await createProcess(adminB.cookie, customerB.body.data.id);
+    expect(processA.status).toBe(201);
+    expect(processB.status).toBe(201);
+
+    // Listagem: cada sessão só enxerga o próprio Customer, mesmo com nome e
+    // telefone espelhados no outro tenant.
+    const listedA = await listCustomers(adminA.cookie);
+    const listedB = await listCustomers(adminB.cookie);
+    expect(listedA.body.data.total).toBe(1);
+    expect(listedA.body.data.items[0].id).toBe(customerA.body.data.id);
+    expect(listedB.body.data.total).toBe(1);
+    expect(listedB.body.data.items[0].id).toBe(customerB.body.data.id);
+    expect(await Customer.countDocuments({})).toBe(2);
+
+    // Filtro por Customer (P2): pedir o histórico do Customer de A usando a
+    // sessão de B devolve lista vazia — o filtro por Tenant da sessão nunca
+    // casa com o customerId forjado/estrangeiro.
+    const crossListProcesses = await listProcessesByCustomer(adminB.cookie, customerA.body.data.id);
+    expect(crossListProcesses.status).toBe(200);
+    expect(crossListProcesses.body.data.items).toEqual([]);
+    const ownListProcesses = await listProcessesByCustomer(adminA.cookie, customerA.body.data.id);
+    expect(ownListProcesses.body.data.items).toHaveLength(1);
+    expect(await Process.countDocuments({})).toBe(2);
+
+    // Mutar pelo id do outro tenant também não vaza (mesmo idioma do
+    // crossBump de field-template acima): o Process de A é invisível para a
+    // sessão de B — 404, e o stage de A fica intacto.
+    const crossStage = await patchStage(adminB.cookie, processA.body.data.id);
+    expect(crossStage.status).toBe(404);
+
+    const processADoc = await Process.findById(processA.body.data.id).lean();
+    expect(processADoc?.stage).toBe('aberto');
+    expect(processADoc?.Tenant.toString()).toBe(adminA.tenantId);
   });
 });
