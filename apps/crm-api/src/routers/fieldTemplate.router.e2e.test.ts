@@ -607,8 +607,12 @@ describe('field-template routes', () => {
 
       // O registro antigo continua renderizando contra a versão que ele usa:
       // arquivar bloqueia só NOVO uso, nunca a leitura de quem já aponta pra cá.
+      // Bloquear novo uso é responsabilidade do CONSUMIDOR (crm-core, feature 3
+      // — ver design.md Error Handling Strategy); esta feature só garante que o
+      // sinal que ele precisa (a flag `archived`) chega correto na leitura.
       const afterArchive = await getCurrent(app, cookie, 'customer', 'default');
       expect(afterArchive.status).toBe(200);
+      expect(afterArchive.body.data.template.archived).toBe(true);
       expect(hydrate(afterArchive.body.data.fields, { status: 'ativo' })).toEqual([
         { ...STATUS_FIELD, value: 'ativo' },
       ]);
