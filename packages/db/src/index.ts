@@ -1,4 +1,6 @@
 export { connect, disconnect } from './connection.js';
+export type { CustomerDocument } from './models/customer.model.js';
+export { Customer } from './models/customer.model.js';
 export type { FieldTemplateDocument } from './models/fieldTemplate.model.js';
 export {
   archiveFieldTemplate,
@@ -18,6 +20,7 @@ export type { UserDocument } from './models/user.model.js';
 export { User } from './models/user.model.js';
 export { tenantScoped } from './tenantScoped.js';
 
+import { Customer } from './models/customer.model.js';
 import { FieldTemplate } from './models/fieldTemplate.model.js';
 import { FieldTemplateVersion } from './models/fieldTemplateVersion.model.js';
 import { Invite } from './models/invite.model.js';
@@ -33,5 +36,6 @@ export const syncIndexes = async (): Promise<void> => {
     Session.createIndexes(),
     FieldTemplate.createIndexes(),
     FieldTemplateVersion.createIndexes(),
+    Customer.createIndexes(),
   ]);
 };
