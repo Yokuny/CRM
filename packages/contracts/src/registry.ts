@@ -4,6 +4,7 @@ import { bumpFieldTemplateSchema } from './schemas/bumpFieldTemplate.schema.js';
 import { createCustomerSchema } from './schemas/createCustomer.schema.js';
 import { createFieldTemplateSchema } from './schemas/createFieldTemplate.schema.js';
 import { createInviteSchema } from './schemas/createInvite.schema.js';
+import { createProcessSchema } from './schemas/createProcess.schema.js';
 import { fieldDefSchema } from './schemas/fieldDef.schema.js';
 import { idSchema } from './schemas/id.schema.js';
 import { inviteTokenParamSchema } from './schemas/inviteToken.schema.js';
@@ -38,4 +39,5 @@ export const schemaRegistry: ReadonlyArray<{ name: string; schema: ZodType }> = 
   { name: 'createFieldTemplateSchema', schema: createFieldTemplateSchema },
   { name: 'bumpFieldTemplateSchema', schema: bumpFieldTemplateSchema },
   { name: 'createCustomerSchema', schema: createCustomerSchema },
+  { name: 'createProcessSchema', schema: createProcessSchema },
 ];
