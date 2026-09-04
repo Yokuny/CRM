@@ -1,0 +1,201 @@
+{
+  "schema": 1,
+  "promote_threshold": 2,
+  "window_days": 45,
+  "quarantine_threshold": 2,
+  "next_id": 13,
+  "lessons": [
+    {
+      "id": "L-001",
+      "key": "ac_gap::for a repeated request against existing pending state must invalidate and reissue requirement assert the reissue outcome old token rejected new token works exactly one live record a test asserting 409 on duplicate locks in rejection as the contract and hides that reuse was never built",
+      "text": "For a 'repeated request against existing pending state must invalidate-and-reissue' requirement, assert the reissue outcome (old token rejected, new token works, exactly one live record) — a test asserting 409-on-duplicate locks in rejection as the contract and hides that reuse was never built.",
+      "signal": "ac_gap",
+      "scope": "idempotency/invite-resend/repositories",
+      "status": "candidate",
+      "features": ["foundation-tenancy-auth"],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "apps/crm-api/src/services/platform.service.ts:42-57; apps/crm-api/src/routers/platform.router.e2e.test.ts:195-214 (idempotency/invite-resend/repositories)"
+      ],
+      "created": "2026-09-03T23:33:09Z",
+      "last_seen": "2026-09-03T23:33:09Z"
+    },
+    {
+      "id": "L-002",
+      "key": "ac_gap::when design md commits to a per operation instrument that is only named inside another component s dependencies column give it its own task during tasks authoring instrumentation mentioned as a side detail of a different task is dropped silently and no done when criterion catches it",
+      "text": "When design.md commits to a per-operation instrument that is only named inside another component's Dependencies column, give it its own task during Tasks authoring — instrumentation mentioned as a side-detail of a different task is dropped silently and no Done-when criterion catches it.",
+      "signal": "ac_gap",
+      "scope": "tasks-authoring/observability/instrumentation",
+      "status": "candidate",
+      "features": ["foundation-tenancy-auth"],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        ".specs/features/foundation-tenancy-auth/design.md (Requirement→Component rows citing dbReqResTime); absent from implementation (tasks-authoring/observability/instrumentation)"
+      ],
+      "created": "2026-09-03T23:33:10Z",
+      "last_seen": "2026-09-03T23:33:10Z"
+    },
+    {
+      "id": "L-003",
+      "key": "gate_fail::run at least one manual smoke test against the real running node process for any module importing a commonjs package via import as x from pkg vitest s esbuild transform synthesizes named exports that real node esm cannot so a fully green suite can ship with those functions undefined",
+      "text": "Run at least one manual smoke test against the real running Node process for any module importing a CommonJS package via 'import * as X from pkg' — Vitest's esbuild transform synthesizes named exports that real Node ESM cannot, so a fully green suite can ship with those functions undefined.",
+      "signal": "gate_fail",
+      "scope": "build-runtime/esm-cjs-interop/auth",
+      "status": "candidate",
+      "features": ["foundation-tenancy-auth"],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "apps/crm-api/src/middlewares/authentication.middleware.ts:4; apps/crm-api/src/services/auth.service.ts:4; apps/crm-api/src/services/invite.service.ts:4 (fixed in aec2a83) (build-runtime/esm-cjs-interop/auth)"
+      ],
+      "created": "2026-09-03T23:33:10Z",
+      "last_seen": "2026-09-03T23:33:10Z"
+    },
+    {
+      "id": "L-004",
+      "key": "surviving_mutant::assert instrumentation on at least one real operation of an instrumented module not only on the wrapper with fictitious operation names otherwise the whole instrumentation can be deleted without turning a single test red",
+      "text": "Assert instrumentation on at least one real operation of an instrumented module, not only on the wrapper with fictitious operation names — otherwise the whole instrumentation can be deleted without turning a single test red.",
+      "signal": "surviving_mutant",
+      "scope": "observability/instrumentation",
+      "status": "candidate",
+      "features": ["dynamic-field-engine"],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M9 (validation.md Discrimination Sensor) — apps/crm-api/src/repositories/fieldTemplate.repository.ts:4,34,50,58,68,87,100,105 (observability/instrumentation)"
+      ],
+      "created": "2026-09-03T23:33:22Z",
+      "last_seen": "2026-09-03T23:33:22Z"
+    },
+    {
+      "id": "L-005",
+      "key": "surviving_mutant::assert a lifecycle flag s flipped value on the read endpoint that serves it not only on the document in the database the api layer can drop or hardcode the flag while the database assertion stays green",
+      "text": "Assert a lifecycle flag's flipped value on the read endpoint that serves it, not only on the document in the database — the API layer can drop or hardcode the flag while the database assertion stays green.",
+      "signal": "surviving_mutant",
+      "scope": "routes/lifecycle-flags",
+      "status": "candidate",
+      "features": ["dynamic-field-engine"],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M10 (validation.md Discrimination Sensor) — apps/crm-api/src/services/fieldTemplate.service.ts:73; apps/crm-api/src/routers/fieldTemplate.router.e2e.test.ts:547-550 (routes/lifecycle-flags)"
+      ],
+      "created": "2026-09-03T23:33:22Z",
+      "last_seen": "2026-09-03T23:33:22Z"
+    },
+    {
+      "id": "L-006",
+      "key": "surviving_mutant::exercise a concurrency guard on the branch that does the expensive side effect work not only on the cheap branch a concurrency test on the cheap path cannot detect the guard being reordered to after the work",
+      "text": "Exercise a concurrency guard on the branch that does the expensive side-effect work, not only on the cheap branch — a concurrency test on the cheap path cannot detect the guard being reordered to after the work.",
+      "signal": "surviving_mutant",
+      "scope": "concurrency/versioning",
+      "status": "candidate",
+      "features": ["dynamic-field-engine"],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M13 (validation.md Discrimination Sensor) — apps/crm-api/src/services/fieldTemplate.service.ts:112-127; apps/crm-api/src/routers/fieldTemplate.router.e2e.test.ts:504 (concurrency/versioning)"
+      ],
+      "created": "2026-09-03T23:33:22Z",
+      "last_seen": "2026-09-03T23:33:22Z"
+    },
+    {
+      "id": "L-007",
+      "key": "ac_gap::when an operation claims a unique slot before doing work that can fail assert the outcome of retrying it after that failure an unreleased slot otherwise ships a permanent conflict response as the de facto contract",
+      "text": "When an operation claims a unique slot before doing work that can fail, assert the outcome of retrying it after that failure — an unreleased slot otherwise ships a permanent conflict response as the de facto contract.",
+      "signal": "ac_gap",
+      "scope": "idempotency/retry/versioning",
+      "status": "candidate",
+      "features": ["dynamic-field-engine"],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "FLD-15 / nota D (validation.md) — apps/crm-api/src/services/fieldTemplate.service.ts:113,120-125; fieldTemplate.router.e2e.test.ts:483-490 (idempotency/retry/versioning)"
+      ],
+      "created": "2026-09-03T23:33:22Z",
+      "last_seen": "2026-09-03T23:33:22Z"
+    },
+    {
+      "id": "L-008",
+      "key": "ac_gap::when an acceptance criterion has two halves keep serving x but block new y give each half its own task and its own assertion the half without a natural happy path is the one that ships unimplemented and unnoticed",
+      "text": "When an acceptance criterion has two halves (keep serving X but block new Y), give each half its own task and its own assertion — the half without a natural happy path is the one that ships unimplemented and unnoticed.",
+      "signal": "ac_gap",
+      "scope": "tasks-authoring/lifecycle",
+      "status": "candidate",
+      "features": ["dynamic-field-engine"],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "P1-AC6 / FLD-08 (validation.md) — apps/crm-api/src/services/fieldTemplate.service.ts:57-77; no route denies use by archived (tasks-authoring/lifecycle)"
+      ],
+      "created": "2026-09-03T23:33:38Z",
+      "last_seen": "2026-09-03T23:33:38Z"
+    },
+    {
+      "id": "L-009",
+      "key": "ac_gap::when an acceptance criterion says behavior must still hold after state has advanced assert it in that exact conjunction a test on the pre advance state plus a separate immutability test proves neither half of it",
+      "text": "When an acceptance criterion says behavior must still hold after state has advanced, assert it in that exact conjunction — a test on the pre-advance state plus a separate immutability test proves neither half of it.",
+      "signal": "ac_gap",
+      "scope": "versioning/e2e",
+      "status": "candidate",
+      "features": ["dynamic-field-engine"],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "P1-AC4 / FLD-06 (validation.md nota F) — apps/crm-api/tests/integration/tenant-isolation.int.test.ts:289; no route serves an arbitrary version (versioning/e2e)"
+      ],
+      "created": "2026-09-03T23:33:38Z",
+      "last_seen": "2026-09-03T23:33:38Z"
+    },
+    {
+      "id": "L-010",
+      "key": "ac_gap::write rbac denial tests with a non privileged user inside the same tenant as the resource a cross tenant user makes the request fail on tenant scoping 404 and the 403 assertion never reaches the role check",
+      "text": "Write RBAC-denial tests with a non-privileged user inside the same tenant as the resource — a cross-tenant user makes the request fail on tenant scoping (404) and the 403 assertion never reaches the role check.",
+      "signal": "ac_gap",
+      "scope": "rbac/routes/e2e",
+      "status": "candidate",
+      "features": ["dynamic-field-engine"],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "P1-AC5 / FLD-07 (validation.md nota E) — M7 kill 'expected 404 to be 403'; apps/crm-api/src/routers/fieldTemplate.router.e2e.test.ts:518,593; seed helper at :131-133 (rbac/routes/e2e)"
+      ],
+      "created": "2026-09-03T23:33:38Z",
+      "last_seen": "2026-09-03T23:33:38Z"
+    },
+    {
+      "id": "L-011",
+      "key": "spec_precision_gap::when a spec qualifies a validation rule with a discriminator validate an id respecting target either implement the discriminator or leave a spec deviation marker validating only the generic form silently narrows the requirement and passes review",
+      "text": "When a spec qualifies a validation rule with a discriminator (validate an id 'respecting target'), either implement the discriminator or leave a // SPEC_DEVIATION marker — validating only the generic form silently narrows the requirement and passes review.",
+      "signal": "spec_precision_gap",
+      "scope": "field-engine/validation",
+      "status": "candidate",
+      "features": ["dynamic-field-engine"],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "P1-AC3 / FLD-02 (validation.md nota A) — packages/field-engine/src/validate.ts:62-65; validate.unit.test.ts:119 (field-engine/validation)"
+      ],
+      "created": "2026-09-03T23:33:38Z",
+      "last_seen": "2026-09-03T23:33:38Z"
+    },
+    {
+      "id": "L-012",
+      "key": "spec_precision_gap::state the concrete value an edge case must produce not just that it must not throw an outcome phrased only as returns pending invalid never throws can only ever be tested as not tothrow",
+      "text": "State the concrete value an edge case must produce, not just that it must not throw — an outcome phrased only as 'returns pending/invalid, never throws' can only ever be tested as not.toThrow().",
+      "signal": "spec_precision_gap",
+      "scope": "spec-authoring/field-engine",
+      "status": "candidate",
+      "features": ["dynamic-field-engine"],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Edge case 'reference cujo target foi apagado' (validation.md Edge Cases) — packages/field-engine/src/hydrate.unit.test.ts:168-169 (spec-authoring/field-engine)"
+      ],
+      "created": "2026-09-03T23:33:38Z",
+      "last_seen": "2026-09-03T23:33:38Z"
+    }
+  ]
+}
