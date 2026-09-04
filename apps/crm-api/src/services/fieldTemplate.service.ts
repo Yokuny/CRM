@@ -125,16 +125,24 @@ export const bumpFieldTemplateVersion = async (
   }
 
   if (diff.kind === 'destructive') {
-    // Se migrateValues lançar, o erro sobe e o ponteiro NUNCA avança: a versão
-    // N+1 fica órfã e inofensiva, e o template segue servindo a anterior
-    // (FLD-12). Nada a desfazer.
-    const { migrated } = await stores[template.targetType].migrateValues(
-      tenantId,
-      template.id,
-      data.expectedVersion,
-      nextVersion,
-      migration,
-    );
+    // Se migrateValues lançar, o ponteiro NUNCA avança E o slot reivindicado é
+    // devolvido: sem essa devolução o índice único {template,version} manteria
+    // para sempre uma versão que nunca existiu, e reaplicar o MESMO bump
+    // receberia 409 permanente ("outro bump já avançou") sem que nada tivesse
+    // avançado. O rollback de FLD-12 é completo, não só do ponteiro.
+    let migrated: number;
+    try {
+      ({ migrated } = await stores[template.targetType].migrateValues(
+        tenantId,
+        template.id,
+        data.expectedVersion,
+        nextVersion,
+        migration,
+      ));
+    } catch (e) {
+      await fieldTemplateRepository.releaseVersionSlot(tenantId, template.id, nextVersion);
+      throw e;
+    }
 
     console.log(
       JSON.stringify({

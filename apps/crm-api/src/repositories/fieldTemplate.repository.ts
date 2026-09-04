@@ -94,6 +94,15 @@ export const claimVersionSlot = async (data: ClaimVersionSlotInput): Promise<voi
     });
   });
 
+// Devolve o slot {template, version} ao pool quando a migração destrutiva
+// falha. Sem isso o índice único guarda para sempre uma versão que nunca
+// chegou a existir, e reaplicar o mesmo bump devolveria 409 permanente
+// (FLD-12: o rollback é completo, não só do ponteiro).
+export const releaseVersionSlot = async (tenantId: string, templateId: string, version: number): Promise<void> =>
+  withDbTiming('fieldTemplate.releaseVersionSlot', async () => {
+    await FieldTemplateVersion.deleteOne(tenantScoped({ Tenant: tenantId, template: templateId, version }));
+  });
+
 // Último passo do bump: só quem reivindicou o slot e concluiu a migração
 // chega aqui (FLD-12 — o ponteiro nunca avança para uma versão não migrada).
 export const updateCurrentVersion = async (templateId: string, version: number): Promise<void> =>

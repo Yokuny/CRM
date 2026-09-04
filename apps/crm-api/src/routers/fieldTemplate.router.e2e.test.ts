@@ -485,9 +485,39 @@ describe('field-template routes', () => {
 
       const template = await FieldTemplate.findById(id).lean();
       expect(template?.currentVersion).toBe(1);
+      // O slot N+1 reivindicado é devolvido: o rollback é completo, não só do
+      // ponteiro — sem isso o índice único guardaria uma versão inexistente.
+      expect(await FieldTemplateVersion.countDocuments({ template: id })).toBe(1);
       const reread = await getCurrent(app, cookie, 'process', 'compra');
       expect(reread.body.data.template.currentVersion).toBe(1);
       expect(reread.body.data.fields).toEqual([STATUS_FIELD, OBS_FIELD]);
+    });
+
+    it('accepts a retry of the same bump after a failed migration, instead of a permanent 409 (FLD-15)', async () => {
+      const { cookie } = await seedTenantUser(['admin']);
+      const store = createFakeFieldValueStore([{ id: 'r1', templateVersion: 1 }]);
+      const app = buildTestApp(buildStores(store));
+      const id = await seedTemplate(app, cookie);
+      store.failOnMigrate = true;
+
+      const failed = await bumpTemplate(app, cookie, id, {
+        expectedVersion: 1,
+        fields: [STATUS_FIELD],
+        migration: { obs: { action: 'discard' } },
+      });
+      expect(failed.status).toBe(500);
+
+      store.failOnMigrate = false;
+      const retry = await bumpTemplate(app, cookie, id, {
+        expectedVersion: 1,
+        fields: [STATUS_FIELD],
+        migration: { obs: { action: 'discard' } },
+      });
+
+      expect(retry.status).toBe(200);
+      expect(retry.body.data.currentVersion).toBe(2);
+      expect(await FieldTemplateVersion.countDocuments({ template: id })).toBe(2);
+      expect(store.records).toEqual([{ id: 'r1', templateVersion: 2 }]);
     });
 
     it('resolves two concurrent bumps on the same expectedVersion into one 200 and one 409 (FLD-17)', async () => {
