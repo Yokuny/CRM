@@ -59,8 +59,17 @@ const schemaForField = (def: FieldDef): z.ZodType => {
       return z.enum(def.options.map((option) => option.key) as [string, ...string[]]);
     case 'document':
       return maybeMultiple(documentValueSchema, def.multiple);
-    // O `target` diz em qual collection resolver — resolução é do consumidor
-    // (crm-core); aqui só a forma de ObjectId é verificável sem I/O.
+    // SPEC_DEVIATION: FLD-02/AC3 pede "reference como ObjectId respeitando
+    // `target`" — esta função só valida a FORMA de ObjectId, nunca `target`.
+    // Reason: `validate` é pura e sem I/O (spec.md AC3 "sem lançar exceção
+    // não tratada", design.md a mantém livre de Mongoose/rede); confirmar que
+    // um ObjectId realmente existe na collection de `target` exige uma
+    // consulta ao banco, que só o consumidor (`crm-core`, feature 3, ainda
+    // sem `Customer`/`Process`) pode fazer. A mesma razão cobre o edge case
+    // do spec "reference cujo target foi apagado": `hydrate` (hydrate.ts)
+    // devolve o ObjectId gravado tal como está, sem tentar resolvê-lo —
+    // resolução (e portanto detectar "pendente/inválida") é responsabilidade
+    // do consumidor, nunca do motor.
     case 'reference':
       return maybeMultiple(referenceValueSchema, def.multiple);
     case 'array':
