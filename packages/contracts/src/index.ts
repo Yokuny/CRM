@@ -5,6 +5,7 @@ export * from './schemas/bumpFieldTemplate.schema.js';
 export * from './schemas/createCustomer.schema.js';
 export * from './schemas/createFieldTemplate.schema.js';
 export * from './schemas/createInvite.schema.js';
+export * from './schemas/createProcess.schema.js';
 export * from './schemas/fieldDef.schema.js';
 export * from './schemas/id.schema.js';
 export * from './schemas/inviteToken.schema.js';
