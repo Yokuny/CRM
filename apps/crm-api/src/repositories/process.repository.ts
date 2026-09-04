@@ -13,13 +13,18 @@ export type ProcessRecord = {
   updatedAt: Date;
 };
 
+// `?? {}`: Mongoose (`minimize: true`, default) remove um Mixed totalmente
+// vazio ANTES de gravar no Mongo — um Process criado com `values: {}`
+// (CORE-07, "values vazios/default") persiste sem a chave `values` de jeito
+// nenhum, e um `.lean()` subsequente devolve `undefined`. O contrato de
+// ProcessRecord.values nunca deve vazar esse detalhe de armazenamento.
 const toRecord = (doc: ProcessDocument): ProcessRecord => ({
   id: doc._id.toString(),
   customer: doc.customer.toString(),
   template: doc.template.toString(),
   templateVersion: doc.templateVersion,
   stage: doc.stage,
-  values: doc.values,
+  values: doc.values ?? {},
   createdAt: doc.createdAt,
   updatedAt: doc.updatedAt,
 });

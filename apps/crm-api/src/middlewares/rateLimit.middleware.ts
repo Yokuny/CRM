@@ -48,3 +48,9 @@ export const customerRateLimit = rejectWithTooManyRequests(
   'Muitas alterações de cliente. Tente novamente em alguns minutos.',
   tenantAndIpKeyGenerator,
 );
+
+// CORE-14: mutação de Process, por tenant + IP — mesmo molde de customerRateLimit.
+export const processRateLimit = rejectWithTooManyRequests(
+  'Muitas alterações de processo. Tente novamente em alguns minutos.',
+  tenantAndIpKeyGenerator,
+);
