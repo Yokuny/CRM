@@ -149,6 +149,23 @@ const seedTenantUser = async (role: Role[]) => {
   return { tenant, user, cookie };
 };
 
+// Segundo usuário no MESMO Tenant de um `seedTenantUser` anterior — é o que
+// prova RBAC de verdade (FLD-07) em rotas por :id: sem isso, um usuário de
+// OUTRO tenant já recebe 404 do escopo de Tenant (findTemplateById) antes de
+// qualquer decisão de `isAdmin`, e o 403 do teste não provaria RBAC nenhum.
+const addUserToTenant = async (tenant: Awaited<ReturnType<typeof seedTenantUser>>['tenant'], role: Role[]) => {
+  seq += 1;
+  const user = await User.create({
+    name: 'Ciclano de Tal',
+    email: `user-${seq}@empresa.com`,
+    password: 'hash',
+    Tenant: tenant._id,
+    role,
+  });
+  const cookie = await issueSessionCookie(user.id);
+  return { user, cookie };
+};
+
 const createTemplate = (app: express.Express, cookie: string, body: object) =>
   request(app).post('/field-templates').set('Cookie', cookie).set('User-Agent', DEVICE).send(body);
 
@@ -571,11 +588,14 @@ describe('field-template routes', () => {
       expect(template?.currentVersion).toBe(2);
     });
 
-    it('responds 403 for a non-admin without touching the template (FLD-07)', async () => {
+    it('responds 403 for a non-admin of the SAME tenant, without touching the template (FLD-07)', async () => {
       const admin = await seedTenantUser(['admin']);
       const app = buildTestApp(buildStores(createFakeFieldValueStore()));
       const id = await seedTemplate(app, admin.cookie, [STATUS_FIELD]);
-      const gestor = await seedTenantUser(['gestor']);
+      // Mesmo Tenant do admin: se fosse de outro tenant, findTemplateById já
+      // devolveria 404 antes de isAdmin decidir — o 403 provaria isolamento
+      // de Tenant, não RBAC (achado do Verifier independente, validation.md).
+      const gestor = await addUserToTenant(admin.tenant, ['gestor']);
 
       const res = await bumpTemplate(app, gestor.cookie, id, { expectedVersion: 1, fields: [STATUS_FIELD, OBS_FIELD] });
 
@@ -642,7 +662,7 @@ describe('field-template routes', () => {
       expect(template?.archived).toBe(true);
     });
 
-    it('responds 403 for a non-admin, leaving the template unarchived (FLD-07)', async () => {
+    it('responds 403 for a non-admin of the SAME tenant, leaving the template unarchived (FLD-07)', async () => {
       const admin = await seedTenantUser(['admin']);
       const app = buildTestApp(buildStores(createFakeFieldValueStore()));
       const created = await createTemplate(app, admin.cookie, {
@@ -650,7 +670,8 @@ describe('field-template routes', () => {
         name: 'Cliente',
         fields: [STATUS_FIELD],
       });
-      const operador = await seedTenantUser(['operador']);
+      // Mesmo Tenant do admin — ver nota da rota de bump acima.
+      const operador = await addUserToTenant(admin.tenant, ['operador']);
 
       const res = await request(app)
         .post(`/field-templates/${created.body.data.id}/archive`)
