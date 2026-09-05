@@ -5,7 +5,7 @@ import { userEvent } from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const postMock = vi.fn();
-vi.mock('../../../lib/api/client.api.js', () => ({ post: postMock }));
+vi.mock('../../lib/api/client.api.js', () => ({ post: postMock }));
 
 const navigateMock = vi.fn();
 vi.mock('@tanstack/react-router', async (importOriginal) => {

@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const getMock = vi.fn();
 const postMock = vi.fn();
-vi.mock('../../../lib/api/client.api.js', () => ({ get: getMock, post: postMock }));
+vi.mock('../../lib/api/client.api.js', () => ({ get: getMock, post: postMock }));
 
 const navigateMock = vi.fn();
 const searchMock = vi.fn();

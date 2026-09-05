@@ -20,10 +20,23 @@
       "preset": "recommended"
     }
   },
+  "overrides": [
+    {
+      "includes": ["**/*.gen.ts"],
+      "linter": { "enabled": false },
+      "formatter": { "enabled": false },
+      "assist": { "enabled": false }
+    }
+  ],
   "javascript": {
     "formatter": {
       "quoteStyle": "single",
       "semicolons": "always"
+    }
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
     }
   },
   "assist": {

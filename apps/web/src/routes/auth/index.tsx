@@ -1,12 +1,11 @@
 import { type SignIn, signinSchema } from '@crm/contracts';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { createRoute, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Card, CardContent, CardHeader } from '../../../components/ui/card.js';
-import { post } from '../../../lib/api/client.api.js';
-import { t } from '../../../lib/helpers/translate.helper.js';
-import { Route as rootRoute } from '../../__root.js';
+import { Card, CardContent, CardHeader } from '../../components/ui/card.js';
+import { post } from '../../lib/api/client.api.js';
+import { t } from '../../lib/helpers/translate.helper.js';
 
 // FND-10/AC2, AC4: login redireciona à área privada em caso de sucesso; erro
 // do back-end mostra a `message` do ApiResponse, nunca um erro cru.
@@ -53,8 +52,6 @@ export function AuthPage() {
   );
 }
 
-export const Route = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/auth',
+export const Route = createFileRoute('/auth/')({
   component: AuthPage,
 });

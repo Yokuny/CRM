@@ -292,14 +292,17 @@ T28
 - Skill: NONE
 
 **Done when**:
-- [ ] `pnpm dev` in `apps/web` renders a Tailwind utility class visibly (manual smoke check)
-- [ ] `cn('a', condition && 'b')` resolves conflicting Tailwind classes correctly (matches DentalEase's own `cn()` behavior)
-- [ ] `routeTree.gen.ts` is generated on `pnpm dev`/build and `router.tsx` consumes it — no manual `addChildren` call remains
-- [ ] All 4 existing routes (`_private`, `_private/index`, `auth/index`, `invite/index`) compile and behave identically under `createFileRoute` — the existing `*.unit.test.tsx` suites for these routes (session guard redirect, login, invite-accept) pass unmodified in assertions (import paths only)
-- [ ] Gate check passes: `pnpm -r exec tsc --noEmit && pnpm biome check . && pnpm vitest run` (full suite — this task touches existing feature-1 tests, so Build gate applies here even though it's not the last task in the phase)
+- [x] `pnpm dev` in `apps/web` renders a Tailwind utility class visibly (manual smoke check) — verified via `vite build`: compiled CSS asset is 6.93 kB (real utility output, not an empty stylesheet), CSS/route-tree pipeline confirmed working end-to-end
+- [x] `cn('a', condition && 'b')` resolves conflicting Tailwind classes correctly (matches DentalEase's own `cn()` behavior)
+- [x] `routeTree.gen.ts` is generated on `pnpm dev`/build and `router.tsx` consumes it — no manual `addChildren` call remains
+- [x] All 4 existing routes (`_private`, `_private/index`, `auth/index`, `invite/index`) compile and behave identically under `createFileRoute` — the existing `*.unit.test.tsx` suites for these routes (session guard redirect, login, invite-accept) pass unmodified in assertions (import paths only)
+- [x] Gate check passes: `pnpm -r exec tsc --noEmit && pnpm biome check . && pnpm vitest run` (full suite — this task touches existing feature-1 tests, so Build gate applies here even though it's not the last task in the phase)
+
+Also ported/adjusted beyond the literal file list above (transitive necessities found running the actual codegen/build, not guessed): root `biome.json` gained `css.parser.tailwindDirectives: true` (Biome otherwise refuses to parse `@theme`/`@apply`) and an `overrides` entry disabling lint/format/assist on `**/*.gen.ts` (matches the reference repo's own `biome.json`, which excludes `routeTree.gen.ts` the same way) — both required for the gate to pass, not optional polish. `apps/web/tsconfig.json` gained `baseUrl`/`paths` (`@/*` → `./src/*`) so `tsc --noEmit` can resolve the `@/...`-aliased imports T8+ introduces (confirmed by experiment: under this project's `moduleResolution: NodeNext`, even a path-mapped bare specifier still needs an explicit `.js` extension — verified before porting any component). The TanStack Router codegen itself corrected `createFileRoute('/auth')`/`createFileRoute('/invite')` to `createFileRoute('/auth/')`/`createFileRoute('/invite/')` (trailing slash — the real convention for a directory+`index.tsx` route with no sibling pathless layout, confirmed by running the actual plugin rather than guessing); `navigate`/`redirect` call sites keep using `to: '/auth'`/`to: '/invite'` unchanged (the router's `to`-form omits the trailing slash by design, per the generated `FileRoutesByTo` type).
 
 **Tests**: none (existing route tests must keep passing, no new tests added by this task)
 **Gate**: build
+**Status**: ✅ Complete (commit `<PENDING>`)
 
 ---
 

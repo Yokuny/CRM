@@ -1,7 +1,6 @@
 import type { QueryClient } from '@tanstack/react-query';
-import { createRoute, Outlet, redirect } from '@tanstack/react-router';
+import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
 import { sessionQuery } from '../query/session.js';
-import { Route as rootRoute } from './__root.js';
 
 // Tech Decisions (design.md): beforeLoad + ensureQueryData(GET /auth/session),
 // NUNCA Zustand — evita a segunda fonte de verdade que causaria o loop de
@@ -16,9 +15,7 @@ export const beforeLoad = async ({ context }: { context: { queryClient: QueryCli
   }
 };
 
-export const Route = createRoute({
-  getParentRoute: () => rootRoute,
-  id: '_private',
+export const Route = createFileRoute('/_private')({
   beforeLoad,
   component: () => <Outlet />,
 });
