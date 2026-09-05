@@ -690,15 +690,18 @@ Phase 3+4+5 close-out (T14-T21): Build gate re-run after T21 — `pnpm -r exec t
 - Skill: NONE
 
 **Done when**:
-- [ ] Renders core fields + the current template's dynamic fields via `hydrate()`/`DynamicField`
-- [ ] Valid submit calls `POST /customers`, navigates to the new record's detail on success
-- [ ] 400 response keeps the form filled, shows the message
-- [ ] Submit button disabled while the mutation is `isPending` — a second click before the first resolves is a no-op (WEB-13)
-- [ ] Gate check passes: `pnpm vitest run --project unit`
-- [ ] Test count: ≥4 tests, one per WEB-04 Acceptance Criterion
+- [x] Renders core fields + the current template's dynamic fields via `hydrate()`/`DynamicField`
+- [x] Valid submit calls `POST /customers`, navigates to the new record's detail on success
+- [x] 400 response keeps the form filled, shows the message
+- [x] Submit button disabled while the mutation is `isPending` — a second click before the first resolves is a no-op (WEB-13)
+- [x] Gate check passes: `pnpm vitest run --project unit`
+- [x] Test count: ≥4 tests, one per WEB-04 Acceptance Criterion
+
+Also built beyond the literal file list above (transitive necessity, flagged by the batch dispatch prompt as load-bearing for this and later tasks): `apps/web/src/components/dynamic-field/dynamic-field.utils.ts` — `renderNodesToDefaultValues(nodes)` converts a `hydrate()` `RenderNode[]` tree into the plain nested object react-hook-form's `defaultValues` needs (group/array `RenderNode.value` is itself `RenderNode[]`, never plain data). 6 unit tests (leaf round-trip incl. hydrate()-filled defaults, group, array-of-leaf, array-of-group, nested group-in-group, empty field list) built against a real `hydrate()` call, not a hand-rolled `RenderNode`. Added `save`/`document`/`customer.create.title`/`customer.create.error` keys to `translate.helper.ts`'s dictionary (progressive addition, same convention T16/T18/T19/T20 already established — T28 does the final sweep).
 
 **Tests**: unit
 **Gate**: quick
+**Status**: ✅ Complete (commit `d8a29e7`)
 
 ---
 
