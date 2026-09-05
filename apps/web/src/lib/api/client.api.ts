@@ -6,7 +6,7 @@ import type { ApiResponse } from '@crm/contracts';
 // `authorization` header (não existe access token aqui).
 const BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
 
-type Method = 'GET' | 'POST';
+type Method = 'GET' | 'POST' | 'PATCH';
 
 const CONNECTION_ERROR_MESSAGE = 'Não foi possível conectar ao servidor. Tente novamente.';
 
@@ -28,3 +28,4 @@ export const request = async <T>(path: string, method: Method, body?: unknown): 
 
 export const get = <T>(path: string): Promise<ApiResponse<T>> => request<T>(path, 'GET');
 export const post = <T>(path: string, body?: unknown): Promise<ApiResponse<T>> => request<T>(path, 'POST', body);
+export const patch = <T>(path: string, body?: unknown): Promise<ApiResponse<T>> => request<T>(path, 'PATCH', body);

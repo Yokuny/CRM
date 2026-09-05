@@ -425,7 +425,7 @@ Reference (`../DentalEase/DentalEase/src/components/default-loading.tsx`) export
 
 **Tests**: none
 **Gate**: build
-**Status**: ✅ Complete (commit `<PENDING>`)
+**Status**: ✅ Complete (commit `124fdf2`)
 
 ---
 
@@ -442,12 +442,13 @@ Reference (`../DentalEase/DentalEase/src/components/default-loading.tsx`) export
 - Skill: NONE
 
 **Done when**:
-- [ ] `patch<T>(path, body): Promise<ApiResponse<T>>` mirrors `post`'s implementation with `method:'PATCH'`
-- [ ] Gate check passes: `pnpm vitest run --project unit`
-- [ ] Test count: `client.api.unit.test.ts` grows by ≥2 cases (success envelope, network-failure envelope) mirroring the existing `post` tests
+- [x] `patch<T>(path, body): Promise<ApiResponse<T>>` mirrors `post`'s implementation with `method:'PATCH'`
+- [x] Gate check passes: `pnpm vitest run --project unit`
+- [x] Test count: `client.api.unit.test.ts` grows by ≥2 cases (success envelope, network-failure envelope) mirroring the existing `post` tests
 
 **Tests**: unit
 **Gate**: quick
+**Status**: ✅ Complete (commit `<PENDING>`)
 
 ---
 
