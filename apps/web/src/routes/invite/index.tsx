@@ -1,14 +1,13 @@
 import { type AcceptInvite, acceptInviteSchema } from '@crm/contracts';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
-import { createRoute, useNavigate, useSearch } from '@tanstack/react-router';
+import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { DefaultLoading } from '../../../components/default-loading.js';
-import { Card, CardContent, CardHeader } from '../../../components/ui/card.js';
-import { get, post } from '../../../lib/api/client.api.js';
-import { t } from '../../../lib/helpers/translate.helper.js';
-import { Route as rootRoute } from '../../__root.js';
+import { DefaultLoading } from '../../components/default-loading.js';
+import { Card, CardContent, CardHeader } from '../../components/ui/card.js';
+import { get, post } from '../../lib/api/client.api.js';
+import { t } from '../../lib/helpers/translate.helper.js';
 
 type InvitePeek = { tenantName: string; email: string };
 type InviteSearch = { token?: string };
@@ -86,9 +85,7 @@ export function InvitePage() {
   );
 }
 
-export const Route = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/invite',
+export const Route = createFileRoute('/invite/')({
   validateSearch: (search: Record<string, unknown>): InviteSearch => ({
     token: typeof search.token === 'string' ? search.token : undefined,
   }),

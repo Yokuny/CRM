@@ -72,6 +72,18 @@ export const findCurrentVersion = async (
     return doc ? { fields: doc.fields, stages: doc.stages } : null;
   });
 
+// WEB-07: lista TODOS os templates do Tenant para um targetType, arquivados
+// inclusive — quem decide visibilidade/desabilitar é o front-end (design.md),
+// nunca o repositório/serviço.
+export const findTemplatesByTargetType = async (
+  tenantId: string,
+  targetType: FieldTemplateTargetType,
+): Promise<TemplateRecord[]> =>
+  withDbTiming('fieldTemplate.findTemplatesByTargetType', async () => {
+    const docs = await FieldTemplate.find(tenantScoped({ Tenant: tenantId, targetType })).lean();
+    return docs.map(toRecord);
+  });
+
 export type ClaimVersionSlotInput = {
   tenant: string;
   template: string;

@@ -37,11 +37,17 @@ const extractInviteToken = (logSpy: ReturnType<typeof vi.spyOn>): string => {
   return match[1];
 };
 
-const seedPlatformAdminCookie = async (app: Express): Promise<string> => {
+// `email` é opcional (default preserva os 5 call sites já existentes acima):
+// signinRateLimit é por e-mail+IP (FND-14), então os testes do WEB-14 mais
+// abaixo — que rodam DEPOIS desses 5 no mesmo processo/janela de 15min —
+// precisam de um e-mail próprio para não estourar o mesmo orçamento de
+// tentativas do 'root@platform.com'. `isPlatformAdmin` não depende de e-mail
+// específico (authorization.middleware.ts só olha o boolean).
+const seedPlatformAdminCookie = async (app: Express, email = 'root@platform.com'): Promise<string> => {
   const hashed = await bcrypt.hash('rootPassword123', 10);
   await User.create({
     name: 'Root Admin',
-    email: 'root@platform.com',
+    email,
     password: hashed,
     isPlatformAdmin: true,
     role: [],
@@ -49,7 +55,7 @@ const seedPlatformAdminCookie = async (app: Express): Promise<string> => {
   const res = await request(app)
     .post('/auth/signin')
     .set('User-Agent', DEVICE)
-    .send({ email: 'root@platform.com', password: 'rootPassword123' });
+    .send({ email, password: 'rootPassword123' });
   return (res.headers['set-cookie'] as unknown as string[])[0].split(';')[0];
 };
 
@@ -435,5 +441,128 @@ describe('cross-tenant isolation (FND-07, FND-09)', () => {
     const processADoc = await Process.findById(processA.body.data.id).lean();
     expect(processADoc?.stage).toBe('aberto');
     expect(processADoc?.Tenant.toString()).toBe(adminA.tenantId);
+  });
+
+  // WEB-14: os 3 endpoints novos desta feature (crm-web-shell) seguem o mesmo
+  // precedente que CORE-05 já fixou acima para Customer/Process — cada um,
+  // chamado com a sessão do Tenant B contra um id/recurso do Tenant A, devolve
+  // 404/vazio, nunca o dado do Tenant A.
+  describe('cross-tenant isolation — crm-web-shell new endpoints (WEB-14)', () => {
+    const setupTwoTenants = async (
+      app: Express,
+      platformCookie: string,
+    ): Promise<{
+      adminA: { tenantId: string; cookie: string };
+      adminB: { tenantId: string; cookie: string };
+    }> => {
+      const adminA = await provisionAndAcceptAdmin(
+        app,
+        platformCookie,
+        'Tenant Shell A',
+        '12121212000112',
+        'shell-a@empresa-a.com',
+        'Admin A',
+      );
+      const adminB = await provisionAndAcceptAdmin(
+        app,
+        platformCookie,
+        'Tenant Shell B',
+        '13131313000113',
+        'shell-b@empresa-b.com',
+        'Admin B',
+      );
+      return { adminA, adminB };
+    };
+
+    it("GET /customers/:id responds 404 for tenant B against tenant A's customer id", async () => {
+      const app = buildApp();
+      const platformCookie = await seedPlatformAdminCookie(app, 'root-shell-get@platform.com');
+      const { adminA, adminB } = await setupTwoTenants(app, platformCookie);
+      const customerA = await request(app)
+        .post('/customers')
+        .set('Cookie', adminA.cookie)
+        .set('User-Agent', DEVICE)
+        .send({ name: 'Cliente A', phone: '11955555555', values: { status: 'novo' } });
+
+      const res = await request(app)
+        .get(`/customers/${customerA.body.data.id}`)
+        .set('Cookie', adminB.cookie)
+        .set('User-Agent', DEVICE);
+
+      expect(res.status).toBe(404);
+    });
+
+    it("PATCH /customers/:id responds 404 for tenant B against tenant A's customer id, leaving it untouched", async () => {
+      const app = buildApp();
+      const platformCookie = await seedPlatformAdminCookie(app, 'root-shell-patch@platform.com');
+      const { adminA, adminB } = await setupTwoTenants(app, platformCookie);
+      const customerA = await request(app)
+        .post('/customers')
+        .set('Cookie', adminA.cookie)
+        .set('User-Agent', DEVICE)
+        .send({ name: 'Cliente A', phone: '11955555555', values: { status: 'novo' } });
+
+      const res = await request(app)
+        .patch(`/customers/${customerA.body.data.id}`)
+        .set('Cookie', adminB.cookie)
+        .set('User-Agent', DEVICE)
+        .send({ name: 'Nome Forjado' });
+
+      expect(res.status).toBe(404);
+      const persisted = await Customer.findById(customerA.body.data.id).lean();
+      expect(persisted?.name).toBe('Cliente A');
+    });
+
+    it("GET /field-templates never lists tenant A's process templates for tenant B", async () => {
+      const app = buildApp();
+      const platformCookie = await seedPlatformAdminCookie(app, 'root-shell-templates@platform.com');
+      const { adminA, adminB } = await setupTwoTenants(app, platformCookie);
+      await request(app)
+        .post('/field-templates')
+        .set('Cookie', adminA.cookie)
+        .set('User-Agent', DEVICE)
+        .send({
+          targetType: 'process',
+          key: 'negociacao',
+          name: 'Negociação A',
+          fields: [OBS_FIELD],
+          stages: PROCESS_STAGES,
+        });
+
+      const res = await request(app)
+        .get('/field-templates')
+        .query({ targetType: 'process' })
+        .set('Cookie', adminB.cookie)
+        .set('User-Agent', DEVICE);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.items).toEqual([]);
+    });
+
+    // T25B (added 2026-09-05): mesmo precedente das 3 rotas acima, agora para
+    // o endpoint adicionado depois delas (GET /field-templates/:id/versions/:version).
+    it("GET /field-templates/:id/versions/:version responds 404 for tenant B against tenant A's template id", async () => {
+      const app = buildApp();
+      const platformCookie = await seedPlatformAdminCookie(app, 'root-shell-version@platform.com');
+      const { adminA, adminB } = await setupTwoTenants(app, platformCookie);
+      const templateA = await request(app)
+        .post('/field-templates')
+        .set('Cookie', adminA.cookie)
+        .set('User-Agent', DEVICE)
+        .send({
+          targetType: 'process',
+          key: 'negociacao',
+          name: 'Negociação A',
+          fields: [OBS_FIELD],
+          stages: PROCESS_STAGES,
+        });
+
+      const res = await request(app)
+        .get(`/field-templates/${templateA.body.data.id}/versions/1`)
+        .set('Cookie', adminB.cookie)
+        .set('User-Agent', DEVICE);
+
+      expect(res.status).toBe(404);
+    });
   });
 });

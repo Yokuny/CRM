@@ -1,11 +1,14 @@
-import { createCustomerSchema } from '@crm/contracts';
+import { createCustomerSchema, idSchema, updateCustomerSchema } from '@crm/contracts';
 import type { RequestHandler } from 'express';
 import { Router } from 'express';
 import { z } from 'zod';
 import * as customerController from '../controllers/customer.controller.js';
 import { customerRateLimit } from '../middlewares/rateLimit.middleware.js';
 import { tenantAssignmentCheck } from '../middlewares/tenantAssign.middleware.js';
-import { validBody } from '../middlewares/validation.middleware.js';
+import { validBody, validParams } from '../middlewares/validation.middleware.js';
+
+// Mesmo padrão de templateIdParamSchema em fieldTemplate.router.ts.
+const customerIdParamSchema = z.object({ id: idSchema }).strict();
 
 // page/limit não têm min/max aqui de propósito: o clamp de CORE-12 é
 // responsabilidade do service (customer.service.ts, T13) — a query aceita
@@ -62,6 +65,24 @@ export const createCustomerRouter = (deps: CustomerRouterDeps): Router => {
   );
 
   router.get('/', deps.validToken, tenantAssignmentCheck, validListCustomersQuery, customerController.listCustomers);
+
+  router.get(
+    '/:id',
+    deps.validToken,
+    tenantAssignmentCheck,
+    validParams(customerIdParamSchema),
+    customerController.getCustomerById,
+  );
+
+  router.patch(
+    '/:id',
+    deps.validToken,
+    tenantAssignmentCheck,
+    customerRateLimit,
+    validParams(customerIdParamSchema),
+    validBody(updateCustomerSchema),
+    customerController.updateCustomer,
+  );
 
   return router;
 };

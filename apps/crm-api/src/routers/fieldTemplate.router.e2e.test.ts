@@ -183,6 +183,12 @@ const getCurrent = (app: express.Express, cookie: string, targetType: string, ke
     .set('Cookie', cookie)
     .set('User-Agent', DEVICE);
 
+const listTemplates = (app: express.Express, cookie: string, targetType: string) =>
+  request(app).get('/field-templates').query({ targetType }).set('Cookie', cookie).set('User-Agent', DEVICE);
+
+const getTemplateVersion = (app: express.Express, cookie: string, id: string, version: number | string) =>
+  request(app).get(`/field-templates/${id}/versions/${version}`).set('Cookie', cookie).set('User-Agent', DEVICE);
+
 describe('field-template routes', () => {
   beforeAll(async () => {
     await connect(process.env.MONGODB_URI as string);
@@ -438,6 +444,193 @@ describe('field-template routes', () => {
       const res = await getCurrent(app, cookie, 'process', 'inexistente');
 
       expect(res.status).toBe(404);
+    });
+  });
+
+  describe('GET /field-templates (WEB-07)', () => {
+    it('lists every process template for the tenant as {key,label,archived}, archived included', async () => {
+      const { cookie } = await seedTenantUser(['admin']);
+      const app = buildTestApp(buildStores(createFakeFieldValueStore()));
+      await createTemplate(app, cookie, {
+        targetType: 'process',
+        key: 'compra',
+        name: 'Compra',
+        fields: [STATUS_FIELD],
+        stages: PROCESS_STAGES,
+      });
+      const toArchive = await createTemplate(app, cookie, {
+        targetType: 'process',
+        key: 'venda',
+        name: 'Venda',
+        fields: [STATUS_FIELD],
+        stages: PROCESS_STAGES,
+      });
+      await request(app)
+        .post(`/field-templates/${toArchive.body.data.id}/archive`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE)
+        .send();
+
+      const res = await listTemplates(app, cookie, 'process');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.items).toHaveLength(2);
+      expect(res.body.data.items).toEqual(
+        expect.arrayContaining([
+          { key: 'compra', label: 'Compra', archived: false },
+          { key: 'venda', label: 'Venda', archived: true },
+        ]),
+      );
+    });
+
+    it('returns the seeded default template for targetType customer', async () => {
+      const { cookie } = await seedTenantUser(['admin']);
+      const app = buildTestApp(buildStores(createFakeFieldValueStore()));
+      await createTemplate(app, cookie, { targetType: 'customer', name: 'Cliente', fields: [STATUS_FIELD] });
+
+      const res = await listTemplates(app, cookie, 'customer');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.items).toEqual([{ key: 'default', label: 'Cliente', archived: false }]);
+    });
+
+    it("never returns another tenant's templates (AD-010)", async () => {
+      const tenantA = await seedTenantUser(['admin']);
+      const tenantB = await seedTenantUser(['admin']);
+      const app = buildTestApp(buildStores(createFakeFieldValueStore()));
+      await createTemplate(app, tenantA.cookie, {
+        targetType: 'process',
+        key: 'compra',
+        name: 'Compra A',
+        fields: [STATUS_FIELD],
+        stages: PROCESS_STAGES,
+      });
+      await createTemplate(app, tenantB.cookie, {
+        targetType: 'process',
+        key: 'compra',
+        name: 'Compra B',
+        fields: [STATUS_FIELD],
+        stages: PROCESS_STAGES,
+      });
+
+      const res = await listTemplates(app, tenantA.cookie, 'process');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.items).toEqual([{ key: 'compra', label: 'Compra A', archived: false }]);
+    });
+
+    it('is open to any authenticated role, with no isAdmin gate (WEB-14)', async () => {
+      const { cookie } = await seedTenantUser(['operador']);
+      const app = buildTestApp(buildStores(createFakeFieldValueStore()));
+
+      const res = await listTemplates(app, cookie, 'customer');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.items).toEqual([]);
+    });
+  });
+
+  // T25B (added 2026-09-05): a única forma de o crm-web-shell renderizar/
+  // validar um Process contra a SUA PRÓPRIA `templateVersion` (nunca a
+  // corrente do template, AD-023) — `GET /current` sempre resolve
+  // `template.currentVersion`, nunca uma versão explícita.
+  describe('GET /field-templates/:id/versions/:version (WEB-08, T25B)', () => {
+    it("returns the template's current version fields when :version is the current one", async () => {
+      const { cookie } = await seedTenantUser(['admin']);
+      const app = buildTestApp(buildStores(createFakeFieldValueStore()));
+      const created = await createTemplate(app, cookie, {
+        targetType: 'process',
+        key: 'compra',
+        name: 'Compra',
+        fields: [STATUS_FIELD],
+        stages: PROCESS_STAGES,
+      });
+
+      const res = await getTemplateVersion(app, cookie, created.body.data.id, 1);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.fields).toEqual([STATUS_FIELD]);
+      expect(res.body.data.stages).toEqual(PROCESS_STAGES);
+    });
+
+    it('returns a NON-current/historical version’s own fields, unaffected by a later bump (the actual point of this endpoint)', async () => {
+      const { cookie } = await seedTenantUser(['admin']);
+      const app = buildTestApp(buildStores(createFakeFieldValueStore()));
+      const created = await createTemplate(app, cookie, {
+        targetType: 'process',
+        key: 'compra',
+        name: 'Compra',
+        fields: [STATUS_FIELD],
+        stages: PROCESS_STAGES,
+      });
+      const id = created.body.data.id as string;
+      const bumped = await bumpTemplate(app, cookie, id, {
+        expectedVersion: 1,
+        fields: [STATUS_FIELD, OBS_FIELD],
+        stages: PROCESS_STAGES,
+      });
+      expect(bumped.status).toBe(200);
+      expect(bumped.body.data.currentVersion).toBe(2);
+
+      const v1 = await getTemplateVersion(app, cookie, id, 1);
+      const v2 = await getTemplateVersion(app, cookie, id, 2);
+
+      expect(v1.status).toBe(200);
+      expect(v1.body.data.fields).toEqual([STATUS_FIELD]);
+      expect(v2.status).toBe(200);
+      expect(v2.body.data.fields).toEqual([STATUS_FIELD, OBS_FIELD]);
+    });
+
+    it('responds 404 for a missing template id and for another tenant’s template id (AD-010)', async () => {
+      const tenantA = await seedTenantUser(['admin']);
+      const tenantB = await seedTenantUser(['admin']);
+      const app = buildTestApp(buildStores(createFakeFieldValueStore()));
+      const created = await createTemplate(app, tenantA.cookie, {
+        targetType: 'process',
+        key: 'compra',
+        name: 'Compra',
+        fields: [STATUS_FIELD],
+        stages: PROCESS_STAGES,
+      });
+
+      const missing = await getTemplateVersion(app, tenantA.cookie, '65b0f3e2a1c4d5e6f7081920', 1);
+      const crossTenant = await getTemplateVersion(app, tenantB.cookie, created.body.data.id, 1);
+
+      expect(missing.status).toBe(404);
+      expect(missing.body.message).toBe('Versão de template não encontrada');
+      expect(crossTenant.status).toBe(404);
+    });
+
+    it('responds 404 for a version number never claimed for that template', async () => {
+      const { cookie } = await seedTenantUser(['admin']);
+      const app = buildTestApp(buildStores(createFakeFieldValueStore()));
+      const created = await createTemplate(app, cookie, {
+        targetType: 'process',
+        key: 'compra',
+        name: 'Compra',
+        fields: [STATUS_FIELD],
+        stages: PROCESS_STAGES,
+      });
+
+      const res = await getTemplateVersion(app, cookie, created.body.data.id, 99);
+
+      expect(res.status).toBe(404);
+      expect(res.body.message).toBe('Versão de template não encontrada');
+    });
+
+    it('is open to any authenticated role, with no isAdmin gate (WEB-14)', async () => {
+      const admin = await seedTenantUser(['admin']);
+      const app = buildTestApp(buildStores(createFakeFieldValueStore()));
+      const created = await createTemplate(app, admin.cookie, {
+        targetType: 'customer',
+        name: 'Cliente',
+        fields: [STATUS_FIELD],
+      });
+      const operador = await addUserToTenant(admin.tenant, ['operador']);
+
+      const res = await getTemplateVersion(app, operador.cookie, created.body.data.id, 1);
+
+      expect(res.status).toBe(200);
     });
   });
 
@@ -844,6 +1037,13 @@ describe('field-template routes', () => {
       });
       const id = created.body.data.id as string;
       await getCurrent(app, cookie, 'customer', 'default');
+      // WEB-16: as 2 rotas de leitura desta feature (GET /field-templates,
+      // GET /field-templates/:id/versions/:version) também passam por
+      // withDbTiming — sem exercitá-las aqui, o teste só prova as operações
+      // herdadas de FLD-18, nunca as que WEB-16 realmente introduziu
+      // (validation.md, Fix 2).
+      await listTemplates(app, cookie, 'customer');
+      await getTemplateVersion(app, cookie, id, 1);
       await bumpTemplate(app, cookie, id, { expectedVersion: 1, fields: [STATUS_FIELD, OBS_FIELD] });
       await request(app).post(`/field-templates/${id}/archive`).set('Cookie', cookie).set('User-Agent', DEVICE).send();
 
@@ -858,6 +1058,7 @@ describe('field-template routes', () => {
         'fieldTemplate.findTemplateById',
         'fieldTemplate.updateCurrentVersion',
         'fieldTemplate.archiveTemplate',
+        'fieldTemplate.findTemplatesByTargetType',
       ]) {
         expect(recordedOperations, `esperava "${operation}" instrumentado`).toContain(operation);
       }

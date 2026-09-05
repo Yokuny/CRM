@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { get, post } from './client.api.js';
+import { get, patch, post } from './client.api.js';
 
 describe('client.api', () => {
   afterEach(() => {
@@ -62,6 +62,37 @@ describe('client.api', () => {
           body: JSON.stringify({ email: 'a@b.com', password: 'senha123' }),
         }),
       );
+    });
+  });
+
+  describe('patch', () => {
+    it('sends a JSON body with Content-Type, credentials:"include" and method:"PATCH", returning the ApiResponse<T> shape on success', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        json: () => Promise.resolve({ success: true, data: { id: 'c1', status: 'won' }, message: '' }),
+      });
+      vi.stubGlobal('fetch', fetchMock);
+
+      const result = await patch<{ id: string; status: string }>('/customers/c1', { status: 'won' });
+
+      expect(result).toEqual({ success: true, data: { id: 'c1', status: 'won' }, message: '' });
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining('/customers/c1'),
+        expect.objectContaining({
+          method: 'PATCH',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'won' }),
+        }),
+      );
+    });
+
+    it('never throws on a network failure — returns an ApiResponse with success:false and a readable message', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
+
+      const result = await patch('/customers/c1', { status: 'won' });
+
+      expect(result.success).toBe(false);
+      expect(result.message).toBe('Não foi possível conectar ao servidor. Tente novamente.');
     });
   });
 });

@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 14,
+  "next_id": 17,
   "lessons": [
     {
       "id": "L-001",
@@ -238,6 +238,60 @@
       ],
       "created": "2026-09-04T20:22:47Z",
       "last_seen": "2026-09-04T20:22:47Z"
+    },
+    {
+      "id": "L-014",
+      "key": "ac_gap::for a column based board view backed by independent per column server queries write a test that seeds items across multiple distinct columns including one with zero matches simultaneously and asserts each column s own query and empty column rendering not just a single item single status drag scenario",
+      "text": "For a column-based board view backed by independent per-column server queries, write a test that seeds items across multiple distinct columns (including one with zero matches) simultaneously and asserts each column's own query and empty-column rendering, not just a single-item single-status drag scenario.",
+      "signal": "ac_gap",
+      "scope": "routes/kanban",
+      "status": "candidate",
+      "features": [
+        "crm-web-shell"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "spec.md WEB-02 AC2/AC3 / apps/web/src/routes/_private/customers/kanban/index.unit.test.tsx (routes/kanban)"
+      ],
+      "created": "2026-09-05T18:39:47Z",
+      "last_seen": "2026-09-05T18:39:47Z"
+    },
+    {
+      "id": "L-015",
+      "key": "ac_gap::when a feature adds new repository operations wrapped in an existing observability helper e g withdbtiming extend that feature s own e2e observability test to actually call the new endpoints and assert their specific operation labels appear rather than leaving the pre existing observability test s assertion list unextended",
+      "text": "When a feature adds new repository operations wrapped in an existing observability helper (e.g. withDbTiming), extend that feature's own e2e observability test to actually call the new endpoints and assert their specific operation labels appear, rather than leaving the pre-existing observability test's assertion list unextended.",
+      "signal": "ac_gap",
+      "scope": "observability",
+      "status": "candidate",
+      "features": [
+        "crm-web-shell"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "spec.md WEB-16 / apps/crm-api/src/routers/customer.router.e2e.test.ts:696-710, fieldTemplate.router.e2e.test.ts:1029-1057 (observability)"
+      ],
+      "created": "2026-09-05T18:39:53Z",
+      "last_seen": "2026-09-05T18:39:53Z"
+    },
+    {
+      "id": "L-016",
+      "key": "gate_fail::before treating the build gate s chained tsc biome vitest command exit code as a real failure independently confirm any biome error is inside this feature s diff range git log diff on the flagged file against the pre feature baseline a pre existing out of scope formatting issue elsewhere in the repo will otherwise always break the chain before vitest runs and must be handled by running vitest as a separate step not treated as a gate failure",
+      "text": "Before treating the Build gate's chained tsc/biome/vitest command exit code as a real failure, independently confirm any biome error is inside this feature's diff range (git log/diff on the flagged file against the pre-feature baseline) — a pre-existing, out-of-scope formatting issue elsewhere in the repo will otherwise always break the && chain before vitest runs and must be handled by running vitest as a separate step, not treated as a gate failure.",
+      "signal": "gate_fail",
+      "scope": "gate-check",
+      "status": "candidate",
+      "features": [
+        "crm-web-shell"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        ".specs/lessons.json (pre-existing biome formatting error, unrelated to this feature's diff) (gate-check)"
+      ],
+      "created": "2026-09-05T18:39:59Z",
+      "last_seen": "2026-09-05T18:39:59Z"
     }
   ]
 }

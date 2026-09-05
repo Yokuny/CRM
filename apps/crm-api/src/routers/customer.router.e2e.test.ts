@@ -1,9 +1,11 @@
 import crypto from 'node:crypto';
-import type { Role } from '@crm/contracts';
+import type { FieldDef, Role } from '@crm/contracts';
+import { NO_STATUS_FILTER_VALUE } from '@crm/contracts';
 import {
   archiveFieldTemplate,
   Customer,
   connect,
+  DEFAULT_CUSTOMER_FIELDS,
   disconnect,
   FieldTemplate,
   FieldTemplateVersion,
@@ -107,6 +109,45 @@ const createCustomerReq = (app: express.Express, cookie: string, body: object) =
 
 const listCustomersReq = (app: express.Express, cookie: string, query: Record<string, string | number>) =>
   request(app).get('/customers').query(query).set('Cookie', cookie).set('User-Agent', DEVICE);
+
+const getCustomerReq = (app: express.Express, cookie: string, id: string) =>
+  request(app).get(`/customers/${id}`).set('Cookie', cookie).set('User-Agent', DEVICE);
+
+const patchCustomerReq = (app: express.Express, cookie: string, id: string, body: object) =>
+  request(app).patch(`/customers/${id}`).set('Cookie', cookie).set('User-Agent', DEVICE).send(body);
+
+// Template com 2 campos (status + obs opcional) — usado só pelos testes de
+// PATCH que precisam provar que o merge preserva uma chave de `values` não
+// tocada pelo request (o template default seedado por seedDefaultCustomerTemplate
+// só tem `status`, insuficiente para essa prova).
+const STATUS_FIELD: FieldDef = {
+  fieldId: 'status',
+  label: 'Status',
+  type: 'status',
+  required: true,
+  options: [
+    { key: 'novo', label: 'Novo', color: '#3B82F6', order: 0 },
+    { key: 'ativo', label: 'Ativo', color: '#22C55E', order: 1 },
+  ],
+};
+const OBS_FIELD: FieldDef = { fieldId: 'obs', label: 'Observação', type: 'text', maxLength: 200 };
+const seedCustomTemplate = async (tenantId: string, fields: FieldDef[]) => {
+  const template = await FieldTemplate.create({
+    Tenant: tenantId,
+    targetType: 'customer',
+    key: 'default',
+    name: 'Cliente',
+    currentVersion: 1,
+  });
+  await FieldTemplateVersion.create({
+    Tenant: tenantId,
+    template: template._id,
+    targetType: 'customer',
+    version: 1,
+    fields,
+  });
+  return template;
+};
 
 // Seed direto no model (@crm/db) — usado pelos testes de LISTAGEM, que não
 // precisam passar pela validação do field-engine (só a criação via serviço
@@ -354,6 +395,44 @@ describe('customer routes', () => {
       expect(res.body.data.items.map((c: { name: string }) => c.name).sort()).toEqual(['Novo A', 'Novo B']);
     });
 
+    it('filters by the __none__ sentinel: matches a missing values.status AND a stale value no longer in the current template options (WEB-02)', async () => {
+      const { tenant, cookie } = await seedTenantUser(['admin']);
+      await seedDefaultCustomerTemplate(tenant.id); // opções correntes: novo, ativo, inativo
+      await Customer.create(directCustomer(tenant._id.toString(), { name: 'Sem Status', values: {} }));
+      await Customer.create(
+        directCustomer(tenant._id.toString(), { name: 'Status Removido', values: { status: 'arquivado_antigo' } }),
+      );
+      await Customer.create(
+        directCustomer(tenant._id.toString(), { name: 'Status Válido', values: { status: 'novo' } }),
+      );
+      const app = buildTestApp();
+
+      const res = await listCustomersReq(app, cookie, { status: NO_STATUS_FILTER_VALUE });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.total).toBe(2);
+      expect(res.body.data.items.map((c: { name: string }) => c.name).sort()).toEqual([
+        'Sem Status',
+        'Status Removido',
+      ]);
+    });
+
+    it('keeps ordinary status=<key> filtering unaffected by the __none__ sentinel addition', async () => {
+      const { tenant, cookie } = await seedTenantUser(['admin']);
+      await seedDefaultCustomerTemplate(tenant.id);
+      await Customer.create(directCustomer(tenant._id.toString(), { name: 'Novo A', values: { status: 'novo' } }));
+      await Customer.create(
+        directCustomer(tenant._id.toString(), { name: 'Status Removido', values: { status: 'arquivado_antigo' } }),
+      );
+      const app = buildTestApp();
+
+      const res = await listCustomersReq(app, cookie, { status: 'novo' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.total).toBe(1);
+      expect(res.body.data.items[0].name).toBe('Novo A');
+    });
+
     it("never returns another tenant's customers through the listing, even with the same name (CORE-05)", async () => {
       const tenantA = await seedTenantUser(['admin']);
       const tenantB = await seedTenantUser(['admin']);
@@ -370,19 +449,277 @@ describe('customer routes', () => {
     });
   });
 
+  describe('GET /customers/:id', () => {
+    it('returns 200 with the full CustomerRecord for an existing id in the caller own tenant (WEB-05)', async () => {
+      const { tenant, cookie } = await seedTenantUser(['admin']);
+      await seedDefaultCustomerTemplate(tenant.id);
+      const app = buildTestApp();
+      const created = await createCustomerReq(app, cookie, {
+        name: 'Maria Silva',
+        phone: '11912345678',
+        document: '12345678900',
+        values: { status: 'novo' },
+      });
+
+      const res = await getCustomerReq(app, cookie, created.body.data.id);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data).toEqual({
+        id: created.body.data.id,
+        name: 'Maria Silva',
+        phone: '11912345678',
+        document: '12345678900',
+        template: created.body.data.template,
+        templateVersion: 1,
+        values: { status: 'novo' },
+        createdAt: created.body.data.createdAt,
+        updatedAt: created.body.data.updatedAt,
+      });
+    });
+
+    it('responds 404 with "Customer não encontrado" for an id that does not exist (WEB-05 AC2)', async () => {
+      const { cookie } = await seedTenantUser(['admin']);
+      const app = buildTestApp();
+
+      const res = await getCustomerReq(app, cookie, randomId());
+
+      expect(res.status).toBe(404);
+      expect(res.body).toEqual({ success: false, message: 'Customer não encontrado' });
+    });
+
+    it("responds 404 for another tenant's id, never leaking its data (AD-010, WEB-05 AC2)", async () => {
+      const tenantA = await seedTenantUser(['admin']);
+      await seedDefaultCustomerTemplate(tenantA.tenant.id);
+      const tenantB = await seedTenantUser(['admin']);
+      const app = buildTestApp();
+      const created = await createCustomerReq(app, tenantA.cookie, {
+        name: 'Cliente A',
+        phone: '11955555555',
+        values: { status: 'novo' },
+      });
+
+      const res = await getCustomerReq(app, tenantB.cookie, created.body.data.id);
+
+      expect(res.status).toBe(404);
+      expect(res.body).toEqual({ success: false, message: 'Customer não encontrado' });
+    });
+  });
+
+  describe('PATCH /customers/:id', () => {
+    it('merges a values-only patch (as the kanban drag would send) into existing values, preserving untouched keys (WEB-03)', async () => {
+      const { tenant, cookie } = await seedTenantUser(['admin']);
+      await seedCustomTemplate(tenant.id, [STATUS_FIELD, OBS_FIELD]);
+      const app = buildTestApp();
+      const created = await createCustomerReq(app, cookie, {
+        name: 'Maria Silva',
+        phone: '11912345678',
+        values: { status: 'novo', obs: 'nota original' },
+      });
+
+      const res = await patchCustomerReq(app, cookie, created.body.data.id, { values: { status: 'ativo' } });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.values).toEqual({ status: 'ativo', obs: 'nota original' });
+      const persisted = await Customer.findById(created.body.data.id).lean();
+      expect(persisted?.values).toEqual({ status: 'ativo', obs: 'nota original' });
+    });
+
+    it('updates core fields (normalized) and values together, as the full edit form would send (WEB-06)', async () => {
+      const { tenant, cookie } = await seedTenantUser(['admin']);
+      await seedDefaultCustomerTemplate(tenant.id);
+      const app = buildTestApp();
+      const created = await createCustomerReq(app, cookie, {
+        name: 'Maria Silva',
+        phone: '11912345678',
+        values: { status: 'novo' },
+      });
+
+      const res = await patchCustomerReq(app, cookie, created.body.data.id, {
+        name: 'Maria Atualizada',
+        phone: '(11) 98888-7777',
+        document: '111.222.333-44',
+        values: { status: 'ativo' },
+      });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.name).toBe('Maria Atualizada');
+      expect(res.body.data.phone).toBe('11988887777');
+      expect(res.body.data.document).toBe('11122233344');
+      expect(res.body.data.values).toEqual({ status: 'ativo' });
+      const persisted = await Customer.findById(created.body.data.id).lean();
+      expect(persisted?.name).toBe('Maria Atualizada');
+      expect(persisted?.phone).toBe('11988887777');
+      expect(persisted?.document).toBe('11122233344');
+    });
+
+    it('advances template/templateVersion to the tenant CURRENT template on every successful write, even without touching values (AD-029)', async () => {
+      const { tenant, cookie } = await seedTenantUser(['admin']);
+      await seedDefaultCustomerTemplate(tenant.id);
+      const app = buildTestApp();
+      const created = await createCustomerReq(app, cookie, {
+        name: 'Maria',
+        phone: '11999999999',
+        values: { status: 'novo' },
+      });
+      expect(created.body.data.templateVersion).toBe(1);
+
+      // Bump manual do ponteiro do template (sem passar pelo router de
+      // field-template, não montado neste app de teste) — fields idênticos,
+      // sem mudança destrutiva, então 'novo' continua válido na versão 2.
+      const template = await FieldTemplate.findOne({
+        Tenant: tenant._id,
+        targetType: 'customer',
+        key: 'default',
+      }).lean();
+      await FieldTemplateVersion.create({
+        Tenant: tenant._id,
+        template: template?._id,
+        targetType: 'customer',
+        version: 2,
+        fields: DEFAULT_CUSTOMER_FIELDS,
+      });
+      await FieldTemplate.findByIdAndUpdate(template?._id, { currentVersion: 2 });
+
+      const res = await patchCustomerReq(app, cookie, created.body.data.id, { name: 'Maria Atualizada' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.template).toBe(template?._id.toString());
+      expect(res.body.data.templateVersion).toBe(2);
+      expect(res.body.data.values).toEqual({ status: 'novo' });
+      const persisted = await Customer.findById(created.body.data.id).lean();
+      expect(persisted?.templateVersion).toBe(2);
+      expect(persisted?.name).toBe('Maria Atualizada');
+    });
+
+    it('responds 400 and persists nothing when the STORED values are re-checked against a current template that no longer accepts them, even though the request never touched `values` (design.md step 4)', async () => {
+      const { tenant, cookie } = await seedTenantUser(['admin']);
+      await seedCustomTemplate(tenant.id, [STATUS_FIELD]);
+      const app = buildTestApp();
+      const created = await createCustomerReq(app, cookie, {
+        name: 'Maria',
+        phone: '11999999999',
+        values: { status: 'novo' },
+      });
+
+      // O template "evolui" para uma versão cujas opções não incluem mais
+      // 'novo' — o valor ARMAZENADO do Customer fica obsoleto. O merge sem
+      // `data.values` no corpo produziria os mesmos `values` já gravados; se a
+      // revalidação fosse pulada nesse caso, o 200 aconteceria mesmo assim —
+      // é exatamente essa diferença que este teste prova.
+      const template = await FieldTemplate.findOne({
+        Tenant: tenant._id,
+        targetType: 'customer',
+        key: 'default',
+      }).lean();
+      await FieldTemplateVersion.create({
+        Tenant: tenant._id,
+        template: template?._id,
+        targetType: 'customer',
+        version: 2,
+        fields: [{ ...STATUS_FIELD, options: [{ key: 'ativo', label: 'Ativo', color: '#22C55E', order: 0 }] }],
+      });
+      await FieldTemplate.findByIdAndUpdate(template?._id, { currentVersion: 2 });
+
+      const res = await patchCustomerReq(app, cookie, created.body.data.id, { name: 'Maria Atualizada' });
+
+      expect(res.status).toBe(400);
+      const persisted = await Customer.findById(created.body.data.id).lean();
+      expect(persisted?.name).toBe('Maria');
+      expect(persisted?.templateVersion).toBe(1);
+      expect(persisted?.values).toEqual({ status: 'novo' });
+    });
+
+    it('does not block the edit when the current customer template is archived (AD-022)', async () => {
+      const { tenant, cookie } = await seedTenantUser(['admin']);
+      await seedDefaultCustomerTemplate(tenant.id);
+      const app = buildTestApp();
+      const created = await createCustomerReq(app, cookie, {
+        name: 'Maria',
+        phone: '11999999999',
+        values: { status: 'novo' },
+      });
+      const template = await FieldTemplate.findOne({
+        Tenant: tenant._id,
+        targetType: 'customer',
+        key: 'default',
+      }).lean();
+      await archiveFieldTemplate(template?._id.toString() as string);
+
+      const res = await patchCustomerReq(app, cookie, created.body.data.id, { values: { status: 'ativo' } });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.values).toEqual({ status: 'ativo' });
+      const persisted = await Customer.findById(created.body.data.id).lean();
+      expect(persisted?.values).toEqual({ status: 'ativo' });
+    });
+
+    it('responds 400 and persists nothing when the merged values fail validation against the current template', async () => {
+      const { tenant, cookie } = await seedTenantUser(['admin']);
+      await seedDefaultCustomerTemplate(tenant.id);
+      const app = buildTestApp();
+      const created = await createCustomerReq(app, cookie, {
+        name: 'Maria',
+        phone: '11999999999',
+        values: { status: 'novo' },
+      });
+
+      const res = await patchCustomerReq(app, cookie, created.body.data.id, { values: { status: 'nao_existe' } });
+
+      expect(res.status).toBe(400);
+      const persisted = await Customer.findById(created.body.data.id).lean();
+      expect(persisted?.values).toEqual({ status: 'novo' });
+      expect(persisted?.name).toBe('Maria');
+    });
+
+    it("responds 404 for a missing id and for another tenant's id, leaving the real record untouched (AD-010)", async () => {
+      const tenantA = await seedTenantUser(['admin']);
+      await seedDefaultCustomerTemplate(tenantA.tenant.id);
+      const tenantB = await seedTenantUser(['admin']);
+      const app = buildTestApp();
+      const created = await createCustomerReq(app, tenantA.cookie, {
+        name: 'Maria',
+        phone: '11999999999',
+        values: { status: 'novo' },
+      });
+
+      const missing = await patchCustomerReq(app, tenantA.cookie, randomId(), { name: 'Forjado' });
+      const crossTenant = await patchCustomerReq(app, tenantB.cookie, created.body.data.id, { name: 'Forjado' });
+
+      expect(missing.status).toBe(404);
+      expect(crossTenant.status).toBe(404);
+      const persisted = await Customer.findById(created.body.data.id).lean();
+      expect(persisted?.name).toBe('Maria');
+    });
+  });
+
   describe('observability (CORE-16)', () => {
     it('records dbReqResTime for every customer repository operation exercised by a full flow', async () => {
       const { tenant, cookie } = await seedTenantUser(['admin']);
       await seedDefaultCustomerTemplate(tenant.id);
       const app = buildTestApp();
 
-      await createCustomerReq(app, cookie, { name: 'Maria', phone: '11999999999', values: { status: 'novo' } });
+      const created = await createCustomerReq(app, cookie, {
+        name: 'Maria',
+        phone: '11999999999',
+        values: { status: 'novo' },
+      });
       await listCustomersReq(app, cookie, {});
+      // WEB-16: as duas novas rotas desta feature (GET/PATCH /customers/:id)
+      // também passam por withDbTiming (customer.service.ts) — sem exercitá-las
+      // aqui, o teste só prova as 2 operações herdadas de CORE-16, nunca as que
+      // WEB-16 realmente introduziu (validation.md, Fix 2).
+      await getCustomerReq(app, cookie, created.body.data.id);
+      await patchCustomerReq(app, cookie, created.body.data.id, { phone: '11888888888' });
 
       const metric = await dbReqResTime.get();
       const recordedOperations = new Set(metric.values.map((value) => value.labels.operation));
 
-      for (const operation of ['customer.createCustomer', 'customer.listCustomers']) {
+      for (const operation of [
+        'customer.createCustomer',
+        'customer.listCustomers',
+        'customer.findById',
+        'customer.updateCustomer',
+      ]) {
         expect(recordedOperations, `esperava "${operation}" instrumentado`).toContain(operation);
       }
     });
