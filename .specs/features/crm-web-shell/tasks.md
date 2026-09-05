@@ -230,14 +230,15 @@ T28
 - Skill: NONE
 
 **Done when**:
-- [ ] `GET /field-templates?targetType=process` returns `200 {success:true, data:{items:[{key,label,archived}]}}` for every template of that `targetType` in the caller's tenant, archived included (front-end decides visibility/disabling — design.md)
-- [ ] `targetType=customer` returns the seeded default template
-- [ ] No `isAdmin` gate (matches `GET /field-templates/current`'s precedent — open to any authenticated role, WEB-14)
-- [ ] Gate check passes: `pnpm vitest run --project e2e`
-- [ ] Test count: e2e adds ≥3 cases (`process` templates incl. one archived, `customer` default, cross-tenant isolation — another tenant's templates never appear) to `fieldTemplate.router.e2e.test.ts`
+- [x] `GET /field-templates?targetType=process` returns `200 {success:true, data:{items:[{key,label,archived}]}}` for every template of that `targetType` in the caller's tenant, archived included (front-end decides visibility/disabling — design.md)
+- [x] `targetType=customer` returns the seeded default template
+- [x] No `isAdmin` gate (matches `GET /field-templates/current`'s precedent — open to any authenticated role, WEB-14)
+- [x] Gate check passes: `pnpm vitest run --project e2e`
+- [x] Test count: e2e adds ≥3 cases (`process` templates incl. one archived, `customer` default, cross-tenant isolation — another tenant's templates never appear) to `fieldTemplate.router.e2e.test.ts`
 
 **Tests**: e2e
 **Gate**: full
+**Status**: ✅ Complete (commit `0c57130`)
 
 ---
 

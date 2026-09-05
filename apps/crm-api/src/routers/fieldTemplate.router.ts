@@ -22,6 +22,8 @@ const currentTemplateQuerySchema = z
   .object({ targetType: z.enum(FIELD_TEMPLATE_TARGET_TYPES), key: z.string().trim().min(1).max(60) })
   .strict();
 
+const listTemplatesQuerySchema = z.object({ targetType: z.enum(FIELD_TEMPLATE_TARGET_TYPES) }).strict();
+
 export type FieldTemplateRouterDeps = FieldTemplateControllerDeps & { validToken: RequestHandler };
 
 // Mutação estrutural é ação de admin (FLD-07): isAdmin roda antes de qualquer
@@ -39,6 +41,17 @@ export const createFieldTemplateRouter = (deps: FieldTemplateRouterDeps): Router
     fieldTemplateRateLimit,
     validBody(createFieldTemplateSchema),
     controller.createFieldTemplate,
+  );
+
+  // WEB-07: descoberta de templates para o seletor de "novo Process" — leitura
+  // liberada para qualquer papel do tenant, sem isAdmin (mesmo precedente de
+  // GET /current).
+  router.get(
+    '/',
+    deps.validToken,
+    tenantAssignmentCheck,
+    validQuery(listTemplatesQuerySchema),
+    controller.listTemplates,
   );
 
   router.get(

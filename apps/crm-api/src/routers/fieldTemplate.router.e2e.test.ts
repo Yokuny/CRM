@@ -183,6 +183,13 @@ const getCurrent = (app: express.Express, cookie: string, targetType: string, ke
     .set('Cookie', cookie)
     .set('User-Agent', DEVICE);
 
+const listTemplates = (app: express.Express, cookie: string, targetType: string) =>
+  request(app)
+    .get('/field-templates')
+    .query({ targetType })
+    .set('Cookie', cookie)
+    .set('User-Agent', DEVICE);
+
 describe('field-template routes', () => {
   beforeAll(async () => {
     await connect(process.env.MONGODB_URI as string);
@@ -438,6 +445,89 @@ describe('field-template routes', () => {
       const res = await getCurrent(app, cookie, 'process', 'inexistente');
 
       expect(res.status).toBe(404);
+    });
+  });
+
+  describe('GET /field-templates (WEB-07)', () => {
+    it('lists every process template for the tenant as {key,label,archived}, archived included', async () => {
+      const { cookie } = await seedTenantUser(['admin']);
+      const app = buildTestApp(buildStores(createFakeFieldValueStore()));
+      await createTemplate(app, cookie, {
+        targetType: 'process',
+        key: 'compra',
+        name: 'Compra',
+        fields: [STATUS_FIELD],
+        stages: PROCESS_STAGES,
+      });
+      const toArchive = await createTemplate(app, cookie, {
+        targetType: 'process',
+        key: 'venda',
+        name: 'Venda',
+        fields: [STATUS_FIELD],
+        stages: PROCESS_STAGES,
+      });
+      await request(app)
+        .post(`/field-templates/${toArchive.body.data.id}/archive`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE)
+        .send();
+
+      const res = await listTemplates(app, cookie, 'process');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.items).toHaveLength(2);
+      expect(res.body.data.items).toEqual(
+        expect.arrayContaining([
+          { key: 'compra', label: 'Compra', archived: false },
+          { key: 'venda', label: 'Venda', archived: true },
+        ]),
+      );
+    });
+
+    it('returns the seeded default template for targetType customer', async () => {
+      const { cookie } = await seedTenantUser(['admin']);
+      const app = buildTestApp(buildStores(createFakeFieldValueStore()));
+      await createTemplate(app, cookie, { targetType: 'customer', name: 'Cliente', fields: [STATUS_FIELD] });
+
+      const res = await listTemplates(app, cookie, 'customer');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.items).toEqual([{ key: 'default', label: 'Cliente', archived: false }]);
+    });
+
+    it("never returns another tenant's templates (AD-010)", async () => {
+      const tenantA = await seedTenantUser(['admin']);
+      const tenantB = await seedTenantUser(['admin']);
+      const app = buildTestApp(buildStores(createFakeFieldValueStore()));
+      await createTemplate(app, tenantA.cookie, {
+        targetType: 'process',
+        key: 'compra',
+        name: 'Compra A',
+        fields: [STATUS_FIELD],
+        stages: PROCESS_STAGES,
+      });
+      await createTemplate(app, tenantB.cookie, {
+        targetType: 'process',
+        key: 'compra',
+        name: 'Compra B',
+        fields: [STATUS_FIELD],
+        stages: PROCESS_STAGES,
+      });
+
+      const res = await listTemplates(app, tenantA.cookie, 'process');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.items).toEqual([{ key: 'compra', label: 'Compra A', archived: false }]);
+    });
+
+    it('is open to any authenticated role, with no isAdmin gate (WEB-14)', async () => {
+      const { cookie } = await seedTenantUser(['operador']);
+      const app = buildTestApp(buildStores(createFakeFieldValueStore()));
+
+      const res = await listTemplates(app, cookie, 'customer');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.items).toEqual([]);
     });
   });
 

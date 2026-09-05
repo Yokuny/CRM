@@ -36,6 +36,18 @@ export const createFieldTemplateController = (deps: FieldTemplateControllerDeps)
     }
   };
 
+  const listTemplates = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const items = await fieldTemplateService.listTemplates(
+        req.tenantUser.tenant as string,
+        req.query.targetType as FieldTemplateTargetType,
+      );
+      res.json(respObj({ data: { items } }));
+    } catch (e) {
+      next(e);
+    }
+  };
+
   const bumpFieldTemplateVersion = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const result = await fieldTemplateService.bumpFieldTemplateVersion(
@@ -63,5 +75,5 @@ export const createFieldTemplateController = (deps: FieldTemplateControllerDeps)
     }
   };
 
-  return { createFieldTemplate, getCurrentTemplate, bumpFieldTemplateVersion, archiveFieldTemplate };
+  return { createFieldTemplate, getCurrentTemplate, listTemplates, bumpFieldTemplateVersion, archiveFieldTemplate };
 };

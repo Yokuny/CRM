@@ -79,6 +79,17 @@ export const getCurrentTemplate = async (
   };
 };
 
+// WEB-07: descoberta de templates para o seletor de "novo Process" — devolve
+// `key`/`label`/`archived` de todo template do targetType, arquivado incluso;
+// esconder/desabilitar o arquivado é decisão do front-end (design.md).
+export const listTemplates = async (
+  tenantId: string,
+  targetType: FieldTemplateTargetType,
+): Promise<{ key: string; label: string; archived: boolean }[]> => {
+  const templates = await fieldTemplateRepository.findTemplatesByTargetType(tenantId, targetType);
+  return templates.map((template) => ({ key: template.key, label: template.name, archived: template.archived }));
+};
+
 // Ordem do sequence diagram do design.md, e ela é o contrato: diff →
 // cobertura da migração → claim do slot → migração → ponteiro. Nada é
 // escrito antes da checagem de cobertura (FLD-05), e o ponteiro só avança
