@@ -35,7 +35,7 @@ adequacy review, Verifier, discrimination sensor).
 
 | Code Layer | Required Test Type | Coverage Expectation | Location Pattern | Run Command |
 | --- | --- | --- | --- | --- |
-| `apps/web` — ported UI primitives (Button/Input/Select/Dialog/Badge/Card/Label/Tabs/Form-wrapper/DropdownMenu/Toaster/DatePicker/MoneyInput/Switch/Checkbox/Spinner/Skeleton) — presentational, no business logic | none | Compiles clean (`tsc`), renders indirectly via the screens that use them — matches the reference repo's own convention of not unit-testing ShadCN primitives individually | `apps/web/src/components/ui/*.tsx` | build gate only |
+| `apps/web` — ported UI primitives (Button/Input/Select/Dialog/Badge/Card/Item/Breadcrumb/Tooltip/Label/Tabs/Form-wrapper/DropdownMenu/Toaster/DatePicker/MoneyInput/Switch/Checkbox/Spinner/Skeleton) — presentational, no business logic | none | Compiles clean (`tsc`), renders indirectly via the screens that use them — matches the reference repo's own convention of not unit-testing ShadCN primitives individually | `apps/web/src/components/ui/*.tsx` | build gate only |
 | `apps/web` — `client.api.ts` (`patch` addition) | unit | Same depth as the existing `get`/`post` tests: request shape (method/body/credentials), success/failure envelope | `apps/web/src/lib/api/client.api.unit.test.ts` (extend) | `pnpm vitest run --project unit` |
 | `apps/web` — `DynamicField` (new, no precedent in either repo) | unit | 1:1 per `FieldDef.type` branch (all 13, incl. `document`/`reference` read-only fallback) + `array`/`group` recursion + `required`/`min`/`max` client-side hints (WEB-11) | `apps/web/src/components/dynamic-field/*.unit.test.tsx` | `pnpm vitest run --project unit` |
 | `apps/web` — `DataTable` (`@tanstack/react-table` manual mode) | unit | Renders columns/rows from props; `onPaginationChange`/`onSortingChange`/`onSearchChange` fire with correct args; never re-sorts/filters/paginates locally | `apps/web/src/components/ui/data-table.unit.test.tsx` | `pnpm vitest run --project unit` |
@@ -287,20 +287,23 @@ T28
 
 ---
 
-### T8: Port primitives batch A — Button, Input, Label, Badge, Card
+### T8: Port primitives batch A — Button, Input, Label, Badge, Card, Item, Breadcrumb, Tooltip + Card's icon dependencies
 
-**What**: Port these 5 presentational primitives, replacing the placeholder `card.tsx` (closes that `SPEC_DEVIATION`).
-**Where**: `apps/web/src/components/ui/{button,input,label,badge,card}.tsx`.
+**What**: Port these presentational primitives, replacing the placeholder `card.tsx` (closes that `SPEC_DEVIATION`).
+**Amended 2026-09-05** (Execute-time gap found during Batch 2 pre-flight, user-confirmed — no new AD, this is a task-list correction under the existing AD-027 design-system-port umbrella): the reference `card.tsx` is not a standalone primitive — it embeds an automatic `Breadcrumb` (via TanStack Router `useMatches()`) plus `Tooltip` and 3 icons (`Back`/`Help`/`Home`), which is exactly the `CLAUDE.md`-documented contract ("Card asPage ativa Breadcrumb automático via rota"). Separately, `Item`/`ItemGroup`/`ItemContent`/`ItemTitle`/`ItemDescription` — `CLAUDE.md`: mandatory for every non-page "componente comum" (used by `DynamicField`/`DataTable`/`Kanban` in Fases 3-5) — were missing from the original Phase 2 primitive list entirely. Both gaps are closed here, before any later phase needs them.
+**Where**: `apps/web/src/components/ui/{button,input,label,badge,card,item,breadcrumb,tooltip}.tsx`, `apps/web/src/components/icons/{Back,Help,Home}.Icon.tsx` (minimal set — only what `Breadcrumb`/`Card` need; the full reference icon inventory is out of this feature's scope, port more only as future features need them).
 **Depends on**: T7
-**Reuses**: `../DentalEase/DentalEase/src/components/ui/{button,input,label,badge,card}.tsx` verbatim (props/variants kept — see design.md Code Reuse Analysis), `cn()` from T7.
-**Requirement**: (Goal: replace `card.tsx` `SPEC_DEVIATION`)
+**Reuses**: `../DentalEase/DentalEase/src/components/ui/{button,input,label,badge,card,item,breadcrumb,tooltip}.tsx` verbatim (props/variants kept — see design.md Code Reuse Analysis), `../DentalEase/DentalEase/src/components/icons/{Back,Help,Home}.Icon.tsx` verbatim, `cn()` from T7.
+**Requirement**: (Goal: replace `card.tsx` `SPEC_DEVIATION`; `CLAUDE.md` Item/ItemGroup + Card/Breadcrumb conventions)
 
 **Tools**:
 - MCP: NONE
 - Skill: NONE
 
 **Done when**:
-- [ ] `Card`/`CardHeader`/`CardContent`/`CardAction` preserve the existing call sites' props (`asPage`, `title`) — `apps/web/src/routes/_private/index.tsx` compiles unchanged
+- [ ] `Card`/`CardHeader`/`CardContent`/`CardAction` preserve the existing call sites' props (`asPage`, `title`) — `apps/web/src/routes/_private/index.tsx`, `_public/auth/index.tsx`, `_public/invite/index.tsx` compile unchanged
+- [ ] `Card asPage` renders a working `Breadcrumb` from the current route match, matching `CLAUDE.md`'s documented contract
+- [ ] `Item`/`ItemGroup`/`ItemContent`/`ItemTitle`/`ItemDescription` exported and usable by later phases' componentes comuns
 - [ ] `SPEC_DEVIATION` comment removed from `card.tsx`
 - [ ] Gate check passes: `pnpm -r exec tsc --noEmit && pnpm biome check .`
 
@@ -811,7 +814,7 @@ tasks) — exact packing is an Execute-time decision, not fixed here.
 | T5: `GET /field-templates` | 1 endpoint (repository+controller+service+router, cohesive) | ✅ Granular |
 | T6: extend tenant-isolation suite | 1 test file, 3 additive cases | ✅ Granular |
 | T7: Tailwind bootstrap | Infra config, 1 cohesive setup (Tailwind+alias+`cn()`) | ✅ Granular (infra, not a component) |
-| T8: primitives batch A | 5 files, presentational-only, zero test burden (Coverage Expectation: none) | ✅ OK — cohesive port batch, matches "2-3+ related things in same file/purpose = OK if cohesive" |
+| T8: primitives batch A | 8 files + 3 icons, presentational-only, zero test burden (Coverage Expectation: none); amended 2026-09-05 to add Item/Breadcrumb/Tooltip/icons (gap found pre-Batch-2) | ✅ OK — cohesive port batch, matches "2-3+ related things in same file/purpose = OK if cohesive" |
 | T9: primitives batch B | 4 files, presentational-only, zero test burden | ✅ OK — same rationale |
 | T10: Form primitives | 1 file (`form.tsx`) | ✅ Granular |
 | T11: remaining leaf primitives | 7 files, presentational-only, zero test burden | ✅ OK — same rationale |
