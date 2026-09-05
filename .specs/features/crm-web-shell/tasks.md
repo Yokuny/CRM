@@ -400,7 +400,7 @@ Also ported beyond the literal file list above (transitive necessities, named in
 
 **Tests**: none
 **Gate**: build
-**Status**: ✅ Complete (commit `<PENDING>`)
+**Status**: ✅ Complete (commit `73f270a`)
 
 ---
 
@@ -417,12 +417,15 @@ Also ported beyond the literal file list above (transitive necessities, named in
 - Skill: NONE
 
 **Done when**:
-- [ ] Same call signature as today (`<DefaultLoading />`), every existing call site compiles unchanged
-- [ ] `SPEC_DEVIATION` comment removed
-- [ ] Gate check passes: `pnpm -r exec tsc --noEmit && pnpm biome check .`
+- [x] Same call signature as today (`<DefaultLoading />`), every existing call site compiles unchanged
+- [x] `SPEC_DEVIATION` comment removed
+- [x] Gate check passes: `pnpm -r exec tsc --noEmit && pnpm biome check .`
+
+Reference (`../DentalEase/DentalEase/src/components/default-loading.tsx`) exports this component as a `default` export — kept as a named export here (`export function DefaultLoading()`) since the existing call site (`invite/index.tsx`) imports it as `{ DefaultLoading }`; changing the export style would be unrequested scope creep on a file this task doesn't own.
 
 **Tests**: none
 **Gate**: build
+**Status**: ✅ Complete (commit `<PENDING>`)
 
 ---
 

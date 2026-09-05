@@ -1,9 +1,14 @@
-import { t } from '../lib/helpers/translate.helper.js';
+import { Skeleton } from './ui/skeleton.js';
+import { Spinner } from './ui/spinner.js';
 
-// SPEC_DEVIATION: versão mínima de <DefaultLoading /> — sem spinner/animação
-// do design system completo (feature 4, fora de escopo). Só a convenção:
-// todo estado de requisição pendente usa este componente, nunca um texto ad
-// hoc por tela.
+// Porte de ../DentalEase/DentalEase/src/components/default-loading.tsx —
+// export nomeado (`export function`), não default, para manter os call
+// sites existentes (`import { DefaultLoading } from '...'`) compilando sem
+// alteração (Tasks T12: "mesma assinatura de chamada").
 export function DefaultLoading() {
-  return <p role="status">{t('loading')}</p>;
+  return (
+    <Skeleton className="flex h-48 w-full items-center justify-center">
+      <Spinner />
+    </Skeleton>
+  );
 }
