@@ -83,11 +83,16 @@ function CustomerDetailsView({ customer }: CustomerDetailsViewProps) {
         ) : (
           <ItemGroup>
             {processesQueryResult.data.items.map((process) => (
-              <Item key={process.id}>
-                <ItemContent>
-                  <ItemTitle>{process.stage}</ItemTitle>
-                  <ItemDescription>{formatDate(process.createdAt)}</ItemDescription>
-                </ItemContent>
+              // Abre o Process existente (WEB-08, T26/T27) — search:{id,
+              // customerId} (AD-030), a mesma dupla que esta própria página
+              // já tem em contexto.
+              <Item key={process.id} asChild>
+                <Link to="/processes/details" search={{ id: process.id, customerId: customer.id }}>
+                  <ItemContent>
+                    <ItemTitle>{process.stage}</ItemTitle>
+                    <ItemDescription>{formatDate(process.createdAt)}</ItemDescription>
+                  </ItemContent>
+                </Link>
               </Item>
             ))}
           </ItemGroup>

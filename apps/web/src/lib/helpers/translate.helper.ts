@@ -26,6 +26,8 @@ const translations: Record<string, string> = {
   'process.create.success': 'Processo criado com sucesso.',
   'process.template.placeholder': 'Escolha um tipo de processo',
   'process.new.action': 'Novo processo',
+  'process.details.title': 'Detalhe do processo',
+  'process.values.error': 'Não foi possível salvar os valores do processo.',
   'auth.signin.title': 'Entrar',
   'auth.signin.submit': 'Entrar',
   'auth.signin.error': 'Não foi possível entrar.',

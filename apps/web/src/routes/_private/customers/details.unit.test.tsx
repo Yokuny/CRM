@@ -140,9 +140,12 @@ describe('CustomerDetailsPage (T23 — WEB-05)', () => {
       throw new Error(`unexpected path ${path}`);
     });
 
-    renderPage();
+    const { container } = renderPage();
 
     expect(await screen.findByText('aberto')).toBeInTheDocument();
+    const link = container.querySelector('a[href^="/processes/details"]');
+    expect(link).not.toBeNull();
+    expect(link?.getAttribute('href')).toBe('/processes/details?id=p1&customerId=c1');
   });
 
   it('WEB-05 AC3: shows an explicit empty state ("nenhum Process ainda") when the Process list is empty', async () => {

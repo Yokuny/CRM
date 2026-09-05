@@ -3,7 +3,8 @@ import { describe, expect, it, vi } from 'vitest';
 const getMock = vi.fn();
 vi.mock('../lib/api/client.api.js', () => ({ get: getMock }));
 
-const { currentCustomerTemplateQuery, fieldTemplateKeys, fieldTemplatesQuery } = await import('./fieldTemplate.js');
+const { currentCustomerTemplateQuery, fieldTemplateKeys, fieldTemplatesQuery, processTemplateVersionQuery } =
+  await import('./fieldTemplate.js');
 
 describe('currentCustomerTemplateQuery', () => {
   it('calls GET /field-templates/current?targetType=customer&key=<key>', async () => {
@@ -66,5 +67,37 @@ describe('fieldTemplatesQuery (T25 — WEB-07)', () => {
   it('exposes a queryKey scoped by targetType', () => {
     expect(fieldTemplatesQuery('process').queryKey).toEqual(fieldTemplateKeys.list('process'));
     expect(fieldTemplatesQuery('process').queryKey).not.toEqual(fieldTemplatesQuery('customer').queryKey);
+  });
+});
+
+describe('processTemplateVersionQuery (T26 — WEB-08 AC1)', () => {
+  it('calls GET /field-templates/:templateId/versions/:version', async () => {
+    getMock.mockResolvedValueOnce({ success: true, data: { fields: [] } });
+
+    await processTemplateVersionQuery('t1', 2).queryFn?.({} as never);
+
+    expect(getMock).toHaveBeenCalledWith('/field-templates/t1/versions/2');
+  });
+
+  it('resolves with fields/stages on success', async () => {
+    const data = { fields: [{ fieldId: 'obs', label: 'Observação', type: 'text' }], stages: ['aberto'] };
+    getMock.mockResolvedValueOnce({ success: true, data });
+
+    const result = await processTemplateVersionQuery('t1', 1).queryFn?.({} as never);
+
+    expect(result).toEqual(data);
+  });
+
+  it('throws with the backend message when success:false', async () => {
+    getMock.mockResolvedValueOnce({ success: false, message: 'Versão de template não encontrada' });
+
+    await expect(processTemplateVersionQuery('t1', 1).queryFn?.({} as never)).rejects.toThrow(
+      'Versão de template não encontrada',
+    );
+  });
+
+  it('exposes a queryKey scoped by templateId+version (a bump never collides with an earlier snapshot)', () => {
+    expect(processTemplateVersionQuery('t1', 1).queryKey).toEqual(fieldTemplateKeys.version('t1', 1));
+    expect(processTemplateVersionQuery('t1', 1).queryKey).not.toEqual(processTemplateVersionQuery('t1', 2).queryKey);
   });
 });

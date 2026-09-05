@@ -830,13 +830,16 @@ Confirmed by reading `validation.middleware.ts`/`customer.router.ts` before trus
 - Skill: NONE
 
 **Done when**:
-- [ ] Renders `values` via `DynamicField` against the record's **own** `templateVersion` snapshot fields, unaffected by any later template bump
-- [ ] Valid save calls `PATCH /processes/:id/values`, reflects the new state without a manual reload
-- [ ] Gate check passes: `pnpm vitest run --project unit`
-- [ ] Test count: ≥2 tests (renders against own snapshot even after a hypothetical current-template change, save round-trips)
+- [x] Renders `values` via `DynamicField` against the record's **own** `templateVersion` snapshot fields, unaffected by any later template bump
+- [x] Valid save calls `PATCH /processes/:id/values`, reflects the new state without a manual reload
+- [x] Gate check passes: `pnpm vitest run --project unit`
+- [x] Test count: ≥2 tests (renders against own snapshot even after a hypothetical current-template change, save round-trips)
+
+Also built beyond the literal file list above: `processTemplateVersionQuery(templateId, version)` added to `apps/web/src/query/fieldTemplate.ts` (extend — 4 new unit tests) — calls `GET /field-templates/:id/versions/:version` (T25B). No `GET /processes/:id` exists, confirmed reading `process.router.ts`: the route resolves the ONE record it needs by filtering `processesQuery(customerId)`'s `items` by `search.id` — never "the full collection" (AD-028 targets unbounded/paginated data, not one customer's own small Process list). "Reflects the new state without a manual reload" is proven by re-seeding the form (`reset()`) with the MUTATION RESPONSE's own `values` (not the locally-typed text) plus a `queryClient.setQueryData` write into the cached Process list — a dedicated test uses a server response that differs from what was typed (normalizes whitespace) to prove this is a real round-trip, not a no-op. `customers/details.tsx`'s Process list items (built by T23) upgraded from plain text to real `<Link>`s to this route (`search:{id, customerId}`) — safe only now that the target route exists, completing the click-through journey Success Criteria describes ("abrir um Process" from the Customer's own list, not just create a new one).
 
 **Tests**: unit
 **Gate**: quick
+**Status**: ✅ Complete (commit `47594f7`)
 
 ---
 
