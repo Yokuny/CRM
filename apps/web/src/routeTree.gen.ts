@@ -13,6 +13,7 @@ import { Route as PrivateRouteImport } from './routes/_private';
 import { Route as InviteIndexRouteImport } from './routes/invite/index';
 import { Route as AuthIndexRouteImport } from './routes/auth/index';
 import { Route as PrivateIndexRouteImport } from './routes/_private/index';
+import { Route as PrivateCustomersIndexRouteImport } from './routes/_private/customers/index';
 
 const PrivateRoute = PrivateRouteImport.update({
   id: '/_private',
@@ -33,16 +34,23 @@ const PrivateIndexRoute = PrivateIndexRouteImport.update({
   path: '/',
   getParentRoute: () => PrivateRoute,
 } as any);
+const PrivateCustomersIndexRoute = PrivateCustomersIndexRouteImport.update({
+  id: '/customers/',
+  path: '/customers/',
+  getParentRoute: () => PrivateRoute,
+} as any);
 
 export interface FileRoutesByFullPath {
   '/': typeof PrivateIndexRoute;
   '/auth/': typeof AuthIndexRoute;
   '/invite/': typeof InviteIndexRoute;
+  '/customers/': typeof PrivateCustomersIndexRoute;
 }
 export interface FileRoutesByTo {
   '/': typeof PrivateIndexRoute;
   '/auth': typeof AuthIndexRoute;
   '/invite': typeof InviteIndexRoute;
+  '/customers': typeof PrivateCustomersIndexRoute;
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport;
@@ -50,13 +58,20 @@ export interface FileRoutesById {
   '/_private/': typeof PrivateIndexRoute;
   '/auth/': typeof AuthIndexRoute;
   '/invite/': typeof InviteIndexRoute;
+  '/_private/customers/': typeof PrivateCustomersIndexRoute;
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
-  fullPaths: '/' | '/auth/' | '/invite/';
+  fullPaths: '/' | '/auth/' | '/invite/' | '/customers/';
   fileRoutesByTo: FileRoutesByTo;
-  to: '/' | '/auth' | '/invite';
-  id: '__root__' | '/_private' | '/_private/' | '/auth/' | '/invite/';
+  to: '/' | '/auth' | '/invite' | '/customers';
+  id:
+    | '__root__'
+    | '/_private'
+    | '/_private/'
+    | '/auth/'
+    | '/invite/'
+    | '/_private/customers/';
   fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
@@ -95,15 +110,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivateIndexRouteImport;
       parentRoute: typeof PrivateRoute;
     };
+    '/_private/customers/': {
+      id: '/_private/customers/';
+      path: '/customers';
+      fullPath: '/customers/';
+      preLoaderRoute: typeof PrivateCustomersIndexRouteImport;
+      parentRoute: typeof PrivateRoute;
+    };
   }
 }
 
 interface PrivateRouteChildren {
   PrivateIndexRoute: typeof PrivateIndexRoute;
+  PrivateCustomersIndexRoute: typeof PrivateCustomersIndexRoute;
 }
 
 const PrivateRouteChildren: PrivateRouteChildren = {
   PrivateIndexRoute: PrivateIndexRoute,
+  PrivateCustomersIndexRoute: PrivateCustomersIndexRoute,
 };
 
 const PrivateRouteWithChildren =
