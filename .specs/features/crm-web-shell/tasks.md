@@ -129,12 +129,13 @@ T28
 - Skill: NONE
 
 **Done when**:
-- [ ] Schema accepts any non-empty subset of `{name, phone, document, values}`, rejects an empty object via `.refine`
-- [ ] Registered in `index.ts`/`registry.ts` exactly like `createCustomerSchema`
-- [ ] Test count: schema unit tests cover 1 valid + 4 invalid cases (empty body, over-length name, over-length phone, non-object `values`)
+- [x] Schema accepts any non-empty subset of `{name, phone, document, values}`, rejects an empty object via `.refine`
+- [x] Registered in `index.ts`/`registry.ts` exactly like `createCustomerSchema`
+- [x] Test count: schema unit tests cover 1 valid + 4 invalid cases (empty body, over-length name, over-length phone, non-object `values`)
 
 **Tests**: unit
 **Gate**: quick
+**Status**: ✅ Complete (commit `1980dac`)
 
 ---
 

@@ -12,6 +12,7 @@ export * from './schemas/inviteToken.schema.js';
 export * from './schemas/migrationAction.schema.js';
 export * from './schemas/provisionTenant.schema.js';
 export * from './schemas/signin.schema.js';
+export * from './schemas/updateCustomer.schema.js';
 export * from './schemas/updateProcessStage.schema.js';
 export * from './schemas/updateProcessValues.schema.js';
 export * from './types.js';
