@@ -19,6 +19,12 @@ const translations: Record<string, string> = {
   loading: 'Carregando…',
   add: 'Adicionar',
   remove: 'Remover',
+  'not.found': 'Nenhum registro encontrado.',
+  'not.found.description': 'Ajuste os filtros ou tente outro termo de busca.',
+  'search.placeholder': 'Buscar…',
+  'table.page': 'Página',
+  'previous.page': 'Página anterior',
+  'next.page': 'Próxima página',
   'private.role': 'Papel',
   // Usado por BreadcrumbEllipsis (apps/web/src/components/ui/breadcrumb.tsx,
   // T8) — texto de acessibilidade (sr-only) do "..." de breadcrumbs longos.

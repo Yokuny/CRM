@@ -521,14 +521,17 @@ Deviation found during Execute: `RenderNode.value` for `array`/`group` is the re
 - Skill: NONE
 
 **Done when**:
-- [ ] `onPaginationChange`/`onSortingChange` fire with the new state; component never locally re-sorts/re-filters/re-paginates the `data` prop it's given
-- [ ] `onSearchChange` fires (debounced, ~300ms) with the typed value
-- [ ] Empty `data` renders the passed `emptyState`, not a blank table
-- [ ] Gate check passes: `pnpm vitest run --project unit`
-- [ ] Test count: ≥5 tests (pagination callback, sort callback, debounced search callback, empty state, loading state)
+- [x] `onPaginationChange`/`onSortingChange` fire with the new state; component never locally re-sorts/re-filters/re-paginates the `data` prop it's given
+- [x] `onSearchChange` fires (debounced, ~300ms) with the typed value
+- [x] Empty `data` renders the passed `emptyState`, not a blank table
+- [x] Gate check passes: `pnpm vitest run --project unit`
+- [x] Test count: 7 tests (pagination callback, sort callback, debounced search callback, custom empty state, default-fallback empty state, loading state, AD-028 no-local-resort proof)
+
+Also built beyond the literal file list above (transitive necessities, per this batch's dispatch prompt): (1) `apps/web/src/components/ui/table.tsx` — ported verbatim from the reference (`Table`/`TableHeader`/`TableBody`/`TableRow`/`TableHead`/`TableCell`/`TableFooter`/`TableCaption`), since despite this task's own "Depends on" line naming it, no prior Batch-2 task actually ported it; `DataTable` needed it for the real DOM structure. (2) `apps/web/src/components/default-empty-data.tsx` (`DefaultEmptyData`) — `CLAUDE.md` mandates it project-wide and this task's own `emptyState?: ReactNode` default needs a concrete fallback; built minimal (`Item`/`ItemContent`/`ItemTitle`/`ItemDescription`, T8), deliberately NOT porting the reference's random-icon roulette (`Card`/`Cloud`/`Face`/`Mail`/`Package`/`Search`/`Service` icons) — unrequested cosmetic flair, same judgment call already made for `DefaultLoading` (T12). Added 6 translation keys (`not.found`, `not.found.description`, `search.placeholder`, `table.page`, `previous.page`, `next.page`) to `translate.helper.ts`'s existing inline dictionary. Added `@tanstack/react-table@8.21.3` to `apps/web/package.json` (exact version from design.md's Code Reuse Analysis).
 
 **Tests**: unit
 **Gate**: quick
+**Status**: ✅ Complete (commit `a8df9af`)
 
 ---
 
