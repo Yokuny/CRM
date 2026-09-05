@@ -1,8 +1,8 @@
-// SPEC_DEVIATION: i18n completo é escopo da feature 4 (crm-web-shell;
-// spec.md, Out of Scope: "i18n completo"). Esta é a forma mínima da
-// convenção obrigatória (t() em toda string voltada ao usuário — CLAUDE.md
-// do front de referência): um dicionário fixo pt-BR só com as chaves que as
-// telas desta feature usam, sem troca de idioma.
+// Dicionário fixo pt-BR (T28 — feature crm-web-shell fecha o SPEC_DEVIATION
+// que apontava pra cá): toda string voltada ao usuário do app passa por
+// `t(key)`, telas novas E existentes (auth/invite/private), sem biblioteca
+// de i18n nem seletor de idioma (spec.md, Assumptions — mesmo padrão do
+// `translations.json` plano do front de referência).
 const translations: Record<string, string> = {
   email: 'E-mail',
   password: 'Senha',
@@ -15,6 +15,7 @@ const translations: Record<string, string> = {
   edit: 'Editar',
   confirm: 'Confirmar',
   back: 'Voltar',
+  'date.pick': 'Escolha o dia',
   customers: 'Clientes',
   'customer.create.title': 'Novo cliente',
   'customer.create.error': 'Não foi possível criar o cliente.',

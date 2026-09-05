@@ -14,6 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select.js';
 import { Switch } from '@/components/ui/switch.js';
 import { formatDate } from '@/lib/helpers/formatDate.helper.js';
+import { t } from '@/lib/helpers/translate.helper.js';
 import { cn } from '@/lib/utils.js';
 import { DynamicFieldArray } from './dynamic-field.array.js';
 import { DynamicFieldGroup } from './dynamic-field.group.js';
@@ -212,7 +213,7 @@ function DateLeaf({ node, name, control }: DateLeafProps) {
         <PopoverTrigger asChild>
           <Button type="button" variant={selected ? undefined : 'primary'} className="justify-start font-normal">
             <IconCalendar className="mr-4 size-4" />
-            {selected ? <p className="font-mono">{formatDate(selected)}</p> : <span>Escolha o dia</span>}
+            {selected ? <p className="font-mono">{formatDate(selected)}</p> : <span>{t('date.pick')}</span>}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0">
