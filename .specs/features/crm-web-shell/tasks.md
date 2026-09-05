@@ -467,14 +467,17 @@ Phase 2 close-out (T7-T13): Build gate re-run after T13 — `pnpm -r exec tsc --
 - Skill: NONE
 
 **Done when**:
-- [ ] Each of the 9 leaf types renders the primitive from design.md's dispatch table, bound to `react-hook-form`'s `control` via `name`
-- [ ] `required`/`min`/`max`/`maxLength` from `FieldDef` surface as client-side hints only (WEB-11 — server `validate()` remains the source of truth, never bypassed)
-- [ ] `currency` reads/writes integer cents (never a decimal) — matches field-engine's `validate()` contract
-- [ ] Gate check passes: `pnpm vitest run --project unit`
-- [ ] Test count: ≥9 tests (one per leaf type, asserting the right primitive renders and round-trips a value through `control`)
+- [x] Each of the 9 leaf types renders the primitive from design.md's dispatch table, bound to `react-hook-form`'s `control` via `name`
+- [x] `required`/`min`/`max`/`maxLength` from `FieldDef` surface as client-side hints only (WEB-11 — server `validate()` remains the source of truth, never bypassed)
+- [x] `currency` reads/writes integer cents (never a decimal) — matches field-engine's `validate()` contract
+- [x] Gate check passes: `pnpm vitest run --project unit`
+- [x] Test count: 10 tests (one per leaf type + a bonus for `select`'s `multiple:true` checkbox branch)
+
+Deviations found during Execute (small, folded in rather than stopping): (1) `RenderNode` actually lives in `@crm/field-engine` (not `@crm/contracts` as this task's "Reuses" line says) — added `@crm/field-engine: workspace:*` to `apps/web/package.json`. (2) The already-ported `ui/date-picker.tsx` (T11) is a bare, prop-less demo (`const [date,setDate] = useState<Date>()`, no `value`/`onChange`) — unusable as a controlled input. Rather than modifying that already-ported primitive, `date`/`datetime`'s leaf composes the same underlying blocks it uses (`Popover`/`Calendar`/`Button`/`IconCalendar`/`formatDate`), now controlled via `useController`. (3) `select`'s `multiple:true` renders a list of the already-ported `Checkbox` (T11) instead of the single-value-only Radix `Select` primitive, since Radix Select has no native multi-select mode and rewriting that primitive is out of scope. (4) `text`'s `multiline` branch renders a plain `<textarea>` styled with `Input`'s own class language (per this batch's explicit fallback instruction) rather than a new `ui/textarea.tsx` primitive. (5) `currency`'s `MoneyInput` keeps its existing pt-BR/BRL-masked typing UX (T11, unmodified); the field's own `code`/`precision` instead drive a separate `Intl.NumberFormat`-based preview line beneath it, which is what actually varies by field. (6) `date`-only values parse/format via local date components (never `Date`'s UTC ISO parsing) to avoid an off-by-one-day bug in negative-UTC-offset timezones; `datetime` is unaffected (real UTC timestamp).
 
 **Tests**: unit
 **Gate**: quick
+**Status**: ✅ Complete (commit `7057af5`)
 
 ---
 
