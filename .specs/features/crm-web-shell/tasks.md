@@ -12,7 +12,7 @@ adequacy review, Verifier, discrimination sensor).
 ---
 
 **Design**: `.specs/features/crm-web-shell/design.md`
-**Status**: Draft
+**Status**: Approved
 
 ---
 
