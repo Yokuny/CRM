@@ -42,3 +42,15 @@ export const fieldTemplateRateLimit = rejectWithTooManyRequests(
   'Muitas alterações de template. Tente novamente em alguns minutos.',
   tenantAndIpKeyGenerator,
 );
+
+// CORE-14: mutação de Customer, por tenant + IP — mesmo molde de fieldTemplateRateLimit.
+export const customerRateLimit = rejectWithTooManyRequests(
+  'Muitas alterações de cliente. Tente novamente em alguns minutos.',
+  tenantAndIpKeyGenerator,
+);
+
+// CORE-14: mutação de Process, por tenant + IP — mesmo molde de customerRateLimit.
+export const processRateLimit = rejectWithTooManyRequests(
+  'Muitas alterações de processo. Tente novamente em alguns minutos.',
+  tenantAndIpKeyGenerator,
+);

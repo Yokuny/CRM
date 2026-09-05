@@ -128,9 +128,9 @@ field to the `fieldTemplateVersions` `targetType:'process'` example (AD-023).
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `customers` example shows `document?` alongside `name`/`phone`
-- [ ] `fieldTemplateVersions` `targetType:'process'` example shows `stages: [...]`
-- [ ] Gate check passes: `pnpm -r exec tsc --noEmit && pnpm biome check . && pnpm vitest run`
+- [x] `customers` example shows `document?` alongside `name`/`phone`
+- [x] `fieldTemplateVersions` `targetType:'process'` example shows `stages: [...]`
+- [x] Gate check passes: `pnpm -r exec tsc --noEmit && pnpm biome check . && pnpm vitest run`
 
 **Tests**: none
 **Gate**: build
@@ -156,12 +156,12 @@ the service in T9, mirroring the existing `key`/`customer` split in `resolveKey`
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `targetType:'process'` without `stages` → rejected; with duplicate values in `stages` → rejected
-- [ ] `targetType:'customer'` with `stages` present → rejected; without it → accepted (unchanged)
-- [ ] `bumpFieldTemplateSchema` accepts a body with or without `stages` (schema-level only)
-- [ ] Both schemas still reject `TENANT_FORBIDDEN_KEYS` (unchanged `.strict()` behavior)
-- [ ] Gate check passes: `pnpm vitest run --project unit`
-- [ ] Test count: ≥ 6 new tests pass (existing suite stays green)
+- [x] `targetType:'process'` without `stages` → rejected; with duplicate values in `stages` → rejected
+- [x] `targetType:'customer'` with `stages` present → rejected; without it → accepted (unchanged)
+- [x] `bumpFieldTemplateSchema` accepts a body with or without `stages` (schema-level only)
+- [x] Both schemas still reject `TENANT_FORBIDDEN_KEYS` (unchanged `.strict()` behavior)
+- [x] Gate check passes: `pnpm vitest run --project unit`
+- [x] Test count: ≥ 6 new tests pass (existing suite stays green)
 
 **Tests**: unit
 **Gate**: quick
@@ -185,12 +185,12 @@ via `field-engine`, not statically here — same split already used for `fields`
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Missing `name`/`phone` rejected; `document` optional and accepted when present or absent
-- [ ] Body with `Tenant`/`tenantId`/`orgId` rejected by `.strict()`
-- [ ] `values` accepts an arbitrary object shape (runtime-validated elsewhere)
-- [ ] Schema appears in `schemaRegistry`; `schema-registry.structural.test.ts` passes unchanged
-- [ ] Gate check passes: `pnpm vitest run --project unit --project structural`
-- [ ] Test count: ≥ 5 tests pass
+- [x] Missing `name`/`phone` rejected; `document` optional and accepted when present or absent
+- [x] Body with `Tenant`/`tenantId`/`orgId` rejected by `.strict()`
+- [x] `values` accepts an arbitrary object shape (runtime-validated elsewhere)
+- [x] Schema appears in `schemaRegistry`; `schema-registry.structural.test.ts` passes unchanged
+- [x] Gate check passes: `pnpm vitest run --project unit --project structural`
+- [x] Test count: ≥ 5 tests pass
 
 **Tests**: unit
 **Gate**: quick
@@ -213,11 +213,11 @@ Register in `schemaRegistry`.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Missing `templateKey`/`customerId` rejected; malformed `customerId` (not 24-hex) rejected
-- [ ] Body with `Tenant`/`tenantId`/`orgId` rejected by `.strict()`
-- [ ] Schema appears in `schemaRegistry`; `schema-registry.structural.test.ts` passes unchanged
-- [ ] Gate check passes: `pnpm vitest run --project unit --project structural`
-- [ ] Test count: ≥ 4 tests pass
+- [x] Missing `templateKey`/`customerId` rejected; malformed `customerId` (not 24-hex) rejected
+- [x] Body with `Tenant`/`tenantId`/`orgId` rejected by `.strict()`
+- [x] Schema appears in `schemaRegistry`; `schema-registry.structural.test.ts` passes unchanged
+- [x] Gate check passes: `pnpm vitest run --project unit --project structural`
+- [x] Test count: ≥ 4 tests pass
 
 **Tests**: unit
 **Gate**: quick
@@ -239,12 +239,12 @@ Register in `schemaRegistry`.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `updateProcessValuesSchema` rejects a missing `values` key; accepts an arbitrary object
-- [ ] `updateProcessStageSchema` rejects empty/missing `stage`
-- [ ] Both reject `Tenant`/`tenantId`/`orgId` via `.strict()`
-- [ ] Both appear in `schemaRegistry`; `schema-registry.structural.test.ts` passes unchanged
-- [ ] Gate check passes: `pnpm vitest run --project unit --project structural`
-- [ ] Test count: ≥ 5 tests pass
+- [x] `updateProcessValuesSchema` rejects a missing `values` key; accepts an arbitrary object
+- [x] `updateProcessStageSchema` rejects empty/missing `stage`
+- [x] Both reject `Tenant`/`tenantId`/`orgId` via `.strict()`
+- [x] Both appear in `schemaRegistry`; `schema-registry.structural.test.ts` passes unchanged
+- [x] Gate check passes: `pnpm vitest run --project unit --project structural`
+- [x] Test count: ≥ 5 tests pass
 
 **Tests**: unit
 **Gate**: quick
@@ -266,10 +266,10 @@ Extend the existing model integration test.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] A `targetType:'process'` document persists and reads back `stages` intact
-- [ ] A `targetType:'customer'` document with no `stages` persists unaffected (field absent, not `[]`)
-- [ ] Gate check passes: `pnpm vitest run --project integration`
-- [ ] Test count: ≥ 2 new tests pass (existing suite stays green)
+- [x] A `targetType:'process'` document persists and reads back `stages` intact
+- [x] A `targetType:'customer'` document with no `stages` persists unaffected (field absent, not `[]`)
+- [x] Gate check passes: `pnpm vitest run --project integration`
+- [x] Test count: ≥ 2 new tests pass (existing suite stays green)
 
 **Tests**: integration
 **Gate**: full
@@ -295,12 +295,12 @@ trade-off, same convention) for `values`
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Two `Customer` docs with the same `{Tenant,phone}` both persist (no unique constraint — explicit proof of the spec Assumption)
-- [ ] `Customer.collection.indexes()` includes `{Tenant:1,name:1}`, `{Tenant:1,phone:1}`, and the compound wildcard `{Tenant:1,'values.$**':1}`
-- [ ] A query `{Tenant, 'values.status': X}` returns only matching docs (functional proof the wildcard index is queryable, not just present)
-- [ ] Exported from `packages/db/src/index.ts`; `syncIndexes()` includes `Customer.createIndexes()`
-- [ ] Gate check passes: `pnpm vitest run --project integration`
-- [ ] Test count: ≥ 5 tests pass
+- [x] Two `Customer` docs with the same `{Tenant,phone}` both persist (no unique constraint — explicit proof of the spec Assumption)
+- [x] `Customer.collection.indexes()` includes `{Tenant:1,name:1}`, `{Tenant:1,phone:1}`, and the compound wildcard `{Tenant:1,'values.$**':1}`
+- [x] A query `{Tenant, 'values.status': X}` returns only matching docs (functional proof the wildcard index is queryable, not just present)
+- [x] Exported from `packages/db/src/index.ts`; `syncIndexes()` includes `Customer.createIndexes()`
+- [x] Gate check passes: `pnpm vitest run --project integration`
+- [x] Test count: ≥ 5 tests pass
 
 **Tests**: integration
 **Gate**: full
@@ -325,11 +325,11 @@ exact `FieldValueStore.countByTemplateVersion`/`migrateValues` filter shape). Ex
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `Process.collection.indexes()` includes `{Tenant:1,customer:1}` and `{Tenant:1,template:1,templateVersion:1}`
-- [ ] A query `{Tenant,template,templateVersion}` returns only matching docs (functional proof, mirrors what the FieldValueStore adapter will filter by)
-- [ ] Exported from `packages/db/src/index.ts`; `syncIndexes()` includes `Process.createIndexes()`
-- [ ] Gate check passes: `pnpm vitest run --project integration`
-- [ ] Test count: ≥ 4 tests pass
+- [x] `Process.collection.indexes()` includes `{Tenant:1,customer:1}` and `{Tenant:1,template:1,templateVersion:1}`
+- [x] A query `{Tenant,template,templateVersion}` returns only matching docs (functional proof, mirrors what the FieldValueStore adapter will filter by)
+- [x] Exported from `packages/db/src/index.ts`; `syncIndexes()` includes `Process.createIndexes()`
+- [x] Gate check passes: `pnpm vitest run --project integration`
+- [x] Test count: ≥ 4 tests pass
 
 **Tests**: integration
 **Gate**: full
@@ -359,12 +359,12 @@ code it proves, per the "merge forward" rule).
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `POST /field-templates` with `targetType:'process'` and no `stages` → 400, nothing created
-- [ ] `POST /field-templates` with `targetType:'process'` and valid `stages` → 201, `GET /current` returns them
-- [ ] `POST /field-templates/:id/versions` (bump) on a `process` template without `stages` → 400, version slot NOT claimed (re-attempting the same `expectedVersion` afterward still works — proves no orphaned slot)
-- [ ] `targetType:'customer'` templates are unaffected (no `stages` in request or response)
-- [ ] Gate check passes: `pnpm vitest run --project e2e`
-- [ ] Test count: ≥ 5 new tests pass (existing suite stays green)
+- [x] `POST /field-templates` with `targetType:'process'` and no `stages` → 400, nothing created
+- [x] `POST /field-templates` with `targetType:'process'` and valid `stages` → 201, `GET /current` returns them
+- [x] `POST /field-templates/:id/versions` (bump) on a `process` template without `stages` → 400, version slot NOT claimed (re-attempting the same `expectedVersion` afterward still works — proves no orphaned slot)
+- [x] `targetType:'customer'` templates are unaffected (no `stages` in request or response)
+- [x] Gate check passes: `pnpm vitest run --project e2e`
+- [x] Test count: ≥ 5 new tests pass (existing suite stays green)
 
 **Tests**: e2e
 **Gate**: full
@@ -393,12 +393,12 @@ signature untouched)
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `countByTemplateVersion` counts only docs at the exact `(Tenant,template,version)`
-- [ ] `discard`/`mapField`/`mapOptions` each transform `values` correctly on a seeded doc
-- [ ] `mapOptions` leaves a value untouched when it has no entry in `mapping`
-- [ ] Calling `migrateValues` twice with the same `(fromVersion,toVersion)` — second call migrates 0 docs (AD-024 idempotent-retry proof)
-- [ ] Gate check passes: `pnpm vitest run --project integration`
-- [ ] Test count: ≥ 6 tests pass
+- [x] `countByTemplateVersion` counts only docs at the exact `(Tenant,template,version)`
+- [x] `discard`/`mapField`/`mapOptions` each transform `values` correctly on a seeded doc
+- [x] `mapOptions` leaves a value untouched when it has no entry in `mapping`
+- [x] Calling `migrateValues` twice with the same `(fromVersion,toVersion)` — second call migrates 0 docs (AD-024 idempotent-retry proof)
+- [x] Gate check passes: `pnpm vitest run --project integration`
+- [x] Test count: ≥ 6 tests pass
 
 **Tests**: integration
 **Gate**: full
@@ -419,9 +419,9 @@ the `Process` collection.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Same four checks as T10, against `Process` documents
-- [ ] Gate check passes: `pnpm vitest run --project integration`
-- [ ] Test count: ≥ 6 tests pass
+- [x] Same four checks as T10, against `Process` documents
+- [x] Gate check passes: `pnpm vitest run --project integration`
+- [x] Test count: ≥ 6 tests pass
 
 **Tests**: integration
 **Gate**: full
@@ -444,9 +444,9 @@ functions wrapped in `withDbTiming`.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Every exported function passes through `withDbTiming` with a unique operation name
-- [ ] `findById` wraps its filter in `tenantScoped` (foreign-tenant id → `null`)
-- [ ] Gate check passes: `pnpm -r exec tsc --noEmit`
+- [x] Every exported function passes through `withDbTiming` with a unique operation name
+- [x] `findById` wraps its filter in `tenantScoped` (foreign-tenant id → `null`)
+- [x] Gate check passes: `pnpm -r exec tsc --noEmit`
 
 **Tests**: none (covered transitively by the e2e of T15 — project floor)
 **Gate**: quick
@@ -473,10 +473,10 @@ descending, delegates to the repository.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Invalid `values` throws before any repository write (`validate().valid === false` short-circuits)
-- [ ] `archived === true` on the resolved template throws a 400 `CustomError` before any write
-- [ ] `page`/`limit` outside `[1,MAX_PAGE_SIZE]` are clamped, never passed through raw
-- [ ] Gate check passes: `pnpm -r exec tsc --noEmit`
+- [x] Invalid `values` throws before any repository write (`validate().valid === false` short-circuits)
+- [x] `archived === true` on the resolved template throws a 400 `CustomError` before any write
+- [x] `page`/`limit` outside `[1,MAX_PAGE_SIZE]` are clamped, never passed through raw
+- [x] Gate check passes: `pnpm -r exec tsc --noEmit`
 
 **Tests**: none (covered transitively by the e2e of T15 — project floor)
 **Gate**: quick
@@ -497,8 +497,8 @@ descending, delegates to the repository.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Both handlers read tenant only from `req.tenantUser.tenant`
-- [ ] Gate check passes: `pnpm -r exec tsc --noEmit`
+- [x] Both handlers read tenant only from `req.tenantUser.tenant`
+- [x] Gate check passes: `pnpm -r exec tsc --noEmit`
 
 **Tests**: none (covered transitively by the e2e of T15 — project floor)
 **Gate**: quick
@@ -527,17 +527,17 @@ CORE-14, CORE-16
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `POST /customers` creates (201) with valid `values`; invalid `values` → 400, nothing persisted
-- [ ] Archived `customer` template → `POST /customers` → 400, nothing created
-- [ ] `gestor`/`operador` sessions can create/list (no 403 — unlike `field-template`'s `isAdmin` gate)
-- [ ] `GET /customers?q=...` matches `name`/`phone`; `sort=name`/`createdAt` orders correctly; pagination bounds are clamped, never the full collection
-- [ ] `GET /customers?status=X` for a value with zero matches → `200 { items: [], total: 0 }`
-- [ ] Phone `"(11) 91234-5678"` and document with punctuation persist normalized (digits/alphanumeric only)
-- [ ] Body with forged `Tenant`/`tenantId`/`orgId` → 400 (schema `.strict()`)
-- [ ] N+1 mutations on the same route → 429
-- [ ] `dbReqResTime` metric includes every `customer.*` operation name after a full flow
-- [ ] Gate check passes: `pnpm vitest run --project e2e`
-- [ ] Test count: ≥ 14 tests pass
+- [x] `POST /customers` creates (201) with valid `values`; invalid `values` → 400, nothing persisted
+- [x] Archived `customer` template → `POST /customers` → 400, nothing created
+- [x] `gestor`/`operador` sessions can create/list (no 403 — unlike `field-template`'s `isAdmin` gate)
+- [x] `GET /customers?q=...` matches `name`/`phone`; `sort=name`/`createdAt` orders correctly; pagination bounds are clamped, never the full collection
+- [x] `GET /customers?status=X` for a value with zero matches → `200 { items: [], total: 0 }`
+- [x] Phone `"(11) 91234-5678"` and document with punctuation persist normalized (digits/alphanumeric only)
+- [x] Body with forged `Tenant`/`tenantId`/`orgId` → 400 (schema `.strict()`)
+- [x] N+1 mutations on the same route → 429
+- [x] `dbReqResTime` metric includes every `customer.*` operation name after a full flow
+- [x] Gate check passes: `pnpm vitest run --project e2e`
+- [x] Test count: ≥ 14 tests pass
 
 **Tests**: e2e
 **Gate**: full
@@ -559,10 +559,10 @@ optimistic-lock field). All wrapped in `withDbTiming`.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Every exported function passes through `withDbTiming` with a unique operation name
-- [ ] `findById`/`findByCustomer` wrap filters in `tenantScoped`
-- [ ] `updateStage` is a single `findOneAndUpdate` call (no read-then-write race window)
-- [ ] Gate check passes: `pnpm -r exec tsc --noEmit`
+- [x] Every exported function passes through `withDbTiming` with a unique operation name
+- [x] `findById`/`findByCustomer` wrap filters in `tenantScoped`
+- [x] `updateStage` is a single `findOneAndUpdate` call (no read-then-write race window)
+- [x] Gate check passes: `pnpm -r exec tsc --noEmit`
 
 **Tests**: none (covered transitively by the e2e of T19 — project floor)
 **Gate**: quick
@@ -594,11 +594,11 @@ the template's current version — CORE-08), validates, persists only if valid.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `createProcess` against a foreign-tenant `customerId` throws 404 before any write
-- [ ] `createProcess` against an archived `process` template throws 400 before any write
-- [ ] `updateProcessValues` resolves `(process.template, process.templateVersion)` — never `template.currentVersion`
-- [ ] `updateProcessStage` rejects a `stage` outside the snapshot's `stages` before any write
-- [ ] Gate check passes: `pnpm -r exec tsc --noEmit`
+- [x] `createProcess` against a foreign-tenant `customerId` throws 404 before any write
+- [x] `createProcess` against an archived `process` template throws 400 before any write
+- [x] `updateProcessValues` resolves `(process.template, process.templateVersion)` — never `template.currentVersion`
+- [x] `updateProcessStage` rejects a `stage` outside the snapshot's `stages` before any write
+- [x] Gate check passes: `pnpm -r exec tsc --noEmit`
 
 **Tests**: none (covered transitively by the e2e of T19 — project floor)
 **Gate**: quick
@@ -619,8 +619,8 @@ the template's current version — CORE-08), validates, persists only if valid.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] All four handlers read tenant only from `req.tenantUser.tenant`
-- [ ] Gate check passes: `pnpm -r exec tsc --noEmit`
+- [x] All four handlers read tenant only from `req.tenantUser.tenant`
+- [x] Gate check passes: `pnpm -r exec tsc --noEmit`
 
 **Tests**: none (covered transitively by the e2e of T19 — project floor)
 **Gate**: quick
@@ -646,17 +646,17 @@ CORE-15, CORE-16, CORE-17
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `POST /processes` creates (201) with `stage` equal to the template's first `stages` entry and a `templateVersion` snapshot
-- [ ] `POST /processes` against a forged/foreign-tenant `customerId` → 404, nothing created
-- [ ] Archived `process` template → `POST /processes` → 400, nothing created
-- [ ] After bumping the process template (via the existing `field-template` bump endpoint), an existing Process's `PATCH .../values` still validates against its ORIGINAL `templateVersion`, not the new one
-- [ ] `PATCH .../stage` through a valid sequence of `stages` succeeds; a value outside `stages` → 400, `stage` unchanged
-- [ ] Two concurrent `PATCH .../stage` requests (`Promise.all`) both resolve without a torn/corrupted document — final `stage` is one of the two requested values, never a hybrid or crash (CORE-15)
-- [ ] `GET /processes?customerId=X` returns only that customer's Process docs (P2)
-- [ ] N+1 mutations on the same route → 429
-- [ ] `dbReqResTime` metric includes every `process.*` operation name after a full flow
-- [ ] Gate check passes: `pnpm vitest run --project e2e`
-- [ ] Test count: ≥ 16 tests pass
+- [x] `POST /processes` creates (201) with `stage` equal to the template's first `stages` entry and a `templateVersion` snapshot
+- [x] `POST /processes` against a forged/foreign-tenant `customerId` → 404, nothing created
+- [x] Archived `process` template → `POST /processes` → 400, nothing created
+- [x] After bumping the process template (via the existing `field-template` bump endpoint), an existing Process's `PATCH .../values` still validates against its ORIGINAL `templateVersion`, not the new one
+- [x] `PATCH .../stage` through a valid sequence of `stages` succeeds; a value outside `stages` → 400, `stage` unchanged
+- [x] Two concurrent `PATCH .../stage` requests (`Promise.all`) both resolve without a torn/corrupted document — final `stage` is one of the two requested values, never a hybrid or crash (CORE-15)
+- [x] `GET /processes?customerId=X` returns only that customer's Process docs (P2)
+- [x] N+1 mutations on the same route → 429
+- [x] `dbReqResTime` metric includes every `process.*` operation name after a full flow
+- [x] Gate check passes: `pnpm vitest run --project e2e`
+- [x] Test count: ≥ 16 tests pass
 
 **Tests**: e2e
 **Gate**: full
@@ -678,10 +678,10 @@ CORE-15, CORE-16, CORE-17
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `buildApp()` mounts both routers
-- [ ] `fieldValueStores` uses the real adapters for both `customer` and `process`
-- [ ] `apps/crm-api/src/server.int.test.ts` (existing boot smoke test) still passes unchanged
-- [ ] Gate check passes: `pnpm vitest run --project integration`
+- [x] `buildApp()` mounts both routers
+- [x] `fieldValueStores` uses the real adapters for both `customer` and `process`
+- [x] `apps/crm-api/src/server.int.test.ts` (existing boot smoke test) still passes unchanged
+- [x] Gate check passes: `pnpm vitest run --project integration`
 
 **Tests**: integration (existing smoke, no new dedicated test)
 **Gate**: full
@@ -703,9 +703,9 @@ against it, confirming neither tenant's session can read the other's records thr
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Two tenants with same-named `Customer`/`Process` — each session's listing/detail calls only ever see their own tenant's records
-- [ ] Gate check passes: `pnpm vitest run --project integration`
-- [ ] Test count: ≥ 1 new test passes (whole file stays green)
+- [x] Two tenants with same-named `Customer`/`Process` — each session's listing/detail calls only ever see their own tenant's records
+- [x] Gate check passes: `pnpm vitest run --project integration`
+- [x] Test count: ≥ 1 new test passes (whole file stays green)
 
 **Tests**: integration
 **Gate**: full

@@ -180,28 +180,29 @@ listar por Customer e confirmar que só os 2 corretos voltam.
 
 | ID | Story | Fase | Status |
 | --- | --- | --- | --- |
-| CORE-01 | P1: Customer — criação com `values` válidos, Tenant/versão da sessão | Design | Pending |
-| CORE-02 | P1: Customer — `values` inválidos rejeitam sem criar | Design | Pending |
-| CORE-03 | P1: Customer — listagem server-side (busca/ordenação/paginação) | Design | Pending |
-| CORE-04 | P1: Customer — filtro por `status` (base da coluna do kanban) | Design | Pending |
-| CORE-05 | P1: Customer — isolamento entre tenants (estende FND-09) | Design | Pending |
-| CORE-06 | P1: Customer — `Tenant`/`tenantId`/`orgId` forjado no body ignorado | Design | Pending |
-| CORE-07 | P1: Process — abertura com `templateVersion` corrente + `stage` inicial | Design | Pending |
-| CORE-08 | P1: Process — update de `values` valida contra a `templateVersion` do registro | Design | Pending |
-| CORE-09 | P1: Process — `stage` só transiciona entre `stages` do template (guard) | Design | Pending |
-| CORE-10 | P1: Process — não vincula Customer de outro tenant | Design | Pending |
-| CORE-11 | P2: Process — listagem filtrada por Customer (histórico) | Design | Pending |
-| CORE-12 | Dimensão: validação de entrada & limites | Design | Pending |
-| CORE-13 | Dimensão: falha/falha parcial não persiste registro inválido | Design | Pending |
-| CORE-14 | Dimensão: fronteiras de auth & rate limit | Design | Pending |
-| CORE-15 | Dimensão: concorrência no avanço de `stage` | Design | Pending |
-| CORE-16 | Dimensão: observabilidade (`dbReqResTime` + log) | Design | Pending |
-| CORE-17 | Dimensão: integridade de transição de `stage` | Design | Pending |
+| CORE-01 | P1: Customer — criação com `values` válidos, Tenant/versão da sessão | Verified | ✅ Verified |
+| CORE-02 | P1: Customer — `values` inválidos rejeitam sem criar | Verified | ✅ Verified |
+| CORE-03 | P1: Customer — listagem server-side (busca/ordenação/paginação) | Verified | ✅ Verified |
+| CORE-04 | P1: Customer — filtro por `status` (base da coluna do kanban) | Verified | ✅ Verified |
+| CORE-05 | P1: Customer — isolamento entre tenants (estende FND-09) | Verified | ✅ Verified |
+| CORE-06 | P1: Customer — `Tenant`/`tenantId`/`orgId` forjado no body ignorado | Verified | ✅ Verified |
+| CORE-07 | P1: Process — abertura com `templateVersion` corrente + `stage` inicial | Verified | ✅ Verified |
+| CORE-08 | P1: Process — update de `values` valida contra a `templateVersion` do registro | Verified | ✅ Verified |
+| CORE-09 | P1: Process — `stage` só transiciona entre `stages` do template (guard) | Verified | ✅ Verified |
+| CORE-10 | P1: Process — não vincula Customer de outro tenant | Verified | ✅ Verified |
+| CORE-11 | P2: Process — listagem filtrada por Customer (histórico) | Verified | ✅ Verified |
+| CORE-12 | Dimensão: validação de entrada & limites | Verified | ✅ Verified |
+| CORE-13 | Dimensão: falha/falha parcial não persiste registro inválido | Verified | ✅ Verified |
+| CORE-14 | Dimensão: fronteiras de auth & rate limit | Verified | ✅ Verified |
+| CORE-15 | Dimensão: concorrência no avanço de `stage` | Verified | ✅ Verified |
+| CORE-16 | Dimensão: observabilidade (`dbReqResTime` + log) | Verified | ✅ Verified |
+| CORE-17 | Dimensão: integridade de transição de `stage` | Verified | ✅ Verified |
 
 **ID format:** `CORE-[NUMBER]`. **Status values:** Pending → In Design → In Tasks →
 Implementing → Verified.
 
-**Coverage:** 17 requisitos · 0 mapeados (spec recém-criada, aguardando Design).
+**Coverage:** 17 requisitos · 17 mapeados e verificados independentemente —
+ver `.specs/features/crm-core/validation.md` (2026-09-04).
 
 ---
 

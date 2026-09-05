@@ -10,6 +10,11 @@ export const bumpFieldTemplateSchema = z
     expectedVersion: z.number().int().min(1),
     fields: z.array(fieldDefSchema).min(1).max(MAX_FIELDS_PER_TEMPLATE),
     migration: z.record(z.string().min(1), migrationActionSchema).optional(),
+    // AD-023: opcional aqui — o schema não tem `targetType` para decidir se é
+    // obrigatório. A regra "bump de template process exige stages" é do
+    // service (fieldTemplate.service.bumpFieldTemplateVersion, T9), mesmo
+    // split já usado hoje para customer/process em `resolveKey`.
+    stages: z.array(z.string().trim().min(1)).min(1).optional(),
   })
   .strict();
 

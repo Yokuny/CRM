@@ -16,6 +16,7 @@ describe('createFieldTemplateSchema', () => {
       key: 'compra',
       name: 'Compra',
       fields: [statusField],
+      stages: ['aguardando_pagamento'],
     });
     expect(result.success).toBe(true);
     if (result.success) {
@@ -98,5 +99,72 @@ describe('createFieldTemplateSchema', () => {
       fields: [{ fieldId: 'a.b', label: 'A', type: 'text' }],
     });
     expect(result.success).toBe(false);
+  });
+
+  // AD-023: `stages` é a fonte de verdade da guarda de transição de Process.
+  it('accepts a process template carrying valid, unique stages', () => {
+    const result = createFieldTemplateSchema.safeParse({
+      targetType: 'process',
+      key: 'compra',
+      name: 'Compra',
+      fields: [statusField],
+      stages: ['aguardando_pagamento', 'pago', 'concluido'],
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.stages).toEqual(['aguardando_pagamento', 'pago', 'concluido']);
+    }
+  });
+
+  it('rejects a process template with no stages', () => {
+    const result = createFieldTemplateSchema.safeParse({
+      targetType: 'process',
+      key: 'compra',
+      name: 'Compra',
+      fields: [statusField],
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.some((issue) => issue.path.join('.') === 'stages')).toBe(true);
+    }
+  });
+
+  it('rejects a process template whose stages contain duplicate values', () => {
+    const result = createFieldTemplateSchema.safeParse({
+      targetType: 'process',
+      key: 'compra',
+      name: 'Compra',
+      fields: [statusField],
+      stages: ['pago', 'pago'],
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.some((issue) => issue.path.join('.') === 'stages')).toBe(true);
+    }
+  });
+
+  it('rejects a customer template that carries stages', () => {
+    const result = createFieldTemplateSchema.safeParse({
+      targetType: 'customer',
+      name: 'Cliente',
+      fields: [statusField],
+      stages: ['novo'],
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.some((issue) => issue.path.join('.') === 'stages')).toBe(true);
+    }
+  });
+
+  it('accepts a customer template with no stages (unchanged)', () => {
+    const result = createFieldTemplateSchema.safeParse({
+      targetType: 'customer',
+      name: 'Cliente',
+      fields: [statusField],
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.stages).toBeUndefined();
+    }
   });
 });

@@ -16,6 +16,7 @@ export type FieldValueStores = Record<FieldTemplateTargetType, FieldValueStore>;
 export type CurrentTemplate = {
   template: { id: string; name: string; currentVersion: number; archived: boolean };
   fields: FieldDef[];
+  stages?: string[];
 };
 
 // `customer` tem exatamente um template por Tenant: a chave é sempre a padrão,
@@ -49,6 +50,7 @@ export const createFieldTemplate = async (
     targetType: data.targetType,
     version: 1,
     fields: data.fields,
+    stages: data.stages,
   });
 
   return { id: template.id, currentVersion: 1 };
@@ -73,6 +75,7 @@ export const getCurrentTemplate = async (
       archived: template.archived,
     },
     fields: version.fields,
+    stages: version.stages,
   };
 };
 
@@ -89,6 +92,14 @@ export const bumpFieldTemplateVersion = async (
 ): Promise<{ currentVersion: number }> => {
   const template = await fieldTemplateRepository.findTemplateById(tenantId, templateId);
   if (!template) throw new CustomError('Template não encontrado', 404);
+
+  // AD-023: o schema (bumpFieldTemplateSchema) não tem `targetType` para
+  // exigir `stages` estaticamente — mesmo split já usado em `resolveKey` para
+  // customer/process em createFieldTemplate. Roda ANTES de reivindicar
+  // qualquer slot, para nunca deixar uma versão órfã no índice único.
+  if (template.targetType === 'process' && !data.stages) {
+    throw new CustomError('stages é obrigatório para bump de template process', 400);
+  }
 
   const base = await fieldTemplateRepository.findCurrentVersion(tenantId, template.id, data.expectedVersion);
   if (!base) {
@@ -116,6 +127,7 @@ export const bumpFieldTemplateVersion = async (
       targetType: template.targetType,
       version: nextVersion,
       fields: data.fields,
+      stages: data.stages,
     });
   } catch (e) {
     if (isDuplicateKeyError(e)) {

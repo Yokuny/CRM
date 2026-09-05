@@ -8,6 +8,7 @@ export interface FieldTemplateVersionDocument {
   targetType: 'customer' | 'process';
   version: number;
   fields: FieldDef[];
+  stages?: string[];
   createdAt: Date;
 }
 
@@ -23,6 +24,13 @@ const fieldTemplateVersionSchema = new Schema<FieldTemplateVersionDocument>(
     targetType: { type: String, enum: ['customer', 'process'], required: true },
     version: { type: Number, required: true, min: 1 },
     fields: { type: Schema.Types.Mixed, required: true },
+    // AD-023: fonte de verdade da guarda de transição de Process
+    // (CORE-09/17) — populado só quando targetType === 'process'; a
+    // obrigatoriedade em si é aplicada em contracts/service (T2/T9), não
+    // aqui no schema Mongoose. `default: undefined` evita o auto-init de
+    // array do Mongoose (`[]`) para documentos `customer`, que não têm
+    // stage — o campo precisa ficar AUSENTE, não uma lista vazia.
+    stages: { type: [String], required: false, default: undefined },
   },
   { timestamps: { createdAt: true, updatedAt: false }, collection: 'fieldTemplateVersions' },
 );
