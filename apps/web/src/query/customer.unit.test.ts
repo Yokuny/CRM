@@ -1,9 +1,11 @@
+import type { FieldDef } from '@crm/contracts';
+import { NO_STATUS_FILTER_VALUE } from '@crm/contracts';
 import { describe, expect, it, vi } from 'vitest';
 
 const getMock = vi.fn();
 vi.mock('../lib/api/client.api.js', () => ({ get: getMock }));
 
-const { customersQuery, customerQuery, customerKeys } = await import('./customer.js');
+const { customersQuery, customerQuery, customerKeys, customerStatusColumns } = await import('./customer.js');
 
 describe('customersQuery', () => {
   it('builds the querystring from page/limit/q/sort/order/status and calls GET /customers', async () => {
@@ -70,5 +72,41 @@ describe('customerQuery', () => {
 
   it('exposes a queryKey scoped by id', () => {
     expect(customerQuery('c1').queryKey).toEqual(customerKeys.detail('c1'));
+  });
+});
+
+describe('customerStatusColumns (T19 — WEB-02 AC1/AC4)', () => {
+  const statusField: FieldDef = {
+    fieldId: 'status',
+    label: 'Status',
+    type: 'status',
+    options: [
+      { key: 'closed', label: 'Fechado', color: '#ef4444', order: 1 },
+      { key: 'open', label: 'Aberto', color: '#22c55e', order: 0 },
+    ],
+  };
+
+  it('orders columns by StatusOption.order, then appends the "sem status" sentinel column last', () => {
+    const columns = customerStatusColumns([statusField]);
+
+    expect(columns).toEqual([
+      { key: 'open', label: 'Aberto', color: '#22c55e', order: 0 },
+      { key: 'closed', label: 'Fechado', color: '#ef4444', order: 1 },
+      { key: NO_STATUS_FILTER_VALUE, label: 'Sem status', order: 2 },
+    ]);
+  });
+
+  it('still includes the "sem status" sentinel column when the template has no `status` field at all', () => {
+    const columns = customerStatusColumns([{ fieldId: 'name', label: 'Nome', type: 'text' }]);
+
+    expect(columns).toEqual([{ key: NO_STATUS_FILTER_VALUE, label: 'Sem status', order: 0 }]);
+  });
+
+  it('the sentinel column value flows through customersQuery as an ordinary status filter (?status=__none__)', async () => {
+    getMock.mockResolvedValueOnce({ success: true, data: { items: [], total: 0 } });
+
+    await customersQuery({ status: NO_STATUS_FILTER_VALUE }).queryFn?.({} as never);
+
+    expect(getMock).toHaveBeenCalledWith(`/customers?status=${NO_STATUS_FILTER_VALUE}`);
   });
 });

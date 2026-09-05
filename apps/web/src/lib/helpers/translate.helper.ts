@@ -28,6 +28,7 @@ const translations: Record<string, string> = {
   'table.page': 'Página',
   'previous.page': 'Página anterior',
   'next.page': 'Próxima página',
+  'customer.status.none': 'Sem status',
   'private.role': 'Papel',
   // Usado por BreadcrumbEllipsis (apps/web/src/components/ui/breadcrumb.tsx,
   // T8) — texto de acessibilidade (sr-only) do "..." de breadcrumbs longos.

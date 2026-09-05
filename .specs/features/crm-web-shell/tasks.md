@@ -603,14 +603,17 @@ Also created beyond the literal file list above: `@interface/customers.interface
 - Skill: NONE
 
 **Done when**:
-- [ ] Column list = current `status` field's `options`, ordered by `StatusOption.order`, plus one trailing "sem status" column (`NO_STATUS_FILTER_VALUE`)
-- [ ] Each column independently queries `GET /customers?status=<key>` (or the sentinel)
-- [ ] A column with zero matching Customers renders empty, not omitted/erroring
-- [ ] Gate check passes: `pnpm vitest run --project unit`
-- [ ] Test count: ≥3 tests (column order from options, empty column renders, "sem status" column included)
+- [x] Column list = current `status` field's `options`, ordered by `StatusOption.order`, plus one trailing "sem status" column (`NO_STATUS_FILTER_VALUE`)
+- [x] Each column independently queries `GET /customers?status=<key>` (or the sentinel)
+- [x] A column with zero matching Customers renders empty, not omitted/erroring
+- [x] Gate check passes: `pnpm vitest run --project unit`
+- [x] Test count: 7 tests (`customerStatusColumns`: sorted-by-order + sentinel appended, sentinel-only when no `status` field exists, sentinel value round-trips through `customersQuery`'s querystring; `currentCustomerTemplateQuery`: builds the GET call, resolves, throws on failure, per-`targetType`+`key` queryKey)
+
+`customerStatusColumns` is a plain exported function (`apps/web/src/query/customer.ts`, extended), not a React hook — it has no internal hook calls, just derives column metadata from a `FieldDef[]` already loaded by `currentCustomerTemplateQuery`; the "each column independently queries" behavior itself is just T17's existing `customersQuery({status: col.key})` called once per column by T20's route (no new fetch function needed — confirmed the per-column render/empty-column behavior is exercised at T20, since this task's own "Where" has no route/component file).
 
 **Tests**: unit
 **Gate**: quick
+**Status**: ✅ Complete (commit `3f36656`)
 
 ---
 

@@ -1,5 +1,7 @@
+import { type FieldDef, NO_STATUS_FILTER_VALUE } from '@crm/contracts';
 import { queryOptions } from '@tanstack/react-query';
 import { get } from '../lib/api/client.api.js';
+import { t } from '../lib/helpers/translate.helper.js';
 
 // Espelha CustomerRecord de apps/crm-api/src/repositories/customer.repository.ts
 // — a verdade fica no back-end; este tipo só descreve o que a tela consome
@@ -67,3 +69,21 @@ export const customerQuery = (id: string) =>
       return res.data;
     },
   });
+
+export type CustomerStatusColumn = { key: string; label: string; color?: string; order: number };
+
+// WEB-02 AC1/AC4: coluna por opção do `status` corrente do template
+// `customer`, ordenada por `StatusOption.order`, mais uma coluna final
+// "sem status" (o sentinel NO_STATUS_FILTER_VALUE, `GET /customers`'s query
+// extension de T4) — nunca omitida, mesmo quando o template não tem nenhum
+// campo `status` definido. Função pura (não um hook): não depende de nenhum
+// estado de React, só da lista de `fields` do template já carregado.
+export const customerStatusColumns = (fields: FieldDef[]): CustomerStatusColumn[] => {
+  const statusField = fields.find((field): field is Extract<FieldDef, { type: 'status' }> => field.type === 'status');
+  const options = statusField ? [...statusField.options].sort((a, b) => a.order - b.order) : [];
+
+  return [
+    ...options.map((option) => ({ key: option.key, label: option.label, color: option.color, order: option.order })),
+    { key: NO_STATUS_FILTER_VALUE, label: t('customer.status.none'), order: options.length },
+  ];
+};
