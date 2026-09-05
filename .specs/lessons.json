@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 13,
+  "next_id": 14,
   "lessons": [
     {
       "id": "L-001",
@@ -12,7 +12,9 @@
       "signal": "ac_gap",
       "scope": "idempotency/invite-resend/repositories",
       "status": "candidate",
-      "features": ["foundation-tenancy-auth"],
+      "features": [
+        "foundation-tenancy-auth"
+      ],
       "recurrence": 1,
       "harmful": 0,
       "evidence": [
@@ -28,7 +30,9 @@
       "signal": "ac_gap",
       "scope": "tasks-authoring/observability/instrumentation",
       "status": "candidate",
-      "features": ["foundation-tenancy-auth"],
+      "features": [
+        "foundation-tenancy-auth"
+      ],
       "recurrence": 1,
       "harmful": 0,
       "evidence": [
@@ -44,7 +48,9 @@
       "signal": "gate_fail",
       "scope": "build-runtime/esm-cjs-interop/auth",
       "status": "candidate",
-      "features": ["foundation-tenancy-auth"],
+      "features": [
+        "foundation-tenancy-auth"
+      ],
       "recurrence": 1,
       "harmful": 0,
       "evidence": [
@@ -60,7 +66,9 @@
       "signal": "surviving_mutant",
       "scope": "observability/instrumentation",
       "status": "candidate",
-      "features": ["dynamic-field-engine"],
+      "features": [
+        "dynamic-field-engine"
+      ],
       "recurrence": 1,
       "harmful": 0,
       "evidence": [
@@ -76,7 +84,9 @@
       "signal": "surviving_mutant",
       "scope": "routes/lifecycle-flags",
       "status": "candidate",
-      "features": ["dynamic-field-engine"],
+      "features": [
+        "dynamic-field-engine"
+      ],
       "recurrence": 1,
       "harmful": 0,
       "evidence": [
@@ -92,7 +102,9 @@
       "signal": "surviving_mutant",
       "scope": "concurrency/versioning",
       "status": "candidate",
-      "features": ["dynamic-field-engine"],
+      "features": [
+        "dynamic-field-engine"
+      ],
       "recurrence": 1,
       "harmful": 0,
       "evidence": [
@@ -108,7 +120,9 @@
       "signal": "ac_gap",
       "scope": "idempotency/retry/versioning",
       "status": "candidate",
-      "features": ["dynamic-field-engine"],
+      "features": [
+        "dynamic-field-engine"
+      ],
       "recurrence": 1,
       "harmful": 0,
       "evidence": [
@@ -124,7 +138,9 @@
       "signal": "ac_gap",
       "scope": "tasks-authoring/lifecycle",
       "status": "candidate",
-      "features": ["dynamic-field-engine"],
+      "features": [
+        "dynamic-field-engine"
+      ],
       "recurrence": 1,
       "harmful": 0,
       "evidence": [
@@ -140,7 +156,9 @@
       "signal": "ac_gap",
       "scope": "versioning/e2e",
       "status": "candidate",
-      "features": ["dynamic-field-engine"],
+      "features": [
+        "dynamic-field-engine"
+      ],
       "recurrence": 1,
       "harmful": 0,
       "evidence": [
@@ -156,7 +174,9 @@
       "signal": "ac_gap",
       "scope": "rbac/routes/e2e",
       "status": "candidate",
-      "features": ["dynamic-field-engine"],
+      "features": [
+        "dynamic-field-engine"
+      ],
       "recurrence": 1,
       "harmful": 0,
       "evidence": [
@@ -172,7 +192,9 @@
       "signal": "spec_precision_gap",
       "scope": "field-engine/validation",
       "status": "candidate",
-      "features": ["dynamic-field-engine"],
+      "features": [
+        "dynamic-field-engine"
+      ],
       "recurrence": 1,
       "harmful": 0,
       "evidence": [
@@ -188,7 +210,9 @@
       "signal": "spec_precision_gap",
       "scope": "spec-authoring/field-engine",
       "status": "candidate",
-      "features": ["dynamic-field-engine"],
+      "features": [
+        "dynamic-field-engine"
+      ],
       "recurrence": 1,
       "harmful": 0,
       "evidence": [
@@ -196,6 +220,24 @@
       ],
       "created": "2026-09-03T23:33:38Z",
       "last_seen": "2026-09-03T23:33:38Z"
+    },
+    {
+      "id": "L-013",
+      "key": "spec_precision_gap::before promising a structured per field error shape in design md confirm the shared response envelope actually supports it do not let a design doc contradict a project wide constraint like a message only error envelope",
+      "text": "Before promising a structured per-field error shape in design.md, confirm the shared response envelope actually supports it — do not let a design doc contradict a project-wide constraint like a message-only error envelope.",
+      "signal": "spec_precision_gap",
+      "scope": "error-handling",
+      "status": "candidate",
+      "features": [
+        "crm-core"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "spec.md CORE-02 AC2 / design.md Error Handling Strategy (error-handling)"
+      ],
+      "created": "2026-09-04T20:22:47Z",
+      "last_seen": "2026-09-04T20:22:47Z"
     }
   ]
 }

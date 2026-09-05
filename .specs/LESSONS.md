@@ -86,6 +86,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: Edge case 'reference cujo target foi apagado' (validation.md Edge Cases) — packages/field-engine/src/hydrate.unit.test.ts:168-169 (spec-authoring/field-engine)
 - last seen: 2026-09-03T23:33:38Z
 
+### L-013 — Before promising a structured per-field error shape in design.md, confirm the shared response envelope actually supports it — do not let a design doc contradict a project-wide constraint like a message-only error envelope.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `error-handling` · harmful: 0
+- features: crm-core
+- evidence: spec.md CORE-02 AC2 / design.md Error Handling Strategy (error-handling)
+- last seen: 2026-09-04T20:22:47Z
+
 ## Quarantined (failed when applied — ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
