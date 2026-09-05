@@ -152,14 +152,15 @@ T28
 - Skill: NONE
 
 **Done when**:
-- [ ] `GET /customers/:id` returns `200 {success:true, data:CustomerRecord}` for an existing id in the caller's tenant
-- [ ] Returns `404 {success:false, message:'Customer não encontrado'}` for a missing id AND for another tenant's id (AD-010 — tenant-scoped filter makes both cases indistinguishable, by design)
-- [ ] Middleware chain matches convention: `validToken → tenantAssignmentCheck → validParams(idSchema)`, no rate limit (GET, matches `GET /customers` precedent)
-- [ ] Gate check passes: `pnpm vitest run --project e2e`
-- [ ] Test count: e2e adds ≥3 cases (found/own-tenant, missing id, other-tenant id) to `customer.router.e2e.test.ts`
+- [x] `GET /customers/:id` returns `200 {success:true, data:CustomerRecord}` for an existing id in the caller's tenant
+- [x] Returns `404 {success:false, message:'Customer não encontrado'}` for a missing id AND for another tenant's id (AD-010 — tenant-scoped filter makes both cases indistinguishable, by design)
+- [x] Middleware chain matches convention: `validToken → tenantAssignmentCheck → validParams(idSchema)`, no rate limit (GET, matches `GET /customers` precedent)
+- [x] Gate check passes: `pnpm vitest run --project e2e`
+- [x] Test count: e2e adds ≥3 cases (found/own-tenant, missing id, other-tenant id) to `customer.router.e2e.test.ts`
 
 **Tests**: e2e
 **Gate**: full
+**Status**: ✅ Complete (commit `338d48f`)
 
 ---
 

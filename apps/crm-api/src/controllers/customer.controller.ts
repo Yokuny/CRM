@@ -18,6 +18,15 @@ export const createCustomer = async (req: Request, res: Response, next: NextFunc
   }
 };
 
+export const getCustomerById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const result = await customerService.getCustomerById(req.tenantUser.tenant as string, req.params.id as string);
+    res.json(respObj({ data: result }));
+  } catch (e) {
+    next(e);
+  }
+};
+
 export const listCustomers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const result = await customerService.listCustomers(

@@ -108,6 +108,9 @@ const createCustomerReq = (app: express.Express, cookie: string, body: object) =
 const listCustomersReq = (app: express.Express, cookie: string, query: Record<string, string | number>) =>
   request(app).get('/customers').query(query).set('Cookie', cookie).set('User-Agent', DEVICE);
 
+const getCustomerReq = (app: express.Express, cookie: string, id: string) =>
+  request(app).get(`/customers/${id}`).set('Cookie', cookie).set('User-Agent', DEVICE);
+
 // Seed direto no model (@crm/db) — usado pelos testes de LISTAGEM, que não
 // precisam passar pela validação do field-engine (só a criação via serviço
 // consulta o template corrente). `template`/`templateVersion` são apontadores
@@ -367,6 +370,62 @@ describe('customer routes', () => {
       expect(res.body.data.total).toBe(1);
       const customerA = await Customer.findOne({ Tenant: tenantA.tenant._id }).lean();
       expect(res.body.data.items[0].id).toBe(customerA?._id.toString());
+    });
+  });
+
+  describe('GET /customers/:id', () => {
+    it('returns 200 with the full CustomerRecord for an existing id in the caller own tenant (WEB-05)', async () => {
+      const { tenant, cookie } = await seedTenantUser(['admin']);
+      await seedDefaultCustomerTemplate(tenant.id);
+      const app = buildTestApp();
+      const created = await createCustomerReq(app, cookie, {
+        name: 'Maria Silva',
+        phone: '11912345678',
+        document: '12345678900',
+        values: { status: 'novo' },
+      });
+
+      const res = await getCustomerReq(app, cookie, created.body.data.id);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data).toEqual({
+        id: created.body.data.id,
+        name: 'Maria Silva',
+        phone: '11912345678',
+        document: '12345678900',
+        template: created.body.data.template,
+        templateVersion: 1,
+        values: { status: 'novo' },
+        createdAt: created.body.data.createdAt,
+        updatedAt: created.body.data.updatedAt,
+      });
+    });
+
+    it('responds 404 with "Customer não encontrado" for an id that does not exist (WEB-05 AC2)', async () => {
+      const { cookie } = await seedTenantUser(['admin']);
+      const app = buildTestApp();
+
+      const res = await getCustomerReq(app, cookie, randomId());
+
+      expect(res.status).toBe(404);
+      expect(res.body).toEqual({ success: false, message: 'Customer não encontrado' });
+    });
+
+    it("responds 404 for another tenant's id, never leaking its data (AD-010, WEB-05 AC2)", async () => {
+      const tenantA = await seedTenantUser(['admin']);
+      await seedDefaultCustomerTemplate(tenantA.tenant.id);
+      const tenantB = await seedTenantUser(['admin']);
+      const app = buildTestApp();
+      const created = await createCustomerReq(app, tenantA.cookie, {
+        name: 'Cliente A',
+        phone: '11955555555',
+        values: { status: 'novo' },
+      });
+
+      const res = await getCustomerReq(app, tenantB.cookie, created.body.data.id);
+
+      expect(res.status).toBe(404);
+      expect(res.body).toEqual({ success: false, message: 'Customer não encontrado' });
     });
   });
 

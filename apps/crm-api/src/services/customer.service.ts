@@ -52,6 +52,16 @@ export const createCustomer = async (tenantId: string, data: CreateCustomer): Pr
   });
 };
 
+// AD-010: findById já é tenant-scoped — um id de outro tenant simplesmente
+// não existe para esta sessão, então id ausente e id de outro tenant caem no
+// mesmo 404, por design (nunca um formato de erro diferente que vazaria
+// existência).
+export const getCustomerById = async (tenantId: string, id: string): Promise<CustomerRecord> => {
+  const customer = await customerRepository.findById(tenantId, id);
+  if (!customer) throw new CustomError('Customer não encontrado', 404);
+  return customer;
+};
+
 export type ListCustomersQuery = {
   page?: number;
   limit?: number;
