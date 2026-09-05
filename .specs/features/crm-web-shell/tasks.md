@@ -330,7 +330,7 @@ Also ported beyond the literal file list above (transitive necessities found whi
 
 **Tests**: none
 **Gate**: build
-**Status**: ✅ Complete (commit `<PENDING>`)
+**Status**: ✅ Complete (commit `04ebc53`)
 
 ---
 
@@ -347,11 +347,14 @@ Also ported beyond the literal file list above (transitive necessities found whi
 - Skill: NONE
 
 **Done when**:
-- [ ] All 4 components exported with the same names/props as the reference
-- [ ] Gate check passes: `pnpm -r exec tsc --noEmit && pnpm biome check .`
+- [x] All 4 components exported with the same names/props as the reference
+- [x] Gate check passes: `pnpm -r exec tsc --noEmit && pnpm biome check .`
+
+Also ported beyond the literal file list above (transitive necessities, named in the Batch 2 dispatch prompt): 2 new icons, `Check.Icon.tsx`/`Cross.Icon.tsx` (verbatim, plain static SVGs) — `select.tsx`'s `Down`/`Up` and `dropdown-menu.tsx`'s `Dot`/`Right` were already ported in T8. `dropdown-menu.tsx` imports the `radix-ui` aggregator package (`import { DropdownMenu as DropdownMenuPrimitive } from 'radix-ui'`), kept as-is (not rewritten to the individual-package style the other 3 files use) — matches the reference file's own import verbatim, per this batch's instructions.
 
 **Tests**: none
 **Gate**: build
+**Status**: ✅ Complete (commit `<PENDING>`)
 
 ---
 
