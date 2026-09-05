@@ -856,14 +856,17 @@ Also built beyond the literal file list above: `processTemplateVersionQuery(temp
 - Skill: NONE
 
 **Done when**:
-- [ ] Stage control's options are **exactly** the record's own snapshot `stages` — never a free-text field, never every stage ever seen system-wide
-- [ ] Valid transition calls `PATCH /processes/:id/stage`, updates the shown `stage`
-- [ ] Server rejection of an invalid transition keeps the previously shown `stage` — no optimistic update
-- [ ] Gate check passes: `pnpm vitest run --project unit`
-- [ ] Test count: ≥3 tests, one per remaining WEB-08 Acceptance Criterion + WEB-17
+- [x] Stage control's options are **exactly** the record's own snapshot `stages` — never a free-text field, never every stage ever seen system-wide
+- [x] Valid transition calls `PATCH /processes/:id/stage`, updates the shown `stage`
+- [x] Server rejection of an invalid transition keeps the previously shown `stage` — no optimistic update
+- [x] Gate check passes: `pnpm vitest run --project unit`
+- [x] Test count: ≥3 tests, one per remaining WEB-08 Acceptance Criterion + WEB-17
+
+Built as `ProcessStageControl`, a small sibling component next to `ProcessValuesForm` (T26) on the same page, reusing `versionQuery.data.stages` (no second backend call). "No optimistic update" (WEB-08 AC4/WEB-17) comes for free from a single design choice: the `Select`'s `value` is bound directly to `process.stage` (the cache's own state), never a local `useState` mirror — so the displayed stage only ever changes once `queryClient.setQueryData` writes the server's accepted response; a rejected mutation simply never writes, and the control keeps showing the last value the server actually confirmed, with zero rollback code needed.
 
 **Tests**: unit
 **Gate**: quick
+**Status**: ✅ Complete (commit `f486361`)
 
 ---
 

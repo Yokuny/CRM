@@ -28,6 +28,8 @@ const translations: Record<string, string> = {
   'process.new.action': 'Novo processo',
   'process.details.title': 'Detalhe do processo',
   'process.values.error': 'Não foi possível salvar os valores do processo.',
+  'process.stage.label': 'Etapa',
+  'process.stage.error': 'Não foi possível avançar a etapa do processo.',
   'auth.signin.title': 'Entrar',
   'auth.signin.submit': 'Entrar',
   'auth.signin.error': 'Não foi possível entrar.',

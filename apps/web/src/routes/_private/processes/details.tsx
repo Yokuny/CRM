@@ -12,6 +12,8 @@ import { DynamicField } from '@/components/dynamic-field/dynamic-field.js';
 import { renderNodesToDefaultValues } from '@/components/dynamic-field/dynamic-field.utils.js';
 import { Button } from '@/components/ui/button.js';
 import { Card, CardContent, CardHeader } from '@/components/ui/card.js';
+import { Label } from '@/components/ui/label.js';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select.js';
 import { patch } from '@/lib/api/client.api.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 import { processTemplateVersionQuery } from '@/query/fieldTemplate.js';
@@ -88,6 +90,67 @@ function ProcessValuesForm({ process, fields, customerId }: ProcessValuesFormPro
   );
 }
 
+type ProcessStageControlProps = { process: ProcessRecord; stages: string[]; customerId: string };
+
+// WEB-08 (metade `stage`) + WEB-17: as opções são EXATAMENTE o `stages` da
+// snapshot do PRÓPRIO Process (nunca um campo de texto livre, nunca a lista
+// de todo stage já visto no sistema) — o mesmo `versionQuery.data.stages`
+// que `ProcessValuesForm` já usa para `fields`, sem uma segunda chamada.
+// `Select value={process.stage}` (não um estado local próprio): o valor
+// exibido só muda quando o CACHE muda (após sucesso da mutação) — é isso
+// que garante "nenhuma atualização otimista" (WEB-08 AC4/WEB-17) sem
+// nenhum código extra de rollback.
+function ProcessStageControl({ process, stages, customerId }: ProcessStageControlProps) {
+  const queryClient = useQueryClient();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const mutation = useMutation({
+    mutationFn: async (stage: string) => {
+      const res = await patch<ProcessRecord>(`/processes/${encodeURIComponent(process.id)}/stage`, { stage });
+      if (!res.success || !res.data) throw new Error(res.message ?? t('process.stage.error'));
+      return res.data;
+    },
+  });
+
+  const onValueChange = (stage: string) => {
+    if (mutation.isPending || stage === process.stage) return;
+    setErrorMessage(null);
+    mutation.mutate(stage, {
+      onSuccess: (data) => {
+        queryClient.setQueryData<ProcessesListResult>(processKeys.list(customerId), (old) =>
+          old ? { items: old.items.map((item) => (item.id === data.id ? data : item)) } : old,
+        );
+      },
+      // WEB-08 AC4/WEB-17: nenhuma escrita no cache no erro — `process.stage`
+      // (o valor exibido) permanece o último que o servidor de fato aceitou.
+      onError: (error: Error) => setErrorMessage(error.message),
+    });
+  };
+
+  return (
+    <div className="grid gap-2">
+      <Label>{t('process.stage.label')}</Label>
+      <Select value={process.stage} onValueChange={onValueChange} disabled={mutation.isPending}>
+        <SelectTrigger>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {stages.map((stage) => (
+            <SelectItem key={stage} value={stage}>
+              {stage}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {errorMessage && (
+        <p role="alert" className="text-destructive text-sm">
+          {errorMessage}
+        </p>
+      )}
+    </div>
+  );
+}
+
 // FND-10-style: `useSearch({strict:false})` — mesmo motivo documentado em
 // customers/index.tsx (T18): o componente fica testável isolado do router.
 export function ProcessDetailsPage() {
@@ -114,7 +177,14 @@ export function ProcessDetailsPage() {
         ) : !process || !versionQuery.data ? (
           <DefaultEmptyData />
         ) : (
-          <ProcessValuesForm process={process} fields={versionQuery.data.fields} customerId={search.customerId} />
+          <div className="grid gap-6">
+            <ProcessStageControl
+              process={process}
+              stages={versionQuery.data.stages ?? []}
+              customerId={search.customerId}
+            />
+            <ProcessValuesForm process={process} fields={versionQuery.data.fields} customerId={search.customerId} />
+          </div>
         )}
       </CardContent>
     </Card>

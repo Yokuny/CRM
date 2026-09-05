@@ -4,7 +4,21 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import type { ReactNode } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+
+// Radix Select (o controle de `stage`, T27) chama APIs que o jsdom não
+// implementa — mesmo polyfill mínimo de dynamic-field.unit.test.tsx (T14).
+beforeAll(() => {
+  Element.prototype.hasPointerCapture ??= () => false;
+  Element.prototype.releasePointerCapture ??= () => {};
+  Element.prototype.scrollIntoView ??= () => {};
+  // biome-ignore lint/suspicious/noExplicitAny: polyfill mínimo, jsdom não implementa ResizeObserver
+  (global as any).ResizeObserver ??= class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+});
 
 const getMock = vi.fn();
 const patchMock = vi.fn();
@@ -128,5 +142,57 @@ describe('ProcessDetailsPage — values (T26, WEB-08)', () => {
     renderPage();
 
     expect(await screen.findByText('Nenhum registro encontrado.')).toBeInTheDocument();
+  });
+});
+
+describe('ProcessDetailsPage — stage control (T27, WEB-08 + WEB-17)', () => {
+  afterEach(() => {
+    cleanup();
+    getMock.mockReset();
+    patchMock.mockReset();
+    searchMock.mockReset();
+  });
+
+  it('WEB-08 AC3: the stage control’s options are EXACTLY the record’s own snapshot stages, never free-text or every stage ever seen', async () => {
+    searchMock.mockReturnValue({ id: 'p1', customerId: 'c1' });
+    mockGetDefault();
+    const user = userEvent.setup();
+
+    renderPage();
+    await user.click(await screen.findByRole('combobox'));
+
+    expect(await screen.findByRole('option', { name: 'aberto' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'concluido' })).toBeInTheDocument();
+    // Exatamente as 2 opções da snapshot — nunca um campo de texto livre nem
+    // uma 3ª opção vinda de algum outro lugar (ex. todo stage já visto).
+    expect(screen.getAllByRole('option')).toHaveLength(2);
+  });
+
+  it('WEB-08 AC3: a valid transition calls PATCH /processes/:id/stage and updates the shown stage', async () => {
+    searchMock.mockReturnValue({ id: 'p1', customerId: 'c1' });
+    mockGetDefault();
+    patchMock.mockResolvedValue({ success: true, data: { ...PROCESS_RECORD, stage: 'concluido' } });
+    const user = userEvent.setup();
+
+    renderPage();
+    await user.click(await screen.findByRole('combobox'));
+    await user.click(await screen.findByRole('option', { name: 'concluido' }));
+
+    await waitFor(() => expect(patchMock).toHaveBeenCalledWith('/processes/p1/stage', { stage: 'concluido' }));
+    await waitFor(() => expect(screen.getByRole('combobox')).toHaveTextContent('concluido'));
+  });
+
+  it('WEB-08 AC4/WEB-17: a server rejection keeps the previously shown stage — no optimistic update', async () => {
+    searchMock.mockReturnValue({ id: 'p1', customerId: 'c1' });
+    mockGetDefault();
+    patchMock.mockResolvedValue({ success: false, message: 'stage inválido para este template' });
+    const user = userEvent.setup();
+
+    renderPage();
+    await user.click(await screen.findByRole('combobox'));
+    await user.click(await screen.findByRole('option', { name: 'concluido' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('stage inválido para este template');
+    expect(screen.getByRole('combobox')).toHaveTextContent('aberto');
   });
 });
