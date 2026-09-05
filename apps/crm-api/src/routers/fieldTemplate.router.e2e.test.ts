@@ -1037,6 +1037,13 @@ describe('field-template routes', () => {
       });
       const id = created.body.data.id as string;
       await getCurrent(app, cookie, 'customer', 'default');
+      // WEB-16: as 2 rotas de leitura desta feature (GET /field-templates,
+      // GET /field-templates/:id/versions/:version) também passam por
+      // withDbTiming — sem exercitá-las aqui, o teste só prova as operações
+      // herdadas de FLD-18, nunca as que WEB-16 realmente introduziu
+      // (validation.md, Fix 2).
+      await listTemplates(app, cookie, 'customer');
+      await getTemplateVersion(app, cookie, id, 1);
       await bumpTemplate(app, cookie, id, { expectedVersion: 1, fields: [STATUS_FIELD, OBS_FIELD] });
       await request(app).post(`/field-templates/${id}/archive`).set('Cookie', cookie).set('User-Agent', DEVICE).send();
 
@@ -1051,6 +1058,7 @@ describe('field-template routes', () => {
         'fieldTemplate.findTemplateById',
         'fieldTemplate.updateCurrentVersion',
         'fieldTemplate.archiveTemplate',
+        'fieldTemplate.findTemplatesByTargetType',
       ]) {
         expect(recordedOperations, `esperava "${operation}" instrumentado`).toContain(operation);
       }

@@ -408,6 +408,38 @@ describe('process routes', () => {
       const newProcess = await createProcessReq(app, cookie, { templateKey: 'compra', customerId: customer.id });
       expect(newProcess.status).toBe(400);
     });
+
+    // Edge Case (spec.md): "template usado por um Process aberto é arquivado
+    // DEPOIS da criação do Process → a edição de values/stage daquele Process
+    // SHALL continuar funcionando" — AD-022 só bloqueia CRIAR um novo registro
+    // contra um template arquivado, nunca editar um já existente. Achado do
+    // Verifier independente (validation.md, Fix 3): a combinação "arquivar o
+    // template" + "ainda conseguir editar um Process existente" só era
+    // garantida estruturalmente (nenhum caminho de leitura/atualização de
+    // Process checa `archived`), sem uma asserção dedicada provando o par.
+    it('continues to allow editing values/stage of an existing Process after its template is archived (AD-022 edge case)', async () => {
+      const { tenant, cookie } = await seedTenantUser(['admin']);
+      const app = buildTestApp();
+      const templateId = await setupProcessTemplate(app, cookie, [STATUS_FIELD]);
+      const customer = await seedCustomer(tenant.id);
+      const created = await createProcessReq(app, cookie, {
+        templateKey: 'compra',
+        customerId: customer.id,
+        values: { status: 'novo' },
+      });
+      expect(created.status).toBe(201);
+
+      const archived = await archiveTemplate(app, cookie, templateId);
+      expect(archived.status).toBe(200);
+
+      const valuesRes = await patchValuesReq(app, cookie, created.body.data.id, { values: { status: 'ativo' } });
+      expect(valuesRes.status).toBe(200);
+      expect((await Process.findById(created.body.data.id).lean())?.values).toEqual({ status: 'ativo' });
+
+      const stageRes = await patchStageReq(app, cookie, created.body.data.id, { stage: 'em_andamento' });
+      expect(stageRes.status).toBe(200);
+      expect((await Process.findById(created.body.data.id).lean())?.stage).toBe('em_andamento');
+    });
   });
 
   describe('PATCH /processes/:id/stage', () => {

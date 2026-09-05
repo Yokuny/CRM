@@ -698,13 +698,28 @@ describe('customer routes', () => {
       await seedDefaultCustomerTemplate(tenant.id);
       const app = buildTestApp();
 
-      await createCustomerReq(app, cookie, { name: 'Maria', phone: '11999999999', values: { status: 'novo' } });
+      const created = await createCustomerReq(app, cookie, {
+        name: 'Maria',
+        phone: '11999999999',
+        values: { status: 'novo' },
+      });
       await listCustomersReq(app, cookie, {});
+      // WEB-16: as duas novas rotas desta feature (GET/PATCH /customers/:id)
+      // também passam por withDbTiming (customer.service.ts) — sem exercitá-las
+      // aqui, o teste só prova as 2 operações herdadas de CORE-16, nunca as que
+      // WEB-16 realmente introduziu (validation.md, Fix 2).
+      await getCustomerReq(app, cookie, created.body.data.id);
+      await patchCustomerReq(app, cookie, created.body.data.id, { phone: '11888888888' });
 
       const metric = await dbReqResTime.get();
       const recordedOperations = new Set(metric.values.map((value) => value.labels.operation));
 
-      for (const operation of ['customer.createCustomer', 'customer.listCustomers']) {
+      for (const operation of [
+        'customer.createCustomer',
+        'customer.listCustomers',
+        'customer.findById',
+        'customer.updateCustomer',
+      ]) {
         expect(recordedOperations, `esperava "${operation}" instrumentado`).toContain(operation);
       }
     });

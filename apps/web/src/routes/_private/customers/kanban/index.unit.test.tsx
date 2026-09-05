@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
+import { NO_STATUS_FILTER_VALUE } from '@crm/contracts';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, cleanup, render, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
@@ -104,6 +105,37 @@ function mockColumnFetches() {
       return {
         success: true,
         data: { items: [{ id: 'c1', name: 'Ana', phone: '11999999999', values: { status } }], total: 1 },
+      };
+    }
+    return { success: true, data: { items: [], total: 0 } };
+  });
+}
+
+// Fixture ESTÁTICA (ao contrário de mockColumnFetches, que amarra tudo a um
+// único customer mutável) — 3 customers, 3 status distintos SIMULTANEAMENTE
+// (incluindo "sem status"), pra provar que cada um cai na própria coluna de
+// verdade, não só que o mesmo customer se move entre colunas em sequência
+// (validation.md, Fix 1).
+function mockMultiColumnFetches() {
+  getMock.mockImplementation(async (path: string) => {
+    if (path.startsWith('/field-templates/current')) return templateResponse;
+    const status = /status=([^&]+)/.exec(path)?.[1];
+    if (status === 'open') {
+      return {
+        success: true,
+        data: { items: [{ id: 'c1', name: 'Ana', phone: '11999999999', values: { status: 'open' } }], total: 1 },
+      };
+    }
+    if (status === 'closed') {
+      return {
+        success: true,
+        data: { items: [{ id: 'c2', name: 'Bia', phone: '11888888888', values: { status: 'closed' } }], total: 1 },
+      };
+    }
+    if (status === NO_STATUS_FILTER_VALUE) {
+      return {
+        success: true,
+        data: { items: [{ id: 'c3', name: 'Caio', phone: '11777777777', values: {} }], total: 1 },
       };
     }
     return { success: true, data: { items: [], total: 0 } };
@@ -217,5 +249,38 @@ describe('CustomersKanbanPage (T20 — WEB-03)', () => {
     const shortcut = container.querySelector('a[href^="/processes/add"]');
     expect(shortcut).not.toBeNull();
     expect(shortcut?.getAttribute('href')).toBe('/processes/add?customerId=c1');
+  });
+
+  it('WEB-02 AC1/AC2: customers in different statuses, including "sem status", each render in their own column simultaneously', async () => {
+    mockMultiColumnFetches();
+    const { getByText } = renderPage();
+
+    await waitFor(() => expect(capturedProps?.data?.length).toBe(3));
+
+    // Cada card resolvido para a coluna certa (não só "existe algum card em
+    // alguma coluna") — a asserção por nome prova que os 3 renderizam ao
+    // mesmo tempo, dentro da coluna que o mock de cada `status=` devolveu.
+    expect(capturedProps.data.find((item: { id: string; column: string }) => item.id === 'c1')?.column).toBe('open');
+    expect(capturedProps.data.find((item: { id: string; column: string }) => item.id === 'c2')?.column).toBe('closed');
+    expect(capturedProps.data.find((item: { id: string; column: string }) => item.id === 'c3')?.column).toBe(
+      NO_STATUS_FILTER_VALUE,
+    );
+    expect(getByText('Ana')).toBeInTheDocument();
+    expect(getByText('Bia')).toBeInTheDocument();
+    expect(getByText('Caio')).toBeInTheDocument();
+  });
+
+  it('WEB-02 AC3: a column with zero matching customers still renders its header, never omitted', async () => {
+    // Só "open" tem customer — "closed" e a coluna sentinela "sem status"
+    // ficam com 0 itens cada, e mesmo assim precisam aparecer.
+    mockColumnFetches();
+    const { getByText, getAllByText } = renderPage();
+
+    await waitFor(() => expect(capturedProps?.data?.length).toBe(1));
+
+    expect(getByText('Fechado')).toBeInTheDocument();
+    expect(getByText('Sem status')).toBeInTheDocument();
+    // 2 colunas vazias ("Fechado" e "Sem status") → 2 ocorrências de "(0)".
+    expect(getAllByText('(0)')).toHaveLength(2);
   });
 });

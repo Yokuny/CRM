@@ -344,7 +344,7 @@ mesmo resultado.
 | Requirement ID | Story | Phase | Status | Tasks |
 | --- | --- | --- | --- | --- |
 | WEB-01 | P1: Listar e buscar Customers em tabela | Tasks | ✅ Verified | T16, T17, T18 |
-| WEB-02 | P1: Visualizar Customers em kanban por status | Tasks | Implementing (AC1/AC4 Verified; AC2/AC3 test-coverage gap — see validation.md Fix 1) | T19, T20 |
+| WEB-02 | P1: Visualizar Customers em kanban por status | Tasks | ✅ Verified (AC2/AC3 gap from validation.md Fix 1 closed post-Verifier — 2 tests added to `kanban/index.unit.test.tsx`) | T19, T20 |
 | WEB-03 | P1: Mudar status de um Customer arrastando o card | Tasks | ✅ Verified | T3, T20 |
 | WEB-04 | P1: Criar um novo Customer | Tasks | ✅ Verified | T14, T15, T22 |
 | WEB-05 | P1: Ver o detalhe de um Customer | Tasks | ✅ Verified | T2, T23 |
@@ -358,7 +358,7 @@ mesmo resultado.
 | WEB-13 | Dimensão: idempotência de submit (evita duplo-clique duplicando registro) | Tasks | ✅ Verified | T22 |
 | WEB-14 | Dimensão: fronteiras de auth & rate limit dos 3 novos endpoints | Tasks | ✅ Verified | T2, T3, T5, T6 |
 | WEB-15 | Dimensão: concorrência (last-write-wins + refetch) | Tasks | ✅ Verified | T3 |
-| WEB-16 | Dimensão: observabilidade dos novos endpoints (dbReqResTime + log) | Tasks | Implementing (código correto, prova e2e incompleta — see validation.md Fix 2) | T2, T3, T4, T5 |
+| WEB-16 | Dimensão: observabilidade dos novos endpoints (dbReqResTime + log) | Tasks | ✅ Verified (e2e-proof gap from validation.md Fix 2 closed post-Verifier — `customer.router.e2e.test.ts`/`fieldTemplate.router.e2e.test.ts` observability tests extended) | T2, T3, T4, T5 |
 | WEB-17 | Dimensão: integridade de estado (`stage` só entre opções da snapshot do registro) | Tasks | ✅ Verified | T27 |
 
 **ID format:** `WEB-[NUMBER]`. **Status values:** Pending → In Design → In Tasks →
