@@ -238,6 +238,14 @@ Detalhamento completo (contexto, consequências, alternativas) em [`docs/adr/`](
 - **Date**: 2026-09-05
 - **Status**: active
 
+### AD-030
+- **Decision**: `apps/web` adopts TanStack Router's file-based routing (`@tanstack/router-plugin`'s `tanstackRouter()` vite plugin + `createFileRoute()`), converging the manual `createRoute`+`router.tsx` `addChildren` composition feature 1 introduced onto the file-based convention `CLAUDE.md` already documents as mandatory (directory + `index.tsx`, `staticData`, no `.`-nested filenames). Every route that identifies a specific record resolves it via `search` params (`validateSearch`), never a dynamic path segment (`$id`) — `details.tsx` is the fixed name for a single-record view/edit screen, `add/index.tsx` for a create screen. A directory prefixed with `_` (e.g. `_private`) is a pathless layout requiring a matching `<name>.tsx` layout file; `_public` had no such file and no shared layout component, so `auth`/`invite` move to plain top-level directories (`auth/index.tsx`, `invite/index.tsx`) instead of inventing an unneeded pathless group.
+- **Reason**: Confirmed with the user during `crm-web-shell` Execute (before Batch 2), after finding `CLAUDE.md`'s routing section (`createFileRoute`, `staticData`, explicit ban on `$id` for details — "use details.tsx com search: { id }") was never actually adopted by feature 1 (`foundation-tenancy-auth` shipped `createRoute`+manual composition instead), and this feature's own Design phase continued that gap (`$customerId`/`$processId` in its original Routes table) without cross-checking `CLAUDE.md`. `crm-web-shell` is the first feature adding a meaningful volume of new `apps/web` routes (6, vs. feature 1's 3) — the natural point to correct this before more routes accumulate on the wrong convention, rather than migrating later at higher cost. The reference `../DentalEase/DentalEase` already uses this exact plugin+convention (`@tanstack/router-plugin@1.168.18` resolved in its lockfile), confirming `CLAUDE.md`'s routing section was transcribed from it.
+- **Trade-off**: rewrites all 4 of feature 1's existing route files (`_private.tsx`, `_private/index.tsx`, `_public/auth/index.tsx`→`auth/index.tsx`, `_public/invite/index.tsx`→`invite/index.tsx`) plus `router.tsx`, adds a new dependency (`@tanstack/router-plugin`) and a generated `routeTree.gen.ts`; every future `apps/web` route follows this from now on — no more manual composition, no more `$id` path segments for a record detail.
+- **Scope**: `apps/web`, every future feature that adds a route.
+- **Date**: 2026-09-05
+- **Status**: active
+
 ---
 
 ## Handoff

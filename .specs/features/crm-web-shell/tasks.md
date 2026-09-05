@@ -265,13 +265,27 @@ T28
 
 ---
 
-### T7: Tailwind v4 + path alias + `cn()` helper
+### T7: Tailwind v4 + path alias + `cn()` helper + file-based routing (AD-030)
 
 **What**: Bootstrap the styling infrastructure `apps/web` currently has none of.
-**Where**: `apps/web/package.json` (add `tailwindcss@4`, `@tailwindcss/vite`, `clsx`, `tailwind-merge`, `class-variance-authority`), `apps/web/vite.config.ts` (add the Tailwind plugin + path alias), `apps/web/src/index.css` (new — `@import 'tailwindcss'` + `@theme` block), `apps/web/src/main.tsx` (import the new CSS), `apps/web/src/lib/utils.ts` (new — `cn()` via `clsx`+`tailwind-merge`).
+**Amended 2026-09-05** (Execute-time gap found, user-confirmed, recorded as **AD-030**): also migrates `apps/web`'s routing from the existing manual `createRoute`+`router.tsx` `addChildren` composition (feature 1) to TanStack Router's file-based routing (`@tanstack/router-plugin` + `createFileRoute`) — the convention `CLAUDE.md` already documents as mandatory and that feature 1 never actually adopted. This feature is the first to add a meaningful volume of new routes (6), the natural point to correct it.
+**Where**:
+- `apps/web/package.json` (add `tailwindcss@4`, `@tailwindcss/vite`, `clsx`, `tailwind-merge`, `class-variance-authority`, **and `@tanstack/router-plugin@1.168.18`** — version resolved from the reference's own lockfile, compatible with this project's `@tanstack/react-router@1.170.32`).
+- `apps/web/vite.config.ts` (add the Tailwind plugin + path alias `@` → `./src`, **and `tanstackRouter({ target: 'react', autoCodeSplitting: true, routeFileIgnorePrefix: '@', semicolons: true })` from `@tanstack/router-plugin/vite`, ordered BEFORE `viteReact()`** — matches the reference's own plugin order).
+- `apps/web/src/index.css` (new — `@import 'tailwindcss'` + `@theme` block).
+- `apps/web/src/main.tsx` (import the new CSS).
+- `apps/web/src/lib/utils.ts` (new — `cn()` via `clsx`+`tailwind-merge`).
+- **`apps/web/src/router.tsx`** (rewritten — imports the generated `routeTree` from `./routeTree.gen.ts` instead of manually composing `addChildren`; `createRouter({ routeTree, context: { queryClient } })`, `Register` module augmentation unchanged).
+- **Convert the 4 existing route files** from `createRoute` to `createFileRoute`, preserving all current behavior exactly (session guard, redirect targets, `validateSearch` for the invite token):
+  - `apps/web/src/routes/_private.tsx` → `createFileRoute('/_private')({ beforeLoad, component })` (same `beforeLoad` body).
+  - `apps/web/src/routes/_private/index.tsx` → `createFileRoute('/_private/')({ component: PrivateIndexPage })`.
+  - `apps/web/src/routes/_public/auth/index.tsx` → **moved to** `apps/web/src/routes/auth/index.tsx`, `createFileRoute('/auth')({ component: AuthPage })` (dropping the `_public` prefix — it was never a real pathless layout, no `_public.tsx` component exists to wrap it; inventing one is unneeded ceremony for 2 unrelated screens).
+  - `apps/web/src/routes/_public/invite/index.tsx` → **moved to** `apps/web/src/routes/invite/index.tsx`, `createFileRoute('/invite')({ validateSearch: ..., component: InvitePage })` (same `validateSearch` body — already search-param-based, no behavior change).
+  - `apps/web/src/routes/__root.tsx` stays `createRootRouteWithContext` (unchanged — root routes don't use `createFileRoute`).
+- Move the corresponding `*.unit.test.tsx` files alongside their routes (same rename), update only their import paths — test bodies/assertions unchanged.
 **Depends on**: None
-**Reuses**: Exact versions confirmed in `../DentalEase/DentalEase/package.json` (AD-027).
-**Requirement**: (enables all Goals — design system)
+**Reuses**: Exact versions confirmed in `../DentalEase/DentalEase/package.json`/lockfile (AD-027, AD-030); the reference's own `tanstackRouter()` plugin options and plugin ordering (`vite.config.ts`).
+**Requirement**: (enables all Goals — design system; AD-030 — routing convention for every route in Phases 4-8)
 
 **Tools**:
 - MCP: NONE
@@ -280,9 +294,11 @@ T28
 **Done when**:
 - [ ] `pnpm dev` in `apps/web` renders a Tailwind utility class visibly (manual smoke check)
 - [ ] `cn('a', condition && 'b')` resolves conflicting Tailwind classes correctly (matches DentalEase's own `cn()` behavior)
-- [ ] Gate check passes: `pnpm -r exec tsc --noEmit && pnpm biome check .`
+- [ ] `routeTree.gen.ts` is generated on `pnpm dev`/build and `router.tsx` consumes it — no manual `addChildren` call remains
+- [ ] All 4 existing routes (`_private`, `_private/index`, `auth/index`, `invite/index`) compile and behave identically under `createFileRoute` — the existing `*.unit.test.tsx` suites for these routes (session guard redirect, login, invite-accept) pass unmodified in assertions (import paths only)
+- [ ] Gate check passes: `pnpm -r exec tsc --noEmit && pnpm biome check . && pnpm vitest run` (full suite — this task touches existing feature-1 tests, so Build gate applies here even though it's not the last task in the phase)
 
-**Tests**: none
+**Tests**: none (existing route tests must keep passing, no new tests added by this task)
 **Gate**: build
 
 ---
@@ -301,7 +317,7 @@ T28
 - Skill: NONE
 
 **Done when**:
-- [ ] `Card`/`CardHeader`/`CardContent`/`CardAction` preserve the existing call sites' props (`asPage`, `title`) — `apps/web/src/routes/_private/index.tsx`, `_public/auth/index.tsx`, `_public/invite/index.tsx` compile unchanged
+- [ ] `Card`/`CardHeader`/`CardContent`/`CardAction` preserve the existing call sites' props (`asPage`, `title`) — `apps/web/src/routes/_private/index.tsx`, `auth/index.tsx`, `invite/index.tsx` (T7's new locations, AD-030) compile unchanged
 - [ ] `Card asPage` renders a working `Breadcrumb` from the current route match, matching `CLAUDE.md`'s documented contract
 - [ ] `Item`/`ItemGroup`/`ItemContent`/`ItemTitle`/`ItemDescription` exported and usable by later phases' componentes comuns
 - [ ] `SPEC_DEVIATION` comment removed from `card.tsx`
@@ -517,7 +533,7 @@ T28
 ### T18: `_private/customers/index.tsx` — table route
 
 **What**: The WEB-01 screen: table wired to `DataTable`, search/sort/page synced to the URL (WEB-09).
-**Where**: `apps/web/src/routes/_private/customers/index.tsx` (+ `router.tsx` registration).
+**Where**: `apps/web/src/routes/_private/customers/index.tsx` (auto-registered via file-based routing/`routeTree.gen.ts`, AD-030 — no manual `router.tsx` edit needed).
 **Depends on**: T16, T17
 **Reuses**: `usePatientList`'s `useSearch`/`validateSearch`/`navigate({search...})` pattern from the reference (design.md).
 **Requirement**: WEB-01, WEB-09
@@ -566,8 +582,8 @@ T28
 
 ### T20: Kanban board route + drag persistence
 
-**What**: `_private/customers/kanban.tsx`, wiring the ported `KanbanProvider`'s `onDragEnd` to `PATCH /customers/:id`.
-**Where**: `apps/web/src/routes/_private/customers/kanban.tsx`.
+**What**: `_private/customers/kanban/index.tsx` (AD-030 directory+`index.tsx` naming), wiring the ported `KanbanProvider`'s `onDragEnd` to `PATCH /customers/:id`.
+**Where**: `apps/web/src/routes/_private/customers/kanban/index.tsx`.
 **Depends on**: T19, T3 (backend mutation must exist), T11 (Toaster)
 **Reuses**: `KanbanProvider`/`KanbanBoard`/`KanbanCards`/`KanbanCard` verbatim; the "resolve target column inside `onDragEnd`" pattern from `KanbanBoardView.tsx`.
 **Requirement**: WEB-03
@@ -590,8 +606,8 @@ T28
 
 ### T21: Table ⇄ Kanban toggle
 
-**What**: A small `Tabs`-style link between `_private/customers/index.tsx` and `.../kanban.tsx`.
-**Where**: A shared header component, e.g. `apps/web/src/routes/_private/customers/-view-toggle.tsx` (or inline in both routes — Tasks/Execute decides the exact file split).
+**What**: A small `Tabs`-style link between `_private/customers/index.tsx` and `.../kanban/index.tsx`.
+**Where**: A shared, non-route component, e.g. `apps/web/src/routes/_private/customers/@components/view-toggle.tsx` (the `@` prefix matches this project's `routeFileIgnorePrefix: '@'` from T7/AD-030 — the route generator skips it, matching `CLAUDE.md`'s own `@components/` folder convention; do NOT use a `-` prefix, that is not this project's ignore prefix) — or inline in both routes if simpler, Execute decides the exact file split.
 **Depends on**: T18, T20
 **Reuses**: `Tabs`/`TabsList`/`TabsTrigger` from Phase 2.
 **Requirement**: (Design's discretion — connects WEB-01 and WEB-02 into one perceived screen)
@@ -610,12 +626,12 @@ T28
 
 ---
 
-### T22: `_private/customers/new.tsx` — create form
+### T22: `_private/customers/add/index.tsx` — create form
 
 **What**: The WEB-04 screen.
-**Where**: `apps/web/src/routes/_private/customers/new.tsx`.
+**Where**: `apps/web/src/routes/_private/customers/add/index.tsx` (AD-030 `add/index.tsx` naming).
 **Depends on**: T15, T13
-**Reuses**: `hydrate()` (field-engine) + `currentCustomerTemplateQuery` (T19) to build the field tree; `DynamicField` (Phase 3); the existing `_public/auth/index.tsx` form-submission convention (inline error text, `useMutation` for the POST).
+**Reuses**: `hydrate()` (field-engine) + `currentCustomerTemplateQuery` (T19) to build the field tree; `DynamicField` (Phase 3); the existing `auth/index.tsx` form-submission convention (inline error text, `useMutation` for the POST).
 **Requirement**: WEB-04, WEB-13
 
 **Tools**:
@@ -635,12 +651,12 @@ T28
 
 ---
 
-### T23: `_private/customers/$customerId/index.tsx` — detail
+### T23: `_private/customers/details.tsx` — detail
 
 **What**: The WEB-05 screen (view mode).
-**Where**: `apps/web/src/routes/_private/customers/$customerId/index.tsx`.
+**Where**: `apps/web/src/routes/_private/customers/details.tsx` (AD-030 — `details.tsx` with `search: { id }` via `validateSearch`, never a `$customerId` path segment).
 **Depends on**: T17
-**Reuses**: `customerQuery(id)` (T17); `processesQuery(customerId)` (new, same file/pattern as T17) for the Process list.
+**Reuses**: `customerQuery(id)` (T17, `id` read via `Route.useSearch()`); `processesQuery(customerId)` (new, same file/pattern as T17) for the Process list.
 **Requirement**: WEB-05
 
 **Tools**:
@@ -648,7 +664,7 @@ T28
 - Skill: NONE
 
 **Done when**:
-- [ ] Direct navigation/reload fetches via `GET /customers/:id`, shows core + `values`
+- [ ] Direct navigation/reload (e.g. `/customers/details?id=<id>`) fetches via `GET /customers/:id`, shows core + `values`
 - [ ] A missing or cross-tenant `:id` shows an explicit not-found state, never another tenant's data or a broken screen
 - [ ] Shows the Customer's Process list via `GET /processes?customerId=:id`, including its own empty state
 - [ ] Gate check passes: `pnpm vitest run --project unit`
@@ -662,7 +678,7 @@ T28
 ### T24: Same route — edit mode
 
 **What**: The WEB-06 screen (in-place edit toggle on the detail route — Design's discretion, no separate route).
-**Where**: `apps/web/src/routes/_private/customers/$customerId/index.tsx` (extend).
+**Where**: `apps/web/src/routes/_private/customers/details.tsx` (extend).
 **Depends on**: T23, T15, T3
 **Reuses**: `DynamicField`, the `PATCH /customers/:id` mutation.
 **Requirement**: WEB-06
@@ -683,12 +699,12 @@ T28
 
 ---
 
-### T25: `_private/customers/$customerId/processes/new.tsx` — Process picker + create
+### T25: `_private/processes/add/index.tsx` — Process picker + create
 
 **What**: The WEB-07 screen, plus the WEB-10 kanban-card shortcut reusing the same route.
-**Where**: `apps/web/src/routes/_private/customers/$customerId/processes/new.tsx`; a shortcut affordance added to the kanban card component from T20 (WEB-10).
+**Where**: `apps/web/src/routes/_private/processes/add/index.tsx` (AD-030 — `add/index.tsx` with `search: { customerId }`, never a `$customerId` path segment); a shortcut affordance added to the kanban card component from T20 (WEB-10).
 **Depends on**: T5, T20
-**Reuses**: `fieldTemplatesQuery('process')` (new hook, `GET /field-templates`), `customerId` path param.
+**Reuses**: `fieldTemplatesQuery('process')` (new hook, `GET /field-templates`), `customerId` read via `Route.useSearch()`.
 **Requirement**: WEB-07, WEB-10
 
 **Tools**:
@@ -700,7 +716,7 @@ T28
 - [ ] Zero available templates shows an explicit message and blocks the attempt (never a silent empty picker)
 - [ ] Valid selection calls `POST /processes` with `templateKey`+`customerId`, shows the returned initial `stage`
 - [ ] Server rejection (archived-between-list-and-submit, invalid `values`) shows the error, never navigates as if created
-- [ ] The kanban card's shortcut opens this same route with `customerId` preset from the card
+- [ ] The kanban card's shortcut opens this same route with `search: { customerId }` preset from the card
 - [ ] Gate check passes: `pnpm vitest run --project unit`
 - [ ] Test count: ≥5 tests (WEB-07 AC1-4 + WEB-10 AC1)
 
@@ -709,10 +725,10 @@ T28
 
 ---
 
-### T26: `_private/processes/$processId/index.tsx` — values form
+### T26: `_private/processes/details.tsx` — values form
 
 **What**: The WEB-08 screen, values half.
-**Where**: `apps/web/src/routes/_private/processes/$processId/index.tsx`.
+**Where**: `apps/web/src/routes/_private/processes/details.tsx` (AD-030 — `search: { id }`, never a `$processId` path segment).
 **Depends on**: T15, T13
 **Reuses**: `DynamicField`, `GET /processes?customerId=` response's own `template`/`templateVersion` to fetch **that exact** `FieldTemplateVersion`'s fields (never the current one) — the key difference from the Customer form (AD-029 does not apply here, `Process` keeps its snapshot model per AD-023).
 **Requirement**: WEB-08 (values half)
@@ -735,7 +751,7 @@ T28
 ### T27: Same route — stage control
 
 **What**: The WEB-08 screen, `stage` half.
-**Where**: `apps/web/src/routes/_private/processes/$processId/index.tsx` (extend).
+**Where**: `apps/web/src/routes/_private/processes/details.tsx` (extend).
 **Depends on**: T26
 **Reuses**: The `stages` array already present on the record's own `FieldTemplateVersion` snapshot (AD-023 — same lookup as T26, no new backend call).
 **Requirement**: WEB-08 (stage half), WEB-17

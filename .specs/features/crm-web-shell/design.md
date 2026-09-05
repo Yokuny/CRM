@@ -49,10 +49,10 @@ graph TD
 | --- | --- | --- |
 | `request`/`get`/`post` fetch wrapper | `apps/web/src/lib/api/client.api.ts` | Extend with `patch<T>(path, body)` — same shape (`credentials:'include'`, never throws, returns `ApiResponse<T>`). No new HTTP client. |
 | `sessionQuery` pattern (TanStack Query `queryOptions` + `queryKey` factory) | `apps/web/src/query/session.ts` | Same pattern for `customersQuery`, `customerQuery(id)`, `processesQuery(customerId)`, `processQuery(id)`, `fieldTemplatesQuery(targetType)`, `currentCustomerTemplateQuery`. |
-| `_private.tsx` layout + `beforeLoad` session guard | `apps/web/src/routes/_private.tsx` | Unchanged — all new routes nest under it, inherit the redirect-to-`/auth` behavior for free (Edge Case: session expiry). |
+| `_private.tsx` layout + `beforeLoad` session guard | `apps/web/src/routes/_private.tsx` | Unchanged behavior — all new routes nest under it, inherit the redirect-to-`/auth` behavior for free (Edge Case: session expiry). Converted to `createFileRoute` by T7/AD-030; the `beforeLoad` logic itself is untouched. |
 | `t(key)` helper | `apps/web/src/lib/helpers/translate.helper.ts` | Same function signature (`t(key): string`), dictionary grows from 12 to every user-facing string in the app (closes the `SPEC_DEVIATION`). No i18n library added. |
-| Test patterns (`vi.mock('../../lib/api/client.api.js', …)`, dynamic `await import` after mocks, `@vitest-environment jsdom` pragma, `userEvent`) | `apps/web/src/routes/_public/auth/index.unit.test.tsx` | Same mocking/rendering convention for every new screen's tests. |
-| `router.tsx` `addChildren` composition | `apps/web/src/router.tsx` | Extend with the new route tree under `privateLayoutRoute` (see Components below). |
+| Test patterns (`vi.mock('../../lib/api/client.api.js', …)`, dynamic `await import` after mocks, `@vitest-environment jsdom` pragma, `userEvent`) | `apps/web/src/routes/auth/index.unit.test.tsx` (moved from `_public/auth/...` by T7/AD-030) | Same mocking/rendering convention for every new screen's tests. |
+| `router.tsx` `addChildren` composition | `apps/web/src/router.tsx` | **Superseded by AD-030** — every new route in this feature is auto-registered via the generated `routeTree.gen.ts` (file-based routing, T7), not manual `addChildren`. `router.tsx` itself becomes a thin `createRouter({ routeTree, context: { queryClient } })` importing the generated tree. |
 
 ### `../DentalEase/DentalEase` — ported as-is
 
@@ -106,7 +106,7 @@ graph TD
 ### `apps/web` — `Kanban` (Customer board)
 
 - **Purpose**: Column-per-`status` board (WEB-02), drag to persist `values.status` (WEB-03).
-- **Location**: `apps/web/src/routes/_private/customers/kanban.tsx` (page) + reuses ported `apps/web/src/components/ui/kanban.tsx` (primitives).
+- **Location**: `apps/web/src/routes/_private/customers/kanban/index.tsx` (page, AD-030 directory+`index.tsx` convention) + reuses ported `apps/web/src/components/ui/kanban.tsx` (primitives).
 - **Interfaces**: page-level `handleDragEnd(event: DragEndEvent)` — resolves `active.id` (customer id) + target column key from `over`, calls the `PATCH /customers/:id` mutation with `{values:{status: targetKey}}`; optimistic move + rollback on failure (`onError` reverts the TanStack Query cache / local column state and calls `toast.error(...)`, WEB-03 AC3).
 - **Dependencies**: `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities`; `GET /customers?status=<key>` per column + one extra call with `status=__none__` for the "sem status" column (see Data Models).
 - **Reuses**: `KanbanProvider`/`KanbanBoard`/`KanbanCards`/`KanbanCard` verbatim from the ported `kanban.tsx`; the "resolve target column inside `onDragEnd`" pattern from `KanbanBoardView.tsx`.
@@ -134,14 +134,16 @@ graph TD
 
 ### `apps/web` — Routes (new)
 
+**Amended 2026-09-05** (Execute-time gap found before Batch 2, user-confirmed, recorded as **AD-030**): the table below originally used dynamic path segments (`$customerId`, `$processId`) and assumed the project's existing manual `createRoute`+`router.tsx` composition. Both contradict `CLAUDE.md`'s binding routing convention (`createFileRoute`, directory+`index.tsx`, **no** `$id` path segments — use `details.tsx` with `search` params) — a convention feature 1 never actually adopted and this feature's own Design missed. Corrected here; see AD-030 for the full migration decision.
+
 | Route | Story | Notes |
 | --- | --- | --- |
 | `_private/customers/index.tsx` | WEB-01 | Table. Search/sort/page in URL search params (WEB-09), `validateSearch` per TanStack Router convention (same as DentalEase's `usePatientList`). |
-| `_private/customers/kanban.tsx` | WEB-02, WEB-03 | Board. `Tabs`-style toggle at the top of both routes links table ⇄ kanban (no precedent in DentalEase — this toggle is new UI, both views are Customer-only per Out of Scope). |
-| `_private/customers/new.tsx` | WEB-04 | Create form. |
-| `_private/customers/$customerId/index.tsx` | WEB-05, WEB-06 | Detail; edit is an in-place mode toggle on the same route (not a separate route) — Design's discretion per spec, no new screen needed. |
-| `_private/customers/$customerId/processes/new.tsx` | WEB-07, WEB-10 | Template picker + create. Reads `customerId` from the path param; the kanban-card shortcut (WEB-10) navigates here with the card's id preset — same route, no duplication. |
-| `_private/processes/$processId/index.tsx` | WEB-08 | Process values form + stage control. |
+| `_private/customers/kanban/index.tsx` | WEB-02, WEB-03 | Board. `Tabs`-style toggle at the top of both routes links table ⇄ kanban (no precedent in DentalEase — this toggle is new UI, both views are Customer-only per Out of Scope). |
+| `_private/customers/add/index.tsx` | WEB-04 | Create form. |
+| `_private/customers/details.tsx` | WEB-05, WEB-06 | Detail; reads the record id via `search: { id }` (`validateSearch`), never a path param (AD-030). Edit is an in-place mode toggle on the same route (not a separate route) — Design's discretion per spec, no new screen needed. |
+| `_private/processes/add/index.tsx` | WEB-07, WEB-10 | Template picker + create. Reads `customerId` via `search: { customerId }`, never a path param (AD-030); the kanban-card shortcut (WEB-10) navigates here with the card's id preset via the same search param — same route, no duplication. |
+| `_private/processes/details.tsx` | WEB-08 | Process values form + stage control. Reads the record id via `search: { id }` (AD-030). |
 
 ### `apps/crm-api` — Customer module (extended)
 
@@ -261,15 +263,16 @@ This covers **both** halves of the spec's Edge Case (no `status` key at all, and
 | Customer edit validates against current template + advances stored `templateVersion` pointer | Yes, on every successful edit | Confirmed with user — keeps `(template, templateVersion)` (AD-026) truthful; differs intentionally from Process's snapshot model per WEB-06 vs WEB-08's own AC wording. |
 | Kanban "sem status" column data source | Extend `GET /customers`'s `status` query with a `__none__` sentinel (4th small backend touch) | Confirmed with user — front-end-only bucketing would require fetching the full collection, violating WEB-01/02's own "never load everything" principle. |
 | `document`/`reference` `FieldDef` types in `DynamicField` | Read-only fallback (raw value, no upload/picker UI) | Confirmed with user — no backend exists for either in this feature's scope; never blocks the rest of the form. |
-| Table ⇄ Kanban toggle for Customers | Two sibling routes (`_private/customers/index.tsx` / `.../kanban.tsx`) linked by a `Tabs`-style toggle, no shared component state beyond the URL | Design's discretion per spec (no DentalEase precedent — its Kanban is a separate, unconnected "tool"); simplest mental model, WEB-09's URL-persistence applies naturally to the table route. |
+| Table ⇄ Kanban toggle for Customers | Two sibling routes (`_private/customers/index.tsx` / `.../kanban/index.tsx`) linked by a `Tabs`-style toggle, no shared component state beyond the URL | Design's discretion per spec (no DentalEase precedent — its Kanban is a separate, unconnected "tool"); simplest mental model, WEB-09's URL-persistence applies naturally to the table route. |
 | Customer edit UI location | In-place mode toggle on the detail route, not a separate `/edit` route | Design's discretion per spec; fewer routes, same testability. |
 | Toast/transient-error mechanism | Port `sonner` (`ui/sonner.tsx`) from the reference, used for the kanban drag failure (WEB-03 AC3) | Existing form-level errors keep the already-established inline-text convention (`translate.helper.ts` keys like `auth.signin.error`); kanban drag has no form to attach an inline error to — a transient toast is the only sensible surface. |
 
-> **Project-level decisions proposed as new `AD-NNN` entries** (pending your confirmation before writing to `STATE.md`, per project convention):
+> **Project-level decisions** (AD-027/028/029 confirmed with the user and written to `STATE.md` at Design close; AD-030 added during Execute, before Batch 2 — see amendment note above):
 >
-> - **AD-027 (proposed)**: `apps/web`'s front-end stack is Tailwind v4 (`@tailwindcss/vite`) + a ShadCN-style component layer + `@dnd-kit/*` + `@tanstack/react-table`, ported from `../DentalEase/DentalEase` at the versions listed in Code Reuse Analysis — binding for every future `apps/web` feature, not just this one.
-> - **AD-028 (proposed)**: any table in `apps/web` uses `@tanstack/react-table` in manual mode (`manualPagination`/`manualSorting`/`manualFiltering: true`) — client-side slicing over a fetched page is never acceptable, even for small datasets — extends WEB-01's "never load the full collection" principle into a reusable front-end convention.
-> - **AD-029 (proposed)**: a field-engine consumer whose mutation endpoint validates `values` against the tenant's **current** template (rather than the record's own snapshot version) must, on every successful write, advance the record's stored `(template, templateVersion)` pointer to match what was actually validated — keeps AD-026's pointer pair truthful for any future entity that chooses "always-current" validation semantics over Process's snapshot model.
+> - **AD-027**: `apps/web`'s front-end stack is Tailwind v4 (`@tailwindcss/vite`) + a ShadCN-style component layer + `@dnd-kit/*` + `@tanstack/react-table`, ported from `../DentalEase/DentalEase` at the versions listed in Code Reuse Analysis — binding for every future `apps/web` feature, not just this one.
+> - **AD-028**: any table in `apps/web` uses `@tanstack/react-table` in manual mode (`manualPagination`/`manualSorting`/`manualFiltering: true`) — client-side slicing over a fetched page is never acceptable, even for small datasets — extends WEB-01's "never load the full collection" principle into a reusable front-end convention.
+> - **AD-029**: a field-engine consumer whose mutation endpoint validates `values` against the tenant's **current** template (rather than the record's own snapshot version) must, on every successful write, advance the record's stored `(template, templateVersion)` pointer to match what was actually validated — keeps AD-026's pointer pair truthful for any future entity that chooses "always-current" validation semantics over Process's snapshot model.
+> - **AD-030**: `apps/web` adopts TanStack Router's file-based routing (`@tanstack/router-plugin` + `createFileRoute`), converging feature 1's manual `createRoute`/`router.tsx` composition onto the convention `CLAUDE.md` already documented as mandatory. Every route resolves a record identifier via `search` params (`validateSearch`), never a dynamic path segment (`$id`) — `details.tsx` names a single-record view/edit screen, `add/index.tsx` a create screen. See STATE.md AD-030 for full rationale/trade-off.
 
 ---
 
@@ -282,11 +285,11 @@ All 17 requirements now map to at least one component/data-model section above:
 | WEB-01 | `DataTable`, `GET /customers` (existing) |
 | WEB-02 | `Kanban` component, `GET /customers` + `status` sentinel |
 | WEB-03 | `Kanban` `handleDragEnd`, `PATCH /customers/:id`, Error Handling (drag failure) |
-| WEB-04 | `_private/customers/new.tsx`, `DynamicField`, `POST /customers` (existing) |
-| WEB-05 | `_private/customers/$customerId/index.tsx`, `GET /customers/:id` (new) |
+| WEB-04 | `_private/customers/add/index.tsx`, `DynamicField`, `POST /customers` (existing) |
+| WEB-05 | `_private/customers/details.tsx` (`search: { id }`, AD-030), `GET /customers/:id` (new) |
 | WEB-06 | Same route (edit mode), `PATCH /customers/:id` (new) |
-| WEB-07 | `_private/customers/$customerId/processes/new.tsx`, `GET /field-templates` (new) |
-| WEB-08 | `_private/processes/$processId/index.tsx`, `PATCH /processes/:id/values`+`/stage` (existing, unchanged) |
+| WEB-07 | `_private/processes/add/index.tsx` (`search: { customerId }`, AD-030), `GET /field-templates` (new) |
+| WEB-08 | `_private/processes/details.tsx` (`search: { id }`, AD-030), `PATCH /processes/:id/values`+`/stage` (existing, unchanged) |
 | WEB-09 | Route `validateSearch` on `_private/customers/index.tsx` |
 | WEB-10 | Kanban card shortcut → same route as WEB-07 |
 | WEB-11 | `validate()` (field-engine, existing) is server-side source of truth; `DynamicField` does light client-side hints only (`required`/`min`/`max` from `FieldDef`), never a replacement |
