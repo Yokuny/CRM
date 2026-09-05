@@ -448,7 +448,9 @@ Reference (`../DentalEase/DentalEase/src/components/default-loading.tsx`) export
 
 **Tests**: unit
 **Gate**: quick
-**Status**: ✅ Complete (commit `<PENDING>`)
+**Status**: ✅ Complete (commit `7d6a912`)
+
+Phase 2 close-out (T7-T13): Build gate re-run after T13 — `pnpm -r exec tsc --noEmit && pnpm biome check . && pnpm vitest run`: tsc clean, biome clean (the one remaining diagnostic, `.specs/lessons.json`, is a pre-existing formatting-only issue on `main` before this batch started, unrelated to `crm-web-shell` — confirmed via `git diff HEAD` showing zero local changes to that file — out of this batch's scope to fix), full vitest suite 63 files / 397 tests passed (one `apps/crm-api` e2e test flaked once under full-suite load — `process.router.e2e.test.ts`, unrelated to this batch's `apps/web`-only changes, confirmed pre-existing/flaky by passing in isolation and again on a full-suite rerun).
 
 ---
 
