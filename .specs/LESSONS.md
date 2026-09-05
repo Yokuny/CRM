@@ -92,6 +92,24 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: spec.md CORE-02 AC2 / design.md Error Handling Strategy (error-handling)
 - last seen: 2026-09-04T20:22:47Z
 
+### L-014 — For a column-based board view backed by independent per-column server queries, write a test that seeds items across multiple distinct columns (including one with zero matches) simultaneously and asserts each column's own query and empty-column rendering, not just a single-item single-status drag scenario.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `routes/kanban` · harmful: 0
+- features: crm-web-shell
+- evidence: spec.md WEB-02 AC2/AC3 / apps/web/src/routes/_private/customers/kanban/index.unit.test.tsx (routes/kanban)
+- last seen: 2026-09-05T18:39:47Z
+
+### L-015 — When a feature adds new repository operations wrapped in an existing observability helper (e.g. withDbTiming), extend that feature's own e2e observability test to actually call the new endpoints and assert their specific operation labels appear, rather than leaving the pre-existing observability test's assertion list unextended.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `observability` · harmful: 0
+- features: crm-web-shell
+- evidence: spec.md WEB-16 / apps/crm-api/src/routers/customer.router.e2e.test.ts:696-710, fieldTemplate.router.e2e.test.ts:1029-1057 (observability)
+- last seen: 2026-09-05T18:39:53Z
+
+### L-016 — Before treating the Build gate's chained tsc/biome/vitest command exit code as a real failure, independently confirm any biome error is inside this feature's diff range (git log/diff on the flagged file against the pre-feature baseline) — a pre-existing, out-of-scope formatting issue elsewhere in the repo will otherwise always break the && chain before vitest runs and must be handled by running vitest as a separate step, not treated as a gate failure.
+- signal: `gate_fail` · recurrence: 1 feature(s) · scope: `gate-check` · harmful: 0
+- features: crm-web-shell
+- evidence: .specs/lessons.json (pre-existing biome formatting error, unrelated to this feature's diff) (gate-check)
+- last seen: 2026-09-05T18:39:59Z
+
 ## Quarantined (failed when applied — ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

@@ -343,23 +343,23 @@ mesmo resultado.
 
 | Requirement ID | Story | Phase | Status | Tasks |
 | --- | --- | --- | --- | --- |
-| WEB-01 | P1: Listar e buscar Customers em tabela | Tasks | Implementing | T16, T17, T18 |
-| WEB-02 | P1: Visualizar Customers em kanban por status | Tasks | Implementing | T19, T20 |
-| WEB-03 | P1: Mudar status de um Customer arrastando o card | Tasks | Implementing | T3, T20 |
-| WEB-04 | P1: Criar um novo Customer | Tasks | Implementing | T14, T15, T22 |
-| WEB-05 | P1: Ver o detalhe de um Customer | Tasks | Implementing | T2, T23 |
-| WEB-06 | P1: Editar um Customer existente | Tasks | Implementing | T1, T3, T24 |
-| WEB-07 | P1: Abrir um novo Process para um Customer | Tasks | Implementing | T5, T25 |
-| WEB-08 | P1: Editar `values`/avançar `stage` de um Process | Tasks | Implementing | T25B, T26, T27 |
-| WEB-09 | P2: Persistir filtro/ordenação/página na URL | Tasks | Implementing | T18 |
-| WEB-10 | P3: Criar Process a partir de atalho no card do kanban | Tasks | Implementing | T25 |
-| WEB-11 | Dimensão: validação client-side é só UX, servidor é fonte da verdade | Tasks | Implementing | T14, T15 |
-| WEB-12 | Dimensão: falha/falha parcial (rollback otimista do drag, formulário preserva dados) | Tasks | Implementing | T20, T22, T24 |
-| WEB-13 | Dimensão: idempotência de submit (evita duplo-clique duplicando registro) | Tasks | Implementing | T22 |
-| WEB-14 | Dimensão: fronteiras de auth & rate limit dos 3 novos endpoints | Tasks | Implementing | T2, T3, T5, T6 |
-| WEB-15 | Dimensão: concorrência (last-write-wins + refetch) | Tasks | Implementing | T3 |
-| WEB-16 | Dimensão: observabilidade dos novos endpoints (dbReqResTime + log) | Tasks | Implementing | T2, T3, T4, T5 |
-| WEB-17 | Dimensão: integridade de estado (`stage` só entre opções da snapshot do registro) | Tasks | Implementing | T27 |
+| WEB-01 | P1: Listar e buscar Customers em tabela | Tasks | ✅ Verified | T16, T17, T18 |
+| WEB-02 | P1: Visualizar Customers em kanban por status | Tasks | Implementing (AC1/AC4 Verified; AC2/AC3 test-coverage gap — see validation.md Fix 1) | T19, T20 |
+| WEB-03 | P1: Mudar status de um Customer arrastando o card | Tasks | ✅ Verified | T3, T20 |
+| WEB-04 | P1: Criar um novo Customer | Tasks | ✅ Verified | T14, T15, T22 |
+| WEB-05 | P1: Ver o detalhe de um Customer | Tasks | ✅ Verified | T2, T23 |
+| WEB-06 | P1: Editar um Customer existente | Tasks | ✅ Verified | T1, T3, T24 |
+| WEB-07 | P1: Abrir um novo Process para um Customer | Tasks | ✅ Verified | T5, T25 |
+| WEB-08 | P1: Editar `values`/avançar `stage` de um Process | Tasks | ✅ Verified | T25B, T26, T27 |
+| WEB-09 | P2: Persistir filtro/ordenação/página na URL | Tasks | ✅ Verified | T18 |
+| WEB-10 | P3: Criar Process a partir de atalho no card do kanban | Tasks | ✅ Verified | T25 |
+| WEB-11 | Dimensão: validação client-side é só UX, servidor é fonte da verdade | Tasks | ✅ Verified | T14, T15 |
+| WEB-12 | Dimensão: falha/falha parcial (rollback otimista do drag, formulário preserva dados) | Tasks | ✅ Verified | T20, T22, T24 |
+| WEB-13 | Dimensão: idempotência de submit (evita duplo-clique duplicando registro) | Tasks | ✅ Verified | T22 |
+| WEB-14 | Dimensão: fronteiras de auth & rate limit dos 3 novos endpoints | Tasks | ✅ Verified | T2, T3, T5, T6 |
+| WEB-15 | Dimensão: concorrência (last-write-wins + refetch) | Tasks | ✅ Verified | T3 |
+| WEB-16 | Dimensão: observabilidade dos novos endpoints (dbReqResTime + log) | Tasks | Implementing (código correto, prova e2e incompleta — see validation.md Fix 2) | T2, T3, T4, T5 |
+| WEB-17 | Dimensão: integridade de estado (`stage` só entre opções da snapshot do registro) | Tasks | ✅ Verified | T27 |
 
 **ID format:** `WEB-[NUMBER]`. **Status values:** Pending → In Design → In Tasks →
 Implementing → Verified.
