@@ -17,6 +17,8 @@ const translations: Record<string, string> = {
   'invite.accept.error': 'Não foi possível concluir o cadastro.',
   'invite.accept.invalid': 'Convite inválido.',
   loading: 'Carregando…',
+  add: 'Adicionar',
+  remove: 'Remover',
   'private.role': 'Papel',
   // Usado por BreadcrumbEllipsis (apps/web/src/components/ui/breadcrumb.tsx,
   // T8) — texto de acessibilidade (sr-only) do "..." de breadcrumbs longos.

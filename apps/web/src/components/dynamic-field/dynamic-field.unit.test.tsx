@@ -235,3 +235,52 @@ describe('DynamicField — leaf types (T14)', () => {
     await waitFor(() => expect(onSubmit).toHaveBeenCalledWith({ field: 'closed' }, expect.anything()));
   });
 });
+
+describe('DynamicField — document/reference read-only fallback (T15)', () => {
+  it('document: renders the raw stored value as read-only text and preserves it on submit (never blocks/drops it)', async () => {
+    const node: RenderNode = {
+      fieldId: 'contract',
+      label: 'Contrato',
+      type: 'document',
+      value: { assetId: 'a1', filename: 'contrato.pdf', mime: 'application/pdf', size: 100 },
+    };
+    const onSubmit = vi.fn();
+    const user = userEvent.setup();
+    render(<Harness node={node} onSubmit={onSubmit} />);
+
+    expect(screen.getByText(/contrato\.pdf/)).toBeInTheDocument();
+    // Nenhum controle editável (input/textarea/combobox/switch) é renderizado.
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+
+    await submit(user);
+
+    await waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        { field: { assetId: 'a1', filename: 'contrato.pdf', mime: 'application/pdf', size: 100 } },
+        expect.anything(),
+      ),
+    );
+  });
+
+  it('reference: renders the raw stored ObjectId as read-only text and preserves it on submit', async () => {
+    const node: RenderNode = {
+      fieldId: 'owner',
+      label: 'Responsável',
+      type: 'reference',
+      target: 'user',
+      value: '507f1f77bcf86cd799439011',
+    };
+    const onSubmit = vi.fn();
+    const user = userEvent.setup();
+    render(<Harness node={node} onSubmit={onSubmit} />);
+
+    expect(screen.getByText('507f1f77bcf86cd799439011')).toBeInTheDocument();
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+
+    await submit(user);
+
+    await waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith({ field: '507f1f77bcf86cd799439011' }, expect.anything()),
+    );
+  });
+});

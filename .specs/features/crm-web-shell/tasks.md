@@ -494,14 +494,17 @@ Deviations found during Execute (small, folded in rather than stopping): (1) `Re
 - Skill: NONE
 
 **Done when**:
-- [ ] `array` renders one `DynamicField` per item (`of`) with Add/Remove controls
-- [ ] `group` renders its `fields` recursively, nested
-- [ ] `document`/`reference` render the raw stored value as read-only text — never block the rest of the form, never drop the field's value on save (confirmed Design decision)
-- [ ] Gate check passes: `pnpm vitest run --project unit`
-- [ ] Test count: ≥4 tests (array add/remove, group nesting renders all children, document fallback, reference fallback)
+- [x] `array` renders one `DynamicField` per item (`of`) with Add/Remove controls
+- [x] `group` renders its `fields` recursively, nested
+- [x] `document`/`reference` render the raw stored value as read-only text — never block the rest of the form, never drop the field's value on save (confirmed Design decision)
+- [x] Gate check passes: `pnpm vitest run --project unit`
+- [x] Test count: 5 tests (array add + array remove, group nesting round-trips all children, document fallback, reference fallback)
+
+Deviation found during Execute: `RenderNode.value` for `array`/`group` is the recursively-**hydrated** RenderNode[] tree (structural metadata for the recursion — which type/label/options each child has), not the raw data react-hook-form must control. `defaultValues` for any form embedding an `array`/`group` node must be seeded from the **original raw `values` object** (the same one passed into `hydrate()`), never from `node.value` itself — the two test harnesses (`dynamic-field.array.unit.test.tsx`, `dynamic-field.group.unit.test.tsx`) take an explicit `initialValue` prop for exactly this reason, built via a real `hydrate()` call rather than a hand-rolled `RenderNode`, so the mismatch would have failed loudly instead of silently. This is a load-bearing detail T22/T24/T26 (later batches, the actual form routes) must also get right when they seed their own `useForm({defaultValues: values})`.
 
 **Tests**: unit
 **Gate**: quick
+**Status**: ✅ Complete (commit `9dd1363`)
 
 ---
 

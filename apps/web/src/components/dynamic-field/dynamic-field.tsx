@@ -15,6 +15,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch.js';
 import { formatDate } from '@/lib/helpers/formatDate.helper.js';
 import { cn } from '@/lib/utils.js';
+import { DynamicFieldArray } from './dynamic-field.array.js';
+import { DynamicFieldGroup } from './dynamic-field.group.js';
 
 // Um único componente recursivo dispatcha por `node.type` (WEB-04/06/08 —
 // "renderer único para qualquer tipo/profundidade de campo, sem código por
@@ -302,6 +304,29 @@ function StatusLeaf({ node, name, control }: LeafProps<'status'>) {
   );
 }
 
+// document/reference (T15): sem backend de upload/busca nesta feature
+// (design.md, Data Models) — mostra o valor cru como texto, nunca bloqueia
+// o resto do formulário nem descarta o valor (não passa por `useController`,
+// então o valor original em `defaultValues` simplesmente nunca é tocado e
+// segue round-trip no submit).
+type ReadOnlyLeafProps = {
+  node: NodeOfType<'document'> | NodeOfType<'reference'>;
+  name: string;
+};
+
+function ReadOnlyLeaf({ node, name }: ReadOnlyLeafProps) {
+  const display = node.value == null ? '' : typeof node.value === 'string' ? node.value : JSON.stringify(node.value);
+
+  return (
+    <div className="grid gap-2">
+      <Label htmlFor={name}>{node.label}</Label>
+      <p id={name} className="text-muted-foreground text-sm">
+        {display || '-'}
+      </p>
+    </div>
+  );
+}
+
 export function DynamicField({ node, name, control }: DynamicFieldProps): ReactElement {
   switch (node.type) {
     case 'text':
@@ -321,11 +346,12 @@ export function DynamicField({ node, name, control }: DynamicFieldProps): ReactE
       return <SelectLeaf node={node} name={name} control={control} />;
     case 'status':
       return <StatusLeaf node={node} name={name} control={control} />;
-    // document/reference (fallback read-only) e array/group (recursão) são
-    // implementados em T15 — nenhum destes 4 tipos é exercitado pelos testes
-    // desta task, então um throw explícito é mais honesto que um fragmento
-    // vazio silencioso.
-    default:
-      throw new Error(`Tipo de campo "${node.type}" ainda não implementado (T15).`);
+    case 'document':
+    case 'reference':
+      return <ReadOnlyLeaf node={node} name={name} />;
+    case 'array':
+      return <DynamicFieldArray node={node} name={name} control={control} />;
+    case 'group':
+      return <DynamicFieldGroup node={node} name={name} control={control} />;
   }
 }
