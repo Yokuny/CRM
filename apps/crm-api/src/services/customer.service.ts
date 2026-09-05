@@ -1,4 +1,4 @@
-import type { CreateCustomer } from '@crm/contracts';
+import type { CreateCustomer, UpdateCustomer } from '@crm/contracts';
 import { DEFAULT_CUSTOMER_TEMPLATE_KEY, validate } from '@crm/field-engine';
 import { CustomError } from '../middlewares/errorHandler.middleware.js';
 import type { CustomerRecord, ListCustomersInput, ListCustomersResult } from '../repositories/customer.repository.js';
@@ -60,6 +60,49 @@ export const getCustomerById = async (tenantId: string, id: string): Promise<Cus
   const customer = await customerRepository.findById(tenantId, id);
   if (!customer) throw new CustomError('Customer não encontrado', 404);
   return customer;
+};
+
+// AD-029: o `values` mesclado é SEMPRE revalidado contra o template `customer`
+// CORRENTE do Tenant — mesmo quando `data.values` não veio no corpo — porque o
+// ponteiro (`template`/`templateVersion`) sempre avança para o corrente ao
+// final, e só é honesto avançar o ponteiro depois de checar o valor completo
+// contra as regras que ele agora aponta. AD-022: template arquivado NÃO
+// bloqueia esta edição (só bloqueia criar um registro novo) — por isso, ao
+// contrário de createCustomer, não há checagem de `template.archived` aqui.
+export const updateCustomer = async (
+  tenantId: string,
+  id: string,
+  data: UpdateCustomer,
+): Promise<CustomerRecord> => {
+  const existing = await customerRepository.findById(tenantId, id);
+  if (!existing) throw new CustomError('Customer não encontrado', 404);
+
+  const template = await fieldTemplateRepository.findTemplateByTargetKey(
+    tenantId,
+    'customer',
+    DEFAULT_CUSTOMER_TEMPLATE_KEY,
+  );
+  if (!template) throw new CustomError('Template de cliente não encontrado', 404);
+
+  const version = await fieldTemplateRepository.findCurrentVersion(tenantId, template.id, template.currentVersion);
+  if (!version) throw new CustomError('Template de cliente não encontrado', 404);
+
+  const mergedValues = data.values ? { ...existing.values, ...data.values } : existing.values;
+  const result = validate(version.fields, mergedValues);
+  if (!result.valid) {
+    throw new CustomError(formatValidationErrors(result.errors), 400);
+  }
+
+  const updated = await customerRepository.updateCustomer(tenantId, id, {
+    name: data.name,
+    phone: data.phone ? normalizePhone(data.phone) : undefined,
+    document: data.document ? normalizeDocument(data.document) : undefined,
+    values: mergedValues,
+    template: template.id,
+    templateVersion: template.currentVersion,
+  });
+  if (!updated) throw new CustomError('Customer não encontrado', 404);
+  return updated;
 };
 
 export type ListCustomersQuery = {

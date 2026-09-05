@@ -59,6 +59,41 @@ export const findById = async (tenantId: string, id: string): Promise<CustomerRe
     return doc ? toRecord(doc) : null;
   });
 
+export type UpdateCustomerInput = {
+  name?: string;
+  phone?: string;
+  document?: string;
+  values: Record<string, unknown>;
+  template: string;
+  templateVersion: number;
+};
+
+// `values`/`template`/`templateVersion` são sempre reescritos (AD-029 — o
+// service já resolveu o merge e o ponteiro corrente antes de chegar aqui);
+// `name`/`phone`/`document` só entram no `$set` quando o service os enviou.
+// Filtro tenant-scoped: um id de outro tenant não casa nenhum documento, e o
+// service traduz `null` em 404 (AD-010).
+export const updateCustomer = async (
+  tenantId: string,
+  id: string,
+  data: UpdateCustomerInput,
+): Promise<CustomerRecord | null> =>
+  withDbTiming('customer.updateCustomer', async () => {
+    const update: Record<string, unknown> = {
+      values: data.values,
+      template: data.template,
+      templateVersion: data.templateVersion,
+    };
+    if (data.name !== undefined) update.name = data.name;
+    if (data.phone !== undefined) update.phone = data.phone;
+    if (data.document !== undefined) update.document = data.document;
+
+    const doc = await Customer.findOneAndUpdate(tenantScoped({ Tenant: tenantId, _id: id }), update, {
+      returnDocument: 'after',
+    }).lean();
+    return doc ? toRecord(doc) : null;
+  });
+
 // Regex escapada: `q` é entrada livre do usuário (CORE-03) — sem isso, um
 // caractere especial de regex (ex.: "(", "+") lançaria "Invalid regular
 // expression" em vez de simplesmente não casar nada.

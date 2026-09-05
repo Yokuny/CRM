@@ -1,4 +1,4 @@
-import { createCustomerSchema, idSchema } from '@crm/contracts';
+import { createCustomerSchema, idSchema, updateCustomerSchema } from '@crm/contracts';
 import type { RequestHandler } from 'express';
 import { Router } from 'express';
 import { z } from 'zod';
@@ -72,6 +72,16 @@ export const createCustomerRouter = (deps: CustomerRouterDeps): Router => {
     tenantAssignmentCheck,
     validParams(customerIdParamSchema),
     customerController.getCustomerById,
+  );
+
+  router.patch(
+    '/:id',
+    deps.validToken,
+    tenantAssignmentCheck,
+    customerRateLimit,
+    validParams(customerIdParamSchema),
+    validBody(updateCustomerSchema),
+    customerController.updateCustomer,
   );
 
   return router;

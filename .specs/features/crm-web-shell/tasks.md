@@ -177,17 +177,18 @@ T28
 - Skill: NONE
 
 **Done when**:
-- [ ] 404 when `:id` missing or cross-tenant (reuses T2's `getCustomerById`-style lookup)
-- [ ] Merges `data.values` (if present) into the existing `values`; always validates the **merged** result against the tenant's **current** `customer` template fields, even when `data.values` is absent from the payload (design.md step 4 — needed to honestly justify the pointer bump in the next bullet)
-- [ ] On success, persists `name`/`phone`(normalized)/`document`(normalized) when present, `values` merged, **and** `template`/`templateVersion` set to the current template's id/current version (AD-029) — confirmed distinct from `Process`'s snapshot model
-- [ ] Archived current template does **not** block the edit (AD-022 only blocks new records) — a dedicated test proves this
-- [ ] 400 with the formatted message when merged `values` fails `validate()`; nothing persists
-- [ ] Middleware chain: `validToken → tenantAssignmentCheck → customerRateLimit → validParams(idSchema) → validBody(updateCustomerSchema)`
-- [ ] Gate check passes: `pnpm vitest run --project e2e`
-- [ ] Test count: e2e adds ≥6 cases (partial `values`-only update as kanban drag would send, full core+values update, `templateVersion` bump assertion, archived-template-does-not-block, invalid `values` → 400 + nothing persisted, cross-tenant/missing → 404) to `customer.router.e2e.test.ts`
+- [x] 404 when `:id` missing or cross-tenant (reuses T2's `getCustomerById`-style lookup)
+- [x] Merges `data.values` (if present) into the existing `values`; always validates the **merged** result against the tenant's **current** `customer` template fields, even when `data.values` is absent from the payload (design.md step 4 — needed to honestly justify the pointer bump in the next bullet)
+- [x] On success, persists `name`/`phone`(normalized)/`document`(normalized) when present, `values` merged, **and** `template`/`templateVersion` set to the current template's id/current version (AD-029) — confirmed distinct from `Process`'s snapshot model
+- [x] Archived current template does **not** block the edit (AD-022 only blocks new records) — a dedicated test proves this
+- [x] 400 with the formatted message when merged `values` fails `validate()`; nothing persists
+- [x] Middleware chain: `validToken → tenantAssignmentCheck → customerRateLimit → validParams(idSchema) → validBody(updateCustomerSchema)`
+- [x] Gate check passes: `pnpm vitest run --project e2e`
+- [x] Test count: e2e adds ≥6 cases (partial `values`-only update as kanban drag would send, full core+values update, `templateVersion` bump assertion, archived-template-does-not-block, invalid `values` → 400 + nothing persisted, cross-tenant/missing → 404) to `customer.router.e2e.test.ts`
 
 **Tests**: e2e
 **Gate**: full
+**Status**: ✅ Complete (commit `207694b`)
 
 ---
 

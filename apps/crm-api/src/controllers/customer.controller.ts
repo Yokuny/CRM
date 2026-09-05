@@ -27,6 +27,19 @@ export const getCustomerById = async (req: Request, res: Response, next: NextFun
   }
 };
 
+export const updateCustomer = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const result = await customerService.updateCustomer(
+      req.tenantUser.tenant as string,
+      req.params.id as string,
+      req.body,
+    );
+    res.json(respObj({ data: result }));
+  } catch (e) {
+    next(e);
+  }
+};
+
 export const listCustomers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const result = await customerService.listCustomers(
