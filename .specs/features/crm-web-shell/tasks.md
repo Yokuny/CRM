@@ -630,14 +630,19 @@ Also created beyond the literal file list above: `@interface/customers.interface
 - Skill: NONE
 
 **Done when**:
-- [ ] Dropping a card in a different column calls `PATCH /customers/:id` with `{values:{status:targetKey}}`
-- [ ] On success, the card stays in the new column and both columns' counts reflect it
-- [ ] On failure (network/400), the card visually returns to its origin column and `toast.error(...)` fires — never left stuck in the rejected column
-- [ ] Gate check passes: `pnpm vitest run --project unit`
-- [ ] Test count: ≥4 tests, one per WEB-03 Acceptance Criterion
+- [x] Dropping a card in a different column calls `PATCH /customers/:id` with `{values:{status:targetKey}}`
+- [x] On success, the card stays in the new column and both columns' counts reflect it
+- [x] On failure (network/400), the card visually returns to its origin column and `toast.error(...)` fires — never left stuck in the rejected column
+- [x] Gate check passes: `pnpm vitest run --project unit`
+- [x] Test count: 4 tests, one per WEB-03 Acceptance Criterion (AC1 mutation call shape, AC2 success reflects in both columns, AC3 failure rollback+toast, AC4 no optimistic lock blocks a second concurrent drag)
+
+Foundational gaps closed here (per the batch dispatch prompt, folded into this task): (1) `apps/web/src/components/ui/scroll-area.tsx` (`ScrollArea`/`ScrollBar`, verbatim port — `kanban.tsx`'s own hard dependency) and (2) `apps/web/src/components/ui/kanban.tsx` (`KanbanBoard`/`KanbanCard`/`KanbanCards`/`KanbanHeader`/`KanbanProvider`, near-verbatim port). Added `@dnd-kit/core@6.3.1`, `@dnd-kit/sortable@10.0.0`, `@dnd-kit/utilities@3.2.2`, `@radix-ui/react-scroll-area@1.2.12`, `tunnel-rat@0.1.2`.
+
+Deviations found during Execute: (1) `tunnel-rat`'s own `dist/index.d.ts` has no `"type":"module"` in its package.json — under this project's `moduleResolution:NodeNext`, `import tunnel from 'tunnel-rat'` resolves to the module's namespace instead of its default export (a real function), even though the bundled runtime always delivers the function correctly. Fixed with one contained, typed cast (`(tunnel as unknown as () => TunnelInstance)()`) rather than `any`, documented inline — a packaging quirk of that dependency, not a code bug. (2) Optimistic move is a **local override map** (`pendingMoves: Record<customerId,status>`), not a direct write to the TanStack Query cache — each kanban column is its own independent `customersQuery({status})`, so overriding the *displayed* column per id (falling back to the column's own query result otherwise) is the simplest correct mechanism; confirmed via a real bug caught by AC2's own test: clearing the override *before* the invalidated queries' refetch settles let the card visually snap back to its pre-move column for one render (the refetch hadn't caught up yet) — fixed by awaiting `queryClient.invalidateQueries(...)` inside `onSuccess` before clearing the override, so the override only drops once the per-column queries already show the true post-move state. (3) The Kanban card's own content is factored into a small `@components/customer-kanban-card-content.tsx` with an `actions?: ReactNode` slot (currently unused) — the WEB-10 extension point T25 (a later batch) needs for its "new Process" shortcut, per this batch's explicit instruction not to guess its shape further than that.
 
 **Tests**: unit
 **Gate**: quick
+**Status**: ✅ Complete (commit `5d1e2af`)
 
 ---
 

@@ -29,6 +29,7 @@ const translations: Record<string, string> = {
   'previous.page': 'Página anterior',
   'next.page': 'Próxima página',
   'customer.status.none': 'Sem status',
+  'kanban.move.error': 'Não foi possível mover o cliente. Tente novamente.',
   'private.role': 'Papel',
   // Usado por BreadcrumbEllipsis (apps/web/src/components/ui/breadcrumb.tsx,
   // T8) — texto de acessibilidade (sr-only) do "..." de breadcrumbs longos.

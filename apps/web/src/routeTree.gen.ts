@@ -14,6 +14,7 @@ import { Route as InviteIndexRouteImport } from './routes/invite/index';
 import { Route as AuthIndexRouteImport } from './routes/auth/index';
 import { Route as PrivateIndexRouteImport } from './routes/_private/index';
 import { Route as PrivateCustomersIndexRouteImport } from './routes/_private/customers/index';
+import { Route as PrivateCustomersKanbanIndexRouteImport } from './routes/_private/customers/kanban/index';
 
 const PrivateRoute = PrivateRouteImport.update({
   id: '/_private',
@@ -39,18 +40,26 @@ const PrivateCustomersIndexRoute = PrivateCustomersIndexRouteImport.update({
   path: '/customers/',
   getParentRoute: () => PrivateRoute,
 } as any);
+const PrivateCustomersKanbanIndexRoute =
+  PrivateCustomersKanbanIndexRouteImport.update({
+    id: '/customers/kanban/',
+    path: '/customers/kanban/',
+    getParentRoute: () => PrivateRoute,
+  } as any);
 
 export interface FileRoutesByFullPath {
   '/': typeof PrivateIndexRoute;
   '/auth/': typeof AuthIndexRoute;
   '/invite/': typeof InviteIndexRoute;
   '/customers/': typeof PrivateCustomersIndexRoute;
+  '/customers/kanban/': typeof PrivateCustomersKanbanIndexRoute;
 }
 export interface FileRoutesByTo {
   '/': typeof PrivateIndexRoute;
   '/auth': typeof AuthIndexRoute;
   '/invite': typeof InviteIndexRoute;
   '/customers': typeof PrivateCustomersIndexRoute;
+  '/customers/kanban': typeof PrivateCustomersKanbanIndexRoute;
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport;
@@ -59,19 +68,21 @@ export interface FileRoutesById {
   '/auth/': typeof AuthIndexRoute;
   '/invite/': typeof InviteIndexRoute;
   '/_private/customers/': typeof PrivateCustomersIndexRoute;
+  '/_private/customers/kanban/': typeof PrivateCustomersKanbanIndexRoute;
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
-  fullPaths: '/' | '/auth/' | '/invite/' | '/customers/';
+  fullPaths: '/' | '/auth/' | '/invite/' | '/customers/' | '/customers/kanban/';
   fileRoutesByTo: FileRoutesByTo;
-  to: '/' | '/auth' | '/invite' | '/customers';
+  to: '/' | '/auth' | '/invite' | '/customers' | '/customers/kanban';
   id:
     | '__root__'
     | '/_private'
     | '/_private/'
     | '/auth/'
     | '/invite/'
-    | '/_private/customers/';
+    | '/_private/customers/'
+    | '/_private/customers/kanban/';
   fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
@@ -117,17 +128,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivateCustomersIndexRouteImport;
       parentRoute: typeof PrivateRoute;
     };
+    '/_private/customers/kanban/': {
+      id: '/_private/customers/kanban/';
+      path: '/customers/kanban';
+      fullPath: '/customers/kanban/';
+      preLoaderRoute: typeof PrivateCustomersKanbanIndexRouteImport;
+      parentRoute: typeof PrivateRoute;
+    };
   }
 }
 
 interface PrivateRouteChildren {
   PrivateIndexRoute: typeof PrivateIndexRoute;
   PrivateCustomersIndexRoute: typeof PrivateCustomersIndexRoute;
+  PrivateCustomersKanbanIndexRoute: typeof PrivateCustomersKanbanIndexRoute;
 }
 
 const PrivateRouteChildren: PrivateRouteChildren = {
   PrivateIndexRoute: PrivateIndexRoute,
   PrivateCustomersIndexRoute: PrivateCustomersIndexRoute,
+  PrivateCustomersKanbanIndexRoute: PrivateCustomersKanbanIndexRoute,
 };
 
 const PrivateRouteWithChildren =
