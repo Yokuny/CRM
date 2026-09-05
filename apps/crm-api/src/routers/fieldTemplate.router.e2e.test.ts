@@ -184,11 +184,7 @@ const getCurrent = (app: express.Express, cookie: string, targetType: string, ke
     .set('User-Agent', DEVICE);
 
 const listTemplates = (app: express.Express, cookie: string, targetType: string) =>
-  request(app)
-    .get('/field-templates')
-    .query({ targetType })
-    .set('Cookie', cookie)
-    .set('User-Agent', DEVICE);
+  request(app).get('/field-templates').query({ targetType }).set('Cookie', cookie).set('User-Agent', DEVICE);
 
 describe('field-template routes', () => {
   beforeAll(async () => {

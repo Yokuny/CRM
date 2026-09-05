@@ -402,7 +402,9 @@ describe('customer routes', () => {
       await Customer.create(
         directCustomer(tenant._id.toString(), { name: 'Status Removido', values: { status: 'arquivado_antigo' } }),
       );
-      await Customer.create(directCustomer(tenant._id.toString(), { name: 'Status Válido', values: { status: 'novo' } }));
+      await Customer.create(
+        directCustomer(tenant._id.toString(), { name: 'Status Válido', values: { status: 'novo' } }),
+      );
       const app = buildTestApp();
 
       const res = await listCustomersReq(app, cookie, { status: NO_STATUS_FILTER_VALUE });

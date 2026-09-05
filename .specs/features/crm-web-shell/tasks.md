@@ -255,12 +255,13 @@ T28
 - Skill: NONE
 
 **Done when**:
-- [ ] Each of the 3 new endpoints, called with tenant B's credentials against a tenant A id, returns 404/empty — never tenant A's data
-- [ ] Gate check passes: `pnpm vitest run --project integration`
-- [ ] Test count: suite grows by exactly 3 cases (one per new endpoint)
+- [x] Each of the 3 new endpoints, called with tenant B's credentials against a tenant A id, returns 404/empty — never tenant A's data
+- [x] Gate check passes: `pnpm vitest run --project integration`
+- [x] Test count: suite grows by exactly 3 cases (one per new endpoint)
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete (commit `5d4ea04`)
 
 ---
 

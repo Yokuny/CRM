@@ -70,11 +70,7 @@ export const getCustomerById = async (tenantId: string, id: string): Promise<Cus
 // contra as regras que ele agora aponta. AD-022: template arquivado NÃO
 // bloqueia esta edição (só bloqueia criar um registro novo) — por isso, ao
 // contrário de createCustomer, não há checagem de `template.archived` aqui.
-export const updateCustomer = async (
-  tenantId: string,
-  id: string,
-  data: UpdateCustomer,
-): Promise<CustomerRecord> => {
+export const updateCustomer = async (tenantId: string, id: string, data: UpdateCustomer): Promise<CustomerRecord> => {
   const existing = await customerRepository.findById(tenantId, id);
   if (!existing) throw new CustomError('Customer não encontrado', 404);
 

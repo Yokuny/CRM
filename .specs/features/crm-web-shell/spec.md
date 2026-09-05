@@ -356,9 +356,9 @@ mesmo resultado.
 | WEB-11 | Dimensão: validação client-side é só UX, servidor é fonte da verdade | Tasks | In Tasks | T14, T15 |
 | WEB-12 | Dimensão: falha/falha parcial (rollback otimista do drag, formulário preserva dados) | Tasks | In Tasks | T20, T22, T24 |
 | WEB-13 | Dimensão: idempotência de submit (evita duplo-clique duplicando registro) | Tasks | In Tasks | T22 |
-| WEB-14 | Dimensão: fronteiras de auth & rate limit dos 3 novos endpoints | Tasks | In Tasks | T2, T3, T5, T6 |
+| WEB-14 | Dimensão: fronteiras de auth & rate limit dos 3 novos endpoints | Tasks | Implementing | T2, T3, T5, T6 |
 | WEB-15 | Dimensão: concorrência (last-write-wins + refetch) | Tasks | In Tasks | T3 |
-| WEB-16 | Dimensão: observabilidade dos novos endpoints (dbReqResTime + log) | Tasks | In Tasks | T2, T3, T4, T5 |
+| WEB-16 | Dimensão: observabilidade dos novos endpoints (dbReqResTime + log) | Tasks | Implementing | T2, T3, T4, T5 |
 | WEB-17 | Dimensão: integridade de estado (`stage` só entre opções da snapshot do registro) | Tasks | In Tasks | T27 |
 
 **ID format:** `WEB-[NUMBER]`. **Status values:** Pending → In Design → In Tasks →
