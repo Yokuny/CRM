@@ -1,3 +1,4 @@
+import { fileURLToPath, URL } from 'node:url';
 import { defineConfig } from 'vitest/config';
 
 // Valores de fallback para apps/crm-api/src/config/env.config.ts, cujo `env` é
@@ -26,6 +27,14 @@ export default defineConfig({
     passWithNoTests: true,
     projects: [
       {
+        // apps/web usa o alias '@' -> './src' (apps/web/vite.config.ts, T7) nos
+        // arquivos portados de ../DentalEase/DentalEase. Este vitest.config.ts
+        // roda a partir da raiz do monorepo e não herda o vite.config.ts de
+        // apps/web, então o mesmo alias precisa ser repetido aqui — só no
+        // project "unit", único que inclui caminhos de apps/web.
+        resolve: {
+          alias: { '@': fileURLToPath(new URL('./apps/web/src', import.meta.url)) },
+        },
         test: {
           name: 'unit',
           include: ['packages/**/*.unit.test.ts', 'apps/*/src/**/*.unit.test.ts', 'apps/*/src/**/*.unit.test.tsx'],

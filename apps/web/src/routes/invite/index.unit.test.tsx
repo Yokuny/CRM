@@ -10,9 +10,20 @@ vi.mock('../../lib/api/client.api.js', () => ({ get: getMock, post: postMock }))
 
 const navigateMock = vi.fn();
 const searchMock = vi.fn();
+// useLocation/useMatches/useRouter: dependências do Card asPage (T8) — sem
+// <RouterProvider> nestes testes isolados de página, os hooks reais do
+// TanStack Router lançam. Mocks mínimos só para não quebrar o render; o
+// comportamento de breadcrumb/back-button do Card não é escopo destes testes.
 vi.mock('@tanstack/react-router', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@tanstack/react-router')>();
-  return { ...actual, useNavigate: () => navigateMock, useSearch: () => searchMock() };
+  return {
+    ...actual,
+    useNavigate: () => navigateMock,
+    useSearch: () => searchMock(),
+    useLocation: () => ({ pathname: '/' }),
+    useMatches: () => [],
+    useRouter: () => ({ history: { back: vi.fn() } }),
+  };
 });
 
 const { InvitePage } = await import('./index.js');

@@ -18,6 +18,9 @@ const translations: Record<string, string> = {
   'invite.accept.invalid': 'Convite inválido.',
   loading: 'Carregando…',
   'private.role': 'Papel',
+  // Usado por BreadcrumbEllipsis (apps/web/src/components/ui/breadcrumb.tsx,
+  // T8) — texto de acessibilidade (sr-only) do "..." de breadcrumbs longos.
+  more: 'Mais',
 };
 
 export const t = (key: string): string => translations[key] ?? key;

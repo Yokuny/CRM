@@ -2,9 +2,24 @@
 import '@testing-library/jest-dom/vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { sessionQuery } from '../../query/session.js';
-import { PrivateIndexPage } from './index.js';
+
+// useLocation/useMatches/useRouter: dependências do Card asPage (T8) — sem
+// <RouterProvider> neste teste isolado de página, os hooks reais do
+// TanStack Router lançam. Mocks mínimos só para não quebrar o render; o
+// comportamento de breadcrumb/back-button do Card não é escopo deste teste.
+vi.mock('@tanstack/react-router', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@tanstack/react-router')>();
+  return {
+    ...actual,
+    useLocation: () => ({ pathname: '/' }),
+    useMatches: () => [],
+    useRouter: () => ({ history: { back: vi.fn() } }),
+  };
+});
+
+const { PrivateIndexPage } = await import('./index.js');
 
 describe('PrivateIndexPage', () => {
   afterEach(() => cleanup());

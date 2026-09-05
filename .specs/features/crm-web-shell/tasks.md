@@ -302,7 +302,7 @@ Also ported/adjusted beyond the literal file list above (transitive necessities 
 
 **Tests**: none (existing route tests must keep passing, no new tests added by this task)
 **Gate**: build
-**Status**: ✅ Complete (commit `<PENDING>`)
+**Status**: ✅ Complete (commit `53832cc`)
 
 ---
 
@@ -320,14 +320,17 @@ Also ported/adjusted beyond the literal file list above (transitive necessities 
 - Skill: NONE
 
 **Done when**:
-- [ ] `Card`/`CardHeader`/`CardContent`/`CardAction` preserve the existing call sites' props (`asPage`, `title`) — `apps/web/src/routes/_private/index.tsx`, `auth/index.tsx`, `invite/index.tsx` (T7's new locations, AD-030) compile unchanged
-- [ ] `Card asPage` renders a working `Breadcrumb` from the current route match, matching `CLAUDE.md`'s documented contract
-- [ ] `Item`/`ItemGroup`/`ItemContent`/`ItemTitle`/`ItemDescription` exported and usable by later phases' componentes comuns
-- [ ] `SPEC_DEVIATION` comment removed from `card.tsx`
-- [ ] Gate check passes: `pnpm -r exec tsc --noEmit && pnpm biome check .`
+- [x] `Card`/`CardHeader`/`CardContent`/`CardAction` preserve the existing call sites' props (`asPage`, `title`) — `apps/web/src/routes/_private/index.tsx`, `auth/index.tsx`, `invite/index.tsx` (T7's new locations, AD-030) compile unchanged
+- [x] `Card asPage` renders a working `Breadcrumb` from the current route match, matching `CLAUDE.md`'s documented contract
+- [x] `Item`/`ItemGroup`/`ItemContent`/`ItemTitle`/`ItemDescription` exported and usable by later phases' componentes comuns
+- [x] `SPEC_DEVIATION` comment removed from `card.tsx`
+- [x] Gate check passes: `pnpm -r exec tsc --noEmit && pnpm biome check .`
+
+Also ported beyond the literal file list above (transitive necessities found while porting, named in the Batch 2 dispatch prompt): `separator.tsx` (Item hard dependency), `Home.Icon.tsx` as a hand-written static SVG (no `framer-motion`). Two more gaps found only by actually wiring the real `card.tsx`, not anticipated by either doc: (1) `badge.tsx` itself pulls in `Down`/`Up`/`Minus` icons for `BadgeWithDelta` (`Minus.Icon.tsx` net-new, `Down`/`Up.Icon.tsx` pulled forward from T9's list since `Badge` is this task's own scope and needs them now) — ported verbatim, all plain static SVGs. (2) `Card asPage`'s `PageBreadcrumb`/`CardHeader`/`CardDescription` call `useLocation`/`useMatches`/`useRouter` (and `Breadcrumb`'s `<Link>`) unconditionally — these throw outside a `<RouterProvider>`, which broke the 3 pre-existing page-level unit tests (`auth`, `invite`, `_private/index`) that render their page component directly without one. Fixed by adding minimal `useLocation`/`useMatches`/`useRouter` mocks (returning `{pathname:'/'}` / `[]` / a no-op `history.back`) to each test's existing `vi.mock('@tanstack/react-router', ...)` block — same convention already used there for `useNavigate`/`useSearch`, no new test infra. Also required: `apps/web/tsconfig.json`'s `@/*` path alias (added in T7) needed a matching `resolve.alias` in the root `vitest.config.ts`'s `unit` project, since Vitest at the repo root does not inherit `apps/web/vite.config.ts`'s alias — without it, every `@/...`-importing file (all of T8 on) fails to resolve under Vitest even though `tsc`/`vite build` were already fine.
 
 **Tests**: none
 **Gate**: build
+**Status**: ✅ Complete (commit `<PENDING>`)
 
 ---
 
