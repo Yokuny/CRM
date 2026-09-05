@@ -205,14 +205,15 @@ T28
 - Skill: NONE
 
 **Done when**:
-- [ ] `customer.repository.listCustomers` accepts an optional `knownStatusKeys?: string[]` and builds the `$or` filter only when it's provided
-- [ ] `customer.service.listCustomers` resolves `knownStatusKeys` from the current template exactly when `query.status === NO_STATUS_FILTER_VALUE`, otherwise behaves unchanged
-- [ ] A Customer with no `values.status` key AND a Customer whose `values.status` holds a key no longer in the current template's options both appear under `status=__none__`; a Customer with a still-valid `status` never appears there
-- [ ] Gate check passes: `pnpm vitest run --project integration` (repository) and `pnpm vitest run --project e2e` (endpoint)
-- [ ] Test count: repository integration test adds ≥3 cases (missing key, stale value, valid value excluded); router e2e adds ≥2 cases (sentinel round-trip through the real endpoint, ordinary `status=<key>` behavior unchanged)
+- [x] `customer.repository.listCustomers` accepts an optional `knownStatusKeys?: string[]` and builds the `$or` filter only when it's provided
+- [x] `customer.service.listCustomers` resolves `knownStatusKeys` from the current template exactly when `query.status === NO_STATUS_FILTER_VALUE`, otherwise behaves unchanged
+- [x] A Customer with no `values.status` key AND a Customer whose `values.status` holds a key no longer in the current template's options both appear under `status=__none__`; a Customer with a still-valid `status` never appears there
+- [x] Gate check passes: `pnpm vitest run --project integration` (repository) and `pnpm vitest run --project e2e` (endpoint)
+- [x] Test count: repository integration test adds ≥3 cases (missing key, stale value, valid value excluded); router e2e adds ≥2 cases (sentinel round-trip through the real endpoint, ordinary `status=<key>` behavior unchanged)
 
 **Tests**: integration, e2e
 **Gate**: full
+**Status**: ✅ Complete (commit `4762c7d`)
 
 ---
 

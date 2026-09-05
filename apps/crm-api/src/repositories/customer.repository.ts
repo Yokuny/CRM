@@ -1,3 +1,4 @@
+import { NO_STATUS_FILTER_VALUE } from '@crm/contracts';
 import type { CustomerDocument } from '@crm/db';
 import { Customer, tenantScoped } from '@crm/db';
 import { withDbTiming } from '../metrics/db.metric.js';
@@ -106,6 +107,7 @@ export type ListCustomersInput = {
   sort: 'name' | 'createdAt';
   order: 'asc' | 'desc';
   status?: string;
+  knownStatusKeys?: string[];
 };
 
 export type ListCustomersResult = {
@@ -117,13 +119,27 @@ export type ListCustomersResult = {
 // confia neles, nunca reaplica o clamp (CORE-12 é responsabilidade de quem
 // chama). `status` que não existir nas opções do template corrente
 // simplesmente não casa nenhum documento — lista vazia, não erro (CORE-04,
-// spec Edge Cases).
+// spec Edge Cases). `status=__none__` (WEB-02) é resolvido pelo service em
+// `knownStatusKeys` — cobre num único filtro os dois casos de "sem status":
+// a chave `values.status` nunca escrita E um valor gravado que não existe
+// mais entre as opções correntes do template (status removido depois do
+// Customer já ter sido classificado).
 export const listCustomers = async (tenantId: string, query: ListCustomersInput): Promise<ListCustomersResult> =>
   withDbTiming('customer.listCustomers', async () => {
     const searchFilter = query.q
       ? { $or: [{ name: new RegExp(escapeRegExp(query.q), 'i') }, { phone: new RegExp(escapeRegExp(query.q), 'i') }] }
       : {};
-    const statusFilter = query.status !== undefined ? { 'values.status': query.status } : {};
+    const statusFilter =
+      query.status === undefined
+        ? {}
+        : query.status === NO_STATUS_FILTER_VALUE
+          ? {
+              $or: [
+                { 'values.status': { $exists: false } },
+                { 'values.status': { $nin: query.knownStatusKeys ?? [] } },
+              ],
+            }
+          : { 'values.status': query.status };
     const filter = tenantScoped({ Tenant: tenantId, ...searchFilter, ...statusFilter });
 
     const sortSpec: Record<string, 1 | -1> = { [query.sort]: query.order === 'asc' ? 1 : -1 };

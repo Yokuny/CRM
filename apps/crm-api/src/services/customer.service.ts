@@ -1,4 +1,5 @@
-import type { CreateCustomer, UpdateCustomer } from '@crm/contracts';
+import type { CreateCustomer, FieldDef, UpdateCustomer } from '@crm/contracts';
+import { NO_STATUS_FILTER_VALUE } from '@crm/contracts';
 import { DEFAULT_CUSTOMER_TEMPLATE_KEY, validate } from '@crm/field-engine';
 import { CustomError } from '../middlewares/errorHandler.middleware.js';
 import type { CustomerRecord, ListCustomersInput, ListCustomersResult } from '../repositories/customer.repository.js';
@@ -127,7 +128,29 @@ const clampLimit = (limit: number | undefined): number => {
   return Math.min(Math.floor(limit), MAX_PAGE_SIZE);
 };
 
+// WEB-02: `status=__none__` só faz sentido resolvido contra as opções
+// CORRENTES do template — a mesma chave que já foi removida das opções não
+// pode ser reconhecida como "válida" só porque algum Customer antigo ainda a
+// guarda em `values.status`.
+const resolveKnownStatusKeys = (fields: FieldDef[]): string[] => {
+  const statusField = fields.find((field) => field.type === 'status');
+  return statusField && statusField.type === 'status' ? statusField.options.map((option) => option.key) : [];
+};
+
 export const listCustomers = async (tenantId: string, query: ListCustomersQuery): Promise<ListCustomersResult> => {
+  let knownStatusKeys: string[] | undefined;
+  if (query.status === NO_STATUS_FILTER_VALUE) {
+    const template = await fieldTemplateRepository.findTemplateByTargetKey(
+      tenantId,
+      'customer',
+      DEFAULT_CUSTOMER_TEMPLATE_KEY,
+    );
+    const version = template
+      ? await fieldTemplateRepository.findCurrentVersion(tenantId, template.id, template.currentVersion)
+      : null;
+    knownStatusKeys = version ? resolveKnownStatusKeys(version.fields) : [];
+  }
+
   const input: ListCustomersInput = {
     page: clampPage(query.page),
     limit: clampLimit(query.limit),
@@ -135,6 +158,7 @@ export const listCustomers = async (tenantId: string, query: ListCustomersQuery)
     sort: query.sort ?? 'createdAt',
     order: query.order ?? 'desc',
     status: query.status,
+    knownStatusKeys,
   };
   return customerRepository.listCustomers(tenantId, input);
 };

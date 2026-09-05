@@ -16,3 +16,10 @@ export const createCustomerSchema = z
   .strict();
 
 export type CreateCustomer = z.infer<typeof createCustomerSchema>;
+
+// Sentinela de `GET /customers?status=__none__` (WEB-02): não é forma de
+// schema nova — `listCustomersQuerySchema.status` já aceita qualquer string —
+// é só o valor que o service reconhece para filtrar "sem status": nem
+// `values.status` ausente, nem um valor que não existe mais nas opções
+// correntes do template.
+export const NO_STATUS_FILTER_VALUE = '__none__';

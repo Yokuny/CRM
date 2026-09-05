@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import type { FieldDef, Role } from '@crm/contracts';
+import { NO_STATUS_FILTER_VALUE } from '@crm/contracts';
 import {
   archiveFieldTemplate,
   Customer,
@@ -392,6 +393,42 @@ describe('customer routes', () => {
 
       expect(res.body.data.total).toBe(2);
       expect(res.body.data.items.map((c: { name: string }) => c.name).sort()).toEqual(['Novo A', 'Novo B']);
+    });
+
+    it('filters by the __none__ sentinel: matches a missing values.status AND a stale value no longer in the current template options (WEB-02)', async () => {
+      const { tenant, cookie } = await seedTenantUser(['admin']);
+      await seedDefaultCustomerTemplate(tenant.id); // opções correntes: novo, ativo, inativo
+      await Customer.create(directCustomer(tenant._id.toString(), { name: 'Sem Status', values: {} }));
+      await Customer.create(
+        directCustomer(tenant._id.toString(), { name: 'Status Removido', values: { status: 'arquivado_antigo' } }),
+      );
+      await Customer.create(directCustomer(tenant._id.toString(), { name: 'Status Válido', values: { status: 'novo' } }));
+      const app = buildTestApp();
+
+      const res = await listCustomersReq(app, cookie, { status: NO_STATUS_FILTER_VALUE });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.total).toBe(2);
+      expect(res.body.data.items.map((c: { name: string }) => c.name).sort()).toEqual([
+        'Sem Status',
+        'Status Removido',
+      ]);
+    });
+
+    it('keeps ordinary status=<key> filtering unaffected by the __none__ sentinel addition', async () => {
+      const { tenant, cookie } = await seedTenantUser(['admin']);
+      await seedDefaultCustomerTemplate(tenant.id);
+      await Customer.create(directCustomer(tenant._id.toString(), { name: 'Novo A', values: { status: 'novo' } }));
+      await Customer.create(
+        directCustomer(tenant._id.toString(), { name: 'Status Removido', values: { status: 'arquivado_antigo' } }),
+      );
+      const app = buildTestApp();
+
+      const res = await listCustomersReq(app, cookie, { status: 'novo' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.total).toBe(1);
+      expect(res.body.data.items[0].name).toBe('Novo A');
     });
 
     it("never returns another tenant's customers through the listing, even with the same name (CORE-05)", async () => {
