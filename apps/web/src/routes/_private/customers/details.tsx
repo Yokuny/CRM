@@ -1,7 +1,7 @@
 import type { FieldDef } from '@crm/contracts';
 import { DEFAULT_CUSTOMER_TEMPLATE_KEY, hydrate } from '@crm/field-engine';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createFileRoute, useSearch } from '@tanstack/react-router';
+import { createFileRoute, Link, useSearch } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
 import type { FieldValues } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
@@ -65,7 +65,17 @@ function CustomerDetailsView({ customer }: CustomerDetailsViewProps) {
       </ItemGroup>
 
       <div className="grid gap-2">
-        <ItemTitle>{t('customer.processes.title')}</ItemTitle>
+        <div className="flex items-center justify-between">
+          <ItemTitle>{t('customer.processes.title')}</ItemTitle>
+          {/* WEB-07 AC1: "a partir do detalhe de um Customer" é a entrada
+              primária do fluxo de criação de Process (T25) — mesma rota do
+              atalho do card do kanban (WEB-10), search:{customerId} (AD-030). */}
+          <Button asChild variant="basic" size="sm">
+            <Link to="/processes/add" search={{ customerId: customer.id }}>
+              {t('process.new.action')}
+            </Link>
+          </Button>
+        </div>
         {processesQueryResult.isLoading ? (
           <DefaultLoading />
         ) : !processesQueryResult.data?.items.length ? (

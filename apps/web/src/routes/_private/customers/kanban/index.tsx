@@ -1,7 +1,8 @@
 import { DEFAULT_CUSTOMER_TEMPLATE_KEY } from '@crm/field-engine';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
+import type { PointerEvent as ReactPointerEvent } from 'react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { DefaultLoading } from '@/components/default-loading.js';
@@ -146,7 +147,26 @@ export function CustomersKanbanPage() {
                 <KanbanCards id={column.id}>
                   {(item: KanbanItem) => (
                     <KanbanCard key={item.id} id={item.id} name={item.name} column={item.column}>
-                      <CustomerKanbanCardContent name={item.name} phone={item.phone} />
+                      <CustomerKanbanCardContent
+                        name={item.name}
+                        phone={item.phone}
+                        actions={
+                          // WEB-10: atalho "novo Process" a partir do card,
+                          // pré-preenchendo `customerId` — mesma rota de
+                          // WEB-07 (T25), search:{customerId} (AD-030).
+                          // onPointerDown para o clique não ser interpretado
+                          // como o início de um drag (KanbanCard aplica os
+                          // listeners de arraste no wrapper inteiro do card).
+                          <Link
+                            to="/processes/add"
+                            search={{ customerId: item.id }}
+                            onPointerDown={(e: ReactPointerEvent) => e.stopPropagation()}
+                            className="text-primary text-xs underline underline-offset-4"
+                          >
+                            {t('process.new.action')}
+                          </Link>
+                        }
+                      />
                     </KanbanCard>
                   )}
                 </KanbanCards>

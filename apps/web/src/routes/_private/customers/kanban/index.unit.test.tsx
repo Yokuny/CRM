@@ -22,11 +22,14 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
     useLocation: () => ({ pathname: '/' }),
     useMatches: () => [],
     useRouter: () => ({ history: { back: vi.fn() } }),
-    // CustomersViewToggle (T21) renderiza um <Link> real fora do breadcrumb —
-    // mesmo motivo dos mocks acima, evita precisar de um <RouterProvider> de
-    // verdade; o comportamento do toggle em si é escopo de
-    // view-toggle.unit.test.tsx.
-    Link: ({ to, children }: { to: string; children?: ReactNode }) => <a href={to}>{children}</a>,
+    // CustomersViewToggle (T21) e o atalho "novo Process" do card (WEB-10,
+    // T25) renderizam um <Link> real fora do breadcrumb — mesmo motivo dos
+    // mocks acima, evita precisar de um <RouterProvider> de verdade. `search`
+    // some no href (querystring) para o teste do atalho poder afirmar o
+    // `customerId` pré-preenchido sem precisar de um router real.
+    Link: ({ to, search, children }: { to: string; search?: Record<string, string>; children?: ReactNode }) => (
+      <a href={search ? `${to}?${new URLSearchParams(search).toString()}` : to}>{children}</a>
+    ),
   };
 });
 
@@ -58,8 +61,11 @@ vi.mock('../../../../components/ui/kanban.js', () => ({
       {(capturedProps?.data ?? []).filter((item: any) => item.column === id).map((item: any) => children(item))}
     </div>
   ),
+  // `children` (não só `name`): WEB-10's shortcut link lives inside
+  // `CustomerKanbanCardContent`, passed as `KanbanCard`'s children — the
+  // real content must render for that link to be queryable in a test.
   // biome-ignore lint/suspicious/noExplicitAny: mock de teste
-  KanbanCard: ({ name }: any) => <div>{name}</div>,
+  KanbanCard: ({ name, children }: any) => <div>{children ?? name}</div>,
 }));
 
 const { CustomersKanbanPage } = await import('./index.js');
@@ -200,5 +206,16 @@ describe('CustomersKanbanPage (T20 — WEB-03)', () => {
     await act(async () => {
       resolveFirst({ success: true, data: {} });
     });
+  });
+
+  it('WEB-10 AC1: the card’s shortcut opens /processes/add with the card’s customerId preset via search', async () => {
+    mockColumnFetches();
+    const { container } = renderPage();
+
+    await waitFor(() => expect(capturedProps?.data?.length).toBe(1));
+
+    const shortcut = container.querySelector('a[href^="/processes/add"]');
+    expect(shortcut).not.toBeNull();
+    expect(shortcut?.getAttribute('href')).toBe('/processes/add?customerId=c1');
   });
 });

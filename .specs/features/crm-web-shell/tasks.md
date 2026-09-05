@@ -772,16 +772,19 @@ Built as an in-place toggle (`isEditing` state) on the same `details.tsx` route,
 - Skill: NONE
 
 **Done when**:
-- [ ] Lists non-archived `targetType:'process'` templates by `label`; archived ones hidden/disabled, never selectable
-- [ ] Zero available templates shows an explicit message and blocks the attempt (never a silent empty picker)
-- [ ] Valid selection calls `POST /processes` with `templateKey`+`customerId`, shows the returned initial `stage`
-- [ ] Server rejection (archived-between-list-and-submit, invalid `values`) shows the error, never navigates as if created
-- [ ] The kanban card's shortcut opens this same route with `search: { customerId }` preset from the card
-- [ ] Gate check passes: `pnpm vitest run --project unit`
-- [ ] Test count: ≥5 tests (WEB-07 AC1-4 + WEB-10 AC1)
+- [x] Lists non-archived `targetType:'process'` templates by `label`; archived ones hidden/disabled, never selectable
+- [x] Zero available templates shows an explicit message and blocks the attempt (never a silent empty picker)
+- [x] Valid selection calls `POST /processes` with `templateKey`+`customerId`, shows the returned initial `stage`
+- [x] Server rejection (archived-between-list-and-submit, invalid `values`) shows the error, never navigates as if created
+- [x] The kanban card's shortcut opens this same route with `search: { customerId }` preset from the card
+- [x] Gate check passes: `pnpm vitest run --project unit`
+- [x] Test count: ≥5 tests (WEB-07 AC1-4 + WEB-10 AC1)
+
+Also built beyond the literal file list above, both necessary to satisfy WEB-07 AC1's own wording ("a partir do detalhe de um Customer" — the primary entry point, not just the P3 kanban shortcut): (1) `fieldTemplatesQuery(targetType)` added to `apps/web/src/query/fieldTemplate.ts` (extend — same `queryOptions` pattern, 4 new unit tests). (2) A small "novo processo" `<Link>` added to `customers/details.tsx`'s Process-list section (built by T23), pointing at this route with `search:{customerId}` — safe to add only now that `/processes/add` exists (avoids any transient forward-reference/type gap). Archived templates are fully filtered out of the list (never rendered, not merely disabled) — satisfies "hidden/disabled, never selectable" via the simpler of the two options. Zero-available and not-found states reuse `<DefaultEmptyData />` (CLAUDE.md's mandatory component), same precedent as T23/T24.
 
 **Tests**: unit
 **Gate**: quick
+**Status**: ✅ Complete (commit `01e31eb`)
 
 ---
 

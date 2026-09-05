@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 const getMock = vi.fn();
 vi.mock('../lib/api/client.api.js', () => ({ get: getMock }));
 
-const { currentCustomerTemplateQuery, fieldTemplateKeys } = await import('./fieldTemplate.js');
+const { currentCustomerTemplateQuery, fieldTemplateKeys, fieldTemplatesQuery } = await import('./fieldTemplate.js');
 
 describe('currentCustomerTemplateQuery', () => {
   it('calls GET /field-templates/current?targetType=customer&key=<key>', async () => {
@@ -36,5 +36,35 @@ describe('currentCustomerTemplateQuery', () => {
 
   it('exposes a queryKey scoped by targetType+key', () => {
     expect(currentCustomerTemplateQuery('default').queryKey).toEqual(fieldTemplateKeys.current('customer', 'default'));
+  });
+});
+
+describe('fieldTemplatesQuery (T25 — WEB-07)', () => {
+  it('calls GET /field-templates?targetType=<type>', async () => {
+    getMock.mockResolvedValueOnce({ success: true, data: { items: [] } });
+
+    await fieldTemplatesQuery('process').queryFn?.({} as never);
+
+    expect(getMock).toHaveBeenCalledWith('/field-templates?targetType=process');
+  });
+
+  it('resolves with items on success', async () => {
+    const data = { items: [{ key: 'compra', label: 'Compra', archived: false }] };
+    getMock.mockResolvedValueOnce({ success: true, data });
+
+    const result = await fieldTemplatesQuery('process').queryFn?.({} as never);
+
+    expect(result).toEqual(data);
+  });
+
+  it('throws with the backend message when success:false', async () => {
+    getMock.mockResolvedValueOnce({ success: false, message: 'Falha ao listar.' });
+
+    await expect(fieldTemplatesQuery('process').queryFn?.({} as never)).rejects.toThrow('Falha ao listar.');
+  });
+
+  it('exposes a queryKey scoped by targetType', () => {
+    expect(fieldTemplatesQuery('process').queryKey).toEqual(fieldTemplateKeys.list('process'));
+    expect(fieldTemplatesQuery('process').queryKey).not.toEqual(fieldTemplatesQuery('customer').queryKey);
   });
 });

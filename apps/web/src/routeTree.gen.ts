@@ -15,6 +15,7 @@ import { Route as AuthIndexRouteImport } from './routes/auth/index';
 import { Route as PrivateIndexRouteImport } from './routes/_private/index';
 import { Route as PrivateCustomersIndexRouteImport } from './routes/_private/customers/index';
 import { Route as PrivateCustomersDetailsRouteImport } from './routes/_private/customers/details';
+import { Route as PrivateProcessesAddIndexRouteImport } from './routes/_private/processes/add/index';
 import { Route as PrivateCustomersKanbanIndexRouteImport } from './routes/_private/customers/kanban/index';
 import { Route as PrivateCustomersAddIndexRouteImport } from './routes/_private/customers/add/index';
 
@@ -47,6 +48,12 @@ const PrivateCustomersDetailsRoute = PrivateCustomersDetailsRouteImport.update({
   path: '/customers/details',
   getParentRoute: () => PrivateRoute,
 } as any);
+const PrivateProcessesAddIndexRoute =
+  PrivateProcessesAddIndexRouteImport.update({
+    id: '/processes/add/',
+    path: '/processes/add/',
+    getParentRoute: () => PrivateRoute,
+  } as any);
 const PrivateCustomersKanbanIndexRoute =
   PrivateCustomersKanbanIndexRouteImport.update({
     id: '/customers/kanban/',
@@ -68,6 +75,7 @@ export interface FileRoutesByFullPath {
   '/customers/': typeof PrivateCustomersIndexRoute;
   '/customers/add/': typeof PrivateCustomersAddIndexRoute;
   '/customers/kanban/': typeof PrivateCustomersKanbanIndexRoute;
+  '/processes/add/': typeof PrivateProcessesAddIndexRoute;
 }
 export interface FileRoutesByTo {
   '/': typeof PrivateIndexRoute;
@@ -77,6 +85,7 @@ export interface FileRoutesByTo {
   '/customers': typeof PrivateCustomersIndexRoute;
   '/customers/add': typeof PrivateCustomersAddIndexRoute;
   '/customers/kanban': typeof PrivateCustomersKanbanIndexRoute;
+  '/processes/add': typeof PrivateProcessesAddIndexRoute;
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport;
@@ -88,6 +97,7 @@ export interface FileRoutesById {
   '/_private/customers/': typeof PrivateCustomersIndexRoute;
   '/_private/customers/add/': typeof PrivateCustomersAddIndexRoute;
   '/_private/customers/kanban/': typeof PrivateCustomersKanbanIndexRoute;
+  '/_private/processes/add/': typeof PrivateProcessesAddIndexRoute;
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
@@ -98,7 +108,8 @@ export interface FileRouteTypes {
     | '/customers/details'
     | '/customers/'
     | '/customers/add/'
-    | '/customers/kanban/';
+    | '/customers/kanban/'
+    | '/processes/add/';
   fileRoutesByTo: FileRoutesByTo;
   to:
     | '/'
@@ -107,7 +118,8 @@ export interface FileRouteTypes {
     | '/customers/details'
     | '/customers'
     | '/customers/add'
-    | '/customers/kanban';
+    | '/customers/kanban'
+    | '/processes/add';
   id:
     | '__root__'
     | '/_private'
@@ -117,7 +129,8 @@ export interface FileRouteTypes {
     | '/_private/customers/details'
     | '/_private/customers/'
     | '/_private/customers/add/'
-    | '/_private/customers/kanban/';
+    | '/_private/customers/kanban/'
+    | '/_private/processes/add/';
   fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
@@ -170,6 +183,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivateCustomersDetailsRouteImport;
       parentRoute: typeof PrivateRoute;
     };
+    '/_private/processes/add/': {
+      id: '/_private/processes/add/';
+      path: '/processes/add';
+      fullPath: '/processes/add/';
+      preLoaderRoute: typeof PrivateProcessesAddIndexRouteImport;
+      parentRoute: typeof PrivateRoute;
+    };
     '/_private/customers/kanban/': {
       id: '/_private/customers/kanban/';
       path: '/customers/kanban';
@@ -193,6 +213,7 @@ interface PrivateRouteChildren {
   PrivateCustomersIndexRoute: typeof PrivateCustomersIndexRoute;
   PrivateCustomersAddIndexRoute: typeof PrivateCustomersAddIndexRoute;
   PrivateCustomersKanbanIndexRoute: typeof PrivateCustomersKanbanIndexRoute;
+  PrivateProcessesAddIndexRoute: typeof PrivateProcessesAddIndexRoute;
 }
 
 const PrivateRouteChildren: PrivateRouteChildren = {
@@ -201,6 +222,7 @@ const PrivateRouteChildren: PrivateRouteChildren = {
   PrivateCustomersIndexRoute: PrivateCustomersIndexRoute,
   PrivateCustomersAddIndexRoute: PrivateCustomersAddIndexRoute,
   PrivateCustomersKanbanIndexRoute: PrivateCustomersKanbanIndexRoute,
+  PrivateProcessesAddIndexRoute: PrivateProcessesAddIndexRoute,
 };
 
 const PrivateRouteWithChildren =

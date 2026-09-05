@@ -21,7 +21,12 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
     useLocation: () => ({ pathname: '/' }),
     useMatches: () => [],
     useRouter: () => ({ history: { back: vi.fn() } }),
-    Link: ({ to, children }: { to: string; children?: ReactNode }) => <a href={to}>{children}</a>,
+    // `search` vira querystring no href — permite afirmar o `customerId`/`id`
+    // pré-preenchido nos links de "novo processo" (WEB-07 AC1) e "voltar"
+    // sem precisar de um router real.
+    Link: ({ to, search, children }: { to: string; search?: Record<string, string>; children?: ReactNode }) => (
+      <a href={search ? `${to}?${new URLSearchParams(search).toString()}` : to}>{children}</a>
+    ),
   };
 });
 
@@ -87,6 +92,24 @@ describe('CustomerDetailsPage (T23 — WEB-05)', () => {
 
     expect(await screen.findByText('Nenhum registro encontrado.')).toBeInTheDocument();
     expect(screen.queryByText('Ana')).not.toBeInTheDocument();
+  });
+
+  it('WEB-07 AC1: shows a "novo processo" link opening /processes/add with this Customer’s id preset', async () => {
+    searchMock.mockReturnValue({ id: 'c1' });
+    getMock.mockImplementation((path: string) => {
+      if (path === '/customers/c1') {
+        return Promise.resolve({ success: true, data: { id: 'c1', name: 'Ana', phone: '119', values: {} } });
+      }
+      if (path === '/processes?customerId=c1') return Promise.resolve({ success: true, data: { items: [] } });
+      throw new Error(`unexpected path ${path}`);
+    });
+
+    const { container } = renderPage();
+    await screen.findByText('Ana');
+
+    const shortcut = container.querySelector('a[href^="/processes/add"]');
+    expect(shortcut).not.toBeNull();
+    expect(shortcut?.getAttribute('href')).toBe('/processes/add?customerId=c1');
   });
 
   it('WEB-05 AC3: shows the Customer’s Process list via GET /processes?customerId=:id', async () => {
