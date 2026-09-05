@@ -14,6 +14,7 @@ import { Route as InviteIndexRouteImport } from './routes/invite/index';
 import { Route as AuthIndexRouteImport } from './routes/auth/index';
 import { Route as PrivateIndexRouteImport } from './routes/_private/index';
 import { Route as PrivateCustomersIndexRouteImport } from './routes/_private/customers/index';
+import { Route as PrivateCustomersDetailsRouteImport } from './routes/_private/customers/details';
 import { Route as PrivateCustomersKanbanIndexRouteImport } from './routes/_private/customers/kanban/index';
 import { Route as PrivateCustomersAddIndexRouteImport } from './routes/_private/customers/add/index';
 
@@ -41,6 +42,11 @@ const PrivateCustomersIndexRoute = PrivateCustomersIndexRouteImport.update({
   path: '/customers/',
   getParentRoute: () => PrivateRoute,
 } as any);
+const PrivateCustomersDetailsRoute = PrivateCustomersDetailsRouteImport.update({
+  id: '/customers/details',
+  path: '/customers/details',
+  getParentRoute: () => PrivateRoute,
+} as any);
 const PrivateCustomersKanbanIndexRoute =
   PrivateCustomersKanbanIndexRouteImport.update({
     id: '/customers/kanban/',
@@ -58,6 +64,7 @@ export interface FileRoutesByFullPath {
   '/': typeof PrivateIndexRoute;
   '/auth/': typeof AuthIndexRoute;
   '/invite/': typeof InviteIndexRoute;
+  '/customers/details': typeof PrivateCustomersDetailsRoute;
   '/customers/': typeof PrivateCustomersIndexRoute;
   '/customers/add/': typeof PrivateCustomersAddIndexRoute;
   '/customers/kanban/': typeof PrivateCustomersKanbanIndexRoute;
@@ -66,6 +73,7 @@ export interface FileRoutesByTo {
   '/': typeof PrivateIndexRoute;
   '/auth': typeof AuthIndexRoute;
   '/invite': typeof InviteIndexRoute;
+  '/customers/details': typeof PrivateCustomersDetailsRoute;
   '/customers': typeof PrivateCustomersIndexRoute;
   '/customers/add': typeof PrivateCustomersAddIndexRoute;
   '/customers/kanban': typeof PrivateCustomersKanbanIndexRoute;
@@ -76,6 +84,7 @@ export interface FileRoutesById {
   '/_private/': typeof PrivateIndexRoute;
   '/auth/': typeof AuthIndexRoute;
   '/invite/': typeof InviteIndexRoute;
+  '/_private/customers/details': typeof PrivateCustomersDetailsRoute;
   '/_private/customers/': typeof PrivateCustomersIndexRoute;
   '/_private/customers/add/': typeof PrivateCustomersAddIndexRoute;
   '/_private/customers/kanban/': typeof PrivateCustomersKanbanIndexRoute;
@@ -86,6 +95,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth/'
     | '/invite/'
+    | '/customers/details'
     | '/customers/'
     | '/customers/add/'
     | '/customers/kanban/';
@@ -94,6 +104,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/invite'
+    | '/customers/details'
     | '/customers'
     | '/customers/add'
     | '/customers/kanban';
@@ -103,6 +114,7 @@ export interface FileRouteTypes {
     | '/_private/'
     | '/auth/'
     | '/invite/'
+    | '/_private/customers/details'
     | '/_private/customers/'
     | '/_private/customers/add/'
     | '/_private/customers/kanban/';
@@ -151,6 +163,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivateCustomersIndexRouteImport;
       parentRoute: typeof PrivateRoute;
     };
+    '/_private/customers/details': {
+      id: '/_private/customers/details';
+      path: '/customers/details';
+      fullPath: '/customers/details';
+      preLoaderRoute: typeof PrivateCustomersDetailsRouteImport;
+      parentRoute: typeof PrivateRoute;
+    };
     '/_private/customers/kanban/': {
       id: '/_private/customers/kanban/';
       path: '/customers/kanban';
@@ -170,6 +189,7 @@ declare module '@tanstack/react-router' {
 
 interface PrivateRouteChildren {
   PrivateIndexRoute: typeof PrivateIndexRoute;
+  PrivateCustomersDetailsRoute: typeof PrivateCustomersDetailsRoute;
   PrivateCustomersIndexRoute: typeof PrivateCustomersIndexRoute;
   PrivateCustomersAddIndexRoute: typeof PrivateCustomersAddIndexRoute;
   PrivateCustomersKanbanIndexRoute: typeof PrivateCustomersKanbanIndexRoute;
@@ -177,6 +197,7 @@ interface PrivateRouteChildren {
 
 const PrivateRouteChildren: PrivateRouteChildren = {
   PrivateIndexRoute: PrivateIndexRoute,
+  PrivateCustomersDetailsRoute: PrivateCustomersDetailsRoute,
   PrivateCustomersIndexRoute: PrivateCustomersIndexRoute,
   PrivateCustomersAddIndexRoute: PrivateCustomersAddIndexRoute,
   PrivateCustomersKanbanIndexRoute: PrivateCustomersKanbanIndexRoute,

@@ -14,6 +14,8 @@ const translations: Record<string, string> = {
   customers: 'Clientes',
   'customer.create.title': 'Novo cliente',
   'customer.create.error': 'Não foi possível criar o cliente.',
+  'customer.details.title': 'Detalhe do cliente',
+  'customer.processes.title': 'Processos',
   'auth.signin.title': 'Entrar',
   'auth.signin.submit': 'Entrar',
   'auth.signin.error': 'Não foi possível entrar.',

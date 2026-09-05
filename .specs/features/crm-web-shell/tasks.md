@@ -718,14 +718,17 @@ Also built beyond the literal file list above (transitive necessity, flagged by 
 - Skill: NONE
 
 **Done when**:
-- [ ] Direct navigation/reload (e.g. `/customers/details?id=<id>`) fetches via `GET /customers/:id`, shows core + `values`
-- [ ] A missing or cross-tenant `:id` shows an explicit not-found state, never another tenant's data or a broken screen
-- [ ] Shows the Customer's Process list via `GET /processes?customerId=:id`, including its own empty state
-- [ ] Gate check passes: `pnpm vitest run --project unit`
-- [ ] Test count: ≥3 tests, one per WEB-05 Acceptance Criterion
+- [x] Direct navigation/reload (e.g. `/customers/details?id=<id>`) fetches via `GET /customers/:id`, shows core + `values`
+- [x] A missing or cross-tenant `:id` shows an explicit not-found state, never another tenant's data or a broken screen
+- [x] Shows the Customer's Process list via `GET /processes?customerId=:id`, including its own empty state
+- [x] Gate check passes: `pnpm vitest run --project unit`
+- [x] Test count: ≥3 tests, one per WEB-05 Acceptance Criterion
+
+Also created beyond the literal file list above: `apps/web/src/query/process.ts` (new — `processesQuery(customerId)`, same `queryOptions`/`queryKey`-factory pattern as `customer.ts`; `ProcessRecord` mirrored locally, same convention as `CustomerRecord`) with its own 4 unit tests. `customerDetailsSearchSchema`/`CustomerDetailsSearch` defined inline in `details.tsx` (not a separate `@interface/*.interface.ts` file — a 1-field `{id}` schema local to this one route, no reuse elsewhere yet). Not-found state and empty-Process-list both reuse `<DefaultEmptyData />` (CLAUDE.md's mandatory "dados vazios" component) rather than inventing dedicated one-off panels. Test-file deviation found running the real code (not guessed): `useQuery`'s default retry (3 attempts w/ backoff) kept `isLoading` true past `findByText`'s default timeout for the WEB-05 AC2 (404) case — fixed with `retry:false` on the test's own `QueryClient`, first precedent for exercising a real query-error branch through `useQuery` in this feature's test suite (`customer.unit.test.ts`/T18 only ever tested error branches by calling `queryFn` directly, bypassing retry).
 
 **Tests**: unit
 **Gate**: quick
+**Status**: ✅ Complete (commit `9845988`)
 
 ---
 
