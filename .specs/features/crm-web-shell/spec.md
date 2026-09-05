@@ -341,30 +341,30 @@ mesmo resultado.
 
 ## Requirement Traceability
 
-| Requirement ID | Story | Phase | Status |
-| --- | --- | --- | --- |
-| WEB-01 | P1: Listar e buscar Customers em tabela | Design | Pending |
-| WEB-02 | P1: Visualizar Customers em kanban por status | Design | Pending |
-| WEB-03 | P1: Mudar status de um Customer arrastando o card | Design | Pending |
-| WEB-04 | P1: Criar um novo Customer | Design | Pending |
-| WEB-05 | P1: Ver o detalhe de um Customer | Design | Pending |
-| WEB-06 | P1: Editar um Customer existente | Design | Pending |
-| WEB-07 | P1: Abrir um novo Process para um Customer | Design | Pending |
-| WEB-08 | P1: Editar `values`/avançar `stage` de um Process | Design | Pending |
-| WEB-09 | P2: Persistir filtro/ordenação/página na URL | Design | Pending |
-| WEB-10 | P3: Criar Process a partir de atalho no card do kanban | Design | Pending |
-| WEB-11 | Dimensão: validação client-side é só UX, servidor é fonte da verdade | Design | Pending |
-| WEB-12 | Dimensão: falha/falha parcial (rollback otimista do drag, formulário preserva dados) | Design | Pending |
-| WEB-13 | Dimensão: idempotência de submit (evita duplo-clique duplicando registro) | Design | Pending |
-| WEB-14 | Dimensão: fronteiras de auth & rate limit dos 3 novos endpoints | Design | Pending |
-| WEB-15 | Dimensão: concorrência (last-write-wins + refetch) | Design | Pending |
-| WEB-16 | Dimensão: observabilidade dos novos endpoints (dbReqResTime + log) | Design | Pending |
-| WEB-17 | Dimensão: integridade de estado (`stage` só entre opções da snapshot do registro) | Design | Pending |
+| Requirement ID | Story | Phase | Status | Tasks |
+| --- | --- | --- | --- | --- |
+| WEB-01 | P1: Listar e buscar Customers em tabela | Tasks | In Tasks | T16, T17, T18 |
+| WEB-02 | P1: Visualizar Customers em kanban por status | Tasks | In Tasks | T19, T20 |
+| WEB-03 | P1: Mudar status de um Customer arrastando o card | Tasks | In Tasks | T3, T20 |
+| WEB-04 | P1: Criar um novo Customer | Tasks | In Tasks | T14, T15, T22 |
+| WEB-05 | P1: Ver o detalhe de um Customer | Tasks | In Tasks | T2, T23 |
+| WEB-06 | P1: Editar um Customer existente | Tasks | In Tasks | T1, T3, T24 |
+| WEB-07 | P1: Abrir um novo Process para um Customer | Tasks | In Tasks | T5, T25 |
+| WEB-08 | P1: Editar `values`/avançar `stage` de um Process | Tasks | In Tasks | T26, T27 |
+| WEB-09 | P2: Persistir filtro/ordenação/página na URL | Tasks | In Tasks | T18 |
+| WEB-10 | P3: Criar Process a partir de atalho no card do kanban | Tasks | In Tasks | T25 |
+| WEB-11 | Dimensão: validação client-side é só UX, servidor é fonte da verdade | Tasks | In Tasks | T14, T15 |
+| WEB-12 | Dimensão: falha/falha parcial (rollback otimista do drag, formulário preserva dados) | Tasks | In Tasks | T20, T22, T24 |
+| WEB-13 | Dimensão: idempotência de submit (evita duplo-clique duplicando registro) | Tasks | In Tasks | T22 |
+| WEB-14 | Dimensão: fronteiras de auth & rate limit dos 3 novos endpoints | Tasks | In Tasks | T2, T3, T5, T6 |
+| WEB-15 | Dimensão: concorrência (last-write-wins + refetch) | Tasks | In Tasks | T3 |
+| WEB-16 | Dimensão: observabilidade dos novos endpoints (dbReqResTime + log) | Tasks | In Tasks | T2, T3, T4, T5 |
+| WEB-17 | Dimensão: integridade de estado (`stage` só entre opções da snapshot do registro) | Tasks | In Tasks | T27 |
 
 **ID format:** `WEB-[NUMBER]`. **Status values:** Pending → In Design → In Tasks →
 Implementing → Verified.
 
-**Coverage:** 17 requisitos · 0 mapeados (spec recém-criada, aguardando Design).
+**Coverage:** 17 requisitos · 17 mapeados a tasks (T1-T28) · 0 não mapeados.
 
 ---
 

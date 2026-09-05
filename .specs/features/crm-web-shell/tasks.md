@@ -1,0 +1,920 @@
+# CRM Web Shell Tasks
+
+## Execution Protocol (MANDATORY -- do not skip)
+
+Implement these tasks with the `tlc-spec-driven` skill: **activate it by name and follow
+its Execute flow and Critical Rules.** Do not search for skill files by filesystem path.
+The skill is the source of truth for the full flow (per-task cycle, sub-agent delegation,
+adequacy review, Verifier, discrimination sensor).
+
+**If the skill cannot be activated, STOP and tell the user — do not proceed without it.**
+
+---
+
+**Design**: `.specs/features/crm-web-shell/design.md`
+**Status**: Draft
+
+---
+
+## Test Coverage Matrix
+
+> Generated from codebase sampling. Guidelines found: `.specs/STATE.md` AD-015 (Vitest 4,
+> single runner) + AD-017 (concrete `projects` convention: `unit`/`integration`/`e2e`/
+> `structural`, suffix-based file naming, no `__test__` dirs). No `AGENTS.md`/
+> `CONTRIBUTING.md` found. Existing-test sampling: `apps/crm-api/src/**/*.unit.test.ts`
+> (middlewares/providers/config — pure logic), `*.int.test.ts` (models/repositories, real
+> `MongoMemoryServer`), `*.e2e.test.ts` (routers, full stack) — **no** `*.service.unit.test.ts`
+> exists anywhere in the repo; every prior feature (`dynamic-field-engine`, `crm-core`)
+> verifies service/business logic exclusively through the router-level e2e suite, never an
+> isolated mocked-repository unit test. This session follows that established convention
+> rather than introducing a new layer-to-test-type mapping. `apps/web` sampling:
+> `apps/web/src/routes/_public/auth/index.unit.test.tsx` (Testing Library + `vi.mock` +
+> dynamic `await import` after mocks + `@vitest-environment jsdom` pragma) — the `unit`
+> Vitest project is the **only** one that includes `apps/web` paths (no `integration`/`e2e`
+> project targets it), so every front-end test in this feature is a `unit` test.
+
+| Code Layer | Required Test Type | Coverage Expectation | Location Pattern | Run Command |
+| --- | --- | --- | --- | --- |
+| `apps/web` — ported UI primitives (Button/Input/Select/Dialog/Badge/Card/Label/Tabs/Form-wrapper/DropdownMenu/Toaster/DatePicker/MoneyInput/Switch/Checkbox/Spinner/Skeleton) — presentational, no business logic | none | Compiles clean (`tsc`), renders indirectly via the screens that use them — matches the reference repo's own convention of not unit-testing ShadCN primitives individually | `apps/web/src/components/ui/*.tsx` | build gate only |
+| `apps/web` — `client.api.ts` (`patch` addition) | unit | Same depth as the existing `get`/`post` tests: request shape (method/body/credentials), success/failure envelope | `apps/web/src/lib/api/client.api.unit.test.ts` (extend) | `pnpm vitest run --project unit` |
+| `apps/web` — `DynamicField` (new, no precedent in either repo) | unit | 1:1 per `FieldDef.type` branch (all 13, incl. `document`/`reference` read-only fallback) + `array`/`group` recursion + `required`/`min`/`max` client-side hints (WEB-11) | `apps/web/src/components/dynamic-field/*.unit.test.tsx` | `pnpm vitest run --project unit` |
+| `apps/web` — `DataTable` (`@tanstack/react-table` manual mode) | unit | Renders columns/rows from props; `onPaginationChange`/`onSortingChange`/`onSearchChange` fire with correct args; never re-sorts/filters/paginates locally | `apps/web/src/components/ui/data-table.unit.test.tsx` | `pnpm vitest run --project unit` |
+| `apps/web` — Kanban board + drag wiring | unit | Column set = template's current `status` options + "sem status"; `handleDragEnd` resolves target column and calls the mutation; optimistic move + rollback on error (WEB-03 AC2/3/4) | `apps/web/src/routes/_private/customers/kanban.unit.test.tsx` | `pnpm vitest run --project unit` |
+| `apps/web` — routes/pages (list, detail, create, edit, process screens) | unit | 1:1 to each story's Acceptance Criteria + every Edge Case that applies to that screen; error/empty/not-found states; submit-guard while `isPending` (WEB-13) | `apps/web/src/routes/_private/**/*.unit.test.tsx` | `pnpm vitest run --project unit` |
+| `packages/contracts` — `updateCustomerSchema` (new) | unit | Valid payload accepted; each invalid case rejected (empty body via `.refine`, over-length `name`/`phone`, wrong `values` shape) | `packages/contracts/src/schemas/updateCustomer.schema.unit.test.ts` | `pnpm vitest run --project unit` |
+| `apps/crm-api` — repository (`customer.repository` status sentinel, `fieldTemplate.repository.findTemplatesByTargetType`) | integration | Real Mongo query behavior: `$exists:false`/`$nin` combination for `__none__`, tenant scoping, `targetType` filter | `apps/crm-api/src/repositories/*.int.test.ts` | `pnpm vitest run --project integration` |
+| `apps/crm-api` — routers/controllers/services (`GET /customers/:id`, `PATCH /customers/:id`, `GET /field-templates`, `GET /customers` sentinel end-to-end) | e2e | Every route: happy path + every listed edge case (404 cross-tenant/missing, 400 invalid `values`, archived template does **not** block an edit, `templateVersion` pointer bump on success, auth/rate-limit chain WEB-14, `dbReqResTime` present WEB-16) | `apps/crm-api/src/routers/*.e2e.test.ts` | `pnpm vitest run --project e2e` |
+| `apps/crm-api` — cross-tenant isolation (shared suite, extended) | integration | The 3 new endpoints added to the existing suite: each returns 404/empty for another tenant's id, never leaks data (AD-010) | `apps/crm-api/tests/integration/tenant-isolation.int.test.ts` (extend) | `pnpm vitest run --project integration` |
+| Structural | none (inherited, unchanged) | This feature introduces no new architectural invariant — existing structural suite untouched | `tests/structural/*.structural.test.ts` | build gate only |
+
+## Gate Check Commands
+
+> Generated from `package.json` (root `check` script) + AD-017. Confirm before Execute.
+
+| Gate Level | When to Use | Command |
+| --- | --- | --- |
+| Quick | After tasks with unit tests only | `pnpm vitest run --project unit --project structural` |
+| Full | After tasks with e2e/integration tests | `pnpm vitest run` |
+| Build | After UI-primitive/config-only tasks, or closing a phase | `pnpm -r exec tsc --noEmit && pnpm biome check . && pnpm vitest run` |
+
+---
+
+## Execution Plan
+
+Phases are ordered and run sequentially — each phase completes before the next begins, and
+tasks within a phase execute in order.
+
+### Phase 1: `apps/crm-api` — the 4 backend touches
+
+```
+T1 → T2 → T3 → T4 → T5 → T6
+```
+
+### Phase 2: `apps/web` — design-system bootstrap
+
+```
+T7 → T8 → T9 → T10 → T11 → T12 → T13
+```
+
+### Phase 3: `apps/web` — `DynamicField` renderer
+
+```
+T14 → T15
+```
+
+### Phase 4: `apps/web` — Customer table (WEB-01, WEB-09)
+
+```
+T16 → T17 → T18
+```
+
+### Phase 5: `apps/web` — Customer kanban (WEB-02, WEB-03)
+
+```
+T19 → T20 → T21
+```
+
+### Phase 6: `apps/web` — Customer create/detail/edit (WEB-04, WEB-05, WEB-06)
+
+```
+T22 → T23 → T24
+```
+
+### Phase 7: `apps/web` — Process screens (WEB-07, WEB-08, WEB-10)
+
+```
+T25 → T26 → T27
+```
+
+### Phase 8: i18n completion + regression close-out
+
+```
+T28
+```
+
+---
+
+## Task Breakdown
+
+### T1: `updateCustomerSchema` contract
+
+**What**: Add the Zod schema for the single Customer mutation endpoint.
+**Where**: `packages/contracts/src/schemas/updateCustomer.schema.ts` (+ export in `packages/contracts/src/index.ts` and `registry.ts`, same pattern as `createCustomer.schema.ts`).
+**Depends on**: None
+**Reuses**: `createCustomerSchema`'s field constraints (`name`/`phone`/`document`/`values` shapes); `registry.ts` registration pattern.
+**Requirement**: WEB-06
+
+**Tools**:
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+- [ ] Schema accepts any non-empty subset of `{name, phone, document, values}`, rejects an empty object via `.refine`
+- [ ] Registered in `index.ts`/`registry.ts` exactly like `createCustomerSchema`
+- [ ] Test count: schema unit tests cover 1 valid + 4 invalid cases (empty body, over-length name, over-length phone, non-object `values`)
+
+**Tests**: unit
+**Gate**: quick
+
+---
+
+### T2: `GET /customers/:id`
+
+**What**: Expose the already-existing `customerRepository.findById` via a new controller action and router route.
+**Where**: `apps/crm-api/src/controllers/customer.controller.ts` (add `getCustomerById`), `apps/crm-api/src/services/customer.service.ts` (add `getCustomerById`, wraps `findById` + 404 `CustomError`), `apps/crm-api/src/routers/customer.router.ts` (add `router.get('/:id', ...)`).
+**Depends on**: None
+**Reuses**: `customerRepository.findById` (unchanged), `CustomError`/`respObj`/`badRespObj` pattern from `fieldTemplate.service.ts`'s 404s, `idSchema` for `validParams`.
+**Requirement**: WEB-05
+
+**Tools**:
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+- [ ] `GET /customers/:id` returns `200 {success:true, data:CustomerRecord}` for an existing id in the caller's tenant
+- [ ] Returns `404 {success:false, message:'Customer não encontrado'}` for a missing id AND for another tenant's id (AD-010 — tenant-scoped filter makes both cases indistinguishable, by design)
+- [ ] Middleware chain matches convention: `validToken → tenantAssignmentCheck → validParams(idSchema)`, no rate limit (GET, matches `GET /customers` precedent)
+- [ ] Gate check passes: `pnpm vitest run --project e2e`
+- [ ] Test count: e2e adds ≥3 cases (found/own-tenant, missing id, other-tenant id) to `customer.router.e2e.test.ts`
+
+**Tests**: e2e
+**Gate**: full
+
+---
+
+### T3: `PATCH /customers/:id` — the single Customer mutation endpoint
+
+**What**: Implement the confirmed merge-then-validate-then-bump-pointer behavior (design.md Data Models).
+**Where**: `apps/crm-api/src/repositories/customer.repository.ts` (add `updateCustomer`), `apps/crm-api/src/services/customer.service.ts` (add `updateCustomer`), `apps/crm-api/src/controllers/customer.controller.ts` (add `updateCustomer`), `apps/crm-api/src/routers/customer.router.ts` (add `router.patch('/:id', ...)`).
+**Depends on**: T1, T2
+**Reuses**: `findTemplateByTargetKey`+`findCurrentVersion` (same calls `createCustomer` already makes), `validate()` (field-engine), `formatValidationErrors`, `normalizePhone`/`normalizeDocument`.
+**Requirement**: WEB-06, WEB-03 (kanban drag uses this same endpoint)
+
+**Tools**:
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+- [ ] 404 when `:id` missing or cross-tenant (reuses T2's `getCustomerById`-style lookup)
+- [ ] Merges `data.values` (if present) into the existing `values`; always validates the **merged** result against the tenant's **current** `customer` template fields, even when `data.values` is absent from the payload (design.md step 4 — needed to honestly justify the pointer bump in the next bullet)
+- [ ] On success, persists `name`/`phone`(normalized)/`document`(normalized) when present, `values` merged, **and** `template`/`templateVersion` set to the current template's id/current version (AD-029) — confirmed distinct from `Process`'s snapshot model
+- [ ] Archived current template does **not** block the edit (AD-022 only blocks new records) — a dedicated test proves this
+- [ ] 400 with the formatted message when merged `values` fails `validate()`; nothing persists
+- [ ] Middleware chain: `validToken → tenantAssignmentCheck → customerRateLimit → validParams(idSchema) → validBody(updateCustomerSchema)`
+- [ ] Gate check passes: `pnpm vitest run --project e2e`
+- [ ] Test count: e2e adds ≥6 cases (partial `values`-only update as kanban drag would send, full core+values update, `templateVersion` bump assertion, archived-template-does-not-block, invalid `values` → 400 + nothing persisted, cross-tenant/missing → 404) to `customer.router.e2e.test.ts`
+
+**Tests**: e2e
+**Gate**: full
+
+---
+
+### T4: `GET /customers` — `status=__none__` sentinel
+
+**What**: Extend the existing list endpoint's `status` filter to also answer "no status" (missing key OR a value no longer among the current options).
+**Where**: `packages/contracts` (new exported `NO_STATUS_FILTER_VALUE = '__none__'` constant, co-located with `createCustomer.schema.ts`), `apps/crm-api/src/repositories/customer.repository.ts` (`listCustomers` — `$or:[{'values.status':{$exists:false}},{'values.status':{$nin:knownStatusKeys}}]` branch), `apps/crm-api/src/services/customer.service.ts` (`listCustomers` — resolve current template's `status` field options into `knownStatusKeys` only when `query.status === NO_STATUS_FILTER_VALUE`).
+**Depends on**: None
+**Reuses**: `findTemplateByTargetKey`+`findCurrentVersion` (same calls used elsewhere), existing `listCustomersQuerySchema`/`ListCustomersInput` types (no schema shape change — `__none__` is just a string value already accepted).
+**Requirement**: WEB-02 (AC4 + the Edge Case about a removed `status` option)
+
+**Tools**:
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+- [ ] `customer.repository.listCustomers` accepts an optional `knownStatusKeys?: string[]` and builds the `$or` filter only when it's provided
+- [ ] `customer.service.listCustomers` resolves `knownStatusKeys` from the current template exactly when `query.status === NO_STATUS_FILTER_VALUE`, otherwise behaves unchanged
+- [ ] A Customer with no `values.status` key AND a Customer whose `values.status` holds a key no longer in the current template's options both appear under `status=__none__`; a Customer with a still-valid `status` never appears there
+- [ ] Gate check passes: `pnpm vitest run --project integration` (repository) and `pnpm vitest run --project e2e` (endpoint)
+- [ ] Test count: repository integration test adds ≥3 cases (missing key, stale value, valid value excluded); router e2e adds ≥2 cases (sentinel round-trip through the real endpoint, ordinary `status=<key>` behavior unchanged)
+
+**Tests**: integration, e2e
+**Gate**: full
+
+---
+
+### T5: `GET /field-templates` — list endpoint
+
+**What**: New listing endpoint for the Process template picker.
+**Where**: `apps/crm-api/src/repositories/fieldTemplate.repository.ts` (add `findTemplatesByTargetType`), `apps/crm-api/src/services/fieldTemplate.service.ts` (add `listTemplates`, maps `name→label`), `apps/crm-api/src/controllers/fieldTemplate.controller.ts` (add `listTemplates`), `apps/crm-api/src/routers/fieldTemplate.router.ts` (add `router.get('/', ...)`).
+**Depends on**: None
+**Reuses**: `tenantScoped`, `withDbTiming`, the existing `validQuery` shared middleware (confirmed safe here — `targetType` is a plain string enum, not a `z.coerce.*` transform, so it doesn't hit the Express-5 `req.query` getter bug documented in `crm-core`'s `validation.md`).
+**Requirement**: WEB-07
+
+**Tools**:
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+- [ ] `GET /field-templates?targetType=process` returns `200 {success:true, data:{items:[{key,label,archived}]}}` for every template of that `targetType` in the caller's tenant, archived included (front-end decides visibility/disabling — design.md)
+- [ ] `targetType=customer` returns the seeded default template
+- [ ] No `isAdmin` gate (matches `GET /field-templates/current`'s precedent — open to any authenticated role, WEB-14)
+- [ ] Gate check passes: `pnpm vitest run --project e2e`
+- [ ] Test count: e2e adds ≥3 cases (`process` templates incl. one archived, `customer` default, cross-tenant isolation — another tenant's templates never appear) to `fieldTemplate.router.e2e.test.ts`
+
+**Tests**: e2e
+**Gate**: full
+
+---
+
+### T6: Extend the shared cross-tenant isolation suite
+
+**What**: Add the 3 new endpoints (`GET /customers/:id`, `PATCH /customers/:id`, `GET /field-templates`) to the project-wide tenant-isolation integration suite, matching the precedent `crm-core` already set for its own new endpoints.
+**Where**: `apps/crm-api/tests/integration/tenant-isolation.int.test.ts` (extend).
+**Depends on**: T2, T3, T5
+**Reuses**: The suite's existing two-tenant fixture setup and assertion style (already extended once for `customers`/`processes` in `crm-core`).
+**Requirement**: WEB-14
+
+**Tools**:
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+- [ ] Each of the 3 new endpoints, called with tenant B's credentials against a tenant A id, returns 404/empty — never tenant A's data
+- [ ] Gate check passes: `pnpm vitest run --project integration`
+- [ ] Test count: suite grows by exactly 3 cases (one per new endpoint)
+
+**Tests**: integration
+**Gate**: full
+
+---
+
+### T7: Tailwind v4 + path alias + `cn()` helper
+
+**What**: Bootstrap the styling infrastructure `apps/web` currently has none of.
+**Where**: `apps/web/package.json` (add `tailwindcss@4`, `@tailwindcss/vite`, `clsx`, `tailwind-merge`, `class-variance-authority`), `apps/web/vite.config.ts` (add the Tailwind plugin + path alias), `apps/web/src/index.css` (new — `@import 'tailwindcss'` + `@theme` block), `apps/web/src/main.tsx` (import the new CSS), `apps/web/src/lib/utils.ts` (new — `cn()` via `clsx`+`tailwind-merge`).
+**Depends on**: None
+**Reuses**: Exact versions confirmed in `../DentalEase/DentalEase/package.json` (AD-027).
+**Requirement**: (enables all Goals — design system)
+
+**Tools**:
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+- [ ] `pnpm dev` in `apps/web` renders a Tailwind utility class visibly (manual smoke check)
+- [ ] `cn('a', condition && 'b')` resolves conflicting Tailwind classes correctly (matches DentalEase's own `cn()` behavior)
+- [ ] Gate check passes: `pnpm -r exec tsc --noEmit && pnpm biome check .`
+
+**Tests**: none
+**Gate**: build
+
+---
+
+### T8: Port primitives batch A — Button, Input, Label, Badge, Card
+
+**What**: Port these 5 presentational primitives, replacing the placeholder `card.tsx` (closes that `SPEC_DEVIATION`).
+**Where**: `apps/web/src/components/ui/{button,input,label,badge,card}.tsx`.
+**Depends on**: T7
+**Reuses**: `../DentalEase/DentalEase/src/components/ui/{button,input,label,badge,card}.tsx` verbatim (props/variants kept — see design.md Code Reuse Analysis), `cn()` from T7.
+**Requirement**: (Goal: replace `card.tsx` `SPEC_DEVIATION`)
+
+**Tools**:
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+- [ ] `Card`/`CardHeader`/`CardContent`/`CardAction` preserve the existing call sites' props (`asPage`, `title`) — `apps/web/src/routes/_private/index.tsx` compiles unchanged
+- [ ] `SPEC_DEVIATION` comment removed from `card.tsx`
+- [ ] Gate check passes: `pnpm -r exec tsc --noEmit && pnpm biome check .`
+
+**Tests**: none
+**Gate**: build
+
+---
+
+### T9: Port primitives batch B — Select, Dialog, Tabs, DropdownMenu
+
+**What**: Port these 4 Radix-based primitives.
+**Where**: `apps/web/src/components/ui/{select,dialog,tabs,dropdown-menu}.tsx`.
+**Depends on**: T7
+**Reuses**: Same reference files verbatim.
+**Requirement**: (enables Goals — used by picker/detail/kanban-card-menu screens)
+
+**Tools**:
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+- [ ] All 4 components exported with the same names/props as the reference
+- [ ] Gate check passes: `pnpm -r exec tsc --noEmit && pnpm biome check .`
+
+**Tests**: none
+**Gate**: build
+
+---
+
+### T10: Port Form primitives (react-hook-form wrapper)
+
+**What**: Port `Form`/`FormField`/`FormItem`/`FormLabel`/`FormControl`/`FormMessage`/`useFormField`.
+**Where**: `apps/web/src/components/ui/form.tsx`.
+**Depends on**: T7, T8 (uses `Label`)
+**Reuses**: Reference `form.tsx` verbatim (`react-hook-form`/`@hookform/resolvers` already installed, unused today).
+**Requirement**: (enables `DynamicField`, Phase 3)
+
+**Tools**:
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+- [ ] Exports match the reference exactly
+- [ ] Gate check passes: `pnpm -r exec tsc --noEmit && pnpm biome check .`
+
+**Tests**: none
+**Gate**: build
+
+---
+
+### T11: Port Sonner/Toaster, DatePicker, MoneyInput, Switch, Checkbox, Spinner, Skeleton
+
+**What**: Port the remaining leaf primitives `DynamicField`/kanban-error-toast need.
+**Where**: `apps/web/src/components/ui/{sonner,date-picker,money-input,switch,checkbox,spinner,skeleton}.tsx`.
+**Depends on**: T7
+**Reuses**: Reference files verbatim; `sonner` package added to `apps/web/package.json`.
+**Requirement**: (enables `DynamicField` currency/date/boolean fields, WEB-03's error toast)
+
+**Tools**:
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+- [ ] `Toaster` mounted once at the router root (`apps/web/src/main.tsx` or `__root.tsx`)
+- [ ] Gate check passes: `pnpm -r exec tsc --noEmit && pnpm biome check .`
+
+**Tests**: none
+**Gate**: build
+
+---
+
+### T12: Rewrite `default-loading.tsx`
+
+**What**: Replace the placeholder with a thin wrapper around the ported `Spinner`/`Skeleton`, closing that `SPEC_DEVIATION`.
+**Where**: `apps/web/src/components/default-loading.tsx`.
+**Depends on**: T11
+**Reuses**: `Spinner`/`Skeleton` from T11.
+**Requirement**: (Goal: design system completeness)
+
+**Tools**:
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+- [ ] Same call signature as today (`<DefaultLoading />`), every existing call site compiles unchanged
+- [ ] `SPEC_DEVIATION` comment removed
+- [ ] Gate check passes: `pnpm -r exec tsc --noEmit && pnpm biome check .`
+
+**Tests**: none
+**Gate**: build
+
+---
+
+### T13: `client.api.ts` — add `patch()`
+
+**What**: Add the missing HTTP verb the 2 new `PATCH` calling sites (Phase 5/6/7) need.
+**Where**: `apps/web/src/lib/api/client.api.ts`.
+**Depends on**: None
+**Reuses**: The exact `get`/`post` pattern in the same file (`credentials:'include'`, never throws, `ApiResponse<T>` envelope).
+**Requirement**: (enables WEB-03, WEB-06, WEB-08)
+
+**Tools**:
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+- [ ] `patch<T>(path, body): Promise<ApiResponse<T>>` mirrors `post`'s implementation with `method:'PATCH'`
+- [ ] Gate check passes: `pnpm vitest run --project unit`
+- [ ] Test count: `client.api.unit.test.ts` grows by ≥2 cases (success envelope, network-failure envelope) mirroring the existing `post` tests
+
+**Tests**: unit
+**Gate**: quick
+
+---
+
+### T14: `DynamicField` — leaf types
+
+**What**: Recursive renderer, leaf-type branches: `text`, `number`, `currency`, `percent`, `boolean`, `date`, `datetime`, `select`, `status`.
+**Where**: `apps/web/src/components/dynamic-field/dynamic-field.tsx`.
+**Depends on**: T10, T11
+**Reuses**: `Input`/`Select`/`DatePicker`/`MoneyInput`/`Switch` from Phase 2; `RenderNode`/`FieldDef` types from `@crm/contracts`.
+**Requirement**: WEB-04, WEB-06, WEB-08, WEB-11
+
+**Tools**:
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+- [ ] Each of the 9 leaf types renders the primitive from design.md's dispatch table, bound to `react-hook-form`'s `control` via `name`
+- [ ] `required`/`min`/`max`/`maxLength` from `FieldDef` surface as client-side hints only (WEB-11 — server `validate()` remains the source of truth, never bypassed)
+- [ ] `currency` reads/writes integer cents (never a decimal) — matches field-engine's `validate()` contract
+- [ ] Gate check passes: `pnpm vitest run --project unit`
+- [ ] Test count: ≥9 tests (one per leaf type, asserting the right primitive renders and round-trips a value through `control`)
+
+**Tests**: unit
+**Gate**: quick
+
+---
+
+### T15: `DynamicField` — recursive types + fallback
+
+**What**: `array`, `group`, and the confirmed read-only fallback for `document`/`reference`.
+**Where**: `apps/web/src/components/dynamic-field/{dynamic-field.array,dynamic-field.group}.tsx` (+ fallback branch in `dynamic-field.tsx`).
+**Depends on**: T14
+**Reuses**: `DynamicField` itself (recursion), `Button` (Add/Remove for `array`).
+**Requirement**: WEB-04, WEB-06, WEB-08, WEB-11
+
+**Tools**:
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+- [ ] `array` renders one `DynamicField` per item (`of`) with Add/Remove controls
+- [ ] `group` renders its `fields` recursively, nested
+- [ ] `document`/`reference` render the raw stored value as read-only text — never block the rest of the form, never drop the field's value on save (confirmed Design decision)
+- [ ] Gate check passes: `pnpm vitest run --project unit`
+- [ ] Test count: ≥4 tests (array add/remove, group nesting renders all children, document fallback, reference fallback)
+
+**Tests**: unit
+**Gate**: quick
+
+---
+
+### T16: `DataTable<T>` (server mode)
+
+**What**: Build the table component on `@tanstack/react-table`'s manual/server API (design.md's confirmed adaptation — not the reference's client-side wrapper).
+**Where**: `apps/web/src/components/ui/data-table.tsx`.
+**Depends on**: T8, T9 (Table/Button/Input primitives)
+**Reuses**: `@tanstack/react-table`'s `useReactTable`/`getCoreRowModel`/`flexRender` — the same library the reference's unused `DataTableProvider` half already demonstrates, wired for `manualPagination`/`manualSorting`/`manualFiltering: true` instead.
+**Requirement**: WEB-01, AD-028
+
+**Tools**:
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+- [ ] `onPaginationChange`/`onSortingChange` fire with the new state; component never locally re-sorts/re-filters/re-paginates the `data` prop it's given
+- [ ] `onSearchChange` fires (debounced, ~300ms) with the typed value
+- [ ] Empty `data` renders the passed `emptyState`, not a blank table
+- [ ] Gate check passes: `pnpm vitest run --project unit`
+- [ ] Test count: ≥5 tests (pagination callback, sort callback, debounced search callback, empty state, loading state)
+
+**Tests**: unit
+**Gate**: quick
+
+---
+
+### T17: Customer query hooks
+
+**What**: TanStack Query `queryOptions`/`queryKey` factories for `GET /customers` (list) and `GET /customers/:id`.
+**Where**: `apps/web/src/query/customer.ts` (new).
+**Depends on**: T13
+**Reuses**: `sessionQuery`'s exact pattern (`apps/web/src/query/session.ts`) — `queryOptions`, `queryKey` factory, `get<T>` from `client.api.ts`.
+**Requirement**: WEB-01, WEB-05
+
+**Tools**:
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+- [ ] `customersQuery({page,limit,q,sort,order,status})` builds the querystring and calls `GET /customers`
+- [ ] `customerQuery(id)` calls `GET /customers/:id`
+- [ ] Gate check passes: `pnpm vitest run --project unit`
+- [ ] Test count: ≥2 tests (querystring built correctly from params, id-based query calls the right path)
+
+**Tests**: unit
+**Gate**: quick
+
+---
+
+### T18: `_private/customers/index.tsx` — table route
+
+**What**: The WEB-01 screen: table wired to `DataTable`, search/sort/page synced to the URL (WEB-09).
+**Where**: `apps/web/src/routes/_private/customers/index.tsx` (+ `router.tsx` registration).
+**Depends on**: T16, T17
+**Reuses**: `usePatientList`'s `useSearch`/`validateSearch`/`navigate({search...})` pattern from the reference (design.md).
+**Requirement**: WEB-01, WEB-09
+
+**Tools**:
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+- [ ] Loads via `GET /customers`, shows name/phone/status columns, paginated
+- [ ] Typing a search term sends `q` to the server (no local filtering over one page)
+- [ ] Changing sort/page reflects new server-fetched data
+- [ ] Empty result shows an explicit empty state
+- [ ] Search/sort/page/status persist in the URL and restore on reload (WEB-09)
+- [ ] Gate check passes: `pnpm vitest run --project unit`
+- [ ] Test count: ≥5 tests, one per Acceptance Criterion (WEB-01 AC1-4 + WEB-09 AC1-2, some may share a test)
+
+**Tests**: unit
+**Gate**: quick
+
+---
+
+### T19: Customer status/kanban query hook + column derivation
+
+**What**: A hook resolving the current `customer` template's `status` `FieldDef.options` (for column set + colors) plus per-column `GET /customers?status=<key>` queries, including the `__none__` sentinel column.
+**Where**: `apps/web/src/query/customer.ts` (extend), `apps/web/src/query/fieldTemplate.ts` (new — `currentCustomerTemplateQuery`).
+**Depends on**: T17, T4 (backend sentinel must exist)
+**Reuses**: `GET /field-templates/current?targetType=customer&key=<default>` (existing endpoint).
+**Requirement**: WEB-02
+
+**Tools**:
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+- [ ] Column list = current `status` field's `options`, ordered by `StatusOption.order`, plus one trailing "sem status" column (`NO_STATUS_FILTER_VALUE`)
+- [ ] Each column independently queries `GET /customers?status=<key>` (or the sentinel)
+- [ ] A column with zero matching Customers renders empty, not omitted/erroring
+- [ ] Gate check passes: `pnpm vitest run --project unit`
+- [ ] Test count: ≥3 tests (column order from options, empty column renders, "sem status" column included)
+
+**Tests**: unit
+**Gate**: quick
+
+---
+
+### T20: Kanban board route + drag persistence
+
+**What**: `_private/customers/kanban.tsx`, wiring the ported `KanbanProvider`'s `onDragEnd` to `PATCH /customers/:id`.
+**Where**: `apps/web/src/routes/_private/customers/kanban.tsx`.
+**Depends on**: T19, T3 (backend mutation must exist), T11 (Toaster)
+**Reuses**: `KanbanProvider`/`KanbanBoard`/`KanbanCards`/`KanbanCard` verbatim; the "resolve target column inside `onDragEnd`" pattern from `KanbanBoardView.tsx`.
+**Requirement**: WEB-03
+
+**Tools**:
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+- [ ] Dropping a card in a different column calls `PATCH /customers/:id` with `{values:{status:targetKey}}`
+- [ ] On success, the card stays in the new column and both columns' counts reflect it
+- [ ] On failure (network/400), the card visually returns to its origin column and `toast.error(...)` fires — never left stuck in the rejected column
+- [ ] Gate check passes: `pnpm vitest run --project unit`
+- [ ] Test count: ≥4 tests, one per WEB-03 Acceptance Criterion
+
+**Tests**: unit
+**Gate**: quick
+
+---
+
+### T21: Table ⇄ Kanban toggle
+
+**What**: A small `Tabs`-style link between `_private/customers/index.tsx` and `.../kanban.tsx`.
+**Where**: A shared header component, e.g. `apps/web/src/routes/_private/customers/-view-toggle.tsx` (or inline in both routes — Tasks/Execute decides the exact file split).
+**Depends on**: T18, T20
+**Reuses**: `Tabs`/`TabsList`/`TabsTrigger` from Phase 2.
+**Requirement**: (Design's discretion — connects WEB-01 and WEB-02 into one perceived screen)
+
+**Tools**:
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+- [ ] Both routes render the same toggle, each linking to the other via TanStack Router `Link`
+- [ ] Gate check passes: `pnpm vitest run --project unit`
+- [ ] Test count: ≥1 test (toggle links to the correct route from each side)
+
+**Tests**: unit
+**Gate**: quick
+
+---
+
+### T22: `_private/customers/new.tsx` — create form
+
+**What**: The WEB-04 screen.
+**Where**: `apps/web/src/routes/_private/customers/new.tsx`.
+**Depends on**: T15, T13
+**Reuses**: `hydrate()` (field-engine) + `currentCustomerTemplateQuery` (T19) to build the field tree; `DynamicField` (Phase 3); the existing `_public/auth/index.tsx` form-submission convention (inline error text, `useMutation` for the POST).
+**Requirement**: WEB-04, WEB-13
+
+**Tools**:
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+- [ ] Renders core fields + the current template's dynamic fields via `hydrate()`/`DynamicField`
+- [ ] Valid submit calls `POST /customers`, navigates to the new record's detail on success
+- [ ] 400 response keeps the form filled, shows the message
+- [ ] Submit button disabled while the mutation is `isPending` — a second click before the first resolves is a no-op (WEB-13)
+- [ ] Gate check passes: `pnpm vitest run --project unit`
+- [ ] Test count: ≥4 tests, one per WEB-04 Acceptance Criterion
+
+**Tests**: unit
+**Gate**: quick
+
+---
+
+### T23: `_private/customers/$customerId/index.tsx` — detail
+
+**What**: The WEB-05 screen (view mode).
+**Where**: `apps/web/src/routes/_private/customers/$customerId/index.tsx`.
+**Depends on**: T17
+**Reuses**: `customerQuery(id)` (T17); `processesQuery(customerId)` (new, same file/pattern as T17) for the Process list.
+**Requirement**: WEB-05
+
+**Tools**:
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+- [ ] Direct navigation/reload fetches via `GET /customers/:id`, shows core + `values`
+- [ ] A missing or cross-tenant `:id` shows an explicit not-found state, never another tenant's data or a broken screen
+- [ ] Shows the Customer's Process list via `GET /processes?customerId=:id`, including its own empty state
+- [ ] Gate check passes: `pnpm vitest run --project unit`
+- [ ] Test count: ≥3 tests, one per WEB-05 Acceptance Criterion
+
+**Tests**: unit
+**Gate**: quick
+
+---
+
+### T24: Same route — edit mode
+
+**What**: The WEB-06 screen (in-place edit toggle on the detail route — Design's discretion, no separate route).
+**Where**: `apps/web/src/routes/_private/customers/$customerId/index.tsx` (extend).
+**Depends on**: T23, T15, T3
+**Reuses**: `DynamicField`, the `PATCH /customers/:id` mutation.
+**Requirement**: WEB-06
+
+**Tools**:
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+- [ ] Edit mode pre-fills core + `values` from the loaded record
+- [ ] Valid save calls the mutation, reflects new values in the detail view without a manual reload
+- [ ] 400 response keeps the form filled with the user's edits, shows the message, original record unchanged
+- [ ] Gate check passes: `pnpm vitest run --project unit`
+- [ ] Test count: ≥3 tests, one per WEB-06 Acceptance Criterion
+
+**Tests**: unit
+**Gate**: quick
+
+---
+
+### T25: `_private/customers/$customerId/processes/new.tsx` — Process picker + create
+
+**What**: The WEB-07 screen, plus the WEB-10 kanban-card shortcut reusing the same route.
+**Where**: `apps/web/src/routes/_private/customers/$customerId/processes/new.tsx`; a shortcut affordance added to the kanban card component from T20 (WEB-10).
+**Depends on**: T5, T20
+**Reuses**: `fieldTemplatesQuery('process')` (new hook, `GET /field-templates`), `customerId` path param.
+**Requirement**: WEB-07, WEB-10
+
+**Tools**:
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+- [ ] Lists non-archived `targetType:'process'` templates by `label`; archived ones hidden/disabled, never selectable
+- [ ] Zero available templates shows an explicit message and blocks the attempt (never a silent empty picker)
+- [ ] Valid selection calls `POST /processes` with `templateKey`+`customerId`, shows the returned initial `stage`
+- [ ] Server rejection (archived-between-list-and-submit, invalid `values`) shows the error, never navigates as if created
+- [ ] The kanban card's shortcut opens this same route with `customerId` preset from the card
+- [ ] Gate check passes: `pnpm vitest run --project unit`
+- [ ] Test count: ≥5 tests (WEB-07 AC1-4 + WEB-10 AC1)
+
+**Tests**: unit
+**Gate**: quick
+
+---
+
+### T26: `_private/processes/$processId/index.tsx` — values form
+
+**What**: The WEB-08 screen, values half.
+**Where**: `apps/web/src/routes/_private/processes/$processId/index.tsx`.
+**Depends on**: T15, T13
+**Reuses**: `DynamicField`, `GET /processes?customerId=` response's own `template`/`templateVersion` to fetch **that exact** `FieldTemplateVersion`'s fields (never the current one) — the key difference from the Customer form (AD-029 does not apply here, `Process` keeps its snapshot model per AD-023).
+**Requirement**: WEB-08 (values half)
+
+**Tools**:
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+- [ ] Renders `values` via `DynamicField` against the record's **own** `templateVersion` snapshot fields, unaffected by any later template bump
+- [ ] Valid save calls `PATCH /processes/:id/values`, reflects the new state without a manual reload
+- [ ] Gate check passes: `pnpm vitest run --project unit`
+- [ ] Test count: ≥2 tests (renders against own snapshot even after a hypothetical current-template change, save round-trips)
+
+**Tests**: unit
+**Gate**: quick
+
+---
+
+### T27: Same route — stage control
+
+**What**: The WEB-08 screen, `stage` half.
+**Where**: `apps/web/src/routes/_private/processes/$processId/index.tsx` (extend).
+**Depends on**: T26
+**Reuses**: The `stages` array already present on the record's own `FieldTemplateVersion` snapshot (AD-023 — same lookup as T26, no new backend call).
+**Requirement**: WEB-08 (stage half), WEB-17
+
+**Tools**:
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+- [ ] Stage control's options are **exactly** the record's own snapshot `stages` — never a free-text field, never every stage ever seen system-wide
+- [ ] Valid transition calls `PATCH /processes/:id/stage`, updates the shown `stage`
+- [ ] Server rejection of an invalid transition keeps the previously shown `stage` — no optimistic update
+- [ ] Gate check passes: `pnpm vitest run --project unit`
+- [ ] Test count: ≥3 tests, one per remaining WEB-08 Acceptance Criterion + WEB-17
+
+**Tests**: unit
+**Gate**: quick
+
+---
+
+### T28: i18n completion + regression close-out
+
+**What**: Expand `translate.helper.ts`'s dictionary to cover every user-facing string across every screen (new AND existing — auth/invite/private), closing the second `SPEC_DEVIATION`; re-confirm feature-1 screens are unaffected.
+**Where**: `apps/web/src/lib/helpers/translate.helper.ts` (extend the flat dictionary — no i18n library, pt-BR only, per spec's confirmed Assumption).
+**Depends on**: T1-T27 (every screen must exist to know its full string inventory)
+**Reuses**: The existing `t(key)` function signature, unchanged.
+**Requirement**: Goals (i18n `SPEC_DEVIATION` closure), Success Criteria #2/#3
+
+**Tools**:
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+- [ ] Every user-facing string in every screen (existing + new) is routed through `t(key)` — zero hardcoded user-facing text remains
+- [ ] `SPEC_DEVIATION` comment removed from `translate.helper.ts`
+- [ ] Full suite green: `pnpm vitest run` — the existing `foundation-tenancy-auth` tests (login, invite, private shell) still pass unmodified, proving zero regression from the design-system/i18n swap (Success Criteria #3)
+- [ ] Gate check passes: `pnpm -r exec tsc --noEmit && pnpm biome check . && pnpm vitest run`
+
+**Tests**: unit (dictionary completeness), full-suite regression
+**Gate**: build
+
+---
+
+## Phase Execution Map
+
+```
+Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8
+
+Phase 1:  T1 ──→ T2 ──→ T3 ──→ T4 ──→ T5 ──→ T6
+Phase 2:  T7 ──→ T8 ──→ T9 ──→ T10 ──→ T11 ──→ T12 ──→ T13
+Phase 3:  T14 ──→ T15
+Phase 4:  T16 ──→ T17 ──→ T18
+Phase 5:  T19 ──→ T20 ──→ T21
+Phase 6:  T22 ──→ T23 ──→ T24
+Phase 7:  T25 ──→ T26 ──→ T27
+Phase 8:  T28
+```
+
+Execution is strictly sequential — no intra-phase parallelism. 28 tasks total, packed at
+Execute time into ~7-task batches (whole phases only): a natural packing is Batch 1 =
+Phase 1+2 (13 tasks — over budget as a single phase-pair; Execute may instead run Phase 1
+alone as Batch 1 and Phase 2 alone as Batch 2, or the orchestrator decides packing at that
+time per `sub-agents.md`), Batch 2 = Phase 3+4+5 (8 tasks), Batch 3 = Phase 6+7+8 (7
+tasks) — exact packing is an Execute-time decision, not fixed here.
+
+---
+
+## Task Granularity Check
+
+| Task | Scope | Status |
+| --- | --- | --- |
+| T1: `updateCustomerSchema` | 1 schema file | ✅ Granular |
+| T2: `GET /customers/:id` | 1 endpoint (controller+service+router, cohesive) | ✅ Granular |
+| T3: `PATCH /customers/:id` | 1 endpoint (repository+controller+service+router, cohesive) | ✅ Granular |
+| T4: `status=__none__` sentinel | 1 query-contract extension across 2 files (repository+service), cohesive | ✅ Granular |
+| T5: `GET /field-templates` | 1 endpoint (repository+controller+service+router, cohesive) | ✅ Granular |
+| T6: extend tenant-isolation suite | 1 test file, 3 additive cases | ✅ Granular |
+| T7: Tailwind bootstrap | Infra config, 1 cohesive setup (Tailwind+alias+`cn()`) | ✅ Granular (infra, not a component) |
+| T8: primitives batch A | 5 files, presentational-only, zero test burden (Coverage Expectation: none) | ✅ OK — cohesive port batch, matches "2-3+ related things in same file/purpose = OK if cohesive" |
+| T9: primitives batch B | 4 files, presentational-only, zero test burden | ✅ OK — same rationale |
+| T10: Form primitives | 1 file (`form.tsx`) | ✅ Granular |
+| T11: remaining leaf primitives | 7 files, presentational-only, zero test burden | ✅ OK — same rationale |
+| T12: `default-loading.tsx` | 1 file | ✅ Granular |
+| T13: `client.api.ts` `patch()` | 1 function | ✅ Granular |
+| T14: `DynamicField` leaf types | 1 component, 1 file | ✅ Granular |
+| T15: `DynamicField` recursive + fallback | 1 component, 2-3 files, cohesive (same component's remaining branches) | ✅ OK |
+| T16: `DataTable` | 1 component | ✅ Granular |
+| T17: Customer query hooks | 1 file, 2 related query factories | ✅ OK — cohesive |
+| T18: table route | 1 route | ✅ Granular |
+| T19: status/kanban query hook | 1-2 files, cohesive (column derivation is one concern) | ✅ OK |
+| T20: kanban route + drag | 1 route | ✅ Granular |
+| T21: table⇄kanban toggle | 1 small shared component | ✅ Granular |
+| T22: create form route | 1 route | ✅ Granular |
+| T23: detail route (view) | 1 route | ✅ Granular |
+| T24: detail route (edit mode) | Same route, additive mode — cohesive extension of T23 | ✅ OK |
+| T25: Process picker route | 1 route + 1 small addition to an existing component (kanban card) | ✅ OK — cohesive (WEB-10 is explicitly "the same flow as WEB-07 from a shortcut") |
+| T26: Process values route | 1 route | ✅ Granular |
+| T27: Process stage control | Same route, additive control — cohesive extension of T26 | ✅ OK |
+| T28: i18n + regression | 1 file (dictionary) + 1 full-suite verification pass | ✅ OK — closing task, verification is its deliverable |
+
+All 28 tasks pass the granularity check — every multi-file task is either a single cohesive
+concern (one endpoint, one component's remaining branches) or an explicitly zero-test-burden
+presentational port batch.
+
+---
+
+## Diagram-Definition Cross-Check
+
+| Task | Depends On (task body) | Diagram Shows | Status |
+| --- | --- | --- | --- |
+| T1 | None | (start of Phase 1) | ✅ Match |
+| T2 | None | T1 → T2 | ✅ Match (sequential-within-phase ordering, no real dependency — T2 doesn't need T1's output; ordering is narrative) |
+| T3 | T1, T2 | T2 → T3 | ✅ Match |
+| T4 | None | T3 → T4 | ✅ Match (ordering, no real dependency) |
+| T5 | None | T4 → T5 | ✅ Match (ordering, no real dependency) |
+| T6 | T2, T3, T5 | T5 → T6 | ✅ Match |
+| T7 | None | (start of Phase 2) | ✅ Match |
+| T8 | T7 | T7 → T8 | ✅ Match |
+| T9 | T7 | T8 → T9 | ✅ Match (ordering, both depend only on T7) |
+| T10 | T7, T8 | T9 → T10 | ✅ Match (ordering; real dep is T7+T8) |
+| T11 | T7 | T10 → T11 | ✅ Match (ordering, real dep is T7) |
+| T12 | T11 | T11 → T12 | ✅ Match |
+| T13 | None | T12 → T13 | ✅ Match (ordering, no real dependency — placed last in phase for narrative flow) |
+| T14 | T10, T11 | T14 → T15 (start of Phase 3) | ✅ Match |
+| T15 | T14 | T14 → T15 | ✅ Match |
+| T16 | T8, T9 | (start of Phase 4) | ✅ Match |
+| T17 | T13 | T16 → T17 | ✅ Match (ordering; real dep is T13 from Phase 2) |
+| T18 | T16, T17 | T17 → T18 | ✅ Match |
+| T19 | T17, T4 | (start of Phase 5) | ✅ Match (cross-phase dep on T4, Phase 1) |
+| T20 | T19, T3, T11 | T19 → T20 | ✅ Match (cross-phase deps on T3/Phase 1, T11/Phase 2) |
+| T21 | T18, T20 | T20 → T21 | ✅ Match (cross-phase dep on T18, Phase 4) |
+| T22 | T15, T13 | (start of Phase 6) | ✅ Match (cross-phase deps on Phase 2/3) |
+| T23 | T17 | T22 → T23 | ✅ Match (ordering; real dep is T17, Phase 4) |
+| T24 | T23, T15, T3 | T23 → T24 | ✅ Match (cross-phase dep on T15/Phase 3, T3/Phase 1) |
+| T25 | T5, T20 | (start of Phase 7) | ✅ Match (cross-phase deps on T5/Phase 1, T20/Phase 5) |
+| T26 | T15, T13 | T25 → T26 | ✅ Match (ordering; real deps are Phase 2/3) |
+| T27 | T26 | T26 → T27 | ✅ Match |
+| T28 | T1-T27 | (Phase 8, after all) | ✅ Match |
+
+No task depends on a task in a later phase. All cross-phase dependencies point backward
+only. ✅ All 28 rows match.
+
+---
+
+## Test Co-location Validation
+
+| Task | Code Layer Created/Modified | Matrix Requires | Task Says | Status |
+| --- | --- | --- | --- | --- |
+| T1 | `packages/contracts` schema | unit | unit | ✅ OK |
+| T2 | `apps/crm-api` router/controller/service | e2e | e2e | ✅ OK |
+| T3 | `apps/crm-api` router/controller/service/repository | e2e (highest of e2e/none) | e2e | ✅ OK |
+| T4 | `apps/crm-api` repository + service | integration, e2e | integration, e2e | ✅ OK |
+| T5 | `apps/crm-api` router/controller/service/repository | e2e | e2e | ✅ OK |
+| T6 | `apps/crm-api` shared integration suite | integration | integration | ✅ OK |
+| T7 | `apps/web` infra (config, no component) | none (config) | none | ✅ OK |
+| T8 | `apps/web` UI primitives | none | none | ✅ OK |
+| T9 | `apps/web` UI primitives | none | none | ✅ OK |
+| T10 | `apps/web` UI primitives | none | none | ✅ OK |
+| T11 | `apps/web` UI primitives | none | none | ✅ OK |
+| T12 | `apps/web` UI primitive | none | none | ✅ OK |
+| T13 | `apps/web` `client.api.ts` | unit | unit | ✅ OK |
+| T14 | `apps/web` `DynamicField` | unit | unit | ✅ OK |
+| T15 | `apps/web` `DynamicField` | unit | unit | ✅ OK |
+| T16 | `apps/web` `DataTable` | unit | unit | ✅ OK |
+| T17 | `apps/web` query hooks | unit | unit | ✅ OK |
+| T18 | `apps/web` route | unit | unit | ✅ OK |
+| T19 | `apps/web` query hook | unit | unit | ✅ OK |
+| T20 | `apps/web` route | unit | unit | ✅ OK |
+| T21 | `apps/web` shared component | unit | unit | ✅ OK |
+| T22 | `apps/web` route | unit | unit | ✅ OK |
+| T23 | `apps/web` route | unit | unit | ✅ OK |
+| T24 | `apps/web` route (extend) | unit | unit | ✅ OK |
+| T25 | `apps/web` route + component edit | unit | unit | ✅ OK |
+| T26 | `apps/web` route | unit | unit | ✅ OK |
+| T27 | `apps/web` route (extend) | unit | unit | ✅ OK |
+| T28 | `apps/web` dictionary + full-suite regression check | none (dictionary is config-like) + full-suite gate | unit (dictionary) + full-suite | ✅ OK — no violation: T28's own deliverable is the regression proof, not a new testable code layer |
+
+No `Tests: none` appears where the matrix requires a test type, and no task defers its
+required tests to a later task ("tested elsewhere" does not appear anywhere above). All 28
+rows pass.
+
+---
+
+## Tips (author checklist, not part of the deliverable)
+
+- [x] Design reviewed before task creation
+- [x] Test Coverage Matrix generated from real codebase sampling (AD-015/017 + existing test files), not invented
+- [x] Gate Check Commands taken verbatim from `package.json`'s `check` script + AD-017
+- [x] All 28 tasks atomic or explicitly justified as a cohesive batch
+- [x] Granularity Check, Diagram-Definition Cross-Check, Test Co-location Validation all ✅ — no restructuring needed
+- [x] Every task traces to a WEB-NN requirement or an explicit enabling/infra rationale
