@@ -354,7 +354,7 @@ Also ported beyond the literal file list above (transitive necessities, named in
 
 **Tests**: none
 **Gate**: build
-**Status**: ✅ Complete (commit `<PENDING>`)
+**Status**: ✅ Complete (commit `92034a2`)
 
 ---
 
@@ -371,11 +371,12 @@ Also ported beyond the literal file list above (transitive necessities, named in
 - Skill: NONE
 
 **Done when**:
-- [ ] Exports match the reference exactly
-- [ ] Gate check passes: `pnpm -r exec tsc --noEmit && pnpm biome check .`
+- [x] Exports match the reference exactly
+- [x] Gate check passes: `pnpm -r exec tsc --noEmit && pnpm biome check .`
 
 **Tests**: none
 **Gate**: build
+**Status**: ✅ Complete (commit `<PENDING>`)
 
 ---
 
