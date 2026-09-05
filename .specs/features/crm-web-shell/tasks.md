@@ -376,7 +376,7 @@ Also ported beyond the literal file list above (transitive necessities, named in
 
 **Tests**: none
 **Gate**: build
-**Status**: ✅ Complete (commit `<PENDING>`)
+**Status**: ✅ Complete (commit `e981059`)
 
 ---
 
@@ -393,11 +393,14 @@ Also ported beyond the literal file list above (transitive necessities, named in
 - Skill: NONE
 
 **Done when**:
-- [ ] `Toaster` mounted once at the router root (`apps/web/src/main.tsx` or `__root.tsx`)
-- [ ] Gate check passes: `pnpm -r exec tsc --noEmit && pnpm biome check .`
+- [x] `Toaster` mounted once at the router root (`apps/web/src/main.tsx` or `__root.tsx`)
+- [x] Gate check passes: `pnpm -r exec tsc --noEmit && pnpm biome check .`
+
+Also ported beyond the literal file list above (transitive necessities, named in the Batch 2 dispatch prompt): `calendar.tsx` + `popover.tsx` (date-picker.tsx's own hard dependencies), `apps/web/src/lib/helpers/formatDate.helper.ts` + `money.helper.ts` (calendar.tsx's / money-input.tsx's own dependencies — verbatim ports, the exact API `CLAUDE.md` already documents as an established convention), 3 more icons — `Left`/`Loader` (verbatim) and `Calendar` (verbatim visually, renamed from the reference's own typo'd `Calender.Icon.tsx`, since this is a new file in this project rather than a path already referenced elsewhere). `sonner.tsx` simplified per the dispatch prompt's explicit instruction: no `next-themes` (dropped the `useTheme()` call, hardcoded `theme="light"`), no `useIsMobile` (hardcoded one fixed `position="bottom-right"` instead of the mobile/desktop branch), and dropped the `toastOptions.descriptionClassName` (referenced brand-blue tokens tied to the `dark:`/`ocean-blue:`/`sunset:` variants this project's CSS deliberately doesn't define). `calendar.tsx`'s `today`/day-button classNames similarly dropped their `ocean-blue:`/`sunset:`/some `dark:` variants (same reasoning — those custom variants are never defined in `index.css`, so referencing them is dead code, not a missing feature). `Toaster` mounted in `apps/web/src/main.tsx` (outside the router tree, alongside `RouterProvider`).
 
 **Tests**: none
 **Gate**: build
+**Status**: ✅ Complete (commit `<PENDING>`)
 
 ---
 
