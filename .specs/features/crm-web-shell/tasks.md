@@ -745,14 +745,17 @@ Also created beyond the literal file list above: `apps/web/src/query/process.ts`
 - Skill: NONE
 
 **Done when**:
-- [ ] Edit mode pre-fills core + `values` from the loaded record
-- [ ] Valid save calls the mutation, reflects new values in the detail view without a manual reload
-- [ ] 400 response keeps the form filled with the user's edits, shows the message, original record unchanged
-- [ ] Gate check passes: `pnpm vitest run --project unit`
-- [ ] Test count: ≥3 tests, one per WEB-06 Acceptance Criterion
+- [x] Edit mode pre-fills core + `values` from the loaded record
+- [x] Valid save calls the mutation, reflects new values in the detail view without a manual reload
+- [x] 400 response keeps the form filled with the user's edits, shows the message, original record unchanged
+- [x] Gate check passes: `pnpm vitest run --project unit`
+- [x] Test count: ≥3 tests, one per WEB-06 Acceptance Criterion
+
+Built as an in-place toggle (`isEditing` state) on the same `details.tsx` route, extracting the view-only content into `CustomerDetailsView` and adding `CustomerEditForm` (mirrors `CustomerCreateForm`'s T22 shape: `useForm<FieldValues>`, `DynamicField`, submit-guard while `isPending`) plus a `Cancel` button (necessary minimal UX for a working toggle — not gold-plating, just how one exits edit mode without saving). `templateQuery` (current template's `fields`, needed for `hydrate()`) is fetched with `enabled: isEditing` — never a wasted request in view-only mode. On success, `queryClient.setQueryData(customerKeys.detail(id), data)` writes the mutation's own response directly into the detail query's cache (no `invalidateQueries`+refetch round-trip) — verified by asserting `GET /customers/:id` was called exactly once across the whole edit flow. Test-file deviation found running the real suite (not guessed): moving the Process-list query into a new child component (`CustomerDetailsView`, mounted only once the customer resolves) added one more render tick before it settles — T23's own empty-Process-list test used a synchronous `getByText` right after `findByText('Ana')`, which raced; fixed to `await findByText(...)`, same assertion, just correctly awaited.
 
 **Tests**: unit
 **Gate**: quick
+**Status**: ✅ Complete (commit `d412f83`)
 
 ---
 

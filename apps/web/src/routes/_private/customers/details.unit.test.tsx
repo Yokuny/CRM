@@ -1,12 +1,14 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { userEvent } from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const getMock = vi.fn();
-vi.mock('../../../lib/api/client.api.js', () => ({ get: getMock }));
+const patchMock = vi.fn();
+vi.mock('../../../lib/api/client.api.js', () => ({ get: getMock, patch: patchMock }));
 
 const searchMock = vi.fn();
 // Mesmo mock mínimo de customers/index.unit.test.tsx (T18) — Card asPage (T8)
@@ -41,6 +43,7 @@ describe('CustomerDetailsPage (T23 — WEB-05)', () => {
   afterEach(() => {
     cleanup();
     getMock.mockReset();
+    patchMock.mockReset();
     searchMock.mockReset();
   });
 
@@ -132,6 +135,127 @@ describe('CustomerDetailsPage (T23 — WEB-05)', () => {
     renderPage();
 
     await screen.findByText('Ana');
-    expect(screen.getByText('Nenhum registro encontrado.')).toBeInTheDocument();
+    expect(await screen.findByText('Nenhum registro encontrado.')).toBeInTheDocument();
+  });
+});
+
+const TEMPLATE_WITH_FIELD = {
+  template: { id: 't1', name: 'Cliente', currentVersion: 1, archived: false },
+  fields: [{ fieldId: 'nickname', label: 'Apelido', type: 'text' }],
+};
+
+function mockGetForEdit(overrides?: { customer?: object }) {
+  const customer = overrides?.customer ?? {
+    id: 'c1',
+    name: 'Ana',
+    phone: '11999999999',
+    document: '12345678900',
+    values: { nickname: 'Aninha' },
+  };
+  getMock.mockImplementation((path: string) => {
+    if (path === '/customers/c1') return Promise.resolve({ success: true, data: customer });
+    if (path === '/processes?customerId=c1') return Promise.resolve({ success: true, data: { items: [] } });
+    if (path === '/field-templates/current?targetType=customer&key=default') {
+      return Promise.resolve({ success: true, data: TEMPLATE_WITH_FIELD });
+    }
+    throw new Error(`unexpected path ${path}`);
+  });
+}
+
+describe('CustomerDetailsPage — edit mode (T24, WEB-06)', () => {
+  afterEach(() => {
+    cleanup();
+    getMock.mockReset();
+    patchMock.mockReset();
+    searchMock.mockReset();
+  });
+
+  it('WEB-06 AC1: edit mode pre-fills core + values from the loaded record', async () => {
+    searchMock.mockReturnValue({ id: 'c1' });
+    mockGetForEdit();
+    const user = userEvent.setup();
+
+    render(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <CustomerDetailsPage />
+      </QueryClientProvider>,
+    );
+    await screen.findByText('Ana');
+    await user.click(screen.getByRole('button', { name: 'Editar' }));
+
+    expect(await screen.findByLabelText('Nome')).toHaveValue('Ana');
+    expect(screen.getByLabelText('Telefone')).toHaveValue('11999999999');
+    expect(screen.getByLabelText('Documento')).toHaveValue('12345678900');
+    expect(screen.getByLabelText('Apelido')).toHaveValue('Aninha');
+  });
+
+  it('WEB-06 AC2: a valid save persists via PATCH /customers/:id and reflects the new values in the detail view without a manual reload', async () => {
+    searchMock.mockReturnValue({ id: 'c1' });
+    mockGetForEdit();
+    patchMock.mockResolvedValue({
+      success: true,
+      data: {
+        id: 'c1',
+        name: 'Ana Nova',
+        phone: '11999999999',
+        document: '12345678900',
+        values: { nickname: 'Aninha' },
+      },
+    });
+    const user = userEvent.setup();
+
+    render(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <CustomerDetailsPage />
+      </QueryClientProvider>,
+    );
+    await screen.findByText('Ana');
+    await user.click(screen.getByRole('button', { name: 'Editar' }));
+    const nameInput = await screen.findByLabelText('Nome');
+    await user.clear(nameInput);
+    await user.type(nameInput, 'Ana Nova');
+    await user.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    await waitFor(() =>
+      expect(patchMock).toHaveBeenCalledWith('/customers/c1', {
+        name: 'Ana Nova',
+        phone: '11999999999',
+        document: '12345678900',
+        values: { nickname: 'Aninha' },
+      }),
+    );
+    // Volta ao modo visualização com o novo nome, sem nenhum novo GET
+    // /customers/c1 (setQueryData, não invalidateQueries+refetch).
+    expect(await screen.findByText('Ana Nova')).toBeInTheDocument();
+    expect(getMock).toHaveBeenCalledWith('/customers/c1');
+    expect(getMock.mock.calls.filter(([path]) => path === '/customers/c1')).toHaveLength(1);
+  });
+
+  it('WEB-06 AC3: a 400 response keeps the form filled with the user’s edits, shows the message, and leaves the original record unchanged', async () => {
+    searchMock.mockReturnValue({ id: 'c1' });
+    mockGetForEdit();
+    patchMock.mockResolvedValue({ success: false, message: 'values inválidos' });
+    const user = userEvent.setup();
+
+    render(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <CustomerDetailsPage />
+      </QueryClientProvider>,
+    );
+    await screen.findByText('Ana');
+    await user.click(screen.getByRole('button', { name: 'Editar' }));
+    const nameInput = await screen.findByLabelText('Nome');
+    await user.clear(nameInput);
+    await user.type(nameInput, 'Ana Editada');
+    await user.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('values inválidos');
+    expect(screen.getByLabelText('Nome')).toHaveValue('Ana Editada');
+
+    // Cancela e confirma que a visualização mostra o registro ORIGINAL — nada
+    // foi persistido/gravado no cache pela tentativa que falhou.
+    await user.click(screen.getByRole('button', { name: 'Cancelar' }));
+    expect(await screen.findByText('Ana')).toBeInTheDocument();
+    expect(screen.queryByText('Ana Editada')).not.toBeInTheDocument();
   });
 });
