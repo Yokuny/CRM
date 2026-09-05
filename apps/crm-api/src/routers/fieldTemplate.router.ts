@@ -18,6 +18,14 @@ import { validBody, validParams, validQuery } from '../middlewares/validation.mi
 
 const templateIdParamSchema = z.object({ id: idSchema }).strict();
 
+// WEB-08 (T25B): `z.coerce.number()` aqui é seguro — `req.params` é um objeto
+// gravável comum em Express 5 (ao contrário de `req.query`, que é um getter
+// sem cache; ver customer.router.ts/validation.middleware.ts), então
+// `validParams`'s `Object.assign(req.params, result.data)` persiste a
+// transformação normalmente, sem o workaround local que `listCustomersQuerySchema`
+// precisou.
+const templateVersionParamSchema = z.object({ id: idSchema, version: z.coerce.number().int().positive() }).strict();
+
 const currentTemplateQuerySchema = z
   .object({ targetType: z.enum(FIELD_TEMPLATE_TARGET_TYPES), key: z.string().trim().min(1).max(60) })
   .strict();
@@ -60,6 +68,20 @@ export const createFieldTemplateRouter = (deps: FieldTemplateRouterDeps): Router
     tenantAssignmentCheck,
     validQuery(currentTemplateQuerySchema),
     controller.getCurrentTemplate,
+  );
+
+  // WEB-08 (T25B, added 2026-09-05): fetch de UMA versão específica (nunca
+  // necessariamente a corrente) — o consumidor é o Process.details do
+  // crm-web-shell, validando/renderizando contra a `templateVersion` PRÓPRIA
+  // do registro (AD-023). Leitura, sem gate isAdmin (mesmo precedente de
+  // GET /current e GET /). Sem colisão de path com POST /:id/versions (bump)
+  // — Express casa por método+path juntos.
+  router.get(
+    '/:id/versions/:version',
+    deps.validToken,
+    tenantAssignmentCheck,
+    validParams(templateVersionParamSchema),
+    controller.getTemplateVersion,
   );
 
   router.post(

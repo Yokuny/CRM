@@ -801,16 +801,19 @@ Also built beyond the literal file list above, both necessary to satisfy WEB-07 
 - Skill: NONE
 
 **Done when**:
-- [ ] `GET /field-templates/:id/versions/:version` returns `200 {success:true, data:{fields:FieldDef[], stages?:string[]}}` for a version that exists for that template, in the caller's tenant
-- [ ] Returns `404 {success:false, message:'Versão de template não encontrada'}` for a missing template id, cross-tenant id, or a version number that was never claimed for that template (AD-010 — cross-tenant indistinguishable from missing, by design)
-- [ ] Works for a version that is NOT the template's current one (the actual point of this endpoint) — a dedicated test proves this: bump a template to v2, then fetch v1 and confirm it returns v1's original fields, not v2's
-- [ ] Middleware chain: `validToken → tenantAssignmentCheck → validParams({id, version})`, no rate limit (GET, matches convention), no `isAdmin`
-- [ ] Gate check passes: `pnpm vitest run --project e2e`
-- [ ] Test count: e2e adds ≥4 cases (current-version fetch, non-current/historical version fetch, missing/cross-tenant → 404, non-existent version number → 404) to `fieldTemplate.router.e2e.test.ts`
-- [ ] Tenant-isolation suite (`apps/crm-api/tests/integration/tenant-isolation.int.test.ts`) extended with 1 more case for this endpoint, matching Batch 1's T6 precedent
+- [x] `GET /field-templates/:id/versions/:version` returns `200 {success:true, data:{fields:FieldDef[], stages?:string[]}}` for a version that exists for that template, in the caller's tenant
+- [x] Returns `404 {success:false, message:'Versão de template não encontrada'}` for a missing template id, cross-tenant id, or a version number that was never claimed for that template (AD-010 — cross-tenant indistinguishable from missing, by design)
+- [x] Works for a version that is NOT the template's current one (the actual point of this endpoint) — a dedicated test proves this: bump a template to v2, then fetch v1 and confirm it returns v1's original fields, not v2's
+- [x] Middleware chain: `validToken → tenantAssignmentCheck → validParams({id, version})`, no rate limit (GET, matches convention), no `isAdmin`
+- [x] Gate check passes: `pnpm vitest run --project e2e`
+- [x] Test count: e2e adds ≥4 cases (current-version fetch, non-current/historical version fetch, missing/cross-tenant → 404, non-existent version number → 404) to `fieldTemplate.router.e2e.test.ts` (added a 5th, open-to-any-role/WEB-14)
+- [x] Tenant-isolation suite (`apps/crm-api/tests/integration/tenant-isolation.int.test.ts`) extended with 1 more case for this endpoint, matching Batch 1's T6 precedent
+
+Confirmed by reading `validation.middleware.ts`/`customer.router.ts` before trusting it (per this task's own spec): `req.params` is a plain writable object in Express 5 (unlike `req.query`, a cache-less getter — the bug documented in `customer.router.ts`'s `validListCustomersQuery` workaround) — `z.coerce.number()` in `templateVersionParamSchema` survives the shared `validParams` middleware's `Object.assign(req.params, result.data)` with no local workaround needed.
 
 **Tests**: e2e, integration (tenant-isolation extension)
 **Gate**: full
+**Status**: ✅ Complete (commit `50540e1`)
 
 ---
 

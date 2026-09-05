@@ -538,5 +538,31 @@ describe('cross-tenant isolation (FND-07, FND-09)', () => {
       expect(res.status).toBe(200);
       expect(res.body.data.items).toEqual([]);
     });
+
+    // T25B (added 2026-09-05): mesmo precedente das 3 rotas acima, agora para
+    // o endpoint adicionado depois delas (GET /field-templates/:id/versions/:version).
+    it("GET /field-templates/:id/versions/:version responds 404 for tenant B against tenant A's template id", async () => {
+      const app = buildApp();
+      const platformCookie = await seedPlatformAdminCookie(app, 'root-shell-version@platform.com');
+      const { adminA, adminB } = await setupTwoTenants(app, platformCookie);
+      const templateA = await request(app)
+        .post('/field-templates')
+        .set('Cookie', adminA.cookie)
+        .set('User-Agent', DEVICE)
+        .send({
+          targetType: 'process',
+          key: 'negociacao',
+          name: 'Negociação A',
+          fields: [OBS_FIELD],
+          stages: PROCESS_STAGES,
+        });
+
+      const res = await request(app)
+        .get(`/field-templates/${templateA.body.data.id}/versions/1`)
+        .set('Cookie', adminB.cookie)
+        .set('User-Agent', DEVICE);
+
+      expect(res.status).toBe(404);
+    });
   });
 });

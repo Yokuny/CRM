@@ -48,6 +48,24 @@ export const createFieldTemplateController = (deps: FieldTemplateControllerDeps)
     }
   };
 
+  // WEB-08 (T25B): fetch de uma versão ESPECÍFICA (não necessariamente a
+  // corrente) — 404 quando o par {template,version} não existe para este
+  // Tenant (template ausente, de outro tenant, ou versão nunca reivindicada;
+  // AD-010, indistinguível por design).
+  const getTemplateVersion = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const result = await fieldTemplateService.getTemplateVersion(
+        req.tenantUser.tenant as string,
+        req.params.id as string,
+        req.params.version as unknown as number,
+      );
+      if (!result) throw new CustomError('Versão de template não encontrada', 404);
+      res.json(respObj({ data: result }));
+    } catch (e) {
+      next(e);
+    }
+  };
+
   const bumpFieldTemplateVersion = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const result = await fieldTemplateService.bumpFieldTemplateVersion(
@@ -75,5 +93,12 @@ export const createFieldTemplateController = (deps: FieldTemplateControllerDeps)
     }
   };
 
-  return { createFieldTemplate, getCurrentTemplate, listTemplates, bumpFieldTemplateVersion, archiveFieldTemplate };
+  return {
+    createFieldTemplate,
+    getCurrentTemplate,
+    listTemplates,
+    getTemplateVersion,
+    bumpFieldTemplateVersion,
+    archiveFieldTemplate,
+  };
 };

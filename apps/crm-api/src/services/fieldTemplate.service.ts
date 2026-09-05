@@ -90,6 +90,20 @@ export const listTemplates = async (
   return templates.map((template) => ({ key: template.key, label: template.name, archived: template.archived }));
 };
 
+// WEB-08 (T25B, added 2026-09-05): fetch de UMA versão específica, nunca
+// necessariamente a corrente do template — o consumidor (crm-web-shell,
+// Process.details) precisa validar/renderizar contra a `templateVersion`
+// PRÓPRIA de um Process (snapshot, AD-023), nunca `template.currentVersion`.
+// `findCurrentVersion` (nome mantido por compatibilidade, apesar de
+// enganoso) já é genérico o bastante — recebe `version` explícito e nunca
+// assume "a mais recente"; este método é só o wrapper fino que faltava.
+export const getTemplateVersion = async (
+  tenantId: string,
+  templateId: string,
+  version: number,
+): Promise<{ fields: FieldDef[]; stages?: string[] } | null> =>
+  fieldTemplateRepository.findCurrentVersion(tenantId, templateId, version);
+
 // Ordem do sequence diagram do design.md, e ela é o contrato: diff →
 // cobertura da migração → claim do slot → migração → ponteiro. Nada é
 // escrito antes da checagem de cobertura (FLD-05), e o ponteiro só avança
