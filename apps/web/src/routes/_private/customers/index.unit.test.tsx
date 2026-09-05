@@ -3,6 +3,7 @@ import '@testing-library/jest-dom/vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
+import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const getMock = vi.fn();
@@ -26,6 +27,11 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
     useLocation: () => ({ pathname: '/' }),
     useMatches: () => [],
     useRouter: () => ({ history: { back: vi.fn() } }),
+    // CustomersViewToggle (T21) renderiza um <Link> real fora do breadcrumb —
+    // mesmo motivo dos mocks acima, um stand-in mínimo evita precisar de um
+    // <RouterProvider> de verdade; o comportamento do toggle em si (href
+    // certo, estado ativo) é escopo de view-toggle.unit.test.tsx.
+    Link: ({ to, children }: { to: string; children?: ReactNode }) => <a href={to}>{children}</a>,
   };
 });
 

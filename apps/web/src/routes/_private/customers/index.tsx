@@ -4,10 +4,11 @@ import type { OnChangeFn, PaginationState, SortingState } from '@tanstack/react-
 import { useMemo } from 'react';
 import { DefaultEmptyData } from '@/components/default-empty-data.js';
 import { DefaultLoading } from '@/components/default-loading.js';
-import { Card, CardContent, CardHeader } from '@/components/ui/card.js';
+import { Card, CardAction, CardContent, CardHeader } from '@/components/ui/card.js';
 import { DataTable } from '@/components/ui/data-table.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 import { customersQuery } from '@/query/customer.js';
+import { CustomersViewToggle } from './@components/view-toggle.js';
 import { type CustomersSearch, customersSearchSchema } from './@interface/customers.interface.js';
 import { customerColumns } from './@utils/columns.js';
 
@@ -76,7 +77,11 @@ export function CustomersListPage() {
 
   return (
     <Card asPage>
-      <CardHeader title={t('customers')} />
+      <CardHeader title={t('customers')}>
+        <CardAction>
+          <CustomersViewToggle />
+        </CardAction>
+      </CardHeader>
       <CardContent>
         {query.isLoading ? (
           <DefaultLoading />

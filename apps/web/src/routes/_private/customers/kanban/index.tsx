@@ -5,12 +5,13 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { DefaultLoading } from '@/components/default-loading.js';
-import { Card, CardContent, CardHeader } from '@/components/ui/card.js';
+import { Card, CardAction, CardContent, CardHeader } from '@/components/ui/card.js';
 import { KanbanBoard, KanbanCard, KanbanCards, KanbanHeader, KanbanProvider } from '@/components/ui/kanban.js';
 import { patch } from '@/lib/api/client.api.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 import { type CustomerStatusColumn, customerKeys, customerStatusColumns, customersQuery } from '@/query/customer.js';
 import { currentCustomerTemplateQuery } from '@/query/fieldTemplate.js';
+import { CustomersViewToggle } from '../@components/view-toggle.js';
 import { CustomerKanbanCardContent } from './@components/customer-kanban-card-content.js';
 
 type KanbanItem = { id: string; name: string; phone: string; column: string };
@@ -111,7 +112,11 @@ export function CustomersKanbanPage() {
 
   return (
     <Card asPage>
-      <CardHeader title={t('customers')} />
+      <CardHeader title={t('customers')}>
+        <CardAction>
+          <CustomersViewToggle />
+        </CardAction>
+      </CardHeader>
       <CardContent>
         {isLoading ? (
           <DefaultLoading />

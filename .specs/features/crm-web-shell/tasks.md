@@ -659,12 +659,17 @@ Deviations found during Execute: (1) `tunnel-rat`'s own `dist/index.d.ts` has no
 - Skill: NONE
 
 **Done when**:
-- [ ] Both routes render the same toggle, each linking to the other via TanStack Router `Link`
-- [ ] Gate check passes: `pnpm vitest run --project unit`
-- [ ] Test count: ≥1 test (toggle links to the correct route from each side)
+- [x] Both routes render the same toggle, each linking to the other via TanStack Router `Link`
+- [x] Gate check passes: `pnpm vitest run --project unit`
+- [x] Test count: 1 test (toggle links to the correct route from each side)
+
+Built as plain `<Link>`s styled to look like tabs (`data-[status=active]` — the attribute TanStack Router's own `Link` already sets when its target matches the current route), not `Tabs`/`TabsTrigger`: a `TabsTrigger` is a `<button>`, so making it actually navigate would need a synthetic `onClick`/`navigate()` handler instead of a real `href`, losing native anchor semantics (open-in-new-tab, etc.) for no benefit — the dispatch prompt's own alternative ("or plain Links styled as tabs") for exactly this reason. Extending `_private/customers/index.tsx` and `.../kanban/index.tsx` with `<CardAction><CustomersViewToggle /></CardAction>` required adding a `Link` stub to both routes' existing `@tanstack/react-router` mocks (T18/T20's tests otherwise threw, same "needs a real router context" issue `Card asPage`'s breadcrumb `Link` already forced a workaround for).
 
 **Tests**: unit
 **Gate**: quick
+**Status**: ✅ Complete (commit `a739c11`)
+
+Phase 3+4+5 close-out (T14-T21): Build gate re-run after T21 — `pnpm -r exec tsc --noEmit`: clean across all 7 workspace packages. `pnpm biome check .`: 1 pre-existing error (`.specs/lessons.json`, confirmed unrelated to this batch — `git diff main -- .specs/lessons.json` shows 0 lines changed, same pre-existing formatting-only issue T13 already documented) + 9 warnings (`lint/suspicious/noExplicitAny`, all intentional/documented: the `useNavigate()`-without-`from` search-updater casts in T18's route, the `tunnel-rat` interop cast in T20's kanban port, and T20's test-mock prop types). `pnpm vitest run` (full suite, run separately since the chained `&&` would otherwise skip it over that one pre-existing error): 72 files / 445 tests passed, 0 failed.
 
 ---
 
