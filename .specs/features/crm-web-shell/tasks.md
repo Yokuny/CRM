@@ -548,13 +548,16 @@ Also built beyond the literal file list above (transitive necessities, per this 
 - Skill: NONE
 
 **Done when**:
-- [ ] `customersQuery({page,limit,q,sort,order,status})` builds the querystring and calls `GET /customers`
-- [ ] `customerQuery(id)` calls `GET /customers/:id`
-- [ ] Gate check passes: `pnpm vitest run --project unit`
-- [ ] Test count: ≥2 tests (querystring built correctly from params, id-based query calls the right path)
+- [x] `customersQuery({page,limit,q,sort,order,status})` builds the querystring and calls `GET /customers`
+- [x] `customerQuery(id)` calls `GET /customers/:id`
+- [x] Gate check passes: `pnpm vitest run --project unit`
+- [x] Test count: 9 tests (querystring built from full params, no-params → no querystring, success resolution, failure message thrown, queryKey varies by params — mirrored for both `customersQuery` and `customerQuery`)
+
+Note: `CustomerRecord` is not exported from `@crm/contracts` (it's a repository-local type in `apps/crm-api`) — mirrored locally in `apps/web/src/query/customer.ts`, same convention `session.ts` already uses for `SessionView`.
 
 **Tests**: unit
 **Gate**: quick
+**Status**: ✅ Complete (commit `4e8924e`)
 
 ---
 
