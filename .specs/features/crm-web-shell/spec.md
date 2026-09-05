@@ -350,7 +350,7 @@ mesmo resultado.
 | WEB-05 | P1: Ver o detalhe de um Customer | Tasks | In Tasks | T2, T23 |
 | WEB-06 | P1: Editar um Customer existente | Tasks | In Tasks | T1, T3, T24 |
 | WEB-07 | P1: Abrir um novo Process para um Customer | Tasks | In Tasks | T5, T25 |
-| WEB-08 | P1: Editar `values`/avançar `stage` de um Process | Tasks | In Tasks | T26, T27 |
+| WEB-08 | P1: Editar `values`/avançar `stage` de um Process | Tasks | In Tasks | T25B, T26, T27 |
 | WEB-09 | P2: Persistir filtro/ordenação/página na URL | Tasks | In Tasks | T18 |
 | WEB-10 | P3: Criar Process a partir de atalho no card do kanban | Tasks | In Tasks | T25 |
 | WEB-11 | Dimensão: validação client-side é só UX, servidor é fonte da verdade | Tasks | In Tasks | T14, T15 |
@@ -364,7 +364,8 @@ mesmo resultado.
 **ID format:** `WEB-[NUMBER]`. **Status values:** Pending → In Design → In Tasks →
 Implementing → Verified.
 
-**Coverage:** 17 requisitos · 17 mapeados a tasks (T1-T28) · 0 não mapeados.
+**Coverage:** 17 requisitos · 17 mapeados a tasks (T1-T28 + T25B, added 2026-09-05) · 0 não
+mapeados.
 
 ---
 

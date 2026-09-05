@@ -11,8 +11,11 @@
 wired, zero design system, zero UI dependency). This feature adds: (1) a design-system
 layer ported from `../DentalEase/DentalEase` and adapted where its API doesn't fit this
 project's requirements, (2) a set of Customer/Process screens built on top of it, and (3)
-four small touches to `apps/crm-api`'s already-Verified `customer`/`fieldTemplate`
-modules (3 new read/write surfaces + 1 query-contract extension to an existing endpoint).
+five small touches to `apps/crm-api`'s already-Verified `customer`/`fieldTemplate`
+modules (3 new read/write surfaces + 1 query-contract extension to an existing endpoint +
+1 more, `GET /field-templates/:id/versions/:version`, found and added 2026-09-05 — see T25B
+in `tasks.md` — a Process's own `templateVersion` snapshot cannot be fetched by any
+endpoint that existed before this addition).
 
 ```mermaid
 graph TD
@@ -36,7 +39,7 @@ graph TD
 ```
 
 **Scope split:** front-end work (`apps/web`) is the bulk of this feature; back-end work
-(`apps/crm-api`) is four small, additive touches to modules already Verified by
+(`apps/crm-api`) is five small, additive touches to modules already Verified by
 `crm-core`/`dynamic-field-engine` — no new collection, no schema migration.
 
 ---
@@ -78,8 +81,8 @@ graph TD
 | `PATCH /customers/:id` (**new**) | Kanban drag (partial `values`) and full edit form (core + `values`) — same endpoint, two calling shapes. |
 | `GET /field-templates` (**new**) | New-Process template picker (WEB-07) — lists `{key,label,archived}` filtered by `targetType`. |
 | `GET /field-templates/current?targetType=customer&key=<default>` (existing) | Drives the Create/Edit-Customer form's field tree (`hydrate()`) and the kanban's column set (`status` field's `options`). |
-| `GET /field-templates/current?targetType=process&key=<templateKey>` (existing) | Drives the Process values form + the `stage` control's allowed options (from `stages` snapshot — but see WEB-08 AC1 nuance below: the **record's own** `templateVersion`, not the current one, is authoritative for an open Process). |
-| `POST /processes`, `PATCH /processes/:id/values`, `PATCH /processes/:id/stage`, `GET /processes?customerId=` (all existing, unchanged) | Process creation/edit/stage-advance screens. |
+| `GET /field-templates/:id/versions/:version` (**new, T25B, added 2026-09-05**) | Drives the Process values form + the `stage` control's allowed options (`fields`/`stages` from the record's **own** `(template, templateVersion)` pointer — WEB-08 AC1's "record's own templateVersion, not the current one" is authoritative for an open Process, and no endpoint before this one could serve a non-current version at all: `GET /field-templates/current` always resolves the template's `currentVersion`, confirmed by reading `fieldTemplate.service.ts`). |
+| `POST /processes`, `PATCH /processes/:id/values`, `PATCH /processes/:id/stage`, `GET /processes?customerId=` (all existing, unchanged) | Process creation/edit/stage-advance screens. There is no `GET /processes/:id` — the values/stage screen (`_private/processes/details.tsx`) resolves the one record it needs from `GET /processes?customerId=`'s `items`, using `search: { id, customerId }` (both always known from the caller's context). |
 
 ---
 
@@ -225,6 +228,28 @@ const statusFilter =
 ```
 This covers **both** halves of the spec's Edge Case (no `status` key at all, and a stored value whose option was later removed from the template) with one query — confirmed with the user as the 4th small backend touch, in addition to the 3 already scoped in spec.md's Assumptions table.
 
+### `GET /field-templates/:id/versions/:version` (new — fetch one specific historical version) — the 5th backend touch, added 2026-09-05, see T25B in `tasks.md`
+
+Found blocking during Execute (before Batch 4): WEB-08 AC1 requires an open Process to render against **its own** `(template, templateVersion)` pointer, never the template's current version — but `GET /field-templates/current` (the only existing read endpoint) always resolves `template.currentVersion`, confirmed by reading `fieldTemplate.service.ts`'s `getCurrentTemplate`. No endpoint could serve a non-current version. The repository already supports it generically:
+
+```ts
+// fieldTemplate.repository.ts (unchanged) — despite the name, this already
+// takes an explicit version and isn't restricted to "current":
+findCurrentVersion(tenantId: string, templateId: string, version: number): Promise<{ fields: FieldDef[]; stages?: string[] } | null>
+```
+
+New service method (thin wrapper, `fieldTemplate.service.ts`):
+```ts
+getTemplateVersion(tenantId: string, templateId: string, version: number): Promise<{ fields: FieldDef[]; stages?: string[] } | null>
+// = fieldTemplateRepository.findCurrentVersion(tenantId, templateId, version)
+```
+
+Router: `router.get('/:id/versions/:version', validToken, tenantAssignmentCheck, validParams({id: idSchema, version: z.coerce.number().int().positive()}), fieldTemplateController.getTemplateVersion)` — mounted in `fieldTemplate.router.ts`, no path collision with the existing `POST /:id/versions` (bump) or `POST /:id/archive` (Express matches on method+path together). No `isAdmin` gate (read, not a structural mutation — matches `/current`'s precedent).
+
+Response: `200 {success:true, data:{fields:FieldDef[], stages?:string[]}}` | `404 {success:false, message:'Versão de template não encontrada'}` (missing template, cross-tenant, or a version number never claimed for that template — AD-010, indistinguishable by design).
+
+No repository change, no schema change, no new collection — purely additive wiring around an already-existing, already-generic repository function.
+
 ---
 
 ## Error Handling Strategy
@@ -238,6 +263,7 @@ This covers **both** halves of the spec's Edge Case (no `status` key at all, and
 | `PATCH /processes/:id/stage` rejects a transition (stage not in the record's own `stages` snapshot) | 400 (already built in `crm-core`, unchanged) | UI keeps showing the previous `stage` (no optimistic update on stage change — WEB-08 AC4), shows the error. |
 | Session expires mid-screen (any new route) | Inherited `_private.tsx` `beforeLoad` guard (unchanged) — the next query in this feature that returns 401-shaped failure triggers the same redirect-to-`/auth` path already Verified in feature 1. | Redirect to `/auth`, no new code (Edge Case, explicitly not a new AC). |
 | `document`/`reference` field present in a template | Rendered read-only (see `DynamicField`) rather than erroring | Form still loads and saves every other field; the unsupported field's value is preserved untouched (never dropped) but not editable through this feature. |
+| `GET /field-templates/:id/versions/:version` — missing template, cross-tenant, or version never claimed | 404, `badRespObj({message:'Versão de template não encontrada'})` | Process detail (`_private/processes/details.tsx`) shows an explicit not-found/error state rather than a broken render — this should be rare in practice (a Process's own pointer always names a version that existed when it was created), but the endpoint never assumes it. |
 
 ---
 
@@ -289,7 +315,7 @@ All 17 requirements now map to at least one component/data-model section above:
 | WEB-05 | `_private/customers/details.tsx` (`search: { id }`, AD-030), `GET /customers/:id` (new) |
 | WEB-06 | Same route (edit mode), `PATCH /customers/:id` (new) |
 | WEB-07 | `_private/processes/add/index.tsx` (`search: { customerId }`, AD-030), `GET /field-templates` (new) |
-| WEB-08 | `_private/processes/details.tsx` (`search: { id }`, AD-030), `PATCH /processes/:id/values`+`/stage` (existing, unchanged) |
+| WEB-08 | `_private/processes/details.tsx` (`search: { id, customerId }`, AD-030), `GET /field-templates/:id/versions/:version` (new, T25B), `PATCH /processes/:id/values`+`/stage` (existing, unchanged) |
 | WEB-09 | Route `validateSearch` on `_private/customers/index.tsx` |
 | WEB-10 | Kanban card shortcut → same route as WEB-07 |
 | WEB-11 | `validate()` (field-engine, existing) is server-side source of truth; `DynamicField` does light client-side hints only (`required`/`min`/`max` from `FieldDef`), never a replacement |

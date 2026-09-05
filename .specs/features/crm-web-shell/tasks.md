@@ -43,7 +43,7 @@ adequacy review, Verifier, discrimination sensor).
 | `apps/web` — routes/pages (list, detail, create, edit, process screens) | unit | 1:1 to each story's Acceptance Criteria + every Edge Case that applies to that screen; error/empty/not-found states; submit-guard while `isPending` (WEB-13) | `apps/web/src/routes/_private/**/*.unit.test.tsx` | `pnpm vitest run --project unit` |
 | `packages/contracts` — `updateCustomerSchema` (new) | unit | Valid payload accepted; each invalid case rejected (empty body via `.refine`, over-length `name`/`phone`, wrong `values` shape) | `packages/contracts/src/schemas/updateCustomer.schema.unit.test.ts` | `pnpm vitest run --project unit` |
 | `apps/crm-api` — repository (`customer.repository` status sentinel, `fieldTemplate.repository.findTemplatesByTargetType`) | integration | Real Mongo query behavior: `$exists:false`/`$nin` combination for `__none__`, tenant scoping, `targetType` filter | `apps/crm-api/src/repositories/*.int.test.ts` | `pnpm vitest run --project integration` |
-| `apps/crm-api` — routers/controllers/services (`GET /customers/:id`, `PATCH /customers/:id`, `GET /field-templates`, `GET /customers` sentinel end-to-end) | e2e | Every route: happy path + every listed edge case (404 cross-tenant/missing, 400 invalid `values`, archived template does **not** block an edit, `templateVersion` pointer bump on success, auth/rate-limit chain WEB-14, `dbReqResTime` present WEB-16) | `apps/crm-api/src/routers/*.e2e.test.ts` | `pnpm vitest run --project e2e` |
+| `apps/crm-api` — routers/controllers/services (`GET /customers/:id`, `PATCH /customers/:id`, `GET /field-templates`, `GET /customers` sentinel, `GET /field-templates/:id/versions/:version` [T25B, added 2026-09-05] end-to-end) | e2e | Every route: happy path + every listed edge case (404 cross-tenant/missing, 400 invalid `values`, archived template does **not** block an edit, `templateVersion` pointer bump on success, non-current version fetch works [T25B], auth/rate-limit chain WEB-14, `dbReqResTime` present WEB-16) | `apps/crm-api/src/routers/*.e2e.test.ts` | `pnpm vitest run --project e2e` |
 | `apps/crm-api` — cross-tenant isolation (shared suite, extended) | integration | The 3 new endpoints added to the existing suite: each returns 404/empty for another tenant's id, never leaks data (AD-010) | `apps/crm-api/tests/integration/tenant-isolation.int.test.ts` (extend) | `pnpm vitest run --project integration` |
 | Structural | none (inherited, unchanged) | This feature introduces no new architectural invariant — existing structural suite untouched | `tests/structural/*.structural.test.ts` | build gate only |
 
@@ -103,8 +103,12 @@ T22 → T23 → T24
 ### Phase 7: `apps/web` — Process screens (WEB-07, WEB-08, WEB-10)
 
 ```
-T25 → T26 → T27
+T25 → T25B → T26 → T27
 ```
+
+> **T25B added 2026-09-05** (Execute-time gap found before Batch 4, no new AD — see T25B's
+> own definition below): a small, additive `apps/crm-api` endpoint T26/T27 cannot function
+> without. Phase 7 is now 4 tasks, not 3; the feature is 29 tasks total, not 28.
 
 ### Phase 8: i18n completion + regression close-out
 
@@ -772,12 +776,38 @@ Phase 3+4+5 close-out (T14-T21): Build gate re-run after T21 — `pnpm -r exec t
 
 ---
 
+### T25B: `GET /field-templates/:id/versions/:version` — fetch one specific historical version (blocking gap found before Batch 4, no new AD — mirrors T5's pattern)
+
+**What**: A new, small, additive backend endpoint T26/T27 cannot function without. Design.md's Data Models describes T26 as fetching "that exact `FieldTemplateVersion`'s fields (never the current one)" via `GET /processes?customerId=`'s own `template`/`templateVersion` pointer, but no endpoint anywhere returns a NON-current `FieldTemplateVersion` — `GET /field-templates/current` always resolves `template.currentVersion` (see `fieldTemplate.service.ts`'s `getCurrentTemplate`), never an explicit version number. Without this task, Phase 7 cannot render a Process's own snapshot at all. The repository-level function already supports it generically — `fieldTemplate.repository.findCurrentVersion(tenantId, templateId, version)` takes an explicit `version` param and queries `FieldTemplateVersion` by `{Tenant, template, version}` (misleading name aside, it already works for ANY version) — this task only adds the missing service/controller/router wiring, identical in shape to Batch 1's T5.
+**Where**: `apps/crm-api/src/services/fieldTemplate.service.ts` (add `getTemplateVersion(tenantId, templateId, version)` — thin wrapper around the existing `findCurrentVersion` repository call, no repository change needed), `apps/crm-api/src/controllers/fieldTemplate.controller.ts` (add `getTemplateVersion` action), `apps/crm-api/src/routers/fieldTemplate.router.ts` (add `router.get('/:id/versions/:version', ...)` — no path collision with the existing `POST /:id/versions` (bump) or `POST /:id/archive`, Express matches on method+path together).
+**Depends on**: None (T5 already exists from Batch 1; this is additive to the same module)
+**Reuses**: `findCurrentVersion` (repository, unchanged), `CustomError`/`respObj` pattern, `idSchema`, `tenantAssignmentCheck`, no `isAdmin` gate (matches `/current`'s already-open-to-any-role precedent — this is a read, not a structural mutation).
+**Requirement**: WEB-08 (enables T26/T27 — the endpoint they depend on)
+
+**Tools**:
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+- [ ] `GET /field-templates/:id/versions/:version` returns `200 {success:true, data:{fields:FieldDef[], stages?:string[]}}` for a version that exists for that template, in the caller's tenant
+- [ ] Returns `404 {success:false, message:'Versão de template não encontrada'}` for a missing template id, cross-tenant id, or a version number that was never claimed for that template (AD-010 — cross-tenant indistinguishable from missing, by design)
+- [ ] Works for a version that is NOT the template's current one (the actual point of this endpoint) — a dedicated test proves this: bump a template to v2, then fetch v1 and confirm it returns v1's original fields, not v2's
+- [ ] Middleware chain: `validToken → tenantAssignmentCheck → validParams({id, version})`, no rate limit (GET, matches convention), no `isAdmin`
+- [ ] Gate check passes: `pnpm vitest run --project e2e`
+- [ ] Test count: e2e adds ≥4 cases (current-version fetch, non-current/historical version fetch, missing/cross-tenant → 404, non-existent version number → 404) to `fieldTemplate.router.e2e.test.ts`
+- [ ] Tenant-isolation suite (`apps/crm-api/tests/integration/tenant-isolation.int.test.ts`) extended with 1 more case for this endpoint, matching Batch 1's T6 precedent
+
+**Tests**: e2e, integration (tenant-isolation extension)
+**Gate**: full
+
+---
+
 ### T26: `_private/processes/details.tsx` — values form
 
 **What**: The WEB-08 screen, values half.
-**Where**: `apps/web/src/routes/_private/processes/details.tsx` (AD-030 — `search: { id }`, never a `$processId` path segment).
-**Depends on**: T15, T13
-**Reuses**: `DynamicField`, `GET /processes?customerId=` response's own `template`/`templateVersion` to fetch **that exact** `FieldTemplateVersion`'s fields (never the current one) — the key difference from the Customer form (AD-029 does not apply here, `Process` keeps its snapshot model per AD-023).
+**Where**: `apps/web/src/routes/_private/processes/details.tsx` (AD-030 — `search: { id, customerId }`, never a `$processId` path segment — see Reuses for why `customerId` is also needed here).
+**Depends on**: T15, T13, T25B
+**Reuses**: `DynamicField`; `GET /processes?customerId=` (existing, unchanged — there is no `GET /processes/:id`, confirmed by reading `process.router.ts`) to fetch the Process record itself — the route's `search` params carry BOTH `id` and `customerId` (every caller that links here — Customer detail's Process list (T23), the kanban shortcut (T25) — already has `customerId` in context), the route calls `processesQuery(customerId)` and finds the one item matching `search.id` from `items` (a small, customer-scoped list, not "the full collection" — does not violate AD-028's principle, which targets unbounded/paginated collections); `GET /field-templates/:id/versions/:version` (**new, T25B**) using the found record's own `template`/`templateVersion` to fetch **that exact** `FieldTemplateVersion`'s fields (never the current one) — the key difference from the Customer form (AD-029 does not apply here, `Process` keeps its snapshot model per AD-023).
 **Requirement**: WEB-08 (values half)
 
 **Tools**:
@@ -853,16 +883,14 @@ Phase 3:  T14 ──→ T15
 Phase 4:  T16 ──→ T17 ──→ T18
 Phase 5:  T19 ──→ T20 ──→ T21
 Phase 6:  T22 ──→ T23 ──→ T24
-Phase 7:  T25 ──→ T26 ──→ T27
+Phase 7:  T25 ──→ T25B ──→ T26 ──→ T27
 Phase 8:  T28
 ```
 
-Execution is strictly sequential — no intra-phase parallelism. 28 tasks total, packed at
-Execute time into ~7-task batches (whole phases only): a natural packing is Batch 1 =
-Phase 1+2 (13 tasks — over budget as a single phase-pair; Execute may instead run Phase 1
-alone as Batch 1 and Phase 2 alone as Batch 2, or the orchestrator decides packing at that
-time per `sub-agents.md`), Batch 2 = Phase 3+4+5 (8 tasks), Batch 3 = Phase 6+7+8 (7
-tasks) — exact packing is an Execute-time decision, not fixed here.
+Execution is strictly sequential — no intra-phase parallelism. 29 tasks total (28 original +
+T25B, added 2026-09-05 — see Phase 7). Actual Execute-time packing (recorded after the
+fact, phases never split across a batch): Batch 1 = Phase 1 (6 tasks), Batch 2 = Phase 2 (7
+tasks), Batch 3 = Phase 3+4+5 (8 tasks), Batch 4 = Phase 6+7+8 (8 tasks, incl. T25B).
 
 ---
 
@@ -895,13 +923,14 @@ tasks) — exact packing is an Execute-time decision, not fixed here.
 | T23: detail route (view) | 1 route | ✅ Granular |
 | T24: detail route (edit mode) | Same route, additive mode — cohesive extension of T23 | ✅ OK |
 | T25: Process picker route | 1 route + 1 small addition to an existing component (kanban card) | ✅ OK — cohesive (WEB-10 is explicitly "the same flow as WEB-07 from a shortcut") |
+| T25B: `GET /field-templates/:id/versions/:version` | 1 endpoint (service+controller+router, cohesive, no repository change) | ✅ Granular — added 2026-09-05 |
 | T26: Process values route | 1 route | ✅ Granular |
 | T27: Process stage control | Same route, additive control — cohesive extension of T26 | ✅ OK |
 | T28: i18n + regression | 1 file (dictionary) + 1 full-suite verification pass | ✅ OK — closing task, verification is its deliverable |
 
-All 28 tasks pass the granularity check — every multi-file task is either a single cohesive
-concern (one endpoint, one component's remaining branches) or an explicitly zero-test-burden
-presentational port batch.
+All 29 tasks pass the granularity check (28 original + T25B, added 2026-09-05) — every
+multi-file task is either a single cohesive concern (one endpoint, one component's remaining
+branches) or an explicitly zero-test-burden presentational port batch.
 
 ---
 
@@ -934,12 +963,13 @@ presentational port batch.
 | T23 | T17 | T22 → T23 | ✅ Match (ordering; real dep is T17, Phase 4) |
 | T24 | T23, T15, T3 | T23 → T24 | ✅ Match (cross-phase dep on T15/Phase 3, T3/Phase 1) |
 | T25 | T5, T20 | (start of Phase 7) | ✅ Match (cross-phase deps on T5/Phase 1, T20/Phase 5) |
-| T26 | T15, T13 | T25 → T26 | ✅ Match (ordering; real deps are Phase 2/3) |
+| T25B | None | T25 → T25B | ✅ Match (ordering; no real dependency — added 2026-09-05, additive to the already-Verified `fieldTemplate` module) |
+| T26 | T15, T13, T25B | T25B → T26 | ✅ Match (real dep on T25B added 2026-09-05; T15/T13 real deps are Phase 2/3) |
 | T27 | T26 | T26 → T27 | ✅ Match |
-| T28 | T1-T27 | (Phase 8, after all) | ✅ Match |
+| T28 | T1-T27, T25B | (Phase 8, after all) | ✅ Match |
 
 No task depends on a task in a later phase. All cross-phase dependencies point backward
-only. ✅ All 28 rows match.
+only. ✅ All 29 rows match (28 original + T25B, added 2026-09-05).
 
 ---
 
@@ -972,12 +1002,13 @@ only. ✅ All 28 rows match.
 | T23 | `apps/web` route | unit | unit | ✅ OK |
 | T24 | `apps/web` route (extend) | unit | unit | ✅ OK |
 | T25 | `apps/web` route + component edit | unit | unit | ✅ OK |
+| T25B | `apps/crm-api` router/controller/service (no repository change) | e2e | e2e, integration | ✅ OK — added 2026-09-05 |
 | T26 | `apps/web` route | unit | unit | ✅ OK |
 | T27 | `apps/web` route (extend) | unit | unit | ✅ OK |
 | T28 | `apps/web` dictionary + full-suite regression check | none (dictionary is config-like) + full-suite gate | unit (dictionary) + full-suite | ✅ OK — no violation: T28's own deliverable is the regression proof, not a new testable code layer |
 
 No `Tests: none` appears where the matrix requires a test type, and no task defers its
-required tests to a later task ("tested elsewhere" does not appear anywhere above). All 28
+required tests to a later task ("tested elsewhere" does not appear anywhere above). All 29
 rows pass.
 
 ---
@@ -987,6 +1018,6 @@ rows pass.
 - [x] Design reviewed before task creation
 - [x] Test Coverage Matrix generated from real codebase sampling (AD-015/017 + existing test files), not invented
 - [x] Gate Check Commands taken verbatim from `package.json`'s `check` script + AD-017
-- [x] All 28 tasks atomic or explicitly justified as a cohesive batch
+- [x] All 29 tasks atomic or explicitly justified as a cohesive batch (28 original + T25B)
 - [x] Granularity Check, Diagram-Definition Cross-Check, Test Co-location Validation all ✅ — no restructuring needed
 - [x] Every task traces to a WEB-NN requirement or an explicit enabling/infra rationale
