@@ -213,15 +213,40 @@ Detalhamento completo (contexto, consequências, alternativas) em [`docs/adr/`](
 - **Date**: 2026-09-04
 - **Status**: active
 
+### AD-027
+- **Decision**: `apps/web`'s front-end stack is Tailwind v4 (via `@tailwindcss/vite`, CSS-first `@theme`, no `tailwind.config.js`) + a ShadCN-style component layer over Radix primitives + `@dnd-kit/core`+`@dnd-kit/sortable`+`@dnd-kit/utilities` + `@tanstack/react-table` — ported from `../DentalEase/DentalEase` at the versions confirmed working there (`tailwindcss@4.3.1`, `@dnd-kit/core@6.3.1`, `@dnd-kit/sortable@10.0.0`, `@dnd-kit/utilities@3.2.2`, `@tanstack/react-table@8.21.3`).
+- **Reason**: `apps/web` had zero styling/UI infrastructure before this feature (confirmed by a repo-wide search: no Tailwind, no Radix, no `cva`/`clsx`/`tailwind-merge` anywhere in the monorepo). Decided during `crm-web-shell` Design — closes the `card.tsx`/`default-loading.tsx` `SPEC_DEVIATION`s and gives every future `apps/web` feature a single, already-proven design-system baseline instead of each feature re-deciding its own UI stack.
+- **Trade-off**: locks the project into Radix's component model and Tailwind's utility-class styling for the life of `apps/web`; a future feature wanting a different UI paradigm would need to supersede this entry, not silently deviate.
+- **Scope**: `apps/web`, every future feature that touches its UI.
+- **Date**: 2026-09-05
+- **Status**: active
+
+### AD-028
+- **Decision**: Any table component in `apps/web` uses `@tanstack/react-table` in manual/server mode (`manualPagination: true, manualSorting: true, manualFiltering: true`) — client-side slicing/sorting/filtering over an already-fetched page is never acceptable, regardless of expected dataset size.
+- **Reason**: Decided during `crm-web-shell` Design after finding that the reference repo's own convenience `DataTable<T>` (`../DentalEase/DentalEase/src/components/ui/data-table.tsx`) is actually 100% client-side despite its name — porting it as-is would have violated WEB-01 AC2/AC3's explicit server-side requirement. Recorded as a standing convention so a future feature doesn't rediscover or re-litigate this the same way.
+- **Trade-off**: every list screen must carry its filter/sort/page state in a place the server call can read (URL search params or component state) instead of handing a full dataset to a convenience component — slightly more wiring per screen, in exchange for never accidentally loading a full collection into the browser.
+- **Scope**: `apps/web`, any future table/list screen.
+- **Date**: 2026-09-05
+- **Status**: active
+
+### AD-029
+- **Decision**: A field-engine (AD-019) consumer whose mutation endpoint validates `values` against the tenant's **current** template version — rather than the record's own snapshot version, which is `Process`'s model (AD-023/WEB-08) — must, on every successful write, advance the record's stored `(template, templateVersion)` pointer (AD-026) to match the version that actually validated it.
+- **Decision context**: first applied to `PATCH /customers/:id` (`crm-web-shell`) — `Customer` edits validate against the current `customer` template (WEB-06 AC3's own wording, unlike `Process`'s explicit per-record snapshot in WEB-08 AC1), so leaving `templateVersion` unchanged after a successful edit would let the stored pointer understate what was actually checked.
+- **Reason**: Decided with the user during `crm-web-shell` Design. Keeps AD-026's pointer pair truthful under a second, different validation philosophy — `Process` snapshots forever, `Customer` re-validates against current on every write — without forcing every future field-engine consumer to rediscover which of the two models it needs or to leave a stale pointer as a side effect.
+- **Trade-off**: an entity following this model can never answer "what did this record look like when it was last edited under an older template" the way `Process`'s snapshot model can — accepted because `Customer` has no requirement (unlike `Process`'s `stage` guard) that depends on remembering an old version.
+- **Scope**: `apps/crm-api` (`customer` module now; any future `targetType` that chooses "always-current" validation semantics).
+- **Date**: 2026-09-05
+- **Status**: active
+
 ---
 
 ## Handoff
 
-- **Feature**: `dynamic-field-engine` (feature 2 de 11) e `crm-core` (feature 3 de 11) — ambas **Execute completo, Verifier PASS, merged em `main`** (`crm-core` via PR [`#2`](https://github.com/Yokuny/CRM/pull/2), squash-merge `28c7872`, nesta sessão, a pedido explícito do usuário). `crm-web-shell` (`.specs/features/crm-web-shell`, feature 4) é a atual — **spec.md confirmado pelo usuário nesta sessão**, branch própria criada, aguardando Design.
-- **Phase / Task**: `crm-web-shell` — Specify completo e **confirmado pelo usuário**. Próximo: Design.
-- **Completed** (`crm-web-shell`): Specify (spec.md, 17 requisitos WEB-01..17, confirmado).
-- **In-progress**: nenhum — aguardando início da fase Design.
-- **Next step**: 1) rodar Design (`design.md`) — Knowledge Verification Chain, usando `../DentalEase/DentalEase` como referência real para design system/DataTable/kanban; 2) rodar Tasks (`tasks.md`). **Execute fica para um prompt separado** (mesmo padrão já usado em `crm-core` — pedido explícito do usuário).
-- **Blockers**: nenhum. 3 adicionais pequenos a `apps/crm-api` seguem confirmados no escopo: `GET /customers/:id` (módulo `customer`), um endpoint de mutação de Customer (núcleo+values parciais, serve kanban-drag e edição completa), `GET /field-templates` (módulo `field-template`, feature 2 já Verified — lista `{key,label,archived}` por `targetType`, só leitura, additive-only).
-- **Uncommitted files**: `.specs/features/crm-web-shell/spec.md` (novo) e este próprio `STATE.md` (Handoff) — a serem commitados nesta sessão como primeiro commit de `feature/crm-web-shell`. `CLAUDE.md` (tracked em `main`, commit 985eac1) continua com conteúdo de um projeto não relacionado (DentalEase, front-end React/ShadCN) — sinalizado repetidas vezes, nunca tocado.
-- **Branch**: `feature/crm-web-shell`, criada a partir de `main` já atualizado com `crm-core` (`main` = `28c7872`), ainda não pushada para `origin`. `feature/crm-core` (local + `origin/feature/crm-core`, `38c518a`) permanece intacta e sincronizada, agora só histórica — seu conteúdo já está em `main` via squash-merge; PR #2 fechado como `MERGED`. `feature/dynamic-field-engine` e `feature/foundation-tenancy-auth` seguem intactas, igualmente históricas (nenhum commit à frente de `main`).
+- **Feature**: `dynamic-field-engine` (feature 2 de 11) e `crm-core` (feature 3 de 11) — ambas **Execute completo, Verifier PASS, merged em `main`** (`crm-core` via PR [`#2`](https://github.com/Yokuny/CRM/pull/2), squash-merge `28c7872`, a pedido explícito do usuário). `crm-web-shell` (`.specs/features/crm-web-shell`, feature 4) é a atual — **spec.md e design.md confirmados pelo usuário**, aguardando Tasks.
+- **Phase / Task**: `crm-web-shell` — Specify confirmado → Design confirmado (`design.md`, AD-027..AD-029 gravadas). Próximo: Tasks.
+- **Completed** (`crm-web-shell`): Specify (spec.md, 17 requisitos WEB-01..17) → Design (design.md, 4 decisões de arquitetura resolvidas com o usuário: DataTable em modo server via `@tanstack/react-table`, `PATCH /customers/:id` sempre avança `templateVersion` para a corrente, sentinela `status=__none__` para "sem status" no kanban, fallback somente-leitura para `document`/`reference` no `DynamicField`).
+- **In-progress**: nenhum — aguardando início da fase Tasks.
+- **Next step**: rodar Tasks (`tasks.md`) — Test Coverage Matrix + Gate Check Commands (convenção AD-015/AD-017, Vitest `projects` unit/integration/e2e/structural). **Execute fica para um prompt separado** (mesmo padrão já usado em `crm-core` — pedido explícito do usuário).
+- **Blockers**: nenhum. 4 toques em `apps/crm-api` confirmados no escopo (design.md, seção Data Models): `GET /customers/:id` (novo), `PATCH /customers/:id` (novo, único endpoint de mutação de Customer — núcleo+values parciais, serve kanban-drag e edição completa, sempre revalida contra o template corrente e avança `templateVersion` — AD-029), `GET /field-templates` (novo, lista `{key,label,archived}` por `targetType`), extensão de query em `GET /customers` (sentinela `status=__none__`, cobre "sem chave" e "valor com option removida" numa query só).
+- **Uncommitted files**: `.specs/features/crm-web-shell/design.md` (novo) e este próprio `STATE.md` (AD-027..029 + Handoff) — a serem commitados nesta sessão.
+- **Branch**: `feature/crm-web-shell`, criada a partir de `main` já atualizado com `crm-core` (`main` = `28c7872`), pushada para `origin` (commit `ba2c223`, spec.md confirmado). `feature/crm-core`/`feature/dynamic-field-engine`/`feature/foundation-tenancy-auth` seguem intactas, históricas (conteúdo já em `main`, PR #2 `MERGED`).
