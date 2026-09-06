@@ -142,12 +142,12 @@ a lógica, não importar)
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `encrypt(plaintext, key)` seguido de `decrypt(...)` devolve o texto original
-- [ ] `decrypt` lança erro se `authTag` for adulterado (integridade)
-- [ ] `decrypt` lança erro nomeando a variável se a chave não tiver 32 bytes
-- [ ] `maskSecret` expõe só os últimos 4 caracteres
-- [ ] Gate check passes: `pnpm vitest run --project unit`
-- [ ] Test count: ≥ 6 tests pass
+- [x] `encrypt(plaintext, key)` seguido de `decrypt(...)` devolve o texto original
+- [x] `decrypt` lança erro se `authTag` for adulterado (integridade)
+- [x] `decrypt` lança erro nomeando a variável se a chave não tiver 32 bytes
+- [x] `maskSecret` expõe só os últimos 4 caracteres
+- [x] Gate check passes: `pnpm vitest run --project unit`
+- [x] Test count: ≥ 6 tests pass
 
 **Tests**: unit
 **Gate**: quick
