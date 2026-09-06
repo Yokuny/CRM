@@ -196,13 +196,13 @@ de guard de transição por query
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Índice único em `{Channel, Customer}`; segunda criação com o mesmo par rejeita
-- [ ] `turnLock` aceita `null` (livre) e `{holder, claimedAt}` (reivindicado)
-- [ ] `findOneAndUpdate({_id, turnLock: null}, {$set:{turnLock:{...}}})` reivindica; a
+- [x] Índice único em `{Channel, Customer}`; segunda criação com o mesmo par rejeita
+- [x] `turnLock` aceita `null` (livre) e `{holder, claimedAt}` (reivindicado)
+- [x] `findOneAndUpdate({_id, turnLock: null}, {$set:{turnLock:{...}}})` reivindica; a
       mesma chamada numa segunda tentativa (já reivindicado) devolve `null`
-- [ ] Índice `{Tenant, mode, lastActivityAt}` existe (suporte à varredura de idle)
-- [ ] Gate check passes: `pnpm vitest run --project integration`
-- [ ] Test count: ≥ 6 tests pass
+- [x] Índice `{Tenant, mode, lastActivityAt}` existe (suporte à varredura de idle)
+- [x] Gate check passes: `pnpm vitest run --project integration`
+- [x] Test count: ≥ 6 tests pass
 
 **Tests**: integration
 **Gate**: full
