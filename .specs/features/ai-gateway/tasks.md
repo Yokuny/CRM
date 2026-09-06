@@ -522,14 +522,14 @@ contra o `FieldTemplate` `targetType:'customer'` corrente do tenant (`values:{}`
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Telefone com 2+ `Customer` no tenant reusa o mais recentemente atualizado, nunca cria
+- [x] Telefone com 2+ `Customer` no tenant reusa o mais recentemente atualizado, nunca cria
       duplicata
-- [ ] Telefone sem nenhum `Customer` no tenant cria um novo com o template `customer`
+- [x] Telefone sem nenhum `Customer` no tenant cria um novo com o template `customer`
       corrente
-- [ ] Telefone que só existe em OUTRO tenant nunca é reusado — cria um novo no tenant do
+- [x] Telefone que só existe em OUTRO tenant nunca é reusado — cria um novo no tenant do
       `ctx`
-- [ ] Gate check passes: `pnpm vitest run --project integration`
-- [ ] Test count: ≥ 5 tests pass
+- [x] Gate check passes: `pnpm vitest run --project integration`
+- [x] Test count: ≥ 5 tests pass
 
 **Tests**: integration
 **Gate**: full
