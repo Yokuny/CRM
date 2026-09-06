@@ -300,12 +300,12 @@ corpo de `POST /channels`. Registrar em `schemaRegistry`.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Rejeita corpo sem `phoneNumberId`/`accessToken`
-- [ ] Rejeita `Tenant`/`tenantId`/`orgId` via `.strict()`
-- [ ] Registrado em `schemaRegistry`; `schema-registry.structural.test.ts` passa sem
+- [x] Rejeita corpo sem `phoneNumberId`/`accessToken`
+- [x] Rejeita `Tenant`/`tenantId`/`orgId` via `.strict()`
+- [x] Registrado em `schemaRegistry`; `schema-registry.structural.test.ts` passa sem
       modificação própria
-- [ ] Gate check passes: `pnpm vitest run --project unit --project structural`
-- [ ] Test count: ≥ 4 tests pass
+- [x] Gate check passes: `pnpm vitest run --project unit --project structural`
+- [x] Test count: ≥ 4 tests pass
 
 **Tests**: unit
 **Gate**: quick
