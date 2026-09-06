@@ -20,7 +20,13 @@ export type { FieldTemplateVersionDocument } from './models/fieldTemplateVersion
 export { FieldTemplateVersion } from './models/fieldTemplateVersion.model.js';
 export type { InviteDocument, InviteStatus } from './models/invite.model.js';
 export { hashToken, Invite } from './models/invite.model.js';
-export type { MessageDirection, MessageDocument, MessageMedia, MessageStatus, MessageType } from './models/message.model.js';
+export type {
+  MessageDirection,
+  MessageDocument,
+  MessageMedia,
+  MessageStatus,
+  MessageType,
+} from './models/message.model.js';
 export { Message } from './models/message.model.js';
 export type { ProcessDocument } from './models/process.model.js';
 export { Process } from './models/process.model.js';
