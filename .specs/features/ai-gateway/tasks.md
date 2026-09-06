@@ -575,13 +575,13 @@ do registro, não a corrente do template)
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `values` válidos contra a `templateVersion` do Process persistem
-- [ ] `values` inválidos devolvem `{error, fieldErrors}`, documento não muda
-- [ ] Template avançou de versão depois do Process ser criado → validação continua contra
+- [x] `values` válidos contra a `templateVersion` do Process persistem
+- [x] `values` inválidos devolvem `{error, fieldErrors}`, documento não muda
+- [x] Template avançou de versão depois do Process ser criado → validação continua contra
       a versão ANTIGA que o Process usa (nunca a corrente do template)
-- [ ] `processId` de outro tenant devolve `{error}`, nada persiste
-- [ ] Gate check passes: `pnpm vitest run --project integration`
-- [ ] Test count: ≥ 6 tests pass
+- [x] `processId` de outro tenant devolve `{error}`, nada persiste
+- [x] Gate check passes: `pnpm vitest run --project integration`
+- [x] Test count: ≥ 6 tests pass
 
 **Tests**: integration
 **Gate**: full
