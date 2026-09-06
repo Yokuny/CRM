@@ -494,14 +494,14 @@ arquivado.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Devolve `fields`+`stages` da versão corrente do Tenant do `ctx`
-- [ ] `key` de outro tenant (mesmo nome, tenant diferente) nunca aparece — só o do
+- [x] Devolve `fields`+`stages` da versão corrente do Tenant do `ctx`
+- [x] `key` de outro tenant (mesmo nome, tenant diferente) nunca aparece — só o do
       `ctx.tenantId`
-- [ ] `key` inexistente ou template arquivado devolve `{error}`, nunca lança
-- [ ] `input_schema` da tool não muda o resultado — `ctx` sempre decide o tenant, nunca o
+- [x] `key` inexistente ou template arquivado devolve `{error}`, nunca lança
+- [x] `input_schema` da tool não muda o resultado — `ctx` sempre decide o tenant, nunca o
       `input`
-- [ ] Gate check passes: `pnpm vitest run --project integration`
-- [ ] Test count: ≥ 5 tests pass
+- [x] Gate check passes: `pnpm vitest run --project integration`
+- [x] Test count: ≥ 5 tests pass
 
 **Tests**: integration
 **Gate**: full
