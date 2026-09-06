@@ -11,6 +11,9 @@ importers:
       '@biomejs/biome':
         specifier: ^2.5.11
         version: 2.5.11
+      '@crm/ai-kit':
+        specifier: workspace:*
+        version: link:packages/ai-kit
       '@crm/contracts':
         specifier: workspace:*
         version: link:packages/contracts

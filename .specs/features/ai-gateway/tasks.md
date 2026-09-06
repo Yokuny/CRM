@@ -465,13 +465,13 @@ varre os 4 `input_schema` e falha se qualquer um contiver uma chave de
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `TOOL_DEFINITIONS` tem exatamente 4 entradas, nomes = `get_process_template`,
+- [x] `TOOL_DEFINITIONS` tem exatamente 4 entradas, nomes = `get_process_template`,
       `find_or_create_customer`, `open_process`, `set_process_fields`
-- [ ] Self-check: um `input_schema` sintético com campo `tenant` é pego pela varredura
+- [x] Self-check: um `input_schema` sintético com campo `tenant` é pego pela varredura
       (prova que o teste não dá falso-verde)
-- [ ] Os 4 `input_schema` reais passam limpos (nenhuma chave proibida)
-- [ ] Gate check passes: `pnpm vitest run --project structural`
-- [ ] Test count: ≥ 4 tests pass
+- [x] Os 4 `input_schema` reais passam limpos (nenhuma chave proibida)
+- [x] Gate check passes: `pnpm vitest run --project structural`
+- [x] Test count: ≥ 4 tests pass
 
 **Tests**: structural
 **Gate**: quick
