@@ -550,11 +550,11 @@ contra o `FieldTemplate` `targetType:'customer'` corrente do tenant (`values:{}`
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `Process` criado com `stage` = primeiro `stages` da `FieldTemplateVersion` corrente
-- [ ] `customerId` de outro tenant (forjado) devolve `{error}`, nenhum `Process` criado
-- [ ] `templateKey` arquivado/inexistente devolve `{error}`, nenhum `Process` criado
-- [ ] Gate check passes: `pnpm vitest run --project integration`
-- [ ] Test count: ≥ 5 tests pass
+- [x] `Process` criado com `stage` = primeiro `stages` da `FieldTemplateVersion` corrente
+- [x] `customerId` de outro tenant (forjado) devolve `{error}`, nenhum `Process` criado
+- [x] `templateKey` arquivado/inexistente devolve `{error}`, nenhum `Process` criado
+- [x] Gate check passes: `pnpm vitest run --project integration`
+- [x] Test count: ≥ 5 tests pass
 
 **Tests**: integration
 **Gate**: full
