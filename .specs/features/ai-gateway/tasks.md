@@ -275,11 +275,11 @@ quando aplicável)
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Os 4 models novos + crypto helper exportados de `packages/db/src/index.ts`
-- [ ] `syncIndexes()` chama `createIndexes()` dos 4 models novos (teste estende o mock
+- [x] Os 4 models novos + crypto helper exportados de `packages/db/src/index.ts`
+- [x] `syncIndexes()` chama `createIndexes()` dos 4 models novos (teste estende o mock
       existente para os novos models)
-- [ ] Gate check passes: `pnpm vitest run --project unit --project integration`
-- [ ] Test count: teste existente + 4 asserções novas passam
+- [x] Gate check passes: `pnpm vitest run --project unit --project integration`
+- [x] Test count: teste existente + 4 asserções novas passam
 
 **Tests**: unit
 **Gate**: quick
