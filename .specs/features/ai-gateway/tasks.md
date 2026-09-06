@@ -412,11 +412,11 @@ lazy singleton com erro nomeado se a chave faltar)
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Lança erro nomeando a variável se `apiKey` vazio (mesmo padrão `parseEnv`)
-- [ ] `createMessage` delega para o SDK mockado nos testes; assinatura permite injeção
+- [x] Lança erro nomeando a variável se `apiKey` vazio (mesmo padrão `parseEnv`)
+- [x] `createMessage` delega para o SDK mockado nos testes; assinatura permite injeção
       total (nenhum import direto do SDK real em `loop.ts`, T21)
-- [ ] Gate check passes: `pnpm vitest run --project unit`
-- [ ] Test count: ≥ 3 tests pass
+- [x] Gate check passes: `pnpm vitest run --project unit`
+- [x] Test count: ≥ 3 tests pass
 
 **Tests**: unit
 **Gate**: quick
