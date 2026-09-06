@@ -436,11 +436,11 @@ devolve `{transcribe(audioBuffer, mime): Promise<{text:string} | {error:string}>
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Lança erro nomeando a variável se `apiKey` vazio
-- [ ] `transcribe` devolve `{error}` (nunca lança) quando o provider mockado simula falha —
+- [x] Lança erro nomeando a variável se `apiKey` vazio
+- [x] `transcribe` devolve `{error}` (nunca lança) quando o provider mockado simula falha —
       contrato que T24/T47 usam para o fallback
-- [ ] Gate check passes: `pnpm vitest run --project unit`
-- [ ] Test count: ≥ 3 tests pass
+- [x] Gate check passes: `pnpm vitest run --project unit`
+- [x] Test count: ≥ 3 tests pass
 
 **Tests**: unit
 **Gate**: quick
