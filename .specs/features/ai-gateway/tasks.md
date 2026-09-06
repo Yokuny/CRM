@@ -1278,9 +1278,13 @@ padrão de 2 tenants espelhados)
 **What**: Caso determinístico: mensagem de texto abre um processo do zero
 (`find_or_create_customer→open_process→set_process_fields`), via `runTurn` real
 (`MongoMemoryServer`, Anthropic/Whisper mockados como fakes determinísticos que sempre
-pedem a sequência certa de tools).
+pedem a sequência certa de tools). Estende `vitest.config.ts`: `include` do project
+`integration` ganha `evals/**/*.int.test.ts` (diretório novo, fora de `packages/`/`apps/`
+— sem esta task nenhum project coleta os arquivos de `evals/`, e o gate check passaria
+`passWithNoTests:true` sem rodar nada; gap encontrado pelo orquestrador antes do Execute,
+mesmo padrão do T25B/AD-030 da feature `crm-web-shell`).
 **Where**: `evals/cases/happyPath.int.test.ts`, `evals/runner/expectTool.ts` (helpers
-`expectTool`/`expectNoTool`)
+`expectTool`/`expectNoTool`), `vitest.config.ts` (modifica)
 **Depends on**: T24
 **Reuses**: Forma do exemplo em ADR-0013 (`expectTool`, `expectNoTool`)
 **Requirement**: AIG-39, AIG-43
@@ -1288,6 +1292,8 @@ pedem a sequência certa de tools).
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
+- [ ] `include` do project `integration` em `vitest.config.ts` contém
+      `evals/**/*.int.test.ts`
 - [ ] `expectTool('find_or_create_customer', {phone: ...})` passa
 - [ ] `expectTool('open_process', {...})` passa, na ordem certa
 - [ ] `expectNoTool('search_products')`/`expectNoTool('create_order')` passam (superfície
