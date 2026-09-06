@@ -328,12 +328,12 @@ templateParams}`, `.strict()` em cada variante — valida o corpo de
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Aceita `{text}` sozinho; aceita `{templateName,templateLanguage,templateParams}`
+- [x] Aceita `{text}` sozinho; aceita `{templateName,templateLanguage,templateParams}`
       sozinho; rejeita corpo vazio ou com os dois ao mesmo tempo
-- [ ] Rejeita `Tenant`/`tenantId`/`orgId`
-- [ ] Registrado em `schemaRegistry`
-- [ ] Gate check passes: `pnpm vitest run --project unit --project structural`
-- [ ] Test count: ≥ 5 tests pass
+- [x] Rejeita `Tenant`/`tenantId`/`orgId`
+- [x] Registrado em `schemaRegistry`
+- [x] Gate check passes: `pnpm vitest run --project unit --project structural`
+- [x] Test count: ≥ 5 tests pass
 
 **Tests**: unit
 **Gate**: quick

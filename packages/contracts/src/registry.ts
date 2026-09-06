@@ -11,6 +11,7 @@ import { idSchema } from './schemas/id.schema.js';
 import { inviteTokenParamSchema } from './schemas/inviteToken.schema.js';
 import { migrationActionSchema } from './schemas/migrationAction.schema.js';
 import { provisionTenantSchema } from './schemas/provisionTenant.schema.js';
+import { sendMessageSchema } from './schemas/sendMessage.schema.js';
 import { signinSchema } from './schemas/signin.schema.js';
 import { updateCustomerSchema } from './schemas/updateCustomer.schema.js';
 import { updateProcessStageSchema } from './schemas/updateProcessStage.schema.js';
@@ -46,6 +47,7 @@ export const schemaRegistry: ReadonlyArray<{ name: string; schema: ZodType }> = 
   { name: 'createCustomerSchema', schema: createCustomerSchema },
   { name: 'updateCustomerSchema', schema: updateCustomerSchema },
   { name: 'createProcessSchema', schema: createProcessSchema },
+  { name: 'sendMessageSchema', schema: sendMessageSchema },
   { name: 'updateProcessValuesSchema', schema: updateProcessValuesSchema },
   { name: 'updateProcessStageSchema', schema: updateProcessStageSchema },
 ];
