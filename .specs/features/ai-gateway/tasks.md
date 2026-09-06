@@ -223,14 +223,14 @@ quando aplicável)
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Índice único **sparse** em `wamid` — dois documentos sem `wamid` (`out` recém-criados)
+- [x] Índice único **sparse** em `wamid` — dois documentos sem `wamid` (`out` recém-criados)
       coexistem; dois documentos com o MESMO `wamid` rejeitam
-- [ ] Índice `{Tenant, Conversation, createdAt}` existe
-- [ ] Índice `{status, createdAt}` existe (suporte ao claim da outbox)
-- [ ] `direction:'in'` sem `status` persiste (status só é obrigatório para `'out'`, via
+- [x] Índice `{Tenant, Conversation, createdAt}` existe
+- [x] Índice `{status, createdAt}` existe (suporte ao claim da outbox)
+- [x] `direction:'in'` sem `status` persiste (status só é obrigatório para `'out'`, via
       validação condicional no schema, não em `required` fixo)
-- [ ] Gate check passes: `pnpm vitest run --project integration`
-- [ ] Test count: ≥ 6 tests pass
+- [x] Gate check passes: `pnpm vitest run --project integration`
+- [x] Test count: ≥ 6 tests pass
 
 **Tests**: integration
 **Gate**: full
