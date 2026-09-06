@@ -168,12 +168,12 @@ por tenant), `accessTokenEnc` embutido (`{ciphertext,iv,authTag}`, `_id:false`).
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Índice único em `phoneNumberId`; segunda criação com o mesmo valor rejeita (erro de
+- [x] Índice único em `phoneNumberId`; segunda criação com o mesmo valor rejeita (erro de
       duplicate key)
-- [ ] Índice único em `Tenant`; segundo `Channel` do mesmo tenant rejeita
-- [ ] `accessTokenEnc` persiste e recupera as 3 chaves (`ciphertext`/`iv`/`authTag`)
-- [ ] Gate check passes: `pnpm vitest run --project integration`
-- [ ] Test count: ≥ 5 tests pass
+- [x] Índice único em `Tenant`; segundo `Channel` do mesmo tenant rejeita
+- [x] `accessTokenEnc` persiste e recupera as 3 chaves (`ciphertext`/`iv`/`authTag`)
+- [x] Gate check passes: `pnpm vitest run --project integration`
+- [x] Test count: ≥ 5 tests pass
 
 **Tests**: integration
 **Gate**: full
