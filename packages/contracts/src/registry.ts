@@ -7,11 +7,15 @@ import { createFieldTemplateSchema } from './schemas/createFieldTemplate.schema.
 import { createInviteSchema } from './schemas/createInvite.schema.js';
 import { createProcessSchema } from './schemas/createProcess.schema.js';
 import { fieldDefSchema } from './schemas/fieldDef.schema.js';
+import { findOrCreateCustomerInputSchema } from './schemas/findOrCreateCustomerInput.schema.js';
+import { getProcessTemplateInputSchema } from './schemas/getProcessTemplateInput.schema.js';
 import { idSchema } from './schemas/id.schema.js';
 import { inviteTokenParamSchema } from './schemas/inviteToken.schema.js';
 import { migrationActionSchema } from './schemas/migrationAction.schema.js';
+import { openProcessInputSchema } from './schemas/openProcessInput.schema.js';
 import { provisionTenantSchema } from './schemas/provisionTenant.schema.js';
 import { sendMessageSchema } from './schemas/sendMessage.schema.js';
+import { setProcessFieldsInputSchema } from './schemas/setProcessFieldsInput.schema.js';
 import { signinSchema } from './schemas/signin.schema.js';
 import { updateCustomerSchema } from './schemas/updateCustomer.schema.js';
 import { updateProcessStageSchema } from './schemas/updateProcessStage.schema.js';
@@ -50,4 +54,8 @@ export const schemaRegistry: ReadonlyArray<{ name: string; schema: ZodType }> = 
   { name: 'sendMessageSchema', schema: sendMessageSchema },
   { name: 'updateProcessValuesSchema', schema: updateProcessValuesSchema },
   { name: 'updateProcessStageSchema', schema: updateProcessStageSchema },
+  { name: 'getProcessTemplateInputSchema', schema: getProcessTemplateInputSchema },
+  { name: 'findOrCreateCustomerInputSchema', schema: findOrCreateCustomerInputSchema },
+  { name: 'openProcessInputSchema', schema: openProcessInputSchema },
+  { name: 'setProcessFieldsInputSchema', schema: setProcessFieldsInputSchema },
 ];

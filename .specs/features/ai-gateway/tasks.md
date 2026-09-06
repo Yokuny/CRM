@@ -357,11 +357,11 @@ numa task só)
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Cada schema rejeita seu campo obrigatório ausente
-- [ ] Nenhum dos 4 aceita `tenant`/`Tenant`/`orgId`/`channelId`/`conversationId` (`.strict()`)
-- [ ] Os 4 registrados em `schemaRegistry`
-- [ ] Gate check passes: `pnpm vitest run --project unit --project structural`
-- [ ] Test count: ≥ 10 tests pass (4 arquivos)
+- [x] Cada schema rejeita seu campo obrigatório ausente
+- [x] Nenhum dos 4 aceita `tenant`/`Tenant`/`orgId`/`channelId`/`conversationId` (`.strict()`)
+- [x] Os 4 registrados em `schemaRegistry`
+- [x] Gate check passes: `pnpm vitest run --project unit --project structural`
+- [x] Test count: ≥ 10 tests pass (4 arquivos)
 
 **Tests**: unit
 **Gate**: quick
