@@ -386,11 +386,11 @@ vazio. Estende `vitest.config.ts`: adiciona `packages/ai-kit/src/**/*.int.test.t
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `pnpm install` resolve o novo workspace sem erro
-- [ ] `pnpm -r exec tsc --noEmit` passa (package vazio, mas compilável)
-- [ ] Um arquivo `*.int.test.ts` fixture dentro de `packages/ai-kit/src/` é coletado pelo
+- [x] `pnpm install` resolve o novo workspace sem erro
+- [x] `pnpm -r exec tsc --noEmit` passa (package vazio, mas compilável)
+- [x] Um arquivo `*.int.test.ts` fixture dentro de `packages/ai-kit/src/` é coletado pelo
       project `integration` (prova de que o glob novo funciona)
-- [ ] Gate check passes: `pnpm -r exec tsc --noEmit && pnpm vitest run --project integration`
+- [x] Gate check passes: `pnpm -r exec tsc --noEmit && pnpm vitest run --project integration`
 
 **Tests**: none (config/entidade)
 **Gate**: build

@@ -47,6 +47,7 @@ export default defineConfig({
           name: 'integration',
           include: [
             'packages/db/src/**/*.int.test.ts',
+            'packages/ai-kit/src/**/*.int.test.ts',
             'apps/crm-api/src/**/*.int.test.ts',
             'apps/crm-api/tests/**/*.int.test.ts',
           ],
