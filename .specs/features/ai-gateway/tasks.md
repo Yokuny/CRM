@@ -250,11 +250,11 @@ quando aplicável)
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Índice único em `Conversation` — segunda criação para a mesma `Conversation` rejeita
-- [ ] `rawHistory` persiste um array de `{role, content}` arbitrário (`Mixed`) sem perder
+- [x] Índice único em `Conversation` — segunda criação para a mesma `Conversation` rejeita
+- [x] `rawHistory` persiste um array de `{role, content}` arbitrário (`Mixed`) sem perder
       estrutura aninhada
-- [ ] Gate check passes: `pnpm vitest run --project integration`
-- [ ] Test count: ≥ 4 tests pass
+- [x] Gate check passes: `pnpm vitest run --project integration`
+- [x] Test count: ≥ 4 tests pass
 
 **Tests**: integration
 **Gate**: full
