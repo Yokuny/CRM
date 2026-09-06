@@ -25,10 +25,9 @@ export const setProcessFields = async (
   const result = validate(version.fields, input.values);
   if (!result.valid) return { error: 'Valores inválidos', fieldErrors: result.errors };
 
-  await Process.updateOne(
-    tenantScoped({ Tenant: ctx.tenantId, _id: input.processId }),
-    { $set: { values: input.values } },
-  );
+  await Process.updateOne(tenantScoped({ Tenant: ctx.tenantId, _id: input.processId }), {
+    $set: { values: input.values },
+  });
 
   return { ok: true };
 };

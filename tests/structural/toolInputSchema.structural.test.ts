@@ -1,5 +1,5 @@
-import { TENANT_FORBIDDEN_KEYS } from '@crm/contracts';
 import { TOOL_DEFINITIONS } from '@crm/ai-kit';
+import { TENANT_FORBIDDEN_KEYS } from '@crm/contracts';
 import { describe, expect, it } from 'vitest';
 
 // AD-010: nenhum input_schema de tool pode carregar tenant/canal/conversa —
@@ -35,12 +35,9 @@ describe('Anel A tool input_schema structural guard (AD-010, AIG-14/40)', () => 
     expect(TOOL_DEFINITIONS.map((tool) => tool.name)).toEqual(EXPECTED_TOOL_NAMES);
   });
 
-  it.each(TOOL_DEFINITIONS)(
-    '$name input_schema contains no forbidden tenant/channel/conversation key',
-    (tool) => {
-      const offending = findForbiddenKeys(tool.input_schema.properties);
+  it.each(TOOL_DEFINITIONS)('$name input_schema contains no forbidden tenant/channel/conversation key', (tool) => {
+    const offending = findForbiddenKeys(tool.input_schema.properties);
 
-      expect(offending).toEqual([]);
-    },
-  );
+    expect(offending).toEqual([]);
+  });
 });

@@ -22,10 +22,7 @@ const V2_FIELDS: FieldDef[] = [
   { fieldId: 'urgente', label: 'Urgente', type: 'boolean', required: true },
 ];
 
-const seedTemplate = async (
-  tenant: string,
-  overrides: { currentVersion?: number; fields?: FieldDef[] } = {},
-) =>
+const seedTemplate = async (tenant: string, overrides: { currentVersion?: number; fields?: FieldDef[] } = {}) =>
   FieldTemplate.create({
     Tenant: tenant,
     targetType: 'process',
@@ -45,7 +42,12 @@ const seedTemplate = async (
     return template;
   });
 
-const seedProcess = async (tenant: string, templateId: string, templateVersion: number, values: Record<string, unknown>) =>
+const seedProcess = async (
+  tenant: string,
+  templateId: string,
+  templateVersion: number,
+  values: Record<string, unknown>,
+) =>
   Process.create({
     Tenant: tenant,
     customer: randomId(),
@@ -75,7 +77,10 @@ describe('setProcessFields tool (AIG-19)', () => {
     const template = await seedTemplate(tenant);
     const process = await seedProcess(tenant, template._id.toString(), 1, { motivo: 'antigo', extra: 'descartado' });
 
-    const result = await setProcessFields({ processId: process._id.toString(), values: { motivo: 'novo motivo' } }, baseCtx(tenant));
+    const result = await setProcessFields(
+      { processId: process._id.toString(), values: { motivo: 'novo motivo' } },
+      baseCtx(tenant),
+    );
 
     expect(result).toEqual({ ok: true });
     const updated = await Process.findById(process._id).lean();
@@ -99,7 +104,10 @@ describe('setProcessFields tool (AIG-19)', () => {
     const template = await seedTemplate(tenant);
     const process = await seedProcess(tenant, template._id.toString(), 1, { motivo: 'original' });
 
-    const result = await setProcessFields({ processId: process._id.toString(), values: { motivo: 123 } }, baseCtx(tenant));
+    const result = await setProcessFields(
+      { processId: process._id.toString(), values: { motivo: 123 } },
+      baseCtx(tenant),
+    );
 
     expect(result).toEqual({ error: expect.any(String), fieldErrors: { motivo: expect.any(Array) } });
     const unchanged = await Process.findById(process._id).lean();
@@ -123,7 +131,10 @@ describe('setProcessFields tool (AIG-19)', () => {
     await FieldTemplate.updateOne({ _id: template._id }, { $set: { currentVersion: 2 } });
 
     // Válido contra v1 (sem `urgente`); seria inválido contra v2 (currentVersion).
-    const result = await setProcessFields({ processId: process._id.toString(), values: { motivo: 'consulta' } }, baseCtx(tenant));
+    const result = await setProcessFields(
+      { processId: process._id.toString(), values: { motivo: 'consulta' } },
+      baseCtx(tenant),
+    );
 
     expect(result).toEqual({ ok: true });
   });

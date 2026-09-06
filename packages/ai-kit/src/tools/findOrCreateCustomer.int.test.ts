@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { connect, Customer, disconnect, FieldTemplate } from '@crm/db';
+import { Customer, connect, disconnect, FieldTemplate } from '@crm/db';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { findOrCreateCustomer } from './findOrCreateCustomer.js';
 import type { ToolContext } from './toolContext.js';
@@ -62,7 +62,11 @@ describe('findOrCreateCustomer tool (AIG-16)', () => {
     // updatedAt explicitamente, com `timestamps:false` para o Mongoose não
     // sobrescrever o valor com "agora" no próprio update.
     const now = Date.now();
-    await Customer.updateOne({ _id: older._id }, { $set: { updatedAt: new Date(now - 60_000) } }, { timestamps: false });
+    await Customer.updateOne(
+      { _id: older._id },
+      { $set: { updatedAt: new Date(now - 60_000) } },
+      { timestamps: false },
+    );
     await Customer.updateOne({ _id: mostRecent._id }, { $set: { updatedAt: new Date(now) } }, { timestamps: false });
 
     const result = await findOrCreateCustomer({ phone: '11900000000' }, baseCtx(tenant));

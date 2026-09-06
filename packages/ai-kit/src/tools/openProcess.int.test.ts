@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { connect, Customer, disconnect, FieldTemplate, FieldTemplateVersion, Process } from '@crm/db';
+import { Customer, connect, disconnect, FieldTemplate, FieldTemplateVersion, Process } from '@crm/db';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { openProcess } from './openProcess.js';
 import type { ToolContext } from './toolContext.js';
@@ -76,7 +76,10 @@ describe('openProcess tool (AIG-17/18)', () => {
     const template = await seedProcessTemplate(tenant);
     const customer = await seedCustomer(tenant);
 
-    const result = await openProcess({ templateKey: 'orcamento', customerId: customer._id.toString() }, baseCtx(tenant));
+    const result = await openProcess(
+      { templateKey: 'orcamento', customerId: customer._id.toString() },
+      baseCtx(tenant),
+    );
 
     expect(result).toEqual({ processId: expect.any(String), stage: 'novo' });
     const created = await Process.findById((result as { processId: string }).processId).lean();
@@ -119,7 +122,10 @@ describe('openProcess tool (AIG-17/18)', () => {
     const tenant = randomId();
     const customer = await seedCustomer(tenant);
 
-    const result = await openProcess({ templateKey: 'inexistente', customerId: customer._id.toString() }, baseCtx(tenant));
+    const result = await openProcess(
+      { templateKey: 'inexistente', customerId: customer._id.toString() },
+      baseCtx(tenant),
+    );
 
     expect(result).toEqual({ error: expect.any(String) });
     expect(await Process.countDocuments({})).toBe(0);
@@ -130,7 +136,10 @@ describe('openProcess tool (AIG-17/18)', () => {
     await seedProcessTemplate(tenant, { archived: true });
     const customer = await seedCustomer(tenant);
 
-    const result = await openProcess({ templateKey: 'orcamento', customerId: customer._id.toString() }, baseCtx(tenant));
+    const result = await openProcess(
+      { templateKey: 'orcamento', customerId: customer._id.toString() },
+      baseCtx(tenant),
+    );
 
     expect(result).toEqual({ error: expect.any(String) });
     expect(await Process.countDocuments({})).toBe(0);
