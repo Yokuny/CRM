@@ -1028,11 +1028,11 @@ de 60s → `status:'queued'`; nunca mexe em documento com `wamid` já gravado.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `mode:'human'` com `lastActivityAt` > 30min → `mode:'bot'`, `assignee:null`
-- [ ] `mode:'human'` com `lastActivityAt` < 30min → não mexe
-- [ ] `mode:'bot'` nunca é tocado pela varredura
-- [ ] Gate check passes: `pnpm vitest run --project integration`
-- [ ] Test count: ≥ 4 tests pass
+- [x] `mode:'human'` com `lastActivityAt` > 30min → `mode:'bot'`, `assignee:null`
+- [x] `mode:'human'` com `lastActivityAt` < 30min → não mexe
+- [x] `mode:'bot'` nunca é tocado pela varredura
+- [x] Gate check passes: `pnpm vitest run --project integration`
+- [x] Test count: ≥ 4 tests pass
 
 **Tests**: integration
 **Gate**: full
