@@ -94,9 +94,10 @@ describe('createMetaClient (AIG-28/45 — Send/Media API da Meta Cloud API)', ()
     await client.sendText('5511999999999', 'a');
     await client.sendText('5511999999999', 'b');
 
-    const authHeaders = fetchMock.mock.calls.map(
-      ([, init]: [string, RequestInit]) => (init.headers as Record<string, string>).Authorization,
-    );
+    const authHeaders = fetchMock.mock.calls.map((call) => {
+      const [, init] = call as [string, RequestInit];
+      return (init.headers as Record<string, string>).Authorization;
+    });
     expect(authHeaders).toEqual([`Bearer ${RAW_TOKEN}`, `Bearer ${RAW_TOKEN}`]);
   });
 });
