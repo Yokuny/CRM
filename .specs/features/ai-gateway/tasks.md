@@ -750,15 +750,15 @@ atualiza `AiSession` (`rawHistory` + dispara resumo rolante ao cruzar o limiar d
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `Message{direction:'out', status:'queued'}` criada com o texto pós-`guardOutput`
-- [ ] `AiSession.rawHistory` ganha o turno; abaixo de 20 mensagens NUNCA chama o
+- [x] `Message{direction:'out', status:'queued'}` criada com o texto pós-`guardOutput`
+- [x] `AiSession.rawHistory` ganha o turno; abaixo de 20 mensagens NUNCA chama o
       `anthropicClient` de resumo
-- [ ] Ao cruzar o limiar (20+10), chama o `anthropicClient` (mockado) para gerar/atualizar
+- [x] Ao cruzar o limiar (20+10), chama o `anthropicClient` (mockado) para gerar/atualizar
       `summary` e mantém só as 20 mais recentes em `rawHistory`
-- [ ] `turnLock` é liberado (`null`) ao final — uma segunda `ingest` da mesma Conversation
+- [x] `turnLock` é liberado (`null`) ao final — uma segunda `ingest` da mesma Conversation
       consegue reivindicar logo em seguida
-- [ ] Gate check passes: `pnpm vitest run --project integration`
-- [ ] Test count: ≥ 6 tests pass
+- [x] Gate check passes: `pnpm vitest run --project integration`
+- [x] Test count: ≥ 6 tests pass
 
 **Tests**: integration
 **Gate**: full
