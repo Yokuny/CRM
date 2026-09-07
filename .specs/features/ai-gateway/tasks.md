@@ -863,12 +863,12 @@ nomeando a variável)
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Falta de qualquer uma das 5 vars nomeia a variável ausente no erro (mesmo padrão
+- [x] Falta de qualquer uma das 5 vars nomeia a variável ausente no erro (mesmo padrão
       `parseEnv`)
-- [ ] `pnpm -r exec tsc --noEmit` passa
-- [ ] Um `*.int.test.ts` fixture dentro de `apps/ai-gateway/src/` é coletado pelo project
+- [x] `pnpm -r exec tsc --noEmit` passa
+- [x] Um `*.int.test.ts` fixture dentro de `apps/ai-gateway/src/` é coletado pelo project
       `integration` (prova do glob novo)
-- [ ] Gate check passes: `pnpm -r exec tsc --noEmit && pnpm vitest run`
+- [x] Gate check passes: `pnpm -r exec tsc --noEmit && pnpm vitest run`
 
 **Tests**: none (config/entidade)
 **Gate**: build
