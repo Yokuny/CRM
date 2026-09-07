@@ -1,6 +1,7 @@
 export * from './contextBuild.js';
 export * from './guardInput.js';
 export * from './ingest.js';
+export * from './loop.js';
 export * from './providers/anthropicClient.js';
 export * from './providers/whisperClient.js';
 export * from './tools/findOrCreateCustomer.js';

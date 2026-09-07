@@ -694,16 +694,16 @@ loop `for` com `MAX_TOOL_ITERATIONS`, mesma forma de `tool_result`)
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `stop_reason !== 'tool_use'` extrai o texto final e para
-- [ ] `tool_use` chama o executor certo com o `input` do modelo + `ctx` do servidor —
+- [x] `stop_reason !== 'tool_use'` extrai o texto final e para
+- [x] `tool_use` chama o executor certo com o `input` do modelo + `ctx` do servidor —
       nunca um `tenantId` vindo do `input`
-- [ ] Executor que devolve `{error}` vira `tool_result` com `is_error:true`
-- [ ] 5ª iteração ainda pedindo tool → encerra com o texto parcial do último turno (ou
+- [x] Executor que devolve `{error}` vira `tool_result` com `is_error:true`
+- [x] 5ª iteração ainda pedindo tool → encerra com o texto parcial do último turno (ou
       fallback fixo se não houver texto)
-- [ ] Anthropic client (mockado) lança erro → `runLoop` propaga (T24 decide o fallback de
+- [x] Anthropic client (mockado) lança erro → `runLoop` propaga (T24 decide o fallback de
       200, não esta task)
-- [ ] Gate check passes: `pnpm vitest run --project integration`
-- [ ] Test count: ≥ 6 tests pass
+- [x] Gate check passes: `pnpm vitest run --project integration`
+- [x] Test count: ≥ 6 tests pass
 
 **Tests**: integration
 **Gate**: full
