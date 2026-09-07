@@ -18,21 +18,21 @@ determinístico que trava esse comportamento no CI.
 
 ## Goals
 
-- [ ] `packages/ai-kit`: pipeline `ingest → guard.input → context.build → loop → guard.output
+- [x] `packages/ai-kit`: pipeline `ingest → guard.input → context.build → loop → guard.output
       → persist → dispatch` completo, com `claude-haiku-4-5` (AD-008), `ToolContext`
       server-side e `TenantScopedRepo` (AD-010)
-- [ ] Superfície de tools real: `get_process_template`, `find_or_create_customer`,
+- [x] Superfície de tools real: `get_process_template`, `find_or_create_customer`,
       `open_process`, `set_process_fields` (Anel A) — as outras 6 tools do ADR-0004/0009
       e todo o Anel B ficam fora desta rodada (ver Out of Scope)
-- [ ] `apps/ai-gateway`: webhook Meta com verificação de assinatura, dedup por `wamid`,
+- [x] `apps/ai-gateway`: webhook Meta com verificação de assinatura, dedup por `wamid`,
       resolução `phone_number_id → Channel → Tenant`, consumidor de outbox com claim
       atômico e janela de 24h (ADR-0007)
-- [ ] Models novos em `packages/db`: `Channel`, `Conversation`, `Message`, `AiSession`
-- [ ] `crm-api`: 3 endpoints headless — provisionar `Channel` (admin), takeover de
+- [x] Models novos em `packages/db`: `Channel`, `Conversation`, `Message`, `AiSession`
+- [x] `crm-api`: 3 endpoints headless — provisionar `Channel` (admin), takeover de
       `Conversation`, enviar mensagem manual (operador)
-- [ ] Golden set determinístico (`evals/cases/*.yaml`) + teste estrutural de `input_schema`
+- [x] Golden set determinístico (`evals/cases/*.yaml`) + teste estrutural de `input_schema`
       (ADR-0010) provando Anel A, isolamento de tenant e dedup de `wamid`
-- [ ] `pnpm check` limpo
+- [x] `pnpm check` limpo
 
 ## Out of Scope
 
@@ -423,7 +423,7 @@ conteúdo transcrito; simular falha do Whisper (mock) e confirmar fallback fixo 
 | AIG-40 | P1: golden set — teste estrutural de `input_schema` | Execute | ✅ Verified |
 | AIG-41 | P1: golden set — dois tenants espelhados sem cruzamento | Execute | ✅ Verified (iteração 2 — `fe8ccef`, teste dedicado de `AiSession` nas duas direções) |
 | AIG-42 | P1: golden set — dedup de `wamid` provado via harness real | Execute | ✅ Verified |
-| AIG-43 | P1: golden set — gate 100% determinístico no CI | Execute | ❌ Needs Fix (iteração 2 — CI existe agora, AD-031/`c2e3468`, mas é não-funcional: `pnpm biome check .` sai com código 1 de forma determinística por causa do baseline pré-existente de `.specs/lessons.json` nunca endereçado, então o workflow falha em toda execução) |
+| AIG-43 | P1: golden set — gate 100% determinístico no CI | Execute | ✅ Verified (iteração 3 — override em `biome.json` para `.specs/lessons.json` corrige o gate, `4805e4b`; `pnpm biome check .` confirmado saindo 0 de forma independente; Build gate completo rodado 2x, 739/739 verde na 2ª vez após 1 flake pré-existente conhecido reproduzir como pass isolado) |
 | AIG-44 | Dimensão: observabilidade (log estruturado em rejeição/erro/dedup) | Execute | ✅ Verified (iteração 2 — `32d6c81`, os 5 eventos exigidos implementados e testados via spy de `console.log` + payload parseado) |
 | AIG-45 | P2: áudio — baixa e transcreve (Whisper), sem armazenar binário | Execute | ✅ Verified |
 | AIG-46 | P2: áudio — transcrição vira turno de texto normal | Execute | ✅ Verified |
@@ -440,17 +440,17 @@ arquitetura, Tasks quebra em passos atômicos.
 
 ## Success Criteria
 
-- [ ] `pnpm check` limpo
-- [ ] Golden set 100% verde no CI, incluindo o teste estrutural de `input_schema`
+- [x] `pnpm check` limpo
+- [x] Golden set 100% verde no CI, incluindo o teste estrutural de `input_schema`
       (nenhuma das 4 tools expõe campo de tenant)
-- [ ] Dois tenants espelhados com `Channel`/`Customer`/`Conversation` de mesmo formato:
+- [x] Dois tenants espelhados com `Channel`/`Customer`/`Conversation` de mesmo formato:
       nenhuma tool, query ou endpoint cruza dado (estende o padrão FND-09/CORE-05)
-- [ ] Mesmo `wamid` processado duas vezes gera exatamente 1 `Message`, provado pelo
+- [x] Mesmo `wamid` processado duas vezes gera exatamente 1 `Message`, provado pelo
       harness real (não só teste unitário)
-- [ ] Dois consumidores de outbox concorrentes nunca enviam a mesma mensagem duas vezes
+- [x] Dois consumidores de outbox concorrentes nunca enviam a mesma mensagem duas vezes
       (claim atômico provado sob concorrência real, não só sequencial)
-- [ ] `Conversation` em `mode:'human'` nunca dispara chamada ao modelo, provado por teste
-- [ ] Texto livre fora da janela de 24h nunca chega a chamar a Meta (bloqueado antes do
+- [x] `Conversation` em `mode:'human'` nunca dispara chamada ao modelo, provado por teste
+- [x] Texto livre fora da janela de 24h nunca chega a chamar a Meta (bloqueado antes do
       envio, tanto vindo do bot quanto de operador)
-- [ ] Nenhum model Mongoose novo declarado fora de `packages/db` (mesma regra das
+- [x] Nenhum model Mongoose novo declarado fora de `packages/db` (mesma regra das
       features anteriores)

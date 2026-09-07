@@ -1,10 +1,50 @@
 # ai-gateway Validation
 
-**Date**: 2026-09-07 (iteration 1) / 2026-09-07 (iteration 2)
+**Date**: 2026-09-07 (iterations 1, 2, 3)
 **Spec**: `.specs/features/ai-gateway/spec.md`
 **Diff range (iteration 1)**: `d6df6da..9fefced` (branch `feature/ai-gateway`, merge-base confirmed via `git merge-base main feature/ai-gateway`)
 **Diff range (iteration 2)**: `9fefced..8d8c3c1` (fix batch: `c2e3468`..`fe8ccef`)
-**Verifier**: independent sub-agent (author ≠ verifier), fresh each iteration — evidence re-derived from source and test files directly, discrimination sensor run personally by the Verifier in both iterations.
+**Diff range (iteration 3)**: `8d8c3c1..0a449c4` (`4805e4b` biome.json fix + `0a449c4` STATE.md note)
+**Verifier**: independent sub-agent (author ≠ verifier), fresh each iteration — evidence re-derived from source and test files directly, discrimination sensor run personally by the Verifier in iterations 1 and 2 (iteration 3 is a narrowly-scoped config-only re-check, no sensor needed — see below).
+
+---
+
+## Iteration 3 — Final Re-Verification (2026-09-07) — ✅ PASS
+
+**Scope**: confirm the orchestrator's direct fix (not a fix-implementer sub-agent this time) for the single gap remaining after iteration 2 — AIG-43's CI workflow being guaranteed to fail on every run due to `.specs/lessons.json`'s unaddressed pre-existing biome-format issue.
+
+**Repo state confirmed**: `git log --oneline -1` → `0a449c4`, exactly as expected. `git diff --stat 3477b4c..HEAD` (iteration 2's report commit → now) touches exactly 2 files — `biome.json` (+6 lines) and `.specs/STATE.md` (+3/-1 lines) — no application code, no test file touched. This is a pure configuration fix; no discrimination sensor is warranted (there is no behavioral code path to fault-inject — the fix is a lint-scope exclusion, and its correctness is directly, deterministically observable by running the tool itself, which I did below).
+
+**Own read of the fix** (`4805e4b`): `biome.json`'s `overrides` array gains a third entry —
+```json
+{
+  "includes": [".specs/lessons.json"],
+  "linter": { "enabled": false },
+  "formatter": { "enabled": false },
+  "assist": { "enabled": false }
+}
+```
+— structurally identical to the pre-existing `**/*.gen.ts` override immediately above it (same 3 keys, same all-disabled shape). This is the correct, minimal fix: it exempts the one machine-owned, `scripts/lessons.py`-rendered file from formatting/linting entirely, rather than reformatting the file (which would fight the lessons script's own next write) or scoping the CI workflow's biome invocation (which would silently diverge from the `pnpm run check` command every other feature already relies on as identical local/CI behavior, reopening exactly the kind of "does CI actually run what a human runs locally" question AD-031 was meant to close).
+
+**Independently re-ran `pnpm biome check .` directly** (not trusting the commit message): 
+```
+Checked 345 files in 94ms. No fixes applied.
+Found 9 warnings.
+```
+**Exit code 0**, confirmed via `$?`. Zero errors — the `.specs/lessons.json` formatting error from iterations 1 and 2 is gone. The remaining 9 warnings are the same pre-existing, accepted `noExplicitAny` baseline from `crm-web-shell` (`apps/web/src/routes/_private/customers/*`), which do not affect biome's exit code (only errors do) and were never in this feature's scope.
+
+**Ran the full Build gate twice, foreground, exactly as specified**: `pnpm -r exec tsc --noEmit && pnpm biome check . && pnpm vitest run`.
+- **Run 1**: `tsc` clean, `biome check .` clean (0 errors, 9 warnings, matches above), `vitest run` → **738/739 passed, 1 failed**: `apps/crm-api/src/routers/customer.router.e2e.test.ts` > "clamps page/limit to the configured bounds..." (`TypeError: Cannot read properties of undefined (reading 'items')` — the response body was malformed, consistent with cross-test data/connection contention on the shared `MongoMemoryServer`). This file belongs to `crm-core` (feature 3), is untouched by `ai-gateway`'s diff, and is not one of the files any of this feature's 48 tasks or 3 verification iterations ever modified.
+- **Isolated re-run** of just that file (`pnpm vitest run --project e2e apps/crm-api/src/routers/customer.router.e2e.test.ts`): **26/26 passed**, clean, immediately.
+- **Run 2** (full gate again, foreground, per the coordinator's instruction to confirm before concluding): `tsc` clean, `biome check .` clean, `vitest run` → **739/739 passed, 0 failed, 117 files**.
+
+**Conclusion**: Run 1's single failure was the documented, pre-existing `MongoMemoryServer`-sharing test-infra flake (`vitest.config.ts`'s own comments; also just re-confirmed in `.specs/STATE.md`'s new AD-031 follow-up note) — not a regression from this fix, not a new gap, and not connected to `ai-gateway`'s own diff surface at all (different app, different feature, a file this Verifier has never had reason to touch across all 3 iterations). It reproduced as a clean, immediate pass both in isolation and on a full-suite re-run, exactly the confirmation protocol this task and the project's own accepted-flake criteria call for.
+
+**AIG-43 traceability**: now genuinely, cleanly ✅ **Verified** — the CI pipeline exists (AD-031), runs the exact same Build gate every feature already uses (no divergent command), and that gate command now deterministically exits 0 on the current tree (net of the same pre-existing, documented, non-blocking test-infra flake every prior feature's Verifier has already accepted under the same criteria — confirmed by a passing immediate re-run, both isolated and full-suite).
+
+This closes the last outstanding item from iteration 2. **All 7 of iteration 1's original real gaps are now genuinely fixed and independently re-verified across 3 iterations.** The 4 spec-precision gaps (AIG-10, AIG-29, AIG-30, AIG-33) remain exactly what they were from iteration 1 — spec.md's own unconfirmed numeric defaults, not implementation failures, not blocking.
+
+**No new lesson distilled this iteration**: no new grounded signal (no surviving mutant, no spec-precision gap, no failed/uncovered AC, no new `SPEC_DEVIATION`) — this was a clean confirmation of an already-diagnosed, already-lessoned (L-023) fix. Per `lessons.md`'s own rule, a clean re-verify with no new signal writes nothing.
 
 ---
 
