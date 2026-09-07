@@ -1180,16 +1180,16 @@ claro.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `takeover` muda `mode` para `'human'` só via a própria query (`{_id,Tenant}`), nunca
+- [x] `takeover` muda `mode` para `'human'` só via a própria query (`{_id,Tenant}`), nunca
       um `if` fora dela
-- [ ] `release` muda `mode` para `'bot'`, limpa `assignee`
-- [ ] `createOutboundMessage` com `text` e `Conversation` fora da janela de 24h
+- [x] `release` muda `mode` para `'bot'`, limpa `assignee`
+- [x] `createOutboundMessage` com `text` e `Conversation` fora da janela de 24h
       (`windowExpiresAt` no passado) rejeita ANTES de inserir (erro tipado, controller
       decide o código HTTP)
-- [ ] `createOutboundMessage` com `templateName` sempre aceita, dentro ou fora da janela
-- [ ] `Conversation` de outro tenant nunca é encontrada (`{_id,Tenant}` no filtro)
-- [ ] Gate check passes: `pnpm vitest run --project integration`
-- [ ] Test count: ≥ 7 tests pass
+- [x] `createOutboundMessage` com `templateName` sempre aceita, dentro ou fora da janela
+- [x] `Conversation` de outro tenant nunca é encontrada (`{_id,Tenant}` no filtro)
+- [x] Gate check passes: `pnpm vitest run --project integration`
+- [x] Test count: ≥ 7 tests pass
 
 **Tests**: integration
 **Gate**: full
