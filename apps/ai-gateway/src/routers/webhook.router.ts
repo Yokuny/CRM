@@ -1,7 +1,7 @@
 import type { AnthropicClient } from '@crm/ai-kit';
 import { runTurn } from '@crm/ai-kit';
-import type { MessageType } from '@crm/db';
 import { badRespObj, respObj } from '@crm/contracts';
+import type { MessageType } from '@crm/db';
 import express, { type Request, type Response, Router } from 'express';
 import { createWebhookSignatureMiddleware, type RawBodyRequest } from '../middlewares/webhookSignature.middleware.js';
 
@@ -58,7 +58,10 @@ const handleVerify = (verifyToken: string) => {
     const challenge = req.query['hub.challenge'];
 
     if (mode === 'subscribe' && token === verifyToken) {
-      res.status(200).type('text/plain').send(typeof challenge === 'string' ? challenge : '');
+      res
+        .status(200)
+        .type('text/plain')
+        .send(typeof challenge === 'string' ? challenge : '');
       return;
     }
 
@@ -104,7 +107,10 @@ const handleIncoming = (deps: WebhookRouterDeps) => {
       // nunca deixando o webhook responder algo != 200 (design.md Error
       // Handling Strategy).
       console.error(
-        JSON.stringify({ event: 'webhook.processing_error', message: err instanceof Error ? err.message : String(err) }),
+        JSON.stringify({
+          event: 'webhook.processing_error',
+          message: err instanceof Error ? err.message : String(err),
+        }),
       );
     }
 

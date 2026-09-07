@@ -31,7 +31,12 @@ describe('createMetaClient (AIG-28/45 — Send/Media API da Meta Cloud API)', ()
     expect(init.method).toBe('POST');
     expect((init.headers as Record<string, string>).Authorization).toBe(`Bearer ${RAW_TOKEN}`);
     const body = JSON.parse(init.body as string);
-    expect(body).toEqual({ messaging_product: 'whatsapp', to: '5511999999999', type: 'text', text: { body: 'Olá, cliente!' } });
+    expect(body).toEqual({
+      messaging_product: 'whatsapp',
+      to: '5511999999999',
+      type: 'text',
+      text: { body: 'Olá, cliente!' },
+    });
   });
 
   it('sendTemplate calls the same endpoint with a template body carrying name/language/params', async () => {
