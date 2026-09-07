@@ -1079,14 +1079,14 @@ de 60s → `status:'queued'`; nunca mexe em documento com `wamid` já gravado.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `createChannel` persiste com `Tenant` do parâmetro (nunca aceita um segundo `Tenant`
+- [x] `createChannel` persiste com `Tenant` do parâmetro (nunca aceita um segundo `Tenant`
       dentro de `data`)
-- [ ] `phoneNumberId` duplicado lança erro de duplicate key (propagado, controller trata)
-- [ ] `findByPhoneNumberId` devolve o `Channel` certo cross-tenant (usado pelo webhook,
+- [x] `phoneNumberId` duplicado lança erro de duplicate key (propagado, controller trata)
+- [x] `findByPhoneNumberId` devolve o `Channel` certo cross-tenant (usado pelo webhook,
       T28 — não filtra por `Tenant` porque É o resolvedor de tenant)
-- [ ] `findByTenant` nunca devolve `Channel` de outro tenant
-- [ ] Gate check passes: `pnpm vitest run --project integration`
-- [ ] Test count: ≥ 5 tests pass
+- [x] `findByTenant` nunca devolve `Channel` de outro tenant
+- [x] Gate check passes: `pnpm vitest run --project integration`
+- [x] Test count: ≥ 5 tests pass
 
 **Tests**: integration
 **Gate**: full
