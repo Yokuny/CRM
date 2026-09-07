@@ -26,11 +26,7 @@ export const releaseConversation = async (id: string, tenantId: string): Promise
 
 // Traduz os erros tipados do repository (T37) para o código HTTP certo — o
 // repository nunca decide isso sozinho.
-export const sendManualMessage = async (
-  id: string,
-  tenantId: string,
-  dto: SendMessage,
-): Promise<MessageRecord> => {
+export const sendManualMessage = async (id: string, tenantId: string, dto: SendMessage): Promise<MessageRecord> => {
   try {
     return await conversationRepository.createOutboundMessage(id, tenantId, dto);
   } catch (e) {

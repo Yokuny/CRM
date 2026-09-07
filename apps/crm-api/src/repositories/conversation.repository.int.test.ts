@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { Channel, Conversation, connect, Customer, disconnect, Message } from '@crm/db';
+import { Channel, Conversation, Customer, connect, disconnect, Message } from '@crm/db';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import * as conversationRepository from './conversation.repository.js';
 
@@ -7,10 +7,7 @@ import * as conversationRepository from './conversation.repository.js';
 // mongoose) — mesmo padrão de customer.repository.int.test.ts.
 const randomId = (): string => crypto.randomBytes(12).toString('hex');
 
-const seedConversation = async (
-  tenantId: string,
-  overrides: Partial<Record<string, unknown>> = {},
-) => {
+const seedConversation = async (tenantId: string, overrides: Partial<Record<string, unknown>> = {}) => {
   const channel = await Channel.create({
     Tenant: tenantId,
     phoneNumberId: randomId(),
@@ -44,7 +41,12 @@ describe('conversation.repository', () => {
   });
 
   afterEach(async () => {
-    await Promise.all([Conversation.deleteMany({}), Message.deleteMany({}), Channel.deleteMany({}), Customer.deleteMany({})]);
+    await Promise.all([
+      Conversation.deleteMany({}),
+      Message.deleteMany({}),
+      Channel.deleteMany({}),
+      Customer.deleteMany({}),
+    ]);
   });
 
   afterAll(async () => {

@@ -89,9 +89,7 @@ export const createOutboundMessage = async (
   payload: OutboundMessagePayload,
 ): Promise<MessageRecord> =>
   withDbTiming('conversation.createOutboundMessage', async () => {
-    const conversation = await Conversation.findOne(
-      tenantScoped({ _id: conversationId, Tenant: tenantId }),
-    ).lean();
+    const conversation = await Conversation.findOne(tenantScoped({ _id: conversationId, Tenant: tenantId })).lean();
     if (!conversation) throw new ConversationNotFoundError();
 
     const isFreeText = 'text' in payload;
