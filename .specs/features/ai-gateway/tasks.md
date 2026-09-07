@@ -973,15 +973,15 @@ também respondem 200, sem processar).
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] 2 consumidores concorrentes sobre a mesma outbox nunca reivindicam a mesma mensagem
+- [x] 2 consumidores concorrentes sobre a mesma outbox nunca reivindicam a mesma mensagem
       (teste com `Promise.all` de 2 chamadas simultâneas)
-- [ ] `Conversation` fora da janela de 24h + mensagem sem `templateName` → `status:'failed'`
+- [x] `Conversation` fora da janela de 24h + mensagem sem `templateName` → `status:'failed'`
       sem chamar `metaClient`
-- [ ] `metaClient` mockado falha 2x e sucede na 3ª → `sent` com `wamid` gravado
-- [ ] `metaClient` mockado falha 3x → `status:'failed'`, `error` preenchido
-- [ ] `wamid` é gravado ANTES do `$set` de `status:'sent'` (ordem provada por spy)
-- [ ] Gate check passes: `pnpm vitest run --project integration`
-- [ ] Test count: ≥ 6 tests pass
+- [x] `metaClient` mockado falha 2x e sucede na 3ª → `sent` com `wamid` gravado
+- [x] `metaClient` mockado falha 3x → `status:'failed'`, `error` preenchido
+- [x] `wamid` é gravado ANTES do `$set` de `status:'sent'` (ordem provada por spy)
+- [x] Gate check passes: `pnpm vitest run --project integration`
+- [x] Test count: ≥ 6 tests pass
 
 **Tests**: integration
 **Gate**: full
