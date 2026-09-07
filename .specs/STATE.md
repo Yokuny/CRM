@@ -246,6 +246,14 @@ Detalhamento completo (contexto, consequências, alternativas) em [`docs/adr/`](
 - **Date**: 2026-09-05
 - **Status**: active
 
+### AD-031
+- **Decision**: CI via GitHub Actions (`.github/workflows/ci.yml`), um único job (`build-gate`) que roda em todo push/PR para `main`, executando exatamente o script `check` da raiz (`pnpm -r exec tsc --noEmit && pnpm biome check . && pnpm vitest run` — o próprio Build gate do AD-017, sem comando novo). `packageManager` (pnpm) já fixado em `package.json`; Node fica em `lts/*` (nenhuma versão de Node era fixada em lugar nenhum do repo antes desta decisão — sem precedente para fixar um número específico).
+- **Reason**: `ai-gateway`'s AC AIG-43 ("golden set — gate 100% determinístico no CI") expôs que nenhuma das 4 features anteriores jamais configurou CI — achado pelo Verifier independente da feature (`validation.md`, iteração 1). Discutido e confirmado com o usuário: em vez de tratar como um fix isolado só de `ai-gateway`, resolve a lacuna de uma vez para o projeto inteiro, já que o Build gate (AD-017) é o mesmo para toda feature — um único workflow cobre todas.
+- **Trade-off**: nenhuma versão de Node fixada (`lts/*` muda sozinho quando o GitHub atualiza a LTS corrente) — aceito por não haver nenhum precedente de pin no repo; fixar um número específico agora seria uma decisão nova sem base. Binário do `mongodb-memory-server` baixa da rede a cada run (sem cache) — aceitável para o volume atual de testes, revisar se o tempo de CI virar gargalo.
+- **Scope**: todo o projeto — todo push/PR para `main`, toda feature futura.
+- **Date**: 2026-09-07
+- **Status**: active
+
 ---
 
 ## Handoff
