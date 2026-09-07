@@ -177,7 +177,7 @@ describe('outboxConsumer (AIG-26/27/28/29)', () => {
     expect(updated?.wamid).toBe('wamid-3rd-attempt');
   });
 
-  it('marks the message failed with an error after 3 metaClient failures (AIG-29, terminal state)', async () => {
+  it('marks the message failed with an error after 3 metaClient failures, logging a structured meta_send_failed event (AIG-29/44, terminal state)', async () => {
     const tenant = randomId();
     const channel = await seedChannel(tenant);
     const customer = await seedCustomer(tenant, randomPhone());
@@ -196,6 +196,7 @@ describe('outboxConsumer (AIG-26/27/28/29)', () => {
       createClient: () => createFakeMetaClient({ sendText }),
       retryDelaysMs: FAST_RETRY_DELAYS_MS,
     };
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
     const result = await processNextOutboxMessage(deps);
 
@@ -204,6 +205,13 @@ describe('outboxConsumer (AIG-26/27/28/29)', () => {
     const updated = await Message.findById(message._id).lean();
     expect(updated?.status).toBe('failed');
     expect(updated?.error).toContain('Meta indisponível');
+    const loggedEvents = logSpy.mock.calls.map(([arg]) => JSON.parse(arg as string));
+    expect(loggedEvents).toContainEqual({
+      event: 'meta_send_failed',
+      messageId: message._id.toString(),
+      attempts: FAST_RETRY_DELAYS_MS.length + 1,
+    });
+    logSpy.mockRestore();
   });
 
   it('records wamid strictly before setting status:sent (ADR-0007, proven by call order)', async () => {

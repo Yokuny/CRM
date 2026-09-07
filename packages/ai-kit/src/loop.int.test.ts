@@ -128,7 +128,7 @@ describe('runLoop (AIG-14/20)', () => {
     expect(payload).toEqual({ fields: expect.any(Object), stages: ['novo', 'fechado'] });
   });
 
-  it('a tool executor that returns {error} becomes a tool_result with is_error:true', async () => {
+  it('a tool executor that returns {error} becomes a tool_result with is_error:true and logs a structured tool_error event (AIG-44)', async () => {
     const tenant = randomId();
     const client = createFakeClient([
       {
@@ -137,12 +137,16 @@ describe('runLoop (AIG-14/20)', () => {
       },
       { content: [{ type: 'text', text: 'ok' }], stop_reason: 'end_turn' },
     ]);
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
     await runLoop(client, baseCtx(tenant), 'system', [{ role: 'user', content: 'oi' }]);
 
     const toolResult = lastToolResultContent(client.calls[1]);
     expect(toolResult.is_error).toBe(true);
     expect(JSON.parse(toolResult.content as string)).toEqual({ error: expect.any(String) });
+    const loggedEvents = logSpy.mock.calls.map(([arg]) => JSON.parse(arg as string));
+    expect(loggedEvents).toContainEqual({ event: 'tool_error', tool: 'get_process_template' });
+    logSpy.mockRestore();
   });
 
   it('stops at the 5th iteration still requesting a tool, using the partial text from that last turn', async () => {

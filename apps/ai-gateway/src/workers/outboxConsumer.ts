@@ -102,6 +102,8 @@ export const processNextOutboxMessage = async (
   if (outcome.ok) {
     await markSent(message._id.toString(), outcome.wamid);
   } else {
+    const attempts = (deps.retryDelaysMs ?? DEFAULT_RETRY_DELAYS_MS).length + 1;
+    console.log(JSON.stringify({ event: 'meta_send_failed', messageId: message._id.toString(), attempts }));
     await markFailed(message._id.toString(), outcome.error);
   }
 

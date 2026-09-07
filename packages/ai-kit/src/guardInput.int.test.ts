@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import { Conversation, connect, disconnect, type MessageType } from '@crm/db';
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   guardInput,
   MAX_INPUT_TEXT_LENGTH,
@@ -96,6 +96,44 @@ describe('guardInput (AIG-10/11)', () => {
     expect(okCount).toBe(1);
     const updated = await Conversation.findById(conversation._id).lean();
     expect(updated?.rateWindowCount).toBe(RATE_LIMIT_MAX_MESSAGES);
+  });
+
+  describe('structured logging on rejection (AIG-44)', () => {
+    it('logs {event:"guard_rejected", reason:"unsupported_type"} for a non-text/non-transcribed message', async () => {
+      const conversation = await seedConversation();
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+      await guardInput({ type: 'image', text: 'oi' }, conversation);
+
+      const loggedEvents = logSpy.mock.calls.map(([arg]) => JSON.parse(arg as string));
+      expect(loggedEvents).toContainEqual({ event: 'guard_rejected', reason: 'unsupported_type' });
+      logSpy.mockRestore();
+    });
+
+    it('logs {event:"guard_rejected", reason:"too_long"} for oversized text', async () => {
+      const conversation = await seedConversation();
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+      await guardInput({ type: 'text', text: 'a'.repeat(MAX_INPUT_TEXT_LENGTH + 1) }, conversation);
+
+      const loggedEvents = logSpy.mock.calls.map(([arg]) => JSON.parse(arg as string));
+      expect(loggedEvents).toContainEqual({ event: 'guard_rejected', reason: 'too_long' });
+      logSpy.mockRestore();
+    });
+
+    it('logs {event:"guard_rejected", reason:"rate_limited"} for a message over the rate limit', async () => {
+      const conversation = await seedConversation({
+        rateWindowStart: new Date(),
+        rateWindowCount: RATE_LIMIT_MAX_MESSAGES,
+      });
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+      await guardInput({ type: 'text', text: 'excedente' }, conversation);
+
+      const loggedEvents = logSpy.mock.calls.map(([arg]) => JSON.parse(arg as string));
+      expect(loggedEvents).toContainEqual({ event: 'guard_rejected', reason: 'rate_limited' });
+      logSpy.mockRestore();
+    });
   });
 
   it('throttles the rate-limit warning: only the FIRST excess message in a window gets fixedReply, the 2nd/3rd get {ok:false} with none (AIG-11)', async () => {

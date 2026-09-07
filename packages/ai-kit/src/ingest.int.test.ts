@@ -89,20 +89,26 @@ describe('ingest (AIG-07/08/09/25/12/32)', () => {
     expect(await Customer.countDocuments({ Tenant: tenant })).toBe(1);
   });
 
-  it('returns {resolved:false} and creates nothing for a phoneNumberId with no matching Channel', async () => {
+  it('returns {resolved:false} and creates nothing for a phoneNumberId with no matching Channel, logging channel_not_resolved (AIG-08/44)', async () => {
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
     const result = await ingest({ phoneNumberId: 'unknown', wamid: 'wamid-x', from: randomPhone(), type: 'text' });
 
     expect(result).toEqual({ resolved: false });
     expect(await Message.countDocuments({})).toBe(0);
     expect(await Conversation.countDocuments({})).toBe(0);
+    const loggedEvents = logSpy.mock.calls.map(([arg]) => JSON.parse(arg as string));
+    expect(loggedEvents).toContainEqual({ event: 'channel_not_resolved', phoneNumberId: 'unknown' });
+    logSpy.mockRestore();
   });
 
-  it('the same wamid called twice persists exactly 1 Message — the 2nd call reports isDuplicate:true', async () => {
+  it('the same wamid called twice persists exactly 1 Message — the 2nd call reports isDuplicate:true and logs wamid_dedup_hit (AIG-44)', async () => {
     const tenant = randomId();
     const phoneNumberId = randomId();
     const from = randomPhone();
     await seedCustomerTemplate(tenant);
     await seedChannel(tenant, phoneNumberId);
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
     const first = await ingest({ phoneNumberId, wamid: 'wamid-dup', from, type: 'text', text: 'oi' });
     const second = await ingest({ phoneNumberId, wamid: 'wamid-dup', from, type: 'text', text: 'oi' });
@@ -110,6 +116,9 @@ describe('ingest (AIG-07/08/09/25/12/32)', () => {
     expect(first.resolved && first.isDuplicate).toBe(false);
     expect(second.resolved && second.isDuplicate).toBe(true);
     expect(await Message.countDocuments({ wamid: 'wamid-dup' })).toBe(1);
+    const loggedEvents = logSpy.mock.calls.map(([arg]) => JSON.parse(arg as string));
+    expect(loggedEvents).toContainEqual({ event: 'wamid_dedup_hit', wamid: 'wamid-dup' });
+    logSpy.mockRestore();
   });
 
   it('reuses the same Conversation for a 2nd message from the same Customer (different wamid)', async () => {
@@ -133,7 +142,7 @@ describe('ingest (AIG-07/08/09/25/12/32)', () => {
     expect(await Conversation.countDocuments({})).toBe(1);
   });
 
-  it('waits with poll for an already-claimed turnLock, then claims it once released', async () => {
+  it('waits with poll for an already-claimed turnLock, then claims it once released, logging turn_lock_occupied exactly once (AIG-44)', async () => {
     const tenant = randomId();
     const phoneNumberId = randomId();
     const from = randomPhone();
@@ -148,6 +157,7 @@ describe('ingest (AIG-07/08/09/25/12/32)', () => {
       void releaseTurnLock(first.conversation._id.toString());
     }, 30);
 
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
     const second = await ingest(
       { phoneNumberId, wamid: 'wamid-lock-2', from, type: 'text', text: 'segunda' },
       { turnLockPollMs: 10, turnLockCeilingMs: 2000 },
@@ -155,6 +165,12 @@ describe('ingest (AIG-07/08/09/25/12/32)', () => {
 
     if (!second.resolved) throw new Error('unreachable');
     expect(second.conversation.turnLock).toEqual(expect.objectContaining({ holder: second.message._id.toString() }));
+    const occupiedLogs = logSpy.mock.calls
+      .map(([arg]) => JSON.parse(arg as string))
+      .filter((e) => e.event === 'turn_lock_occupied');
+    // Loga 1 vez por chamada de ingest que precisou esperar — nunca 1 vez por tick do poll.
+    expect(occupiedLogs).toEqual([{ event: 'turn_lock_occupied', conversationId: second.conversation._id.toString() }]);
+    logSpy.mockRestore();
   });
 
   it('proceeds anyway (no throw) once the turnLock poll ceiling is exceeded, without ever claiming the lock', async () => {

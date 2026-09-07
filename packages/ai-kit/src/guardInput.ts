@@ -98,13 +98,20 @@ export const guardInput = async (
 ): Promise<GuardInputResult> => {
   const text =
     message.type === 'text' ? (message.text ?? '') : message.type === 'audio' ? message.transcribedText : undefined;
-  if (text === undefined) return { ok: false, fixedReply: UNSUPPORTED_TYPE_REPLY };
+  if (text === undefined) {
+    console.log(JSON.stringify({ event: 'guard_rejected', reason: 'unsupported_type' }));
+    return { ok: false, fixedReply: UNSUPPORTED_TYPE_REPLY };
+  }
 
-  if (text.length > MAX_INPUT_TEXT_LENGTH) return { ok: false, fixedReply: TOO_LONG_REPLY };
+  if (text.length > MAX_INPUT_TEXT_LENGTH) {
+    console.log(JSON.stringify({ event: 'guard_rejected', reason: 'too_long' }));
+    return { ok: false, fixedReply: TOO_LONG_REPLY };
+  }
 
   const conversationId = conversation._id.toString();
   const bumpResult = await bumpRateLimit(conversationId, new Date());
   if (!bumpResult.withinLimit) {
+    console.log(JSON.stringify({ event: 'guard_rejected', reason: 'rate_limited' }));
     const isFirstWarningThisWindow = await claimRateLimitWarning(conversationId, bumpResult.rateWindowStart);
     return isFirstWarningThisWindow ? { ok: false, fixedReply: RATE_LIMITED_REPLY } : { ok: false };
   }

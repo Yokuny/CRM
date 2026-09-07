@@ -149,7 +149,10 @@ const transcribeAudio = async (
 
 export const ingest = async (input: IngestInput, opts: IngestOptions = {}): Promise<IngestResult> => {
   const channel = await Channel.findOne({ phoneNumberId: input.phoneNumberId }).lean();
-  if (!channel) return { resolved: false };
+  if (!channel) {
+    console.log(JSON.stringify({ event: 'channel_not_resolved', phoneNumberId: input.phoneNumberId }));
+    return { resolved: false };
+  }
 
   const tenantId = channel.Tenant.toString();
   const channelId = channel._id.toString();
@@ -194,6 +197,7 @@ export const ingest = async (input: IngestInput, opts: IngestOptions = {}): Prom
   // Dedup por wamid (AIG-07): a 2ª chamada é no-op idempotente — nem a janela
   // de 24h, nem o turnLock são tocados de novo.
   if (isDuplicate) {
+    console.log(JSON.stringify({ event: 'wamid_dedup_hit', wamid: input.wamid }));
     return { resolved: true, isDuplicate, channel, conversation, customer, message, audioTranscription };
   }
 
@@ -216,6 +220,12 @@ export const ingest = async (input: IngestInput, opts: IngestOptions = {}): Prom
   const ceilingMs = opts.turnLockCeilingMs ?? DEFAULT_TURN_LOCK_CEILING_MS;
   const startedAt = Date.now();
   let claimed = await claimTurnLock(conversation._id.toString(), message._id.toString());
+  // AIG-44: loga UMA vez por chamada de ingest quando ela precisou esperar
+  // (lock ocupado no 1º attempt) — nunca a cada tick do poll, para não
+  // inundar o log num teto de espera longo.
+  if (!claimed) {
+    console.log(JSON.stringify({ event: 'turn_lock_occupied', conversationId: conversation._id.toString() }));
+  }
   while (!claimed && Date.now() - startedAt < ceilingMs) {
     await sleep(pollMs);
     claimed = await claimTurnLock(conversation._id.toString(), message._id.toString());

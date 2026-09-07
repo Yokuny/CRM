@@ -88,11 +88,13 @@ export const runLoop = async (
       } catch (err) {
         result = { error: err instanceof Error ? err.message : 'Erro ao executar a operação.' };
       }
+      const isError = isErrorResult(result);
+      if (isError) console.log(JSON.stringify({ event: 'tool_error', tool: toolUse.name }));
       toolResults.push({
         type: 'tool_result',
         tool_use_id: toolUse.id,
         content: JSON.stringify(result),
-        is_error: isErrorResult(result),
+        is_error: isError,
       });
     }
 
