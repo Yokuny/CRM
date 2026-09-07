@@ -2,7 +2,9 @@ import crypto from 'node:crypto';
 import { findOrCreateCustomer } from '@crm/ai-kit';
 import type { FieldDef } from '@crm/contracts';
 import {
+  AiSession,
   Channel,
+  Conversation,
   Customer,
   connect,
   disconnect,
@@ -12,6 +14,7 @@ import {
   Process,
   Session,
   Tenant,
+  tenantScoped,
   User,
 } from '@crm/db';
 import bcrypt from 'bcrypt';
@@ -121,7 +124,9 @@ describe('cross-tenant isolation (FND-07, FND-09)', () => {
 
   afterEach(async () => {
     await Promise.all([
+      AiSession.deleteMany({}),
       Channel.deleteMany({}),
+      Conversation.deleteMany({}),
       Process.deleteMany({}),
       Customer.deleteMany({}),
       FieldTemplateVersion.deleteMany({}),
@@ -668,6 +673,38 @@ describe('cross-tenant isolation (FND-07, FND-09)', () => {
       // Nenhuma chamada criou/reusou o registro do outro tenant — os 2
       // originais continuam sendo os únicos 2 documentos com esse telefone.
       expect(await Customer.countDocuments({ phone: mirroredPhone })).toBe(2);
+    });
+
+    // AIG-41: fecha o gap de evidência apontado pela validação — o AC fala
+    // literalmente em "nenhum AiSession cruza dado", mas T42 só tinha provado
+    // Channel + find_or_create_customer. AiSession é 1:1 com Conversation
+    // (índice único em Conversation, packages/db/src/models/aiSession.model.ts)
+    // e cada Conversation já nasce escopada a um Tenant — este teste prova
+    // que uma consulta escopada por {Conversation,Tenant} de um tenant nunca
+    // devolve o AiSession espelhado do outro, nas duas direções.
+    it("no AiSession crosses tenants — a query scoped to one tenant's Conversation never returns the mirrored other tenant's AiSession", async () => {
+      const tenantA = randomId();
+      const tenantB = randomId();
+      const conversationA = await Conversation.create({ Tenant: tenantA, Channel: randomId(), Customer: randomId() });
+      const conversationB = await Conversation.create({ Tenant: tenantB, Channel: randomId(), Customer: randomId() });
+      const aiSessionA = await AiSession.create({ Tenant: tenantA, Conversation: conversationA._id });
+      await AiSession.create({ Tenant: tenantB, Conversation: conversationB._id });
+
+      const foundA = await AiSession.findOne(tenantScoped({ Conversation: conversationA._id, Tenant: tenantA })).lean();
+      expect(foundA?._id.toString()).toBe(aiSessionA._id.toString());
+      expect(foundA?.Tenant.toString()).toBe(tenantA);
+
+      // A Conversation de A nunca é encontrada sob o Tenant de B, e vice-versa:
+      const crossedAtoB = await AiSession.findOne(
+        tenantScoped({ Conversation: conversationA._id, Tenant: tenantB }),
+      ).lean();
+      const crossedBtoA = await AiSession.findOne(
+        tenantScoped({ Conversation: conversationB._id, Tenant: tenantA }),
+      ).lean();
+      expect(crossedAtoB).toBeNull();
+      expect(crossedBtoA).toBeNull();
+      expect(await AiSession.countDocuments({ Tenant: tenantA })).toBe(1);
+      expect(await AiSession.countDocuments({ Tenant: tenantB })).toBe(1);
     });
   });
 });
