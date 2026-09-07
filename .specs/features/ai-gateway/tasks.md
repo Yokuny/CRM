@@ -1339,14 +1339,14 @@ mesmo padrão do T25B/AD-030 da feature `crm-web-shell`).
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `include` do project `integration` em `vitest.config.ts` contém
+- [x] `include` do project `integration` em `vitest.config.ts` contém
       `evals/**/*.int.test.ts`
-- [ ] `expectTool('find_or_create_customer', {phone: ...})` passa
-- [ ] `expectTool('open_process', {...})` passa, na ordem certa
-- [ ] `expectNoTool('search_products')`/`expectNoTool('create_order')` passam (superfície
+- [x] `expectTool('find_or_create_customer', {phone: ...})` passa
+- [x] `expectTool('open_process', {...})` passa, na ordem certa
+- [x] `expectNoTool('search_products')`/`expectNoTool('create_order')` passam (superfície
       fixa — nenhuma das 6 tools fora do Anel A é oferecida nem chamada)
-- [ ] Gate check passes: `pnpm vitest run --project integration`
-- [ ] Test count: ≥ 3 tests pass
+- [x] Gate check passes: `pnpm vitest run --project integration`
+- [x] Test count: ≥ 3 tests pass
 
 **Tests**: integration
 **Gate**: full

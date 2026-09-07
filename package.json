@@ -14,6 +14,7 @@
     "zod": "^4.5.4",
     "@crm/contracts": "workspace:*",
     "@crm/ai-kit": "workspace:*",
+    "@crm/db": "workspace:*",
     "tsx": "^4.19.2"
   }
 }

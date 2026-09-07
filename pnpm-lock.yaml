@@ -17,6 +17,9 @@ importers:
       '@crm/contracts':
         specifier: workspace:*
         version: link:packages/contracts
+      '@crm/db':
+        specifier: workspace:*
+        version: link:packages/db
       tsx:
         specifier: ^4.19.2
         version: 4.23.13

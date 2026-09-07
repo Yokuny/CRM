@@ -59,6 +59,10 @@ export default defineConfig({
             'apps/crm-api/src/**/*.int.test.ts',
             'apps/crm-api/tests/**/*.int.test.ts',
             'apps/ai-gateway/src/**/*.int.test.ts',
+            // T43 (golden set, evals/) — evals/ vive fora de packages/*/apps/*,
+            // sem este glob nenhum project coletaria os arquivos e o gate
+            // passaria com passWithNoTests:true sem rodar nada.
+            'evals/**/*.int.test.ts',
           ],
           passWithNoTests: true,
           globalSetup: ['packages/db/tests/setup/globalSetup.ts'],
