@@ -1,3 +1,4 @@
+export * from './contextBuild.js';
 export * from './guardInput.js';
 export * from './ingest.js';
 export * from './providers/anthropicClient.js';

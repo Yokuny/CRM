@@ -666,13 +666,13 @@ rule fixa de agendamento)
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `system` byte-idêntico entre 2 chamadas com tenants diferentes (só o nome do tenant
+- [x] `system` byte-idêntico entre 2 chamadas com tenants diferentes (só o nome do tenant
       muda, no bloco dinâmico — nunca no `system`)
-- [ ] Lista de `key`+`name` de `FieldTemplate` `targetType:'process'` do Tenant do `ctx`
+- [x] Lista de `key`+`name` de `FieldTemplate` `targetType:'process'` do Tenant do `ctx`
       aparece no turno de usuário — nunca a de outro tenant
-- [ ] `messages` inclui `summary` (quando existe) antes do `rawHistory`
-- [ ] Gate check passes: `pnpm vitest run --project integration`
-- [ ] Test count: ≥ 5 tests pass
+- [x] `messages` inclui `summary` (quando existe) antes do `rawHistory`
+- [x] Gate check passes: `pnpm vitest run --project integration`
+- [x] Test count: ≥ 5 tests pass
 
 **Tests**: integration
 **Gate**: full
