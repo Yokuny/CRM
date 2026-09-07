@@ -388,10 +388,10 @@ conteúdo transcrito; simular falha do Whisper (mock) e confirmar fallback fixo 
 | AIG-05 | P1: Webhook — `GET` handshake de verificação | Execute | ✅ Verified |
 | AIG-06 | P1: Webhook — assinatura `X-Hub-Signature-256` inválida rejeita | Execute | ✅ Verified |
 | AIG-07 | P1: Webhook — dedup por `wamid` | Execute | ✅ Verified |
-| AIG-08 | P1: Webhook — `phone_number_id` sem Channel: ack 200, não processa | Execute | ❌ Needs Fix (log do evento não resolvido nunca implementado) |
+| AIG-08 | P1: Webhook — `phone_number_id` sem Channel: ack 200, não processa | Execute | ✅ Verified (iteração 2 — log `channel_not_resolved` adicionado em `32d6c81`, testado) |
 | AIG-09 | P1: Ingest — persiste Message `in` + Conversation | Execute | ✅ Verified |
 | AIG-10 | P1: guard.input — limite de tamanho rejeita com resposta fixa | Execute | ⚠️ Verified — spec-precision gap (valor exato não confirmado) |
-| AIG-11 | P1: guard.input — rate limit por `(Tenant, Customer)` | Execute | ❌ Needs Fix (throttle "máx 1 aviso por janela" nunca implementado; números exatos também são spec-precision gap) |
+| AIG-11 | P1: guard.input — rate limit por `(Tenant, Customer)` | Execute | ✅ Verified (iteração 2 — throttle de "máx 1 aviso por janela" implementado em `f607bba`, claim atômico + testado end-to-end; números exatos seguem spec-precision gap) |
 | AIG-12 | P1: guard.input — `mode:'human'` só persiste, loop não roda | Execute | ✅ Verified |
 | AIG-13 | P1: context.build — system congelado, dinâmico só no turno de usuário | Execute | ✅ Verified |
 | AIG-14 | P1: loop — só as 4 tools do Anel A; nenhum `input_schema` com tenant | Execute | ✅ Verified |
@@ -418,17 +418,17 @@ conteúdo transcrito; simular falha do Whisper (mock) e confirmar fallback fixo 
 | AIG-35 | P1: takeover — isolamento de tenant no endpoint (403/404) | Execute | ✅ Verified |
 | AIG-36 | P1: envio manual — `text` ou template, cria `queued` | Execute | ✅ Verified |
 | AIG-37 | P1: envio manual — rejeita `text` livre fora da janela | Execute | ✅ Verified |
-| AIG-38 | P1: envio manual — mesmo caminho de claim/envio do bot | Execute | ❌ Needs Fix (sem teste end-to-end ligando os dois; verdadeiro por inspeção de código) |
+| AIG-38 | P1: envio manual — mesmo caminho de claim/envio do bot | Execute | ✅ Verified (iteração 2 — `34ec4bf`, prova por shape idêntico de documento, já que `apps/ai-gateway` não depende de `apps/crm-api`) |
 | AIG-39 | P1: golden set — tool certa, argumentos certos, superfície fixa | Execute | ✅ Verified |
 | AIG-40 | P1: golden set — teste estrutural de `input_schema` | Execute | ✅ Verified |
-| AIG-41 | P1: golden set — dois tenants espelhados sem cruzamento | Execute | ❌ Needs Fix (Conversation/tool provados; AiSession sem teste dedicado) |
+| AIG-41 | P1: golden set — dois tenants espelhados sem cruzamento | Execute | ✅ Verified (iteração 2 — `fe8ccef`, teste dedicado de `AiSession` nas duas direções) |
 | AIG-42 | P1: golden set — dedup de `wamid` provado via harness real | Execute | ✅ Verified |
-| AIG-43 | P1: golden set — gate 100% determinístico no CI | Execute | ❌ Needs Fix (nenhum pipeline de CI existe no repo — sistêmico, pré-existente, não exclusivo desta feature) |
-| AIG-44 | Dimensão: observabilidade (log estruturado em rejeição/erro/dedup) | Execute | ❌ Needs Fix (nenhum dos 5 logs exigidos foi implementado) |
+| AIG-43 | P1: golden set — gate 100% determinístico no CI | Execute | ❌ Needs Fix (iteração 2 — CI existe agora, AD-031/`c2e3468`, mas é não-funcional: `pnpm biome check .` sai com código 1 de forma determinística por causa do baseline pré-existente de `.specs/lessons.json` nunca endereçado, então o workflow falha em toda execução) |
+| AIG-44 | Dimensão: observabilidade (log estruturado em rejeição/erro/dedup) | Execute | ✅ Verified (iteração 2 — `32d6c81`, os 5 eventos exigidos implementados e testados via spy de `console.log` + payload parseado) |
 | AIG-45 | P2: áudio — baixa e transcreve (Whisper), sem armazenar binário | Execute | ✅ Verified |
 | AIG-46 | P2: áudio — transcrição vira turno de texto normal | Execute | ✅ Verified |
 | AIG-47 | P2: áudio — falha de transcrição cai no fallback de tipo não suportado | Execute | ✅ Verified |
-| AIG-48 | P2: mídia não processada — persiste ponteiro, nunca binário | Execute | ❌ Needs Fix (figurinha/vídeo nunca reconhecidos, ponteiro descartado; `caption` nunca populado) |
+| AIG-48 | P2: mídia não processada — persiste ponteiro, nunca binário | Execute | ✅ Verified (iteração 2 — `228663e`, figurinha/vídeo reconhecidos e `caption` populado, provado end-to-end via o router real) |
 
 **ID format:** `AIG-[NUMBER]`. **Status values:** Pending → In Design → In Tasks →
 Implementing → Verified.

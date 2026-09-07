@@ -146,6 +146,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: evals/runner/expectTool.ts:14-19 (SPEC_DEVIATION: ADR-0013's YAML DSL superseded by same-day AD-015 fixing Vitest as the only runner, reconciled only in a code comment) (decision-log/adr-hygiene)
 - last seen: 2026-09-07T18:09:59Z
 
+### L-023 — Before wiring an existing local gate script into an automated CI workflow, first run that exact script clean end-to-end against the current default branch — a pre-existing exit-code failure a human Verifier already knows to read past (e.g. a machine-owned file's formatting nit) will make every single CI run fail identically, since CI has no equivalent judgment to distinguish accepted baseline noise from a real regression.
+- signal: `gate_fail` · recurrence: 1 feature(s) · scope: `ci-cd/gate-check` · harmful: 0
+- features: ai-gateway
+- evidence: .github/workflows/ci.yml / c2e3468 (pnpm biome check . exits 1 deterministically on the current tree due to the unaddressed pre-existing .specs/lessons.json formatting baseline) (ci-cd/gate-check)
+- last seen: 2026-09-07T19:49:53Z
+
 ## Quarantined (failed when applied — ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

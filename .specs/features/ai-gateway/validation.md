@@ -1,9 +1,76 @@
 # ai-gateway Validation
 
-**Date**: 2026-09-07
+**Date**: 2026-09-07 (iteration 1) / 2026-09-07 (iteration 2)
 **Spec**: `.specs/features/ai-gateway/spec.md`
-**Diff range**: `d6df6da..HEAD` (branch `feature/ai-gateway`, merge-base confirmed via `git merge-base main feature/ai-gateway`)
-**Verifier**: independent sub-agent (author ≠ verifier) — fresh read of spec/design/tasks, evidence re-derived from source and test files directly (own reads + 4 parallel research sub-agents, each independently citing `file:line`), discrimination sensor run personally by the Verifier.
+**Diff range (iteration 1)**: `d6df6da..9fefced` (branch `feature/ai-gateway`, merge-base confirmed via `git merge-base main feature/ai-gateway`)
+**Diff range (iteration 2)**: `9fefced..8d8c3c1` (fix batch: `c2e3468`..`fe8ccef`)
+**Verifier**: independent sub-agent (author ≠ verifier), fresh each iteration — evidence re-derived from source and test files directly, discrimination sensor run personally by the Verifier in both iterations.
+
+---
+
+## Iteration 2 — Re-Verification (2026-09-07)
+
+**Scope**: re-check the 5 real gaps fixed by a separate fix-implementer sub-agent since iteration 1 (AIG-11, AIG-44+AIG-08, AIG-48, AIG-38, AIG-41), verify the new AD-031 CI workflow addressing AIG-43, run a full regression pass, and run a lighter (3-mutation) discrimination sensor on the new fix-batch code. Iteration-1's original findings are preserved unmodified below this section for history.
+
+### Fix-by-fix re-verification (evidence-or-zero, own reads — not trusting the implementer's commit messages)
+
+| Gap (iteration 1) | Fix commit | Re-verification | Result |
+| --- | --- | --- | --- |
+| AIG-11 (rate-limit warning not throttled) | `f607bba` | Read `guardInput.ts`'s new `claimRateLimitWarning` (atomic `findOneAndUpdate({_id,rateWindowStart,rateLimitWarnedWindowStart:{$ne:rateWindowStart}},{$set:...})` — same claim idiom as `turnLock`/outbox) and `runTurn.ts`'s updated `guard_rejected` branch (`dispatchFixedReply` only when `fixedReply` is set; `releaseTurnLock` called directly otherwise — T24B invariant preserved on the throttled path too). Ran `guardInput.int.test.ts` + `runTurn.int.test.ts` directly: **28/28 passed**. `runTurn.int.test.ts`'s extended test sends 3 excess messages in one window and asserts `outMessages` (queued) `toHaveLength(1)`, `turnLock` is `null` after **every single one** (not just the throttled ones), and a new window (different `rateWindowStart`) warns again. This is the exact spec.md outcome ("no máximo 1 aviso fixo por janela de 60s"), not a paraphrase. | ✅ **Fixed** |
+| AIG-44 + AIG-08 (observability entirely unimplemented) | `32d6c81` | Read all 4 touched files (`guardInput.ts`, `loop.ts`, `outboxConsumer.ts`, `ingest.ts`): all 6 required events now present (`guard_rejected{reason}`, `tool_error{tool}`, `meta_send_failed{messageId,attempts}`, `wamid_dedup_hit{wamid}`, `turn_lock_occupied{conversationId}` — logged once per waiting `ingest()` call, not once per poll tick — and `channel_not_resolved{phoneNumberId}` for AIG-08). Ran the 4 affected test files directly: all pass, and every one of the 6 new/extended tests spies on `console.log` and asserts the **parsed JSON payload**, not just that logging occurred. One nuance: design.md's Tech Decisions table asks for a Meta-send-failure log "a cada retry + failed final" (each retry attempt + the final failure); the fix logs only once, at the terminal failure, with an `attempts` count — this covers the substantive requirement (failure visibility, attempt count) but not literally "each retry". Judged an acceptable, proportionate interpretation — not re-opened as a gap, noted for completeness. | ✅ **Fixed** |
+| AIG-48 (sticker/video pointer dropped, caption dead) | `228663e` | Read `webhook.router.ts`: `extractMediaId` now also reads `message.sticker?.id ?? message.video?.id`; new `extractCaption` reads `document/video/image` caption and threads it through `IngestInput.caption` into `Message.media`. Ran `webhook.router.e2e.test.ts` (11/11) and `ingest.int.test.ts` (17/17): the 2 new e2e tests prove, through the **real** `mapMessageType`/`extractMediaId`/`extractCaption` (not a mock of them), that a sticker payload persists `{mediaId}` and a video payload persists `{mediaId,caption}`, while the response still stays the unsupported-type fallback and the model is never called. **Deviation judged**: the implementer proved this via 2 new `webhook.router.e2e.test.ts` cases instead of extending `ingest.int.test.ts`'s `it.each(['image','document','location'])` as iteration 1's fix plan suggested — sound engineering judgment, not a shortcut: `ingest()` only ever receives an already-mapped `MessageType` (`text\|audio\|image\|document\|location\|unsupported`, `packages/db`'s enum), so `'sticker'`/`'video'` are concepts that exist ONLY at the router layer where the Meta-payload mapping happens — that is the correct, and only, layer at which this claim can be proven end-to-end. `mapMessageType` still maps both to `'unsupported'` (no new enum value was added) — also correct, since the spec never asked for a new type value, only that the **pointer** survive and the **fallback response** fire, both of which are now proven. | ✅ **Fixed** |
+| AIG-38 (no end-to-end outbox-path proof for operator messages) | `34ec4bf` | Read the new test: it seeds a `Message` via the pre-existing `seedOutMessage` helper (already used by every adjacent bot-message test in the same file) with the field shape `{Tenant,Conversation,Channel,Customer,direction:'out',type:'text',status:'queued',text}` — confirmed field-by-field against `conversation.repository.ts`'s actual `createOutboundMessage` (re-read directly, iteration 1's own citation) — then drives it through the real `processNextOutboxMessage` and asserts `status:'sent'`+recorded `wamid`. Ran the file: **7/7 passed**. **Deviation judged**: proof-by-identical-document-shape (not a direct cross-app import) is the only architecturally sound option — `apps/ai-gateway` does not and must not depend on `apps/crm-api` in this monorepo (only `packages/*` are shared across apps), and `Message` has no origin/discriminator field for the consumer to branch on regardless. This is not a weakened proof; it is the strongest proof available without violating the monorepo's own app-boundary rule. | ✅ **Fixed** |
+| AIG-41 (no AiSession-specific cross-tenant test) | `fe8ccef` | Read the new test: creates a mirrored `AiSession` (via its own `Conversation`) for 2 tenants, asserts a `tenantScoped({Conversation,Tenant})` query for tenant A's Conversation never returns under tenant B's Tenant (and vice versa), plus per-tenant `countDocuments`. Ran the file: **12/12 passed**. **Nuance** (not a gap, noting for completeness): the test proves the isolation guarantee via an explicit `tenantScoped` query pattern; the actual production call site (`runTurn.ts`'s `findOrCreateAiSession`) queries only by `{Conversation:conversationId}` (no `Tenant` in the query filter itself) — it relies on `conversationId` always being resolved upstream through a tenant-scoped `Channel`/`Customer` lookup (`ingest.ts`), never on a query-level fence at this specific call site. This is a consistent, pre-existing pattern in this codebase (safety by ID provenance, not per-query tenant fencing, same as `AiSession`'s unique index being on `Conversation` alone) — not something this fix introduced or should have to re-architect. The new test does directly prove the AC's literal claim. | ✅ **Fixed** |
+
+**Regression check**: ran the full Build gate. `tsc --noEmit`: clean (exit 0). `pnpm vitest run`: **739/739 passed, 117 files** (up from 728 in iteration 1 — +11, matching the fix batch's own new/extended tests; 0 deleted, 0 skipped). `pnpm biome check .`: unchanged from iteration 1 — 1 error + 9 warnings, both the same accepted pre-existing baseline items (see below for a **new** and more serious finding about this exact error).
+
+### Discrimination sensor (iteration 2, lighter scope — 3 mutations on the new fix-batch code)
+
+| # | File:line | Description | Killed? |
+| --- | --- | --- | --- |
+| 1 | `packages/ai-kit/src/guardInput.ts` (`claimRateLimitWarning`) | Removed the `rateLimitWarnedWindowStart: {$ne: rateWindowStart}` exclusion from the claim's filter (claim always succeeds, throttle disabled) | ✅ Killed — `guardInput.int.test.ts`'s throttle test failed (2nd/3rd excess message wrongly got `fixedReply`) and `runTurn.int.test.ts`'s burst test failed (`outMessages` had length 3, not 1) |
+| 2 | `packages/ai-kit/src/ingest.ts:198` | Removed the `console.log(...'wamid_dedup_hit'...)` call | ✅ Killed — `ingest.int.test.ts`'s dedicated logging test failed (`expected [] to deep equally contain {event:'wamid_dedup_hit',...}`). **Note**: a second, unrelated test in the same file (`turn_lock_occupied` logging test) also failed when this file ran as part of the full-file suite; isolated re-runs (`-t "waits with poll"`) proved this second failure is a pre-existing test-order/shared-Mongo-connection timing artifact **unrelated to this mutation** — it passes cleanly in isolation both with and without the mutation present. Documented here for transparency; does not weaken the kill (the intended, targeted test failed exactly as expected). |
+| 3 | `apps/ai-gateway/src/routers/webhook.router.ts` (`extractMediaId`) | Reverted to the pre-fix 3-way chain (dropped `?? message.sticker?.id ?? message.video?.id`) | ✅ Killed — both new `webhook.router.e2e.test.ts` sticker/video tests failed (`inMessage?.media` was `undefined` instead of the expected pointer) |
+
+**Result**: 3/3 killed — ✅ PASS. All mutations applied via `Edit` directly to the real files, tested, then restored via `git checkout -- <file>`; `git diff --stat`/`git status --porcelain` confirmed empty after every single mutation before proceeding to the next.
+
+### AIG-43 (CI) — verified in depth, a NEW problem found
+
+`c2e3468` adds `.github/workflows/ci.yml`: triggers on `push`/`pull_request` to `main`, checks out, sets up pnpm+Node (`lts/*`, pnpm cache), runs `pnpm install --frozen-lockfile`, then `pnpm run check` — which is exactly `pnpm -r exec tsc --noEmit && pnpm biome check . && pnpm vitest run` (AD-017's Build gate, no new command invented). The workflow's *shape* is correct and reasonable (matches AD-017 verbatim, biome/pnpm/node versions are all pinned via lockfile/`packageManager`, so CI and local runs are deterministically identical).
+
+**However**, independently running the exact gate command this session (`pnpm biome check .`) confirms it **exits with code 1** — `Found 1 error. Found 9 warnings.` — because of the same pre-existing `.specs/lessons.json` formatting issue flagged as accepted baseline noise in iteration 1 (confirmed via `git log`: still last touched by `076cfe5`, `crm-web-shell`, never fixed, never given a biome ignore rule). `biome.json` has **no override** excluding `.specs/lessons.json` (its only override is for `**/*.gen.ts`). Since `pnpm run check` chains with `&&`, `tsc` passes, then `biome check .` fails and the chain stops there with a non-zero exit — **before `vitest run` even executes**.
+
+This means: **the newly-added CI workflow will fail on every single run**, including its very first run against this exact commit — not because of any regression in `ai-gateway`'s own code, but because the pre-existing baseline exemption that every human/agent Verifier has manually applied (`git log`-checking that the error predates the current feature) has no equivalent mechanism in an automated CI system, which only sees an exit code. A permanently-red CI check is arguably *worse* than no CI at all for AIG-43's actual intent ("gate 100% determinístico ... nenhum eval vermelho sobe") — it trains reviewers to ignore/override the check rather than trust it, and would block merging if branch protection ever requires it to pass.
+
+This is **not** one of the 5 gaps this iteration was asked to re-check, and it is **not** a regression in this feature's own code — it is a new, independently-discovered problem in the just-added CI configuration (AD-031), surfaced specifically by task 6's instruction to "verify the workflow file actually runs the Build gate correctly" rather than only confirming the file's existence/shape.
+
+**Traceability judgment**: I am not marking AIG-43 "✅ Verified" — a CI pipeline that is guaranteed to fail on every run does not satisfy "gate 100% determinístico" any more than having no pipeline did. It remains **❌ Needs Fix**, with a materially different (and now more specific/actionable) root cause than iteration 1's finding.
+
+**Fix (for a future iteration, not performed by this Verifier)**: add a `biome.json` `overrides` entry excluding `.specs/lessons.json` from the formatter (mirroring the existing `**/*.gen.ts` override already present) — the cleanest option, since the file is already documented project-wide as machine-owned/`scripts/lessons.py`-rendered and exempt from hand-formatting. Alternative: fix `scripts/lessons.py`'s JSON serialization to already emit biome-compliant compact-array formatting (more invasive, touches the skill's own tooling). Verify by re-running `pnpm biome check .` standalone and confirming exit 0, then confirm the GitHub Actions workflow goes green on its next run.
+
+### Iteration 2 Requirement Traceability Update
+
+| Requirement | Iteration 1 Status | Iteration 2 Status |
+| --- | --- | --- |
+| AIG-08 | ❌ Needs Fix (logging half missing) | ✅ Verified (logging half added in `32d6c81`, `channel_not_resolved` event, tested) |
+| AIG-11 | ❌ Needs Fix (throttle not implemented) | ✅ Verified (atomic per-window warning claim, `f607bba`, tested end-to-end including turnLock release on the throttled path) |
+| AIG-38 | ❌ Needs Fix (no end-to-end test) | ✅ Verified (`34ec4bf`, shape-proof judged sound given the monorepo's app-boundary constraint) |
+| AIG-41 | ❌ Needs Fix (AiSession evidence missing) | ✅ Verified (`fe8ccef`, direct cross-tenant AiSession test both directions) |
+| AIG-43 | ❌ Needs Fix (no CI pipeline existed) | ❌ Needs Fix — **still** (CI pipeline now exists per AD-031/`c2e3468`, but is non-functional: `pnpm biome check .` deterministically exits 1 on the current `main`-bound state due to the still-unaddressed pre-existing `.specs/lessons.json` formatting baseline, so the workflow will fail on every single run) |
+| AIG-44 | ❌ Needs Fix (observability entirely unimplemented) | ✅ Verified (`32d6c81`, all 5 required structured-log events added and tested via `console.log` spy + parsed-payload assertions) |
+| AIG-48 | ❌ Needs Fix (sticker/video dropped, caption dead) | ✅ Verified (`228663e`, both fixed and tested end-to-end via the real router mapping) |
+
+**Iteration 2 tally**: 6/7 previously-failing items now genuinely fixed and independently re-verified with fresh evidence; 1 remains open (AIG-43, for a different and more specific reason than iteration 1). 0 regressions found across 739 tests. 3/3 new sensor mutations killed.
+
+### New Lesson (iteration 2)
+
+Distilled via `scripts/lessons.py add` (see below) — a `gate_fail`-signal lesson distinct from iteration 1's L-016 (which was about how a *human/agent* Verifier should treat a pre-existing gate failure; this one is about what happens when that same gate is wired into an automated system with no equivalent judgment).
+
+---
+
+## Iteration 1 — Original Findings (2026-09-07, preserved for history)
+
+The full iteration-1 report follows unmodified below. Where iteration 2 above supersedes a specific finding, iteration 2 is authoritative; this section is kept for audit history and for the ACs/evidence iteration 2 did not need to touch (all of which remain valid).
 
 ---
 
@@ -305,3 +372,5 @@ Legend: ✅ PASS (spec-defined outcome matched by a real assertion) · ❌ GAP (
 6. AIG-08's "log the unresolved event" half is unimplemented — folded into Fix 2's remit (part of the same observability gap).
 
 **Next steps**: Route Fixes 1-5 as fix tasks to an implementer (bounded to the standard 3 fix→re-verify iterations); escalate Fix 6 to the user as a STATE.md-level decision independent of this feature's own completion.
+
+> **Superseded by iteration 2 (see top of this file)**: Fixes 1-5 (AIG-11, AIG-44/AIG-08, AIG-48, AIG-38, AIG-41) were independently re-verified as genuinely fixed. Fix 6 (AIG-43/CI) was addressed at the project level (AD-031, `.github/workflows/ci.yml`) but iteration 2 found the resulting workflow is non-functional (always fails) due to an unaddressed pre-existing `.specs/lessons.json` biome-format issue — see the Iteration 2 section for the current, authoritative status of every item on this list.

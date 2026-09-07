@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 23,
+  "next_id": 24,
   "lessons": [
     {
       "id": "L-001",
@@ -400,6 +400,24 @@
       ],
       "created": "2026-09-07T18:09:59Z",
       "last_seen": "2026-09-07T18:09:59Z"
+    },
+    {
+      "id": "L-023",
+      "key": "gate_fail::before wiring an existing local gate script into an automated ci workflow first run that exact script clean end to end against the current default branch a pre existing exit code failure a human verifier already knows to read past e g a machine owned file s formatting nit will make every single ci run fail identically since ci has no equivalent judgment to distinguish accepted baseline noise from a real regression",
+      "text": "Before wiring an existing local gate script into an automated CI workflow, first run that exact script clean end-to-end against the current default branch — a pre-existing exit-code failure a human Verifier already knows to read past (e.g. a machine-owned file's formatting nit) will make every single CI run fail identically, since CI has no equivalent judgment to distinguish accepted baseline noise from a real regression.",
+      "signal": "gate_fail",
+      "scope": "ci-cd/gate-check",
+      "status": "candidate",
+      "features": [
+        "ai-gateway"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        ".github/workflows/ci.yml / c2e3468 (pnpm biome check . exits 1 deterministically on the current tree due to the unaddressed pre-existing .specs/lessons.json formatting baseline) (ci-cd/gate-check)"
+      ],
+      "created": "2026-09-07T19:49:53Z",
+      "last_seen": "2026-09-07T19:49:53Z"
     }
   ]
 }
