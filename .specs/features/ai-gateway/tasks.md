@@ -1001,14 +1001,14 @@ de 60s → `status:'queued'`; nunca mexe em documento com `wamid` já gravado.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `sending` há > 60s (sem `wamid`) → volta a `queued`
-- [ ] `sending` há > 60s **com `wamid` já gravado** → NÃO mexe (protege contra reenvio
+- [x] `sending` há > 60s (sem `wamid`) → volta a `queued`
+- [x] `sending` há > 60s **com `wamid` já gravado** → NÃO mexe (protege contra reenvio
       duplicado, ADR-0007)
-- [ ] `sending` há < 60s → não mexe
-- [ ] Nenhuma mensagem `sending` no banco → no-op, nenhum efeito colateral em
+- [x] `sending` há < 60s → não mexe
+- [x] Nenhuma mensagem `sending` no banco → no-op, nenhum efeito colateral em
       `queued`/`sent`/`failed`
-- [ ] Gate check passes: `pnpm vitest run --project integration`
-- [ ] Test count: ≥ 5 tests pass
+- [x] Gate check passes: `pnpm vitest run --project integration`
+- [x] Test count: ≥ 5 tests pass
 
 **Tests**: integration
 **Gate**: full
