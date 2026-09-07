@@ -1233,9 +1233,9 @@ no corpo de envio manual.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Os 3 endpoints seguem `{success,data?,message?}`
-- [ ] Erro tipado do service (404/400) vira o código HTTP certo
-- [ ] Coberto transitivamente pelo e2e do router (T40)
+- [x] Os 3 endpoints seguem `{success,data?,message?}`
+- [x] Erro tipado do service (404/400) vira o código HTTP certo
+- [x] Coberto transitivamente pelo e2e do router (T40)
 
 **Tests**: none (provado por T40)
 **Gate**: — (validado junto com T40)
