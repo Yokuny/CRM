@@ -105,3 +105,30 @@ export const persist = async (
 export const dispatch = async (message: Pick<MessageDocument, 'Conversation'>): Promise<void> => {
   await releaseTurnLock(message.Conversation.toString());
 };
+
+// T24B (gap found by the orchestrator before Batch 4, no new AD — mirrors
+// T25B's pattern from crm-web-shell): guard.input rejeitado (tamanho/rate
+// limit) nunca engaja o modelo, mas o cliente ainda precisa receber o aviso
+// fixo — spec.md Assumptions ("cliente recebe no máximo 1 aviso fixo por
+// janela de 60s") exige isso, e runTurn (T24) devolvia o `fixedReply` sem
+// nunca persistir/despachar uma Message — o texto nunca chegava ao WhatsApp.
+// Reusa o mesmo Message{direction:'out',status:'queued'}+outbox de sempre,
+// sem tocar AiSession (não é um turno do modelo — não entra no
+// histórico/resumo rolante). Libera o turnLock do mesmo jeito que dispatch().
+export const dispatchFixedReply = async (
+  conversation: PersistConversation,
+  fixedReply: string,
+): Promise<MessageDocument> => {
+  const message = await Message.create({
+    Tenant: conversation.Tenant,
+    Conversation: conversation._id,
+    Channel: conversation.Channel,
+    Customer: conversation.Customer,
+    direction: 'out',
+    type: 'text',
+    status: 'queued',
+    text: fixedReply,
+  });
+  await releaseTurnLock(conversation._id.toString());
+  return message;
+};

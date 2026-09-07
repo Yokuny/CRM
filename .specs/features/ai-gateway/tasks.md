@@ -85,8 +85,12 @@ T14 → T15 → T16 → T17
 ### Phase 5: `packages/ai-kit` — pipeline e orquestração
 
 ```
-T18 → T19 → T20 → T21 → T22 → T23 → T24
+T18 → T19 → T20 → T21 → T22 → T23 → T24 → T24B
 ```
+
+> **T24B added 2026-09-06** (Execute-time gap found before Batch 4, no new AD — see
+> T24B's own section for the bug: `turnLock` never released in `human_mode`/
+> `guard_rejected`, `fixedReply` never delivered).
 
 ### Phase 6: `apps/ai-gateway` — webhook
 
@@ -800,6 +804,49 @@ recebe um resultado, nunca uma exception não tratada).
 
 ---
 
+### T24B: `runTurn` — libera `turnLock` em `human_mode`/`guard_rejected`; entrega o `fixedReply` (gap found by the orchestrator before Batch 4, no new AD — mirrors T25B's pattern from crm-web-shell)
+
+**What**: T24's implementação original retornava cedo em `mode:'human'` e em
+`guardInput` recusado SEM nunca chamar `dispatch`/liberar o `turnLock` que `ingest`
+(T18) reivindicou — toda mensagem SEGUINTE da mesma `Conversation` ficaria presa
+esperando um lock que nunca seria liberado (bug de concorrência, não coberto por
+nenhum teste do T24 original, que só verificava o `outcome` e que `runLoop` não rodou).
+Além disso, `guard_rejected` nunca persistia/despachava o `fixedReply` como `Message`
+— o cliente nunca receberia o aviso fixo que `spec.md` (Assumptions, linha do rate
+limit: "cliente recebe no máximo 1 aviso fixo por janela de 60s") exige. Corrigido:
+`human_mode` libera o lock direto (`releaseTurnLock`, nenhuma `Message` nova — um
+operador humano trata manualmente, T37-40); `guard_rejected` grava
+`Message{direction:'out',status:'queued',text:fixedReply}` via uma nova função
+`dispatchFixedReply` (`persist.ts`) e libera o lock — sem tocar `AiSession` (não é um
+turno do modelo, não entra no histórico/resumo rolante).
+**Where**: `packages/ai-kit/src/runTurn.ts` (modifica), `packages/ai-kit/src/persist.ts`
+(modifica, + `dispatchFixedReply`), `packages/ai-kit/src/runTurn.int.test.ts` (estende
+3 testes existentes: `human_mode`, os 2 `guard_rejected`)
+**Depends on**: T24
+**Reuses**: `releaseTurnLock` (`@crm/db`, já usado por `dispatch`); mesmo formato de
+`Message{out,status:queued}` de `persist`
+**Requirement**: AIG-10, AIG-11, AIG-25 (turnLock)
+
+**Tools**: MCP: NONE · Skill: NONE
+
+**Done when**:
+- [x] `mode:'human'` → `turnLock` fica `null` ao final; uma segunda `ingest`/claim da
+      MESMA `Conversation` consegue reivindicar imediatamente
+- [x] `guardInput` recusa (tamanho) → uma `Message{direction:'out',status:'queued'}` com
+      `text` igual ao `fixedReply` devolvido é criada; `turnLock` liberado
+- [x] `guardInput` recusa (rate limit) → mesma prova acima
+- [x] Nenhuma das duas rejeições toca `AiSession` (sem chamada ao `client` de resumo)
+- [x] Gate check passes: `pnpm vitest run` (Full — toda a suíte, não só `--project
+      integration`)
+- [x] Test count: os 3 testes estendidos continuam passando (8 testes no arquivo,
+      nenhum novo teste — assserções adicionadas aos existentes)
+
+**Tests**: integration
+**Gate**: full
+**Commit**: `fix(ai-kit): release turnLock and deliver fixedReply on human_mode/guard_rejected (T24B)`
+
+---
+
 ### T25: Estender `env.config.ts` do `ai-gateway`
 
 **What**: Adicionar `ANTHROPIC_API_KEY`, `META_APP_SECRET`, `META_WEBHOOK_VERIFY_TOKEN`,
@@ -1424,7 +1471,7 @@ Phase 1:   T1 → T2 → T3 → T4 → T5 → T6
 Phase 2:   T7 → T8 → T9
 Phase 3:   T10 → T11 → T12 → T13
 Phase 4:   T14 → T15 → T16 → T17
-Phase 5:   T18 → T19 → T20 → T21 → T22 → T23 → T24
+Phase 5:   T18 → T19 → T20 → T21 → T22 → T23 → T24 → T24B (added 2026-09-06)
 Phase 6:   T25 → T26 → T27 → T28
 Phase 7:   T29 → T30 → T31 → T32
 Phase 8:   T33 → T34 → T35 → T36
@@ -1439,7 +1486,10 @@ lote) trabalha uma task de cada vez, em ordem.
 **47 tasks totais → ~7 lotes de sub-agente** no orçamento de ~7 tasks/worker (Fase 1+2 →
 Fase 3+4 → Fase 5 → Fase 6+7 → Fase 8+9 → Fase 10+11, ajustável no momento do Execute
 conforme o empacotamento real). Oferta de sub-agentes será apresentada antes do Execute,
-como de praxe.
+como de praxe. Empacotamento real do Execute: Lote 1 = Fase 1+2 (T1-T9), Lote 2 = Fase 3+4
+(T10-T17), Lote 3 = Fase 5 (T18-T24, + T24B corrigida pelo orquestrador após o lote), Lote
+4 = Fase 6+7, Lote 5 = Fase 8+9, Lote 6 = Fase 10+11 — 48 tasks totais após a adição de
+T24B.
 
 ---
 
@@ -1457,6 +1507,7 @@ como de praxe.
 | T13: definitions + teste estrutural | 2 arquivos, 1 conceito (a superfície fixa + sua garantia) | ✅ Granular |
 | T14-T17: 1 tool executor cada | 1 função | ✅ Granular |
 | T18-T24: 1 etapa de pipeline cada | 1 função | ✅ Granular |
+| T24B: fix pontual em `runTurn`/`persist` | 2 arquivos, 1 conceito (liberação de lock + entrega do fixedReply) | ✅ Granular — added 2026-09-06 |
 | T25: env config | 3 arquivos (env, vitest config, .env.example), 1 conceito (infra de vars novas) | ✅ Granular |
 | T26: metaClient | 1 arquivo | ✅ Granular |
 | T27: middleware assinatura | 1 arquivo | ✅ Granular |

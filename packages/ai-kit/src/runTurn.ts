@@ -1,11 +1,11 @@
 import type Anthropic from '@anthropic-ai/sdk';
-import { AiSession, type AiSessionDocument, Tenant } from '@crm/db';
+import { AiSession, type AiSessionDocument, releaseTurnLock, Tenant } from '@crm/db';
 import { contextBuild } from './contextBuild.js';
 import { guardInput } from './guardInput.js';
 import { guardOutput } from './guardOutput.js';
 import { checkConversationMode, type IngestInput, type IngestOptions, ingest } from './ingest.js';
 import { runLoop } from './loop.js';
-import { dispatch, type PersistConversation, persist } from './persist.js';
+import { dispatch, dispatchFixedReply, type PersistConversation, persist } from './persist.js';
 import type { AnthropicClient } from './providers/anthropicClient.js';
 import type { ToolContext } from './tools/toolContext.js';
 
@@ -41,15 +41,6 @@ const findOrCreateAiSession = async (tenantId: string, conversationId: string): 
 // se perde) — quem chama sempre recebe um outcome, nunca uma exception não
 // tratada (AIG-20/Error Handling Strategy). `client` é injetado (T11) — todo
 // teste usa um fake determinístico, nunca a SDK real.
-//
-// SPEC_DEVIATION: `guard_rejected` devolve o `fixedReply` sem passar por
-// `persist`/`dispatch` — nem spec.md/design.md nem a Error Handling Strategy
-// definem o mecanismo de fila para esse caso especificamente (a tabela lista
-// "Anthropic indisponível", "Meta falha", "janela de 24h", mas nenhuma linha
-// para "guard.input rejeitado"), então nenhum shape de `turnMessages` foi
-// inventado aqui para não chutar um contrato não especificado. AIG-10 AC6
-// ("responder com uma mensagem fixa") continua parcialmente aberto — fica
-// para uma task futura que toque o fluxo de webhook/outbox decidir.
 export const runTurn = async (
   client: AnthropicClient,
   input: IngestInput,
@@ -61,14 +52,37 @@ export const runTurn = async (
 
   const { channel, conversation, message } = ingestResult;
   const tenantId = channel.Tenant.toString();
+  const conversationId = conversation._id.toString();
+  const persistConversation: PersistConversation = {
+    _id: conversationId,
+    Tenant: tenantId,
+    Channel: channel._id.toString(),
+    Customer: conversation.Customer.toString(),
+  };
 
-  if (checkConversationMode(conversation)) return { outcome: 'human_mode' };
+  // T24B (gap found by the orchestrator before Batch 4, no new AD — mirrors
+  // T25B's pattern from crm-web-shell): both early-return branches below used
+  // to skip releasing the turnLock ingest() claimed, since only dispatch()
+  // (never reached on these paths) released it — every later message on the
+  // SAME Conversation would then always burn the full poll ceiling forever.
+  // human_mode: no bot reply is ever sent (an operator handles it manually,
+  // T37-40), so just release the lock, no Message is persisted here.
+  if (checkConversationMode(conversation)) {
+    await releaseTurnLock(conversationId);
+    return { outcome: 'human_mode' };
+  }
 
   const guardResult = await guardInput(message, conversation);
-  if (!guardResult.ok) return { outcome: 'guard_rejected', fixedReply: guardResult.fixedReply };
+  // guard_rejected: the customer still needs the fixed reply delivered
+  // (spec.md Assumptions — rate-limit row: "cliente recebe no máximo 1 aviso
+  // fixo por janela de 60s") — dispatchFixedReply queues it the same way a
+  // normal reply is queued, and releases the lock.
+  if (!guardResult.ok) {
+    await dispatchFixedReply(persistConversation, guardResult.fixedReply);
+    return { outcome: 'guard_rejected', fixedReply: guardResult.fixedReply };
+  }
 
   const tenant = await Tenant.findById(tenantId).lean();
-  const conversationId = conversation._id.toString();
   const aiSession = await findOrCreateAiSession(tenantId, conversationId);
 
   const contextResult = await contextBuild(
@@ -94,12 +108,6 @@ export const runTurn = async (
 
   const guardedReply = guardOutput(reply);
   const turnMessages: Anthropic.MessageParam[] = [{ role: 'user', content: guardResult.text }, ...rawTurn];
-  const persistConversation: PersistConversation = {
-    _id: conversationId,
-    Tenant: tenantId,
-    Channel: channel._id.toString(),
-    Customer: conversation.Customer.toString(),
-  };
   const outMessage = await persist(client, persistConversation, aiSession, turnMessages, guardedReply);
   await dispatch(outMessage);
 

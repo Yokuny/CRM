@@ -135,7 +135,7 @@ describe('runTurn (AIG-12/20, edge case de injeção de prompt)', () => {
     expect(await Message.countDocuments({ wamid: 'wamid-dup' })).toBe(1);
   });
 
-  it("mode:'human' only persists Message{in} — contextBuild/runLoop/guardOutput never run", async () => {
+  it("mode:'human' only persists Message{in} — contextBuild/runLoop/guardOutput never run, turnLock released", async () => {
     const tenant = randomId();
     const channel = await seedChannel(tenant, randomId());
     const from = randomPhone();
@@ -169,9 +169,13 @@ describe('runTurn (AIG-12/20, edge case de injeção de prompt)', () => {
     expect(await Message.countDocuments({ Conversation: conversation._id })).toBe(1);
     expect(await Message.countDocuments({ Conversation: conversation._id, direction: 'in' })).toBe(1);
     expect(await Message.countDocuments({ Conversation: conversation._id, direction: 'out' })).toBe(0);
+    // T24B: sem isso, toda mensagem seguinte da MESMA Conversation ficaria
+    // presa esperando um turnLock que nunca seria liberado (ver runTurn.ts).
+    expect((await Conversation.findById(conversation._id).lean())?.turnLock).toBeNull();
+    expect(await claimTurnLock(conversation._id.toString(), 'next-turn')).not.toBeNull();
   });
 
-  it('guardInput size rejection returns the fixedReply — runLoop never runs', async () => {
+  it('guardInput size rejection queues the fixedReply as Message{out,status:queued} and runLoop never runs (T24B)', async () => {
     const tenant = randomId();
     const phoneNumberId = randomId();
     const from = randomPhone();
@@ -184,9 +188,17 @@ describe('runTurn (AIG-12/20, edge case de injeção de prompt)', () => {
 
     expect(result.outcome).toBe('guard_rejected');
     expect(client.createMessage).not.toHaveBeenCalled();
+    // T24B: o cliente precisa efetivamente receber o aviso fixo (spec.md
+    // Assumptions) — antes desta correção nenhuma Message{out} era criada.
+    const outMessage = await Message.findOne({ direction: 'out' }).lean();
+    expect(outMessage?.status).toBe('queued');
+    expect(outMessage?.text).toBe((result as { fixedReply: string }).fixedReply);
+    const conversation = await Conversation.findOne({}).lean();
+    expect(conversation?.turnLock).toBeNull();
+    expect(await claimTurnLock(conversation?._id.toString() as string, 'next-turn')).not.toBeNull();
   });
 
-  it('guardInput rate-limit rejection returns the fixedReply — runLoop never runs', async () => {
+  it('guardInput rate-limit rejection queues the fixedReply as Message{out,status:queued} and runLoop never runs (T24B)', async () => {
     const tenant = randomId();
     const channel = await seedChannel(tenant, randomId());
     const from = randomPhone();
@@ -199,7 +211,7 @@ describe('runTurn (AIG-12/20, edge case de injeção de prompt)', () => {
       templateVersion: 1,
       values: {},
     });
-    await Conversation.create({
+    const conversation = await Conversation.create({
       Tenant: tenant,
       Channel: channel._id,
       Customer: customer._id,
@@ -218,6 +230,11 @@ describe('runTurn (AIG-12/20, edge case de injeção de prompt)', () => {
 
     expect(result.outcome).toBe('guard_rejected');
     expect(client.createMessage).not.toHaveBeenCalled();
+    const outMessage = await Message.findOne({ Conversation: conversation._id, direction: 'out' }).lean();
+    expect(outMessage?.status).toBe('queued');
+    expect(outMessage?.text).toBe((result as { fixedReply: string }).fixedReply);
+    expect((await Conversation.findById(conversation._id).lean())?.turnLock).toBeNull();
+    expect(await claimTurnLock(conversation._id.toString(), 'next-turn')).not.toBeNull();
   });
 
   it('a thrown error from the (mocked) Anthropic client never propagates — runTurn returns a fixed fallback reply', async () => {
