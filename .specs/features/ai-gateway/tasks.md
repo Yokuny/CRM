@@ -1107,10 +1107,10 @@ claro.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `createChannel` grava `accessTokenEnc`, nunca o token em claro
-- [ ] `getCurrentChannel` devolve o token mascarado (`maskSecret`), nunca `accessTokenEnc`
+- [x] `createChannel` grava `accessTokenEnc`, nunca o token em claro
+- [x] `getCurrentChannel` devolve o token mascarado (`maskSecret`), nunca `accessTokenEnc`
       bruto no objeto de resposta
-- [ ] Coberto transitivamente pelo e2e do router (T36) — sem teste dedicado (mesmo padrão
+- [x] Coberto transitivamente pelo e2e do router (T36) — sem teste dedicado (mesmo padrão
       do repo: nenhum `*.service.unit.test.ts` existe hoje)
 
 **Tests**: none (provado por T36)
