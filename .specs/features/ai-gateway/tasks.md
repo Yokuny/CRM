@@ -1210,9 +1210,9 @@ controller.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `Conversation` inexistente/de outro tenant → erro tipado 404
-- [ ] Janela de 24h expirada + `text` → erro tipado 400 com mensagem legível
-- [ ] Coberto transitivamente pelo e2e do router (T40)
+- [x] `Conversation` inexistente/de outro tenant → erro tipado 404
+- [x] Janela de 24h expirada + `text` → erro tipado 400 com mensagem legível
+- [x] Coberto transitivamente pelo e2e do router (T40)
 
 **Tests**: none (provado por T40)
 **Gate**: — (validado junto com T40)
