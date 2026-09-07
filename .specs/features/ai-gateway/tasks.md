@@ -723,13 +723,13 @@ mais próximo (fim de frase); redige qualquer `ObjectId` (24 hex chars) via rege
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Texto ≤ 1600 chars passa inalterado
-- [ ] Texto > 1600 chars trunca no fim de frase mais próximo abaixo do limite, nunca no
+- [x] Texto ≤ 1600 chars passa inalterado
+- [x] Texto > 1600 chars trunca no fim de frase mais próximo abaixo do limite, nunca no
       meio de uma palavra
-- [ ] String de 24 hex chars é removida/redigida; string hex de outro tamanho (23 ou 25)
+- [x] String de 24 hex chars é removida/redigida; string hex de outro tamanho (23 ou 25)
       NÃO é tocada (evita falso positivo)
-- [ ] Gate check passes: `pnpm vitest run --project unit`
-- [ ] Test count: ≥ 6 tests pass
+- [x] Gate check passes: `pnpm vitest run --project unit`
+- [x] Test count: ≥ 6 tests pass
 
 **Tests**: unit
 **Gate**: quick
