@@ -1306,13 +1306,13 @@ padrão de 2 tenants espelhados)
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] 2 tenants com `Channel`/`Customer`/`Conversation` de mesmo `phoneNumberId`-like/nome:
+- [x] 2 tenants com `Channel`/`Customer`/`Conversation` de mesmo `phoneNumberId`-like/nome:
       nenhuma tool (T14-T17), nenhuma rota (T36/T40) devolve dado do tenant errado
-- [ ] `GET /channels/current` de um tenant nunca devolve o `Channel` do outro
-- [ ] `find_or_create_customer` executado com o `ToolContext` do tenant A nunca reusa
+- [x] `GET /channels/current` de um tenant nunca devolve o `Channel` do outro
+- [x] `find_or_create_customer` executado com o `ToolContext` do tenant A nunca reusa
       `Customer` do tenant B, mesmo com telefone idêntico
-- [ ] Gate check passes: `pnpm vitest run --project integration`
-- [ ] Test count: arquivo existente + ≥ 4 asserções novas passam
+- [x] Gate check passes: `pnpm vitest run --project integration`
+- [x] Test count: arquivo existente + ≥ 4 asserções novas passam
 
 **Tests**: integration
 **Gate**: full

@@ -1,5 +1,8 @@
+import crypto from 'node:crypto';
+import { findOrCreateCustomer } from '@crm/ai-kit';
 import type { FieldDef } from '@crm/contracts';
 import {
+  Channel,
   Customer,
   connect,
   disconnect,
@@ -18,6 +21,11 @@ import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest
 import { buildApp } from '../../src/app.js';
 
 const DEVICE = 'isolation-agent';
+
+// Sem `mongoose` aqui (AD-010/boundary) — mesmo padrão dos tool executors
+// (T14-T17) e de ingest.int.test.ts (packages/ai-kit).
+const randomId = (): string => crypto.randomBytes(12).toString('hex');
+const randomPhone = (): string => `119${crypto.randomInt(10000000, 99999999)}`;
 
 // Extrai o token opaco do e-mail "enviado" pelo MailProvider `log` (o único
 // habilitado em ambiente de teste) — nunca lido do banco, que só guarda o
@@ -113,6 +121,7 @@ describe('cross-tenant isolation (FND-07, FND-09)', () => {
 
   afterEach(async () => {
     await Promise.all([
+      Channel.deleteMany({}),
       Process.deleteMany({}),
       Customer.deleteMany({}),
       FieldTemplateVersion.deleteMany({}),
@@ -563,6 +572,102 @@ describe('cross-tenant isolation (FND-07, FND-09)', () => {
         .set('User-Agent', DEVICE);
 
       expect(res.status).toBe(404);
+    });
+  });
+
+  // AIG-41 (T42): estende a mesma prova de espelhamento acima (CORE-05/WEB-14)
+  // para as duas peças novas desta feature — Channel (rota, T36) e
+  // find_or_create_customer (tool do Anel A, T15) — através do buildApp()
+  // COMPLETO (não um app de teste isolado só com o router em questão, como em
+  // channel.router.e2e.test.ts), fechando o Done-when de T41 de que ambos os
+  // routers respondem corretamente dentro da app composta real.
+  describe('cross-tenant isolation — ai-gateway Channel + find_or_create_customer (AIG-41)', () => {
+    it("GET /channels/current (via buildApp()) returns only the session tenant's own Channel, never the mirrored other tenant's (AD-010)", async () => {
+      const app = buildApp();
+      const platformCookie = await seedPlatformAdminCookie(app, 'root-aig-channel@platform.com');
+      const adminA = await provisionAndAcceptAdmin(
+        app,
+        platformCookie,
+        'Tenant AIG Channel A',
+        '20202020000120',
+        'aig-channel-a@empresa-a.com',
+        'Admin A',
+      );
+      const adminB = await provisionAndAcceptAdmin(
+        app,
+        platformCookie,
+        'Tenant AIG Channel B',
+        '21212121000121',
+        'aig-channel-b@empresa-b.com',
+        'Admin B',
+      );
+
+      const createdA = await request(app)
+        .post('/channels')
+        .set('Cookie', adminA.cookie)
+        .set('User-Agent', DEVICE)
+        .send({ phoneNumberId: `pn-mirror-${randomId()}`, accessToken: 'token-tenant-a-12345' });
+      const createdB = await request(app)
+        .post('/channels')
+        .set('Cookie', adminB.cookie)
+        .set('User-Agent', DEVICE)
+        .send({ phoneNumberId: `pn-mirror-${randomId()}`, accessToken: 'token-tenant-b-12345' });
+      expect(createdA.status).toBe(201);
+      expect(createdB.status).toBe(201);
+
+      const currentA = await request(app)
+        .get('/channels/current')
+        .set('Cookie', adminA.cookie)
+        .set('User-Agent', DEVICE);
+      const currentB = await request(app)
+        .get('/channels/current')
+        .set('Cookie', adminB.cookie)
+        .set('User-Agent', DEVICE);
+
+      expect(currentA.body.data.id).toBe(createdA.body.data.id);
+      expect(currentA.body.data.id).not.toBe(createdB.body.data.id);
+      expect(currentB.body.data.id).toBe(createdB.body.data.id);
+      expect(currentB.body.data.id).not.toBe(createdA.body.data.id);
+      expect(await Channel.countDocuments({ Tenant: adminA.tenantId })).toBe(1);
+      expect(await Channel.countDocuments({ Tenant: adminB.tenantId })).toBe(1);
+    });
+
+    it("find_or_create_customer resolves only the ToolContext tenant's own Customer, never reusing the mirrored tenant's record despite an identical phone", async () => {
+      const tenantA = randomId();
+      const tenantB = randomId();
+      const mirroredPhone = randomPhone();
+      const customerA = await Customer.create({
+        Tenant: tenantA,
+        name: 'Cliente Espelhado',
+        phone: mirroredPhone,
+        template: randomId(),
+        templateVersion: 1,
+        values: {},
+      });
+      const customerB = await Customer.create({
+        Tenant: tenantB,
+        name: 'Cliente Espelhado',
+        phone: mirroredPhone,
+        template: randomId(),
+        templateVersion: 1,
+        values: {},
+      });
+
+      const resultA = await findOrCreateCustomer(
+        { phone: mirroredPhone },
+        { tenantId: tenantA, channelId: randomId(), conversationId: randomId() },
+      );
+      const resultB = await findOrCreateCustomer(
+        { phone: mirroredPhone },
+        { tenantId: tenantB, channelId: randomId(), conversationId: randomId() },
+      );
+
+      expect(resultA).toEqual({ customerId: customerA._id.toString(), created: false });
+      expect(resultB).toEqual({ customerId: customerB._id.toString(), created: false });
+      expect(resultA.customerId).not.toBe(resultB.customerId);
+      // Nenhuma chamada criou/reusou o registro do outro tenant — os 2
+      // originais continuam sendo os únicos 2 documentos com esse telefone.
+      expect(await Customer.countDocuments({ phone: mirroredPhone })).toBe(2);
     });
   });
 });
