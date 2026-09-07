@@ -32,6 +32,9 @@ importers:
 
   apps/ai-gateway:
     dependencies:
+      '@crm/ai-kit':
+        specifier: workspace:*
+        version: link:../../packages/ai-kit
       '@crm/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts

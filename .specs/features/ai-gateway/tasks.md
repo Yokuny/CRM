@@ -942,15 +942,15 @@ também respondem 200, sem processar).
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `GET` com `hub.verify_token` certo → 200, corpo = `hub.challenge` cru (sem JSON)
-- [ ] `GET` com token errado → 403
-- [ ] `POST` com assinatura inválida → 401, nada persistido
-- [ ] `POST` válido com `phone_number_id` sem `Channel` → 200, nada persistido
-- [ ] `POST` válido, payload malformado (sem `wamid`) → 200, nada persistido
-- [ ] `POST` válido com mensagem de texto → 200, `runTurn` chamado, `Message` persistida
-- [ ] Mesmo `wamid` 2x → 1 `Message` (harness real, `MongoMemoryServer`)
-- [ ] Gate check passes: `pnpm vitest run --project e2e`
-- [ ] Test count: ≥ 7 tests pass
+- [x] `GET` com `hub.verify_token` certo → 200, corpo = `hub.challenge` cru (sem JSON)
+- [x] `GET` com token errado → 403
+- [x] `POST` com assinatura inválida → 401, nada persistido
+- [x] `POST` válido com `phone_number_id` sem `Channel` → 200, nada persistido
+- [x] `POST` válido, payload malformado (sem `wamid`) → 200, nada persistido
+- [x] `POST` válido com mensagem de texto → 200, `runTurn` chamado, `Message` persistida
+- [x] Mesmo `wamid` 2x → 1 `Message` (harness real, `MongoMemoryServer`)
+- [x] Gate check passes: `pnpm vitest run --project e2e`
+- [x] Test count: ≥ 7 tests pass
 
 **Tests**: e2e
 **Gate**: full
