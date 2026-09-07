@@ -602,15 +602,15 @@ vira `{isDuplicate:true}`), resolve `Channel→Tenant`, `findOrCreateConversatio
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Mesmo `wamid` chamado 2x → 1 `Message` (`isDuplicate:true` na 2ª)
-- [ ] `phone_number_id` sem `Channel` → `{resolved:false}`, nenhuma `Message`/`Conversation`
+- [x] Mesmo `wamid` chamado 2x → 1 `Message` (`isDuplicate:true` na 2ª)
+- [x] `phone_number_id` sem `Channel` → `{resolved:false}`, nenhuma `Message`/`Conversation`
       criada
-- [ ] Primeira mensagem de um Customer cria `Conversation`; segunda mensagem reusa a mesma
-- [ ] `turnLock` já reivindicado → espera com poll até liberar (teste com timer mockado);
+- [x] Primeira mensagem de um Customer cria `Conversation`; segunda mensagem reusa a mesma
+- [x] `turnLock` já reivindicado → espera com poll até liberar (teste com timer mockado);
       estoura teto → prossegue mesmo assim (log, não lança)
-- [ ] `checkConversationMode` devolve `true` quando `mode:'human'`
-- [ ] Gate check passes: `pnpm vitest run --project integration`
-- [ ] Test count: ≥ 8 tests pass
+- [x] `checkConversationMode` devolve `true` quando `mode:'human'`
+- [x] Gate check passes: `pnpm vitest run --project integration`
+- [x] Test count: ≥ 8 tests pass
 
 **Tests**: integration
 **Gate**: full
