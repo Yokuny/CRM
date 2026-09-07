@@ -1281,10 +1281,10 @@ no corpo de envio manual.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Ambos os routers respondem através de `buildApp()` completo (não só isolados)
-- [ ] Nenhuma rota existente quebra (regressão zero — `pnpm vitest run --project e2e`
+- [x] Ambos os routers respondem através de `buildApp()` completo (não só isolados)
+- [x] Nenhuma rota existente quebra (regressão zero — `pnpm vitest run --project e2e`
       inteiro, não só os arquivos novos)
-- [ ] Gate check passes: `pnpm vitest run --project e2e`
+- [x] Gate check passes: `pnpm vitest run --project e2e`
 
 **Tests**: e2e (regressão da suíte existente)
 **Gate**: full
