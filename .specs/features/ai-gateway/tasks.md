@@ -915,12 +915,12 @@ decifrado (T1) antes de cada chamada.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Assinatura correta (calculada com o mesmo secret) passa
-- [ ] Assinatura ausente → 401
-- [ ] Assinatura calculada com secret errado → 401
-- [ ] Comparação usa `timingSafeEqual` (não `===` de string)
-- [ ] Gate check passes: `pnpm vitest run --project unit`
-- [ ] Test count: ≥ 4 tests pass
+- [x] Assinatura correta (calculada com o mesmo secret) passa
+- [x] Assinatura ausente → 401
+- [x] Assinatura calculada com secret errado → 401
+- [x] Comparação usa `timingSafeEqual` (não `===` de string)
+- [x] Gate check passes: `pnpm vitest run --project unit`
+- [x] Test count: ≥ 4 tests pass
 
 **Tests**: unit
 **Gate**: quick
