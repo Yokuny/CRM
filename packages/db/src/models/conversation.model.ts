@@ -20,6 +20,11 @@ export interface ConversationDocument {
   turnLock: TurnLock | null;
   rateWindowStart?: Date;
   rateWindowCount?: number;
+  // AIG-11 fix: marca a janela (por valor de rateWindowStart) em que o
+  // cliente já recebeu o aviso fixo de rate limit — "no máximo 1 aviso por
+  // janela de 60s" (spec.md Assumptions). Mesmo estilo de rateWindowStart:
+  // vive só no documento, nunca em memória do processo.
+  rateLimitWarnedWindowStart?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -49,6 +54,7 @@ const conversationSchema = new Schema<ConversationDocument>(
     turnLock: { type: turnLockSchema, required: false, default: null },
     rateWindowStart: { type: Date, required: false },
     rateWindowCount: { type: Number, required: false },
+    rateLimitWarnedWindowStart: { type: Date, required: false },
   },
   { timestamps: true, collection: 'conversations' },
 );

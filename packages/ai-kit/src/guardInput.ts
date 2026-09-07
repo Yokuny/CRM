@@ -7,7 +7,10 @@ import { Conversation, type ConversationDocument, type MessageDocument } from '@
 // fixo). Um áudio transcrito com sucesso passa a seguir o MESMO caminho de
 // tamanho/rate-limit do texto digitado (AIG-46 AC2).
 export type GuardInputMessage = Pick<MessageDocument, 'type' | 'text'> & { transcribedText?: string };
-export type GuardInputResult = { ok: true; text: string } | { ok: false; fixedReply: string };
+// AIG-11 fix: `fixedReply` é opcional na rejeição — o rate limit só entrega
+// um aviso fixo na PRIMEIRA rejeição de cada janela (throttle); tamanho e
+// tipo não suportado continuam incondicionais (sempre têm fixedReply).
+export type GuardInputResult = { ok: true; text: string } | { ok: false; fixedReply?: string };
 
 // AIG-10 / context.md: nenhum número é fixado em spec/design/tasks para o
 // limite de ENTRADA (só o de SAÍDA, 1600 chars — guardOutput/T22 — é
@@ -34,7 +37,12 @@ export const RATE_LIMITED_REPLY = 'Você está enviando mensagens muito rápido.
 // (1) a janela expirou/nunca existiu → reset atômico; (2) está fresca e
 // ainda sob o teto → incremento atômico; se nenhum dos dois casar (fresca E
 // no teto), nenhuma escrita acontece — rejeita.
-const bumpRateLimit = async (conversationId: string, now: Date): Promise<boolean> => {
+// Quando rejeita, devolve o `rateWindowStart` atual da janela (lido à parte,
+// já que nenhum dos dois findOneAndUpdate casou) — guardInput usa esse valor
+// para o claim atômico de "primeiro aviso desta janela" (throttle).
+type BumpRateLimitResult = { withinLimit: true } | { withinLimit: false; rateWindowStart?: Date };
+
+const bumpRateLimit = async (conversationId: string, now: Date): Promise<BumpRateLimitResult> => {
   const staleThreshold = new Date(now.getTime() - RATE_LIMIT_WINDOW_MS);
 
   const reset = await Conversation.findOneAndUpdate(
@@ -45,14 +53,37 @@ const bumpRateLimit = async (conversationId: string, now: Date): Promise<boolean
     { $set: { rateWindowStart: now, rateWindowCount: 1 } },
     { returnDocument: 'after' },
   ).lean();
-  if (reset) return true;
+  if (reset) return { withinLimit: true };
 
   const bumped = await Conversation.findOneAndUpdate(
     { _id: conversationId, rateWindowCount: { $lt: RATE_LIMIT_MAX_MESSAGES } },
     { $inc: { rateWindowCount: 1 } },
     { returnDocument: 'after' },
   ).lean();
-  return bumped !== null;
+  if (bumped) return { withinLimit: true };
+
+  const current = await Conversation.findById(conversationId).select('rateWindowStart').lean();
+  return { withinLimit: false, rateWindowStart: current?.rateWindowStart };
+};
+
+// AIG-11 fix: "cliente recebe no máximo 1 aviso fixo por janela de 60s" —
+// claim atômico de "primeiro a avisar nesta janela", mesmo idioma do claim
+// de turnLock/outbox (findOneAndUpdate com filtro excludente, nunca
+// read-then-write). Só casa se a Conversation ainda estiver na MESMA janela
+// (`rateWindowStart` bate) e ainda não tiver sido avisada nesta janela
+// (`rateLimitWarnedWindowStart` != rateWindowStart, o que inclui o campo
+// nunca ter existido). Quem vence marca `rateLimitWarnedWindowStart` e é o
+// único a devolver o fixedReply; os demais (2º/3º excedente da mesma janela,
+// ou uma janela nova que já rolou por outra chamada concorrente) não avisam
+// de novo.
+const claimRateLimitWarning = async (conversationId: string, rateWindowStart: Date | undefined): Promise<boolean> => {
+  if (!rateWindowStart) return false;
+
+  const claimed = await Conversation.findOneAndUpdate(
+    { _id: conversationId, rateWindowStart, rateLimitWarnedWindowStart: { $ne: rateWindowStart } },
+    { $set: { rateLimitWarnedWindowStart: rateWindowStart } },
+  ).lean();
+  return claimed !== null;
 };
 
 // guardInput: gate de tipo (texto sempre processa; áudio processa SE já
@@ -71,8 +102,12 @@ export const guardInput = async (
 
   if (text.length > MAX_INPUT_TEXT_LENGTH) return { ok: false, fixedReply: TOO_LONG_REPLY };
 
-  const withinLimit = await bumpRateLimit(conversation._id.toString(), new Date());
-  if (!withinLimit) return { ok: false, fixedReply: RATE_LIMITED_REPLY };
+  const conversationId = conversation._id.toString();
+  const bumpResult = await bumpRateLimit(conversationId, new Date());
+  if (!bumpResult.withinLimit) {
+    const isFirstWarningThisWindow = await claimRateLimitWarning(conversationId, bumpResult.rateWindowStart);
+    return isFirstWarningThisWindow ? { ok: false, fixedReply: RATE_LIMITED_REPLY } : { ok: false };
+  }
 
   return { ok: true, text };
 };

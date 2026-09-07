@@ -83,10 +83,21 @@ export const runTurn = async (
   // guard_rejected: the customer still needs the fixed reply delivered
   // (spec.md Assumptions — rate-limit row: "cliente recebe no máximo 1 aviso
   // fixo por janela de 60s") — dispatchFixedReply queues it the same way a
-  // normal reply is queued, and releases the lock.
+  // normal reply is queued, and releases the lock. AIG-11 fix: when
+  // guardInput throttles the rate-limit warning (already warned this
+  // window), `fixedReply` is undefined — no Message is queued, but the
+  // turnLock still needs releasing (same T24B reasoning: dispatchFixedReply
+  // was the only thing releasing it on this path). `fixedReply` on the
+  // returned outcome stays '' in the throttled case (no canonical text was
+  // actually dispatched) — callers that care about the queued Message count
+  // must look at persisted Messages, not this field.
   if (!guardResult.ok) {
-    await dispatchFixedReply(persistConversation, guardResult.fixedReply);
-    return { outcome: 'guard_rejected', fixedReply: guardResult.fixedReply };
+    if (guardResult.fixedReply) {
+      await dispatchFixedReply(persistConversation, guardResult.fixedReply);
+    } else {
+      await releaseTurnLock(conversationId);
+    }
+    return { outcome: 'guard_rejected', fixedReply: guardResult.fixedReply ?? '' };
   }
 
   const tenant = await Tenant.findById(tenantId).lean();

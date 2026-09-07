@@ -98,6 +98,41 @@ describe('guardInput (AIG-10/11)', () => {
     expect(updated?.rateWindowCount).toBe(RATE_LIMIT_MAX_MESSAGES);
   });
 
+  it('throttles the rate-limit warning: only the FIRST excess message in a window gets fixedReply, the 2nd/3rd get {ok:false} with none (AIG-11)', async () => {
+    const conversation = await seedConversation({
+      rateWindowStart: new Date(),
+      rateWindowCount: RATE_LIMIT_MAX_MESSAGES,
+    });
+
+    const first = await guardInput({ type: 'text', text: 'excedente-1' }, conversation);
+    const second = await guardInput({ type: 'text', text: 'excedente-2' }, conversation);
+    const third = await guardInput({ type: 'text', text: 'excedente-3' }, conversation);
+
+    expect(first).toEqual({ ok: false, fixedReply: RATE_LIMITED_REPLY });
+    expect(second).toEqual({ ok: false });
+    expect(third).toEqual({ ok: false });
+    const updated = await Conversation.findById(conversation._id).lean();
+    expect(updated?.rateLimitWarnedWindowStart?.getTime()).toBe(conversation.rateWindowStart?.getTime());
+  });
+
+  it('a NEW rate-limit window (after the previous one expired) warns again, even if the old window was already warned (AIG-11)', async () => {
+    const conversation = await seedConversation({
+      rateWindowStart: new Date(Date.now() - 61_000),
+      rateWindowCount: RATE_LIMIT_MAX_MESSAGES,
+      rateLimitWarnedWindowStart: new Date(Date.now() - 61_000),
+    });
+
+    // Preenche a nova janela até o teto sem receber nenhum aviso (allowed):
+    for (let i = 0; i < RATE_LIMIT_MAX_MESSAGES; i++) {
+      const result = await guardInput({ type: 'text', text: `msg-${i}` }, conversation);
+      expect(result.ok).toBe(true);
+    }
+
+    const rejected = await guardInput({ type: 'text', text: 'excedente da nova janela' }, conversation);
+
+    expect(rejected).toEqual({ ok: false, fixedReply: RATE_LIMITED_REPLY });
+  });
+
   it('resets the window after it has expired, allowing messages again', async () => {
     const conversation = await seedConversation({
       rateWindowStart: new Date(Date.now() - 61_000),

@@ -12,7 +12,7 @@ import {
   Process,
 } from '@crm/db';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { MAX_INPUT_TEXT_LENGTH, RATE_LIMIT_MAX_MESSAGES } from './guardInput.js';
+import { MAX_INPUT_TEXT_LENGTH, RATE_LIMIT_MAX_MESSAGES, RATE_LIMITED_REPLY } from './guardInput.js';
 import type { AnthropicClient, AnthropicMessage } from './providers/anthropicClient.js';
 import { runTurn } from './runTurn.js';
 
@@ -198,7 +198,7 @@ describe('runTurn (AIG-12/20, edge case de injeção de prompt)', () => {
     expect(await claimTurnLock(conversation?._id.toString() as string, 'next-turn')).not.toBeNull();
   });
 
-  it('guardInput rate-limit rejection queues the fixedReply as Message{out,status:queued} and runLoop never runs (T24B)', async () => {
+  it('guardInput rate-limit rejection queues the fixedReply as Message{out,status:queued} and runLoop never runs (T24B); a burst of 3 excess messages in the SAME window queues only 1 warning, and turnLock releases after every single one (AIG-11)', async () => {
     const tenant = randomId();
     const channel = await seedChannel(tenant, randomId());
     const from = randomPhone();
@@ -220,21 +220,91 @@ describe('runTurn (AIG-12/20, edge case de injeção de prompt)', () => {
     });
     const client = createFakeClient([endTurn('nunca deveria rodar')]);
 
-    const result = await runTurn(client, {
+    const first = await runTurn(client, {
       phoneNumberId: channel.phoneNumberId,
-      wamid: 'wamid-rate',
+      wamid: 'wamid-rate-1',
       from,
       type: 'text',
-      text: 'mais uma mensagem',
+      text: 'excedente 1',
+    });
+    // (c) turnLock released after the 1st (throttled or not) — claimável de imediato pela próxima mensagem:
+    expect((await Conversation.findById(conversation._id).lean())?.turnLock).toBeNull();
+
+    const second = await runTurn(client, {
+      phoneNumberId: channel.phoneNumberId,
+      wamid: 'wamid-rate-2',
+      from,
+      type: 'text',
+      text: 'excedente 2',
+    });
+    // (c) idem para a 2ª — regressão do T24B seria travar aqui (dispatchFixedReply nunca chamado, lock nunca liberado):
+    expect((await Conversation.findById(conversation._id).lean())?.turnLock).toBeNull();
+
+    const third = await runTurn(client, {
+      phoneNumberId: channel.phoneNumberId,
+      wamid: 'wamid-rate-3',
+      from,
+      type: 'text',
+      text: 'excedente 3',
     });
 
-    expect(result.outcome).toBe('guard_rejected');
+    // (a) todas as 3 mensagens excedentes são rejeitadas do loop — nunca chegam a runLoop:
+    expect(first.outcome).toBe('guard_rejected');
+    expect(second.outcome).toBe('guard_rejected');
+    expect(third.outcome).toBe('guard_rejected');
     expect(client.createMessage).not.toHaveBeenCalled();
-    const outMessage = await Message.findOne({ Conversation: conversation._id, direction: 'out' }).lean();
-    expect(outMessage?.status).toBe('queued');
-    expect(outMessage?.text).toBe((result as { fixedReply: string }).fixedReply);
+
+    // (b) AIG-11: "no máximo 1 aviso fixo por janela de 60s" — mesmo com 3
+    // excedentes na MESMA janela, só a 1ª gera Message{out}; a 2ª/3ª não:
+    const outMessages = await Message.find({ Conversation: conversation._id, direction: 'out' }).lean();
+    expect(outMessages).toHaveLength(1);
+    expect(outMessages[0]?.status).toBe('queued');
+    expect(outMessages[0]?.text).toBe(RATE_LIMITED_REPLY);
+    expect(first).toEqual({ outcome: 'guard_rejected', fixedReply: RATE_LIMITED_REPLY });
+    expect(second).toEqual({ outcome: 'guard_rejected', fixedReply: '' });
+    expect(third).toEqual({ outcome: 'guard_rejected', fixedReply: '' });
+
+    // (c) turnLock também livre após a 3ª, e reivindicável de imediato:
     expect((await Conversation.findById(conversation._id).lean())?.turnLock).toBeNull();
     expect(await claimTurnLock(conversation._id.toString(), 'next-turn')).not.toBeNull();
+  });
+
+  it("a NEW rate-limit window resets the throttle — even when the PREVIOUS window was already warned, the new window's first excess message is warned again (AIG-11)", async () => {
+    const tenant = randomId();
+    const channel = await seedChannel(tenant, randomId());
+    const from = randomPhone();
+    const customerTemplate = await seedCustomerTemplate(tenant);
+    const customer = await Customer.create({
+      Tenant: tenant,
+      name: from,
+      phone: from,
+      template: customerTemplate._id,
+      templateVersion: 1,
+      values: {},
+    });
+    const conversation = await Conversation.create({
+      Tenant: tenant,
+      Channel: channel._id,
+      Customer: customer._id,
+      rateWindowStart: new Date(),
+      rateWindowCount: RATE_LIMIT_MAX_MESSAGES,
+      // Aviso já disparado numa janela ANTERIOR (valor de rateWindowStart
+      // diferente/expirado) — a janela ATUAL (fresh, no teto) nunca foi avisada:
+      rateLimitWarnedWindowStart: new Date(Date.now() - 61_000),
+    });
+    const client = createFakeClient([endTurn('nunca deveria rodar')]);
+
+    const result = await runTurn(client, {
+      phoneNumberId: channel.phoneNumberId,
+      wamid: 'wamid-rate-new-window',
+      from,
+      type: 'text',
+      text: 'excedente da nova janela',
+    });
+
+    expect(result).toEqual({ outcome: 'guard_rejected', fixedReply: RATE_LIMITED_REPLY });
+    const outMessage = await Message.findOne({ Conversation: conversation._id, direction: 'out' }).lean();
+    expect(outMessage?.text).toBe(RATE_LIMITED_REPLY);
   });
 
   it('a thrown error from the (mocked) Anthropic client never propagates — runTurn returns a fixed fallback reply', async () => {
