@@ -1153,13 +1153,13 @@ claro.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Admin cria `Channel` → 201, token nunca aparece em claro na resposta
-- [ ] `phoneNumberId` duplicado → 409
-- [ ] Corpo com `Tenant`/`tenantId`/`orgId` → ignorado, `Tenant` vem da sessão
-- [ ] Usuário sem papel `admin` → 403 antes de tocar dados
-- [ ] `GET /channels/current` devolve o `Channel` do tenant da sessão, mascarado
-- [ ] Gate check passes: `pnpm vitest run --project e2e`
-- [ ] Test count: ≥ 6 tests pass
+- [x] Admin cria `Channel` → 201, token nunca aparece em claro na resposta
+- [x] `phoneNumberId` duplicado → 409
+- [x] Corpo com `Tenant`/`tenantId`/`orgId` → ignorado, `Tenant` vem da sessão
+- [x] Usuário sem papel `admin` → 403 antes de tocar dados
+- [x] `GET /channels/current` devolve o `Channel` do tenant da sessão, mascarado
+- [x] Gate check passes: `pnpm vitest run --project e2e`
+- [x] Test count: ≥ 6 tests pass
 
 **Tests**: e2e
 **Gate**: full
