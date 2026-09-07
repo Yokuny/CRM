@@ -12,6 +12,11 @@ export const envSchema = z.object({
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
   SMTP_FROM: z.string().optional(),
+  // Compartilhada com apps/ai-gateway/src/config/env.config.ts (AD-018, mesmo
+  // .env único na raiz) — channel.service.ts (T34) criptografa/mascara o
+  // accessToken do Channel com a MESMA chave que o outbox consumer do
+  // ai-gateway usa para decifrar e enviar (packages/db/src/crypto.helper.ts).
+  CHANNEL_ENC_KEY: z.string().min(1, 'CHANNEL_ENC_KEY é obrigatória'),
 });
 
 export type Env = z.infer<typeof envSchema>;

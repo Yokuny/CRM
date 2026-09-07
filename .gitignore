@@ -4,3 +4,4 @@ coverage/
 .env
 *.local
 /playwright-skill/
+/whatsapp-mcp

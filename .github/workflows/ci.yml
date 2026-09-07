@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  build-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Build gate (AD-017) — mesmo comando exato do script "check" da raiz:
+      # tsc --noEmit (todo o monorepo) && biome check (lint+format) && vitest
+      # run (suíte completa: unit/integration/e2e/structural + evals/).
+      - run: pnpm run check

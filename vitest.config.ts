@@ -15,6 +15,14 @@ const crmApiBaseEnv = {
   CORS_ORIGIN: 'http://localhost:5173',
   MAIL_PROVIDER: 'log',
   AI_GATEWAY_PORT: '8081',
+  // apps/ai-gateway/src/config/env.config.ts (T25) — validado no import do
+  // módulo (fail-fast, FND-18), mesmo motivo das vars acima.
+  ANTHROPIC_API_KEY: 'sk-ant-test',
+  META_APP_SECRET: 'test-meta-app-secret',
+  META_WEBHOOK_VERIFY_TOKEN: 'test-verify-token',
+  // 32 bytes base64 válidos (crypto.helper.ts, T1) — Buffer.alloc(32,9).toString('base64').
+  CHANNEL_ENC_KEY: 'CQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQk=',
+  OPENAI_API_KEY: 'sk-openai-test',
 };
 
 // unit/e2e/structural não têm globalSetup — precisam de um MONGODB_URI
@@ -47,8 +55,14 @@ export default defineConfig({
           name: 'integration',
           include: [
             'packages/db/src/**/*.int.test.ts',
+            'packages/ai-kit/src/**/*.int.test.ts',
             'apps/crm-api/src/**/*.int.test.ts',
             'apps/crm-api/tests/**/*.int.test.ts',
+            'apps/ai-gateway/src/**/*.int.test.ts',
+            // T43 (golden set, evals/) — evals/ vive fora de packages/*/apps/*,
+            // sem este glob nenhum project coletaria os arquivos e o gate
+            // passaria com passWithNoTests:true sem rodar nada.
+            'evals/**/*.int.test.ts',
           ],
           passWithNoTests: true,
           globalSetup: ['packages/db/tests/setup/globalSetup.ts'],

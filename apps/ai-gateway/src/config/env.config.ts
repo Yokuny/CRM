@@ -4,6 +4,11 @@ export const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   MONGODB_URI: z.string().min(1, 'MONGODB_URI é obrigatória'),
   AI_GATEWAY_PORT: z.string().min(1, 'AI_GATEWAY_PORT é obrigatória'),
+  ANTHROPIC_API_KEY: z.string().min(1, 'ANTHROPIC_API_KEY é obrigatória'),
+  META_APP_SECRET: z.string().min(1, 'META_APP_SECRET é obrigatória'),
+  META_WEBHOOK_VERIFY_TOKEN: z.string().min(1, 'META_WEBHOOK_VERIFY_TOKEN é obrigatória'),
+  CHANNEL_ENC_KEY: z.string().min(1, 'CHANNEL_ENC_KEY é obrigatória'),
+  OPENAI_API_KEY: z.string().min(1, 'OPENAI_API_KEY é obrigatória'),
 });
 
 export type Env = z.infer<typeof envSchema>;
