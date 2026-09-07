@@ -5,7 +5,8 @@
   "packageManager": "pnpm@11.11.0",
   "scripts": {
     "check": "pnpm -r exec tsc --noEmit && pnpm biome check . && pnpm vitest run",
-    "format": "biome format . --write"
+    "format": "biome format . --write",
+    "evals": "vitest run --project integration evals/"
   },
   "devDependencies": {
     "typescript": "5.9.3",

@@ -1416,8 +1416,8 @@ determinístico no CI).
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `pnpm run evals` roda só os arquivos de `evals/` e passa
-- [ ] Gate check passes: `pnpm -r exec tsc --noEmit && pnpm biome check . && pnpm vitest run`
+- [x] `pnpm run evals` roda só os arquivos de `evals/` e passa
+- [x] Gate check passes: `pnpm -r exec tsc --noEmit && pnpm biome check . && pnpm vitest run`
 
 **Tests**: none (config/entidade)
 **Gate**: build
