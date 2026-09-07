@@ -1,5 +1,12 @@
 import crypto, { createHmac } from 'node:crypto';
-import type { AnthropicClient, AnthropicMessage } from '@crm/ai-kit';
+import type {
+  AnthropicClient,
+  AnthropicMessage,
+  DownloadAudio,
+  WhisperClient,
+  WhisperTranscription,
+} from '@crm/ai-kit';
+import { UNSUPPORTED_TYPE_REPLY } from '@crm/ai-kit';
 import { Channel, connect, disconnect, FieldTemplate, Message } from '@crm/db';
 import express, { type Express } from 'express';
 import request from 'supertest';
@@ -54,6 +61,36 @@ const metaTextPayload = (phoneNumberId: string, wamid: string, from: string, tex
       ],
     },
   ],
+});
+
+// P2 (T47): mesma forma de metaTextPayload, mensagem type:'audio' com um
+// mediaId da Meta — nunca um binário real (o webhook nem sabe do binário,
+// só do mediaId; download+transcrição acontecem dentro de runTurn/ingest).
+const metaAudioPayload = (phoneNumberId: string, wamid: string, from: string, mediaId: string) => ({
+  object: 'whatsapp_business_account',
+  entry: [
+    {
+      id: 'waba-1',
+      changes: [
+        {
+          value: {
+            messaging_product: 'whatsapp',
+            metadata: { phone_number_id: phoneNumberId },
+            messages: [{ id: wamid, from, type: 'audio', audio: { id: mediaId } }],
+          },
+          field: 'messages',
+        },
+      ],
+    },
+  ],
+});
+
+// P2 (T47) — fakes determinísticos, nunca a rede real da Meta/OpenAI.
+const createFakeDownloadAudio = (): DownloadAudio =>
+  vi.fn(async () => ({ buffer: Buffer.from('conteúdo binário fake do áudio'), mime: 'audio/ogg' }));
+
+const createFakeWhisperClient = (result: WhisperTranscription): WhisperClient => ({
+  transcribe: vi.fn(async () => result),
 });
 
 const sign = (body: unknown, secret = APP_SECRET): string =>
@@ -191,6 +228,64 @@ describe('webhook.router (AIG-05/06/07/08)', () => {
       expect(first.status).toBe(200);
       expect(second.status).toBe(200);
       expect(await Message.countDocuments({ wamid: 'wamid.dup' })).toBe(1);
+    });
+
+    // P2 (T47, AIG-45/46/47): áudio via webhook real (POST completo, com
+    // assinatura válida) — download+transcrição injetados como fakes,
+    // nunca a rede real da Meta/OpenAI.
+    it('responds 200 and lets a successfully transcribed audio reach the model, whose reply is persisted normally', async () => {
+      const tenant = randomId();
+      const phoneNumberId = randomPhoneNumberId();
+      const from = randomFrom();
+      await seedCustomerTemplate(tenant);
+      await seedChannel(tenant, phoneNumberId);
+      const client = createFakeClient('Seu pedido está a caminho!');
+      const downloadAudio = createFakeDownloadAudio();
+      const whisperClient = createFakeWhisperClient({ text: 'Quero saber o status do meu pedido' });
+      const app = buildTestApp({
+        client,
+        verifyToken: VERIFY_TOKEN,
+        appSecret: APP_SECRET,
+        downloadAudio,
+        whisperClient,
+      });
+      const body = metaAudioPayload(phoneNumberId, 'wamid.audio.ok', from, 'meta-media-ok');
+
+      const res = await postWebhook(app, body, sign(body));
+
+      expect(res.status).toBe(200);
+      expect(client.createMessage).toHaveBeenCalledTimes(1);
+      const inMessage = await Message.findOne({ wamid: 'wamid.audio.ok', direction: 'in' }).lean();
+      expect(inMessage?.type).toBe('audio');
+      expect(inMessage?.media).toEqual({ mediaId: 'meta-media-ok', mime: 'audio/ogg' });
+      const outMessage = await Message.findOne({ direction: 'out' }).lean();
+      expect(outMessage?.text).toBe('Seu pedido está a caminho!');
+    });
+
+    it('responds 200 and falls back to the fixed unsupported-type reply when Whisper fails — the model is never called (AIG-47)', async () => {
+      const tenant = randomId();
+      const phoneNumberId = randomPhoneNumberId();
+      const from = randomFrom();
+      await seedCustomerTemplate(tenant);
+      await seedChannel(tenant, phoneNumberId);
+      const client = createFakeClient('nunca deveria rodar');
+      const downloadAudio = createFakeDownloadAudio();
+      const whisperClient = createFakeWhisperClient({ error: 'Whisper indisponível' });
+      const app = buildTestApp({
+        client,
+        verifyToken: VERIFY_TOKEN,
+        appSecret: APP_SECRET,
+        downloadAudio,
+        whisperClient,
+      });
+      const body = metaAudioPayload(phoneNumberId, 'wamid.audio.fail', from, 'meta-media-fail');
+
+      const res = await postWebhook(app, body, sign(body));
+
+      expect(res.status).toBe(200);
+      expect(client.createMessage).not.toHaveBeenCalled();
+      const outMessage = await Message.findOne({ direction: 'out' }).lean();
+      expect(outMessage?.text).toBe(UNSUPPORTED_TYPE_REPLY);
     });
   });
 });

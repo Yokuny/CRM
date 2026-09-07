@@ -50,7 +50,7 @@ export const runTurn = async (
   if (!ingestResult.resolved) return { outcome: 'not_resolved' };
   if (ingestResult.isDuplicate) return { outcome: 'duplicate' };
 
-  const { channel, conversation, message } = ingestResult;
+  const { channel, conversation, message, audioTranscription } = ingestResult;
   const tenantId = channel.Tenant.toString();
   const conversationId = conversation._id.toString();
   const persistConversation: PersistConversation = {
@@ -72,7 +72,14 @@ export const runTurn = async (
     return { outcome: 'human_mode' };
   }
 
-  const guardResult = await guardInput(message, conversation);
+  // P2 (T47, AIG-46): áudio transcrito com sucesso por `ingest` (opts.
+  // ingestOptions.downloadAudio/whisperClient) chega aqui como
+  // `transcribedText` — guardInput.ts trata isso exatamente como o texto
+  // digitado (tamanho, rate limit). Sem transcrição (P1, ou falha do
+  // Whisper/Meta), `transcribedText` fica undefined e o tipo cai no
+  // fallback fixo já existente (T19), sem mudança de comportamento.
+  const transcribedText = audioTranscription && 'text' in audioTranscription ? audioTranscription.text : undefined;
+  const guardResult = await guardInput({ type: message.type, text: message.text, transcribedText }, conversation);
   // guard_rejected: the customer still needs the fixed reply delivered
   // (spec.md Assumptions — rate-limit row: "cliente recebe no máximo 1 aviso
   // fixo por janela de 60s") — dispatchFixedReply queues it the same way a

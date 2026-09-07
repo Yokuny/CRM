@@ -1,4 +1,4 @@
-import type { AnthropicClient } from '@crm/ai-kit';
+import type { AnthropicClient, DownloadAudio, WhisperClient } from '@crm/ai-kit';
 import { runTurn } from '@crm/ai-kit';
 import { badRespObj, respObj } from '@crm/contracts';
 import type { MessageType } from '@crm/db';
@@ -9,6 +9,12 @@ export type WebhookRouterDeps = {
   client: AnthropicClient;
   verifyToken: string;
   appSecret: string;
+  // P2 (T47): ambos opcionais — sem eles, áudio segue o fallback de tipo não
+  // suportado do P1 (guardInput.ts, T19). app.ts injeta as implementações
+  // reais (audioDownloader.ts + whisperClient.ts); todo teste injeta um
+  // fake, nunca a rede real da Meta/OpenAI.
+  downloadAudio?: DownloadAudio;
+  whisperClient?: WhisperClient;
 };
 
 // Shapes mínimas do payload da Meta necessárias para extrair 1 mensagem por
@@ -89,14 +95,18 @@ const handleIncoming = (deps: WebhookRouterDeps) => {
           for (const message of messages) {
             if (!message?.id || !message?.from) continue; // falta wamid/from — malformado, ack sem processar
 
-            await runTurn(deps.client, {
-              phoneNumberId,
-              wamid: message.id,
-              from: message.from,
-              type: mapMessageType(message.type),
-              text: message.text?.body,
-              mediaId: extractMediaId(message),
-            });
+            await runTurn(
+              deps.client,
+              {
+                phoneNumberId,
+                wamid: message.id,
+                from: message.from,
+                type: mapMessageType(message.type),
+                text: message.text?.body,
+                mediaId: extractMediaId(message),
+              },
+              { ingestOptions: { downloadAudio: deps.downloadAudio, whisperClient: deps.whisperClient } },
+            );
           }
         }
       }

@@ -10,8 +10,9 @@ import {
   Message,
   releaseTurnLock,
 } from '@crm/db';
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { checkConversationMode, ingest } from './ingest.js';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { checkConversationMode, type DownloadAudio, ingest } from './ingest.js';
+import type { WhisperClient, WhisperTranscription } from './providers/whisperClient.js';
 
 // Sem `mongoose` aqui (AD-010/boundary) — mesmo padrão dos tool executors
 // (T14-T17).
@@ -37,6 +38,17 @@ const seedChannel = async (tenant: string, phoneNumberId: string) => {
     status: 'active',
   });
 };
+
+// P2 (T47) — fakes determinísticos, nunca a rede real da Meta/OpenAI (mesmo
+// molde de createFakeClient em runTurn.int.test.ts).
+const createFakeDownloadAudio = (buffer: Buffer, mime: string) =>
+  vi.fn(async (..._args: Parameters<DownloadAudio>) => ({ buffer, mime }));
+
+const createFakeWhisperClient = (
+  result: WhisperTranscription,
+): WhisperClient & { transcribe: ReturnType<typeof vi.fn> } => ({
+  transcribe: vi.fn(async (..._args: Parameters<WhisperClient['transcribe']>) => result),
+});
 
 describe('ingest (AIG-07/08/09/25/12/32)', () => {
   beforeAll(async () => {
@@ -186,5 +198,140 @@ describe('ingest (AIG-07/08/09/25/12/32)', () => {
 
   it('checkConversationMode returns false when mode is "bot"', () => {
     expect(checkConversationMode({ mode: 'bot' })).toBe(false);
+  });
+
+  // P2 (T47, AIG-45/46/47/48): áudio baixa (Meta) e transcreve (Whisper),
+  // sem jamais gravar o binário — só o ponteiro (mediaId/mime) e o texto
+  // transcrito, este último só em memória (audioTranscription), nunca no
+  // documento Message.
+  describe('P2 — áudio transcrito (AIG-45/46/47/48)', () => {
+    it('downloads and transcribes an audio message, returning audioTranscription and persisting only the Meta pointer — never the binary', async () => {
+      const tenant = randomId();
+      const phoneNumberId = randomId();
+      const from = randomPhone();
+      await seedCustomerTemplate(tenant);
+      await seedChannel(tenant, phoneNumberId);
+      const audioBuffer = Buffer.from('conteúdo binário fake do áudio');
+      const downloadAudio = createFakeDownloadAudio(audioBuffer, 'audio/ogg');
+      const whisperClient = createFakeWhisperClient({ text: 'Quero saber o status do meu pedido' });
+
+      const result = await ingest(
+        { phoneNumberId, wamid: 'wamid-audio-ok', from, type: 'audio', mediaId: 'meta-media-1' },
+        { downloadAudio, whisperClient },
+      );
+
+      expect(result.resolved).toBe(true);
+      if (!result.resolved) throw new Error('unreachable');
+      expect(result.audioTranscription).toEqual({ text: 'Quero saber o status do meu pedido' });
+      expect(downloadAudio).toHaveBeenCalledWith(expect.objectContaining({ phoneNumberId }), 'meta-media-1');
+      expect(whisperClient.transcribe).toHaveBeenCalledWith(audioBuffer, 'audio/ogg');
+      // Ponteiro persistido (mediaId + mime resolvido) — o Message.text
+      // segue undefined: o binário/transcrição NUNCA são gravados no
+      // documento em si (só trafegam em memória até chegar em guardInput).
+      // `.lean()` (não `result.message` cru) porque um subdocumento Mongoose
+      // não é um objeto plano — comparar direto com `toEqual` falharia por
+      // campos internos ($__, _doc, etc.), nunca pelo dado em si.
+      const persisted = await Message.findById(result.message._id).lean();
+      expect(persisted?.media).toEqual({ mediaId: 'meta-media-1', mime: 'audio/ogg' });
+      expect(persisted?.text).toBeUndefined();
+      expect(JSON.stringify(persisted)).not.toContain(audioBuffer.toString('base64'));
+    });
+
+    it('never throws when Whisper returns {error} — persists only the pointer and returns the error as audioTranscription', async () => {
+      const tenant = randomId();
+      const phoneNumberId = randomId();
+      const from = randomPhone();
+      await seedCustomerTemplate(tenant);
+      await seedChannel(tenant, phoneNumberId);
+      const downloadAudio = createFakeDownloadAudio(Buffer.from('audio'), 'audio/ogg');
+      const whisperClient = createFakeWhisperClient({ error: 'Whisper indisponível' });
+
+      const result = await ingest(
+        { phoneNumberId, wamid: 'wamid-audio-whisper-error', from, type: 'audio', mediaId: 'meta-media-2' },
+        { downloadAudio, whisperClient },
+      );
+
+      expect(result.resolved).toBe(true);
+      if (!result.resolved) throw new Error('unreachable');
+      expect(result.audioTranscription).toEqual({ error: 'Whisper indisponível' });
+      const persisted = await Message.findById(result.message._id).lean();
+      expect(persisted?.text).toBeUndefined();
+      expect(persisted?.media).toEqual({ mediaId: 'meta-media-2', mime: 'audio/ogg' });
+    });
+
+    it('never throws when downloadAudio itself fails (Meta network/token error) — returns the error as audioTranscription, never propagates', async () => {
+      const tenant = randomId();
+      const phoneNumberId = randomId();
+      const from = randomPhone();
+      await seedCustomerTemplate(tenant);
+      await seedChannel(tenant, phoneNumberId);
+      const downloadAudio = vi.fn(async (..._args: Parameters<DownloadAudio>) => {
+        throw new Error('Falha ao resolver URL de mídia (status 401)');
+      });
+      const whisperClient = createFakeWhisperClient({ text: 'nunca deveria rodar' });
+
+      const result = await ingest(
+        { phoneNumberId, wamid: 'wamid-audio-download-fail', from, type: 'audio', mediaId: 'meta-media-3' },
+        { downloadAudio, whisperClient },
+      );
+
+      expect(result.resolved).toBe(true);
+      if (!result.resolved) throw new Error('unreachable');
+      expect(result.audioTranscription).toEqual({ error: 'Falha ao resolver URL de mídia (status 401)' });
+      expect(whisperClient.transcribe).not.toHaveBeenCalled();
+      const persisted = await Message.findById(result.message._id).lean();
+      expect(persisted?.text).toBeUndefined();
+      expect(persisted?.media).toEqual({ mediaId: 'meta-media-3' });
+    });
+
+    it('an audio message with no downloadAudio/whisperClient injected behaves exactly like P1 — persists only the mediaId pointer, no transcription attempted', async () => {
+      const tenant = randomId();
+      const phoneNumberId = randomId();
+      const from = randomPhone();
+      await seedCustomerTemplate(tenant);
+      await seedChannel(tenant, phoneNumberId);
+
+      const result = await ingest({
+        phoneNumberId,
+        wamid: 'wamid-audio-p1',
+        from,
+        type: 'audio',
+        mediaId: 'meta-media-4',
+      });
+
+      expect(result.resolved).toBe(true);
+      if (!result.resolved) throw new Error('unreachable');
+      expect(result.audioTranscription).toBeUndefined();
+      const persisted = await Message.findById(result.message._id).lean();
+      expect(persisted?.media).toEqual({ mediaId: 'meta-media-4' });
+      expect(persisted?.text).toBeUndefined();
+    });
+
+    it.each(['image', 'document', 'location'] as const)(
+      'a "%s" message persists only the Meta pointer (mediaId) and never invokes downloadAudio/whisperClient, even when injected (AIG-48)',
+      async (type) => {
+        const tenant = randomId();
+        const phoneNumberId = randomId();
+        const from = randomPhone();
+        await seedCustomerTemplate(tenant);
+        await seedChannel(tenant, phoneNumberId);
+        const downloadAudio = createFakeDownloadAudio(Buffer.from('nunca deveria baixar'), 'irrelevant');
+        const whisperClient = createFakeWhisperClient({ text: 'nunca deveria transcrever' });
+
+        const result = await ingest(
+          { phoneNumberId, wamid: `wamid-${type}`, from, type, mediaId: `meta-media-${type}` },
+          { downloadAudio, whisperClient },
+        );
+
+        expect(result.resolved).toBe(true);
+        if (!result.resolved) throw new Error('unreachable');
+        const persisted = await Message.findById(result.message._id).lean();
+        expect(persisted?.media).toEqual({ mediaId: `meta-media-${type}` });
+        expect(persisted?.text).toBeUndefined();
+        expect(result.audioTranscription).toBeUndefined();
+        expect(downloadAudio).not.toHaveBeenCalled();
+        expect(whisperClient.transcribe).not.toHaveBeenCalled();
+      },
+    );
   });
 });

@@ -110,4 +110,50 @@ describe('guardInput (AIG-10/11)', () => {
     const updated = await Conversation.findById(conversation._id).lean();
     expect(updated?.rateWindowCount).toBe(1);
   });
+
+  // P2 (T47, AIG-46 AC2): áudio transcrito com sucesso por ingest.ts segue o
+  // MESMO caminho de guardInput do texto digitado (tamanho, rate limit) —
+  // `transcribedText` só chega preenchido pelo pipeline real (runTurn.ts),
+  // nunca por quem chama guardInput isoladamente (o it.each acima, que
+  // nunca define `transcribedText`, continua caindo no fallback fixo).
+  describe('P2 — áudio transcrito (AIG-46)', () => {
+    it('type "audio" with a successful transcribedText within the size limit → {ok:true, text:transcribedText} — same path as typed text', async () => {
+      const conversation = await seedConversation();
+
+      const result = await guardInput(
+        { type: 'audio', transcribedText: 'Quero saber o status do meu pedido' },
+        conversation,
+      );
+
+      expect(result).toEqual({ ok: true, text: 'Quero saber o status do meu pedido' });
+    });
+
+    it('type "audio" with a transcribedText above the size limit → {ok:false, fixedReply:TOO_LONG_REPLY} — same size gate as typed text', async () => {
+      const conversation = await seedConversation();
+      const tooLong = 'a'.repeat(MAX_INPUT_TEXT_LENGTH + 1);
+
+      const result = await guardInput({ type: 'audio', transcribedText: tooLong }, conversation);
+
+      expect(result).toEqual({ ok: false, fixedReply: TOO_LONG_REPLY });
+    });
+
+    it('type "audio" with transcribedText hitting an exhausted rate limit → {ok:false, fixedReply:RATE_LIMITED_REPLY} — same rate-limit gate as typed text', async () => {
+      const conversation = await seedConversation({
+        rateWindowStart: new Date(),
+        rateWindowCount: RATE_LIMIT_MAX_MESSAGES,
+      });
+
+      const result = await guardInput({ type: 'audio', transcribedText: 'mais uma mensagem' }, conversation);
+
+      expect(result).toEqual({ ok: false, fixedReply: RATE_LIMITED_REPLY });
+    });
+
+    it('type "audio" WITHOUT transcribedText still falls back to the unsupported-type reply (Whisper failure / P1, AIG-47)', async () => {
+      const conversation = await seedConversation();
+
+      const result = await guardInput({ type: 'audio' }, conversation);
+
+      expect(result).toEqual({ ok: false, fixedReply: UNSUPPORTED_TYPE_REPLY });
+    });
+  });
 });

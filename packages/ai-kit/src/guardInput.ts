@@ -1,6 +1,12 @@
 import { Conversation, type ConversationDocument, type MessageDocument } from '@crm/db';
 
-export type GuardInputMessage = Pick<MessageDocument, 'type' | 'text'>;
+// P2 (T47, AIG-45/46): `transcribedText` só é preenchido pelo pipeline real
+// (runTurn.ts) quando `ingest` já baixou e transcreveu um áudio com sucesso
+// — NUNCA por quem chama guardInput isoladamente (o teste unitário de tipo
+// não suportado, abaixo, nunca o define, então continua caindo no fallback
+// fixo). Um áudio transcrito com sucesso passa a seguir o MESMO caminho de
+// tamanho/rate-limit do texto digitado (AIG-46 AC2).
+export type GuardInputMessage = Pick<MessageDocument, 'type' | 'text'> & { transcribedText?: string };
 export type GuardInputResult = { ok: true; text: string } | { ok: false; fixedReply: string };
 
 // AIG-10 / context.md: nenhum número é fixado em spec/design/tasks para o
@@ -49,17 +55,20 @@ const bumpRateLimit = async (conversationId: string, now: Date): Promise<boolean
   return bumped !== null;
 };
 
-// guardInput: gate de tipo (só texto processa nesta task — áudio entra em
-// T47), gate de tamanho, rate limit atômico (AIG-10/11). `message`/
-// `conversation` já foram persistidos pelo `ingest` (T18) — guardInput nunca
-// persiste nada, só decide se o turno segue para o loop.
+// guardInput: gate de tipo (texto sempre processa; áudio processa SE já
+// veio transcrito por ingest — T47; qualquer outro tipo, ou áudio sem
+// transcrição, cai no fallback fixo), gate de tamanho, rate limit atômico
+// (AIG-10/11). `message`/`conversation` já foram persistidos pelo `ingest`
+// (T18) — guardInput nunca persiste nada, só decide se o turno segue para o
+// loop.
 export const guardInput = async (
   message: GuardInputMessage,
   conversation: Pick<ConversationDocument, '_id'>,
 ): Promise<GuardInputResult> => {
-  if (message.type !== 'text') return { ok: false, fixedReply: UNSUPPORTED_TYPE_REPLY };
+  const text =
+    message.type === 'text' ? (message.text ?? '') : message.type === 'audio' ? message.transcribedText : undefined;
+  if (text === undefined) return { ok: false, fixedReply: UNSUPPORTED_TYPE_REPLY };
 
-  const text = message.text ?? '';
   if (text.length > MAX_INPUT_TEXT_LENGTH) return { ok: false, fixedReply: TOO_LONG_REPLY };
 
   const withinLimit = await bumpRateLimit(conversation._id.toString(), new Date());

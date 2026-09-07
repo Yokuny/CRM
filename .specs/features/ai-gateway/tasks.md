@@ -1441,17 +1441,17 @@ existente (T19)
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Mensagem de áudio baixa o binário (mockado) e transcreve (mockado) — texto
+- [x] Mensagem de áudio baixa o binário (mockado) e transcreve (mockado) — texto
       transcrito segue pelo MESMO caminho de `contextBuild`/`runLoop`/`guardOutput` do
       texto digitado
-- [ ] Binário do áudio NUNCA é persistido em nenhum campo/collection — só o texto
+- [x] Binário do áudio NUNCA é persistido em nenhum campo/collection — só o texto
       transcrito
-- [ ] `whisperClient` mockado devolve `{error}` → cai no fallback fixo de tipo não
+- [x] `whisperClient` mockado devolve `{error}` → cai no fallback fixo de tipo não
       suportado, sem lançar, sem derrubar o webhook (teste e2e confirma 200)
-- [ ] Imagem/documento/localização continuam só persistidos com o ponteiro da Meta
+- [x] Imagem/documento/localização continuam só persistidos com o ponteiro da Meta
       (`media:{mediaId,mime,caption}`), nunca o binário
-- [ ] Gate check passes: `pnpm vitest run --project integration --project e2e`
-- [ ] Test count: ≥ 6 tests pass
+- [x] Gate check passes: `pnpm vitest run --project integration --project e2e`
+- [x] Test count: ≥ 6 tests pass
 
 **Tests**: integration
 **Gate**: full
