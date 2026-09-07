@@ -889,12 +889,12 @@ decifrado (T1) antes de cada chamada.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `sendText`/`sendTemplate` chamam o endpoint certo (`POST /{phoneNumberId}/messages`)
+- [x] `sendText`/`sendTemplate` chamam o endpoint certo (`POST /{phoneNumberId}/messages`)
       com o token decifrado — mockado em teste (nenhuma chamada de rede real)
-- [ ] `getMediaUrl`+`downloadMedia` seguem o fluxo de 2 etapas da Meta (mockado)
-- [ ] Falha do fetch mockado propaga como erro tipado (T29 decide o retry, não esta task)
-- [ ] Gate check passes: `pnpm vitest run --project unit`
-- [ ] Test count: ≥ 5 tests pass
+- [x] `getMediaUrl`+`downloadMedia` seguem o fluxo de 2 etapas da Meta (mockado)
+- [x] Falha do fetch mockado propaga como erro tipado (T29 decide o retry, não esta task)
+- [x] Gate check passes: `pnpm vitest run --project unit`
+- [x] Test count: ≥ 5 tests pass
 
 **Tests**: unit
 **Gate**: quick
