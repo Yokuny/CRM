@@ -1392,11 +1392,11 @@ determinístico no CI).
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Mesmo `wamid` 2x → 1 `Message`, `runTurn` só roda o loop uma vez
-- [ ] Suíte completa (`evals/` + `tests/structural/`) é 100% determinística — sem
+- [x] Mesmo `wamid` 2x → 1 `Message`, `runTurn` só roda o loop uma vez
+- [x] Suíte completa (`evals/` + `tests/structural/`) é 100% determinística — sem
       `it.skip`/rede real
-- [ ] Gate check passes: `pnpm vitest run --project integration --project structural`
-- [ ] Test count: ≥ 2 tests pass
+- [x] Gate check passes: `pnpm vitest run --project integration --project structural`
+- [x] Test count: ≥ 2 tests pass
 
 **Tests**: integration
 **Gate**: full
