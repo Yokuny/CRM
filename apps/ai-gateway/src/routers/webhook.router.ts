@@ -27,8 +27,12 @@ type MetaIncomingMessage = {
   type?: string;
   text?: { body?: string };
   audio?: { id?: string };
-  image?: { id?: string };
-  document?: { id?: string };
+  image?: { id?: string; caption?: string };
+  document?: { id?: string; caption?: string };
+  // AIG-48: figurinha (sticker) nunca vem com legenda na API da Meta; vídeo
+  // vem, igual documento/imagem.
+  sticker?: { id?: string };
+  video?: { id?: string; caption?: string };
 };
 
 type MetaWebhookBody = {
@@ -44,7 +48,14 @@ type MetaWebhookBody = {
 
 // Tipos suportados nesta rodada (P1 = texto; P2/T45-47 liga áudio) — os
 // demais (image/document/location/figurinha/vídeo) sempre viram
-// 'unsupported' aqui; guardInput (T19) decide o fallback fixo.
+// 'unsupported' aqui; guardInput (T19) decide o fallback fixo. AIG-48:
+// figurinha/vídeo não têm valor próprio no enum MessageType
+// (packages/db/src/models/message.model.ts) — caem no mesmo 'unsupported'
+// de qualquer tipo não reconhecido (mapeamento deliberado, não um esquecimento:
+// não há valor "mais próximo" melhor entre text/audio/image/document/location
+// para nenhum dos dois). O que muda de fato é extractMediaId/extractCaption
+// abaixo: o ponteiro da Meta (mediaId/mime/legenda) desses 2 tipos agora é
+// preservado, nunca mais descartado.
 const mapMessageType = (type: string | undefined): MessageType => {
   if (type === 'text' || type === 'audio' || type === 'image' || type === 'document' || type === 'location') {
     return type;
@@ -53,7 +64,13 @@ const mapMessageType = (type: string | undefined): MessageType => {
 };
 
 const extractMediaId = (message: MetaIncomingMessage): string | undefined =>
-  message.audio?.id ?? message.image?.id ?? message.document?.id;
+  message.audio?.id ?? message.image?.id ?? message.document?.id ?? message.sticker?.id ?? message.video?.id;
+
+// AIG-48: legenda opcional que a Meta manda em document/video/image — nunca
+// preenchida para os demais tipos (texto tem seu próprio corpo; áudio/
+// figurinha/localização nunca carregam legenda na API da Meta).
+const extractCaption = (message: MetaIncomingMessage): string | undefined =>
+  message.document?.caption ?? message.video?.caption ?? message.image?.caption;
 
 // AIG-05: GET handshake — hub.challenge cru no corpo (sem envelope JSON), só
 // quando hub.verify_token bate com o secret de plataforma.
@@ -104,6 +121,7 @@ const handleIncoming = (deps: WebhookRouterDeps) => {
                 type: mapMessageType(message.type),
                 text: message.text?.body,
                 mediaId: extractMediaId(message),
+                caption: extractCaption(message),
               },
               { ingestOptions: { downloadAudio: deps.downloadAudio, whisperClient: deps.whisperClient } },
             );

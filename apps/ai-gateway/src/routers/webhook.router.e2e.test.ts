@@ -85,6 +85,46 @@ const metaAudioPayload = (phoneNumberId: string, wamid: string, from: string, me
   ],
 });
 
+// AIG-48: mesma forma de metaAudioPayload — figurinha (sticker) nunca tem
+// legenda na API da Meta; vídeo pode ter uma opcional.
+const metaStickerPayload = (phoneNumberId: string, wamid: string, from: string, mediaId: string) => ({
+  object: 'whatsapp_business_account',
+  entry: [
+    {
+      id: 'waba-1',
+      changes: [
+        {
+          value: {
+            messaging_product: 'whatsapp',
+            metadata: { phone_number_id: phoneNumberId },
+            messages: [{ id: wamid, from, type: 'sticker', sticker: { id: mediaId } }],
+          },
+          field: 'messages',
+        },
+      ],
+    },
+  ],
+});
+
+const metaVideoPayload = (phoneNumberId: string, wamid: string, from: string, mediaId: string, caption?: string) => ({
+  object: 'whatsapp_business_account',
+  entry: [
+    {
+      id: 'waba-1',
+      changes: [
+        {
+          value: {
+            messaging_product: 'whatsapp',
+            metadata: { phone_number_id: phoneNumberId },
+            messages: [{ id: wamid, from, type: 'video', video: { id: mediaId, caption } }],
+          },
+          field: 'messages',
+        },
+      ],
+    },
+  ],
+});
+
 // P2 (T47) — fakes determinísticos, nunca a rede real da Meta/OpenAI.
 const createFakeDownloadAudio = (): DownloadAudio =>
   vi.fn(async () => ({ buffer: Buffer.from('conteúdo binário fake do áudio'), mime: 'audio/ogg' }));
@@ -284,6 +324,53 @@ describe('webhook.router (AIG-05/06/07/08)', () => {
 
       expect(res.status).toBe(200);
       expect(client.createMessage).not.toHaveBeenCalled();
+      const outMessage = await Message.findOne({ direction: 'out' }).lean();
+      expect(outMessage?.text).toBe(UNSUPPORTED_TYPE_REPLY);
+    });
+
+    // AIG-48: antes da correção, mapMessageType/extractMediaId não
+    // reconheciam sticker/video — o ponteiro da Meta era descartado (nunca
+    // persistido), não apenas deixado sem download. Estes 2 testes provam
+    // que o ponteiro chega ao Message.media, exatamente como já acontecia
+    // para image/document/location (ingest.int.test.ts), e que a resposta
+    // continua sendo o fallback fixo de tipo não suportado — o modelo nunca
+    // é chamado.
+    it('responds 200, persists the sticker Meta pointer (mediaId) and falls back to the unsupported-type reply — never dropped, never downloaded (AIG-48)', async () => {
+      const tenant = randomId();
+      const phoneNumberId = randomPhoneNumberId();
+      const from = randomFrom();
+      await seedCustomerTemplate(tenant);
+      await seedChannel(tenant, phoneNumberId);
+      const client = createFakeClient('nunca deveria rodar');
+      const app = buildTestApp({ client, verifyToken: VERIFY_TOKEN, appSecret: APP_SECRET });
+      const body = metaStickerPayload(phoneNumberId, 'wamid.sticker', from, 'meta-media-sticker');
+
+      const res = await postWebhook(app, body, sign(body));
+
+      expect(res.status).toBe(200);
+      expect(client.createMessage).not.toHaveBeenCalled();
+      const inMessage = await Message.findOne({ wamid: 'wamid.sticker', direction: 'in' }).lean();
+      expect(inMessage?.media).toEqual({ mediaId: 'meta-media-sticker' });
+      const outMessage = await Message.findOne({ direction: 'out' }).lean();
+      expect(outMessage?.text).toBe(UNSUPPORTED_TYPE_REPLY);
+    });
+
+    it('responds 200, persists the video Meta pointer (mediaId+caption) and falls back to the unsupported-type reply — never dropped, never downloaded (AIG-48)', async () => {
+      const tenant = randomId();
+      const phoneNumberId = randomPhoneNumberId();
+      const from = randomFrom();
+      await seedCustomerTemplate(tenant);
+      await seedChannel(tenant, phoneNumberId);
+      const client = createFakeClient('nunca deveria rodar');
+      const app = buildTestApp({ client, verifyToken: VERIFY_TOKEN, appSecret: APP_SECRET });
+      const body = metaVideoPayload(phoneNumberId, 'wamid.video', from, 'meta-media-video', 'Chegou quebrado');
+
+      const res = await postWebhook(app, body, sign(body));
+
+      expect(res.status).toBe(200);
+      expect(client.createMessage).not.toHaveBeenCalled();
+      const inMessage = await Message.findOne({ wamid: 'wamid.video', direction: 'in' }).lean();
+      expect(inMessage?.media).toEqual({ mediaId: 'meta-media-video', caption: 'Chegou quebrado' });
       const outMessage = await Message.findOne({ direction: 'out' }).lean();
       expect(outMessage?.text).toBe(UNSUPPORTED_TYPE_REPLY);
     });

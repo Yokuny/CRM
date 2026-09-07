@@ -349,5 +349,35 @@ describe('ingest (AIG-07/08/09/25/12/32)', () => {
         expect(whisperClient.transcribe).not.toHaveBeenCalled();
       },
     );
+
+    // AIG-48: 'sticker'/'video' não entram no it.each acima porque `ingest()`
+    // só aceita `type: MessageType` (packages/db) já MAPEADO pelo router —
+    // esse mapeamento (mapMessageType/extractMediaId/extractCaption, ambos
+    // agora corrigidos para não descartar o ponteiro) é exercitado end-to-end
+    // em apps/ai-gateway/src/routers/webhook.router.e2e.test.ts. Este teste
+    // aqui prova a metade que É de `ingest()`: a `caption`, quando fornecida
+    // pelo chamador (o router, para document/video/image), é persistida no
+    // ponteiro `media` — mesma garantia de "nunca baixar" das demais.
+    it('persists the caption in the Meta pointer when the input provides one (AIG-48)', async () => {
+      const tenant = randomId();
+      const phoneNumberId = randomId();
+      const from = randomPhone();
+      await seedCustomerTemplate(tenant);
+      await seedChannel(tenant, phoneNumberId);
+
+      const result = await ingest({
+        phoneNumberId,
+        wamid: 'wamid-caption',
+        from,
+        type: 'document',
+        mediaId: 'meta-media-caption',
+        caption: 'Segue o comprovante',
+      });
+
+      expect(result.resolved).toBe(true);
+      if (!result.resolved) throw new Error('unreachable');
+      const persisted = await Message.findById(result.message._id).lean();
+      expect(persisted?.media).toEqual({ mediaId: 'meta-media-caption', caption: 'Segue o comprovante' });
+    });
   });
 });

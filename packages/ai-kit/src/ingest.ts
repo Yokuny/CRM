@@ -28,6 +28,9 @@ export type IngestInput = {
   type: MessageType;
   text?: string;
   mediaId?: string;
+  // AIG-48: legenda opcional do ponteiro da Meta (document/video/image) — só
+  // populada no `media` da Message quando o payload original trouxe uma.
+  caption?: string;
 };
 
 // P2 (T47, AIG-45): áudio baixado da Meta via fluxo de duas etapas
@@ -181,9 +184,10 @@ export const ingest = async (input: IngestInput, opts: IngestOptions = {}): Prom
       direction: 'in',
       type: input.type,
       text: input.text,
-      // AIG-48: só o ponteiro (mediaId/mime) é persistido — o binário do
-      // áudio NUNCA passa por aqui nem por nenhum outro campo/collection.
-      media: input.mediaId ? { mediaId: input.mediaId, mime: mediaMime } : undefined,
+      // AIG-48: só o ponteiro (mediaId/mime/caption) é persistido — o
+      // binário (áudio ou qualquer outro tipo de mídia) NUNCA passa por aqui
+      // nem por nenhum outro campo/collection.
+      media: input.mediaId ? { mediaId: input.mediaId, mime: mediaMime, caption: input.caption } : undefined,
       wamid: input.wamid,
     });
   } catch (err) {
