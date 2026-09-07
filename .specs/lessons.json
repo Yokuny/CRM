@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 17,
+  "next_id": 24,
   "lessons": [
     {
       "id": "L-001",
@@ -292,6 +292,132 @@
       ],
       "created": "2026-09-05T18:39:59Z",
       "last_seen": "2026-09-05T18:39:59Z"
+    },
+    {
+      "id": "L-017",
+      "key": "ac_gap::before closing tasks authoring confirm every requirement id in spec md s traceability table is named in at least one task s requirement field in tasks md a requirement can satisfy a nenhum unmapped coverage claim in prose while never actually being assigned to any task and ships fully unimplemented",
+      "text": "Before closing Tasks authoring, confirm every requirement ID in spec.md's traceability table is named in at least one task's Requirement field in tasks.md — a requirement can satisfy a 'nenhum unmapped' coverage claim in prose while never actually being assigned to any task, and ships fully unimplemented.",
+      "signal": "ac_gap",
+      "scope": "tasks-authoring/observability",
+      "status": "candidate",
+      "features": [
+        "ai-gateway"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "AIG-44 / .specs/features/ai-gateway/tasks.md (no task references AIG-44 in its Requirement field) (tasks-authoring/observability)"
+      ],
+      "created": "2026-09-07T18:09:39Z",
+      "last_seen": "2026-09-07T18:09:39Z"
+    },
+    {
+      "id": "L-018",
+      "key": "ac_gap::when a spec requires throttling a secondary side effect to at most n per window e g one warning message per rate limit window implement a dedicated last sent timestamp for that side effect a counter that only gates the primary action lets every excess event still re fire the secondary side effect once per event",
+      "text": "When a spec requires throttling a secondary side-effect to 'at most N per window' (e.g. one warning message per rate-limit window), implement a dedicated last-sent timestamp for that side-effect — a counter that only gates the primary action lets every excess event still re-fire the secondary side-effect once per event.",
+      "signal": "ac_gap",
+      "scope": "rate-limiting/guardrails",
+      "status": "candidate",
+      "features": [
+        "ai-gateway"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "AIG-11 / packages/ai-kit/src/runTurn.ts:87-90 (dispatchFixedReply called unconditionally on every guard_rejected outcome) (rate-limiting/guardrails)"
+      ],
+      "created": "2026-09-07T18:09:39Z",
+      "last_seen": "2026-09-07T18:09:39Z"
+    },
+    {
+      "id": "L-019",
+      "key": "ac_gap::when a spec enumerates a closed list of variant types requiring identical treatment write a test that iterates that exact literal list a type mapping switch or lookup that recognizes only a subset silently drops the rest into a generic fallback with zero failing test",
+      "text": "When a spec enumerates a closed list of variant types requiring identical treatment, write a test that iterates that exact literal list — a type-mapping switch or lookup that recognizes only a subset silently drops the rest into a generic fallback with zero failing test.",
+      "signal": "ac_gap",
+      "scope": "message-ingestion/type-mapping",
+      "status": "candidate",
+      "features": [
+        "ai-gateway"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "AIG-48 / apps/ai-gateway/src/routers/webhook.router.ts:48-56 (mapMessageType/extractMediaId recognize only 3 of the 5 spec-listed non-text types) (message-ingestion/type-mapping)"
+      ],
+      "created": "2026-09-07T18:09:49Z",
+      "last_seen": "2026-09-07T18:09:49Z"
+    },
+    {
+      "id": "L-020",
+      "key": "ac_gap::when a cross tenant isolation acceptance criterion names multiple collections in one sentence give each named collection its own dedicated assertion proving isolation on some of them does not evidence it for the others even when they are structurally coupled e g 1 1 via a unique index",
+      "text": "When a cross-tenant isolation acceptance criterion names multiple collections in one sentence, give each named collection its own dedicated assertion — proving isolation on some of them does not evidence it for the others, even when they are structurally coupled (e.g. 1:1 via a unique index).",
+      "signal": "ac_gap",
+      "scope": "tenant-isolation/testing",
+      "status": "candidate",
+      "features": [
+        "ai-gateway"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "AIG-41 / apps/crm-api/tests/integration/tenant-isolation.int.test.ts:584-673 (extension covers Channel + find_or_create_customer only, not AiSession named in the same AC) (tenant-isolation/testing)"
+      ],
+      "created": "2026-09-07T18:09:49Z",
+      "last_seen": "2026-09-07T18:09:49Z"
+    },
+    {
+      "id": "L-021",
+      "key": "ac_gap::when a spec requires that a second producer s output follows the same path as an already tested first producer s write one end to end test that creates the record via the second producer and drives it through the shared consumer the absence of a discriminator field in the code is not the same as a tested guarantee",
+      "text": "When a spec requires that a second producer's output 'follows the same path' as an already-tested first producer's, write one end-to-end test that creates the record via the second producer and drives it through the shared consumer — the absence of a discriminator field in the code is not the same as a tested guarantee.",
+      "signal": "ac_gap",
+      "scope": "queue-consumer/testing",
+      "status": "candidate",
+      "features": [
+        "ai-gateway"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "AIG-38 / apps/ai-gateway/src/workers/outboxConsumer.int.test.ts (only seeds via Message.create directly, never via createOutboundMessage/the manual-send endpoint) (queue-consumer/testing)"
+      ],
+      "created": "2026-09-07T18:09:59Z",
+      "last_seen": "2026-09-07T18:09:59Z"
+    },
+    {
+      "id": "L-022",
+      "key": "spec_deviation::when a later same day decision e g a project wide tooling adr supersedes an earlier decision s implementation mechanics text update the earlier decision s own status text in state md to point at the newer one do not leave the conflict to be silently reconciled only via a code level spec deviation comment discovered later by a future feature",
+      "text": "When a later, same-day decision (e.g. a project-wide tooling ADR) supersedes an earlier decision's implementation-mechanics text, update the earlier decision's own status/text in STATE.md to point at the newer one — do not leave the conflict to be silently reconciled only via a code-level SPEC_DEVIATION comment discovered later by a future feature.",
+      "signal": "spec_deviation",
+      "scope": "decision-log/adr-hygiene",
+      "status": "candidate",
+      "features": [
+        "ai-gateway"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "evals/runner/expectTool.ts:14-19 (SPEC_DEVIATION: ADR-0013's YAML DSL superseded by same-day AD-015 fixing Vitest as the only runner, reconciled only in a code comment) (decision-log/adr-hygiene)"
+      ],
+      "created": "2026-09-07T18:09:59Z",
+      "last_seen": "2026-09-07T18:09:59Z"
+    },
+    {
+      "id": "L-023",
+      "key": "gate_fail::before wiring an existing local gate script into an automated ci workflow first run that exact script clean end to end against the current default branch a pre existing exit code failure a human verifier already knows to read past e g a machine owned file s formatting nit will make every single ci run fail identically since ci has no equivalent judgment to distinguish accepted baseline noise from a real regression",
+      "text": "Before wiring an existing local gate script into an automated CI workflow, first run that exact script clean end-to-end against the current default branch — a pre-existing exit-code failure a human Verifier already knows to read past (e.g. a machine-owned file's formatting nit) will make every single CI run fail identically, since CI has no equivalent judgment to distinguish accepted baseline noise from a real regression.",
+      "signal": "gate_fail",
+      "scope": "ci-cd/gate-check",
+      "status": "candidate",
+      "features": [
+        "ai-gateway"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        ".github/workflows/ci.yml / c2e3468 (pnpm biome check . exits 1 deterministically on the current tree due to the unaddressed pre-existing .specs/lessons.json formatting baseline) (ci-cd/gate-check)"
+      ],
+      "created": "2026-09-07T19:49:53Z",
+      "last_seen": "2026-09-07T19:49:53Z"
     }
   ]
 }

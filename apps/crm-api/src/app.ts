@@ -15,6 +15,8 @@ import type { MailProvider } from './providers/mail/index.js';
 import { createLogMailProvider } from './providers/mail/log.mailProvider.js';
 import { createNodemailerMailProvider } from './providers/mail/nodemailer.mailProvider.js';
 import { createAuthRouter } from './routers/auth.router.js';
+import { createChannelRouter } from './routers/channel.router.js';
+import { createConversationRouter } from './routers/conversation.router.js';
 import { createCustomerRouter } from './routers/customer.router.js';
 import { createFieldTemplateRouter } from './routers/fieldTemplate.router.js';
 import { inviteRouter } from './routers/invite.router.js';
@@ -95,6 +97,8 @@ export const buildApp = (): Express => {
   app.use('/field-templates', createFieldTemplateRouter({ validToken, fieldValueStores }));
   app.use('/customers', createCustomerRouter({ validToken }));
   app.use('/processes', createProcessRouter({ validToken }));
+  app.use('/channels', createChannelRouter({ validToken }));
+  app.use('/conversations', createConversationRouter({ validToken }));
 
   app.use(errorHandler);
 

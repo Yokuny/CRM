@@ -110,6 +110,48 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: .specs/lessons.json (pre-existing biome formatting error, unrelated to this feature's diff) (gate-check)
 - last seen: 2026-09-05T18:39:59Z
 
+### L-017 — Before closing Tasks authoring, confirm every requirement ID in spec.md's traceability table is named in at least one task's Requirement field in tasks.md — a requirement can satisfy a 'nenhum unmapped' coverage claim in prose while never actually being assigned to any task, and ships fully unimplemented.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `tasks-authoring/observability` · harmful: 0
+- features: ai-gateway
+- evidence: AIG-44 / .specs/features/ai-gateway/tasks.md (no task references AIG-44 in its Requirement field) (tasks-authoring/observability)
+- last seen: 2026-09-07T18:09:39Z
+
+### L-018 — When a spec requires throttling a secondary side-effect to 'at most N per window' (e.g. one warning message per rate-limit window), implement a dedicated last-sent timestamp for that side-effect — a counter that only gates the primary action lets every excess event still re-fire the secondary side-effect once per event.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `rate-limiting/guardrails` · harmful: 0
+- features: ai-gateway
+- evidence: AIG-11 / packages/ai-kit/src/runTurn.ts:87-90 (dispatchFixedReply called unconditionally on every guard_rejected outcome) (rate-limiting/guardrails)
+- last seen: 2026-09-07T18:09:39Z
+
+### L-019 — When a spec enumerates a closed list of variant types requiring identical treatment, write a test that iterates that exact literal list — a type-mapping switch or lookup that recognizes only a subset silently drops the rest into a generic fallback with zero failing test.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `message-ingestion/type-mapping` · harmful: 0
+- features: ai-gateway
+- evidence: AIG-48 / apps/ai-gateway/src/routers/webhook.router.ts:48-56 (mapMessageType/extractMediaId recognize only 3 of the 5 spec-listed non-text types) (message-ingestion/type-mapping)
+- last seen: 2026-09-07T18:09:49Z
+
+### L-020 — When a cross-tenant isolation acceptance criterion names multiple collections in one sentence, give each named collection its own dedicated assertion — proving isolation on some of them does not evidence it for the others, even when they are structurally coupled (e.g. 1:1 via a unique index).
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `tenant-isolation/testing` · harmful: 0
+- features: ai-gateway
+- evidence: AIG-41 / apps/crm-api/tests/integration/tenant-isolation.int.test.ts:584-673 (extension covers Channel + find_or_create_customer only, not AiSession named in the same AC) (tenant-isolation/testing)
+- last seen: 2026-09-07T18:09:49Z
+
+### L-021 — When a spec requires that a second producer's output 'follows the same path' as an already-tested first producer's, write one end-to-end test that creates the record via the second producer and drives it through the shared consumer — the absence of a discriminator field in the code is not the same as a tested guarantee.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `queue-consumer/testing` · harmful: 0
+- features: ai-gateway
+- evidence: AIG-38 / apps/ai-gateway/src/workers/outboxConsumer.int.test.ts (only seeds via Message.create directly, never via createOutboundMessage/the manual-send endpoint) (queue-consumer/testing)
+- last seen: 2026-09-07T18:09:59Z
+
+### L-022 — When a later, same-day decision (e.g. a project-wide tooling ADR) supersedes an earlier decision's implementation-mechanics text, update the earlier decision's own status/text in STATE.md to point at the newer one — do not leave the conflict to be silently reconciled only via a code-level SPEC_DEVIATION comment discovered later by a future feature.
+- signal: `spec_deviation` · recurrence: 1 feature(s) · scope: `decision-log/adr-hygiene` · harmful: 0
+- features: ai-gateway
+- evidence: evals/runner/expectTool.ts:14-19 (SPEC_DEVIATION: ADR-0013's YAML DSL superseded by same-day AD-015 fixing Vitest as the only runner, reconciled only in a code comment) (decision-log/adr-hygiene)
+- last seen: 2026-09-07T18:09:59Z
+
+### L-023 — Before wiring an existing local gate script into an automated CI workflow, first run that exact script clean end-to-end against the current default branch — a pre-existing exit-code failure a human Verifier already knows to read past (e.g. a machine-owned file's formatting nit) will make every single CI run fail identically, since CI has no equivalent judgment to distinguish accepted baseline noise from a real regression.
+- signal: `gate_fail` · recurrence: 1 feature(s) · scope: `ci-cd/gate-check` · harmful: 0
+- features: ai-gateway
+- evidence: .github/workflows/ci.yml / c2e3468 (pnpm biome check . exits 1 deterministically on the current tree due to the unaddressed pre-existing .specs/lessons.json formatting baseline) (ci-cd/gate-check)
+- last seen: 2026-09-07T19:49:53Z
+
 ## Quarantined (failed when applied — ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

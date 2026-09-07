@@ -9,6 +9,7 @@
     "seed:platform-admin": "tsx scripts/seed-platform-admin.ts"
   },
   "dependencies": {
+    "@crm/ai-kit": "workspace:*",
     "@crm/contracts": "workspace:*",
     "@crm/db": "workspace:*",
     "@crm/field-engine": "workspace:*",
