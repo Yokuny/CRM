@@ -781,18 +781,18 @@ recebe um resultado, nunca uma exception não tratada).
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `wamid` duplicado → `runTurn` devolve no-op sem rodar nenhuma etapa após `ingest`
-- [ ] `mode:'human'` → só a `Message{in}` persiste; `contextBuild`/`runLoop`/`guardOutput`
+- [x] `wamid` duplicado → `runTurn` devolve no-op sem rodar nenhuma etapa após `ingest`
+- [x] `mode:'human'` → só a `Message{in}` persiste; `contextBuild`/`runLoop`/`guardOutput`
       nunca são chamados (espiado via mock)
-- [ ] `guardInput` recusa (tamanho/rate limit/tipo) → resposta fixa devolvida, `runLoop`
+- [x] `guardInput` recusa (tamanho/rate limit/tipo) → resposta fixa devolvida, `runLoop`
       nunca chamado
-- [ ] Anthropic client mockado lança erro → `runTurn` NÃO lança, devolve resposta de
+- [x] Anthropic client mockado lança erro → `runTurn` NÃO lança, devolve resposta de
       fallback fixa (a `Message{in}` já persistida por `ingest` não se perde)
-- [ ] Texto de injeção de prompt no turno do usuário não muda qual tool roda nem expõe
+- [x] Texto de injeção de prompt no turno do usuário não muda qual tool roda nem expõe
       dado de outro tenant (mesma garantia estrutural do `ToolContext`, provada aqui
       end-to-end)
-- [ ] Gate check passes: `pnpm vitest run --project integration`
-- [ ] Test count: ≥ 8 tests pass
+- [x] Gate check passes: `pnpm vitest run --project integration`
+- [x] Test count: ≥ 8 tests pass
 
 **Tests**: integration
 **Gate**: full
