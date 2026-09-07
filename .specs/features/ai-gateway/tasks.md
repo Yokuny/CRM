@@ -632,16 +632,16 @@ rate limit atômico (`findOneAndUpdate` em `rateWindowStart`/`rateWindowCount`).
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Texto dentro do limite de tamanho → `{ok:true, text}`
-- [ ] Texto acima do limite → `{ok:false, fixedReply}`, sem chamar nada além do guard
-- [ ] Tipo não-texto (imagem/documento/localização/áudio nesta task) → `{ok:false,
+- [x] Texto dentro do limite de tamanho → `{ok:true, text}`
+- [x] Texto acima do limite → `{ok:false, fixedReply}`, sem chamar nada além do guard
+- [x] Tipo não-texto (imagem/documento/localização/áudio nesta task) → `{ok:false,
       fixedReply}` de tipo não suportado
-- [ ] 21ª mensagem em 60s do mesmo `(Tenant,Customer)` → `{ok:false, fixedReply}` de rate
+- [x] 21ª mensagem em 60s do mesmo `(Tenant,Customer)` → `{ok:false, fixedReply}` de rate
       limit; mensagem AINDA É persistida por `ingest` (T18), só não entra no loop
-- [ ] 2 chamadas concorrentes ao rate limit nunca ambas incrementam sem serializar (claim
+- [x] 2 chamadas concorrentes ao rate limit nunca ambas incrementam sem serializar (claim
       atômico, mesmo padrão do `turnLock`)
-- [ ] Gate check passes: `pnpm vitest run --project integration`
-- [ ] Test count: ≥ 7 tests pass
+- [x] Gate check passes: `pnpm vitest run --project integration`
+- [x] Test count: ≥ 7 tests pass
 
 **Tests**: integration
 **Gate**: full
