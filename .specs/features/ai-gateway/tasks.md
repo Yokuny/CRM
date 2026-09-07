@@ -1053,13 +1053,13 @@ de 60s → `status:'queued'`; nunca mexe em documento com `wamid` já gravado.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `GET /health` continua respondendo (não quebrou nada do esqueleto)
-- [ ] `GET/POST /webhooks/whatsapp` respondem através de `buildApp()` (não só do router
+- [x] `GET /health` continua respondendo (não quebrou nada do esqueleto)
+- [x] `GET/POST /webhooks/whatsapp` respondem através de `buildApp()` (não só do router
       isolado de T28)
-- [ ] `start()` inicia os 3 workers sem lançar (teste com Mongo real via
+- [x] `start()` inicia os 3 workers sem lançar (teste com Mongo real via
       `MongoMemoryServer`, workers com `intervalMs` curto para o teste não esperar 30min)
-- [ ] Gate check passes: `pnpm vitest run --project e2e`
-- [ ] Test count: teste existente + ≥ 3 asserções novas passam
+- [x] Gate check passes: `pnpm vitest run --project e2e`
+- [x] Test count: teste existente + ≥ 3 asserções novas passam
 
 **Tests**: e2e
 **Gate**: full

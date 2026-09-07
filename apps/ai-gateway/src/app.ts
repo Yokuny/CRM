@@ -1,9 +1,11 @@
+import { createAnthropicClient } from '@crm/ai-kit';
 import { respObj } from '@crm/contracts';
 import express, { type Express } from 'express';
+import { env } from './config/env.config.js';
+import { createWebhookRouter } from './routers/webhook.router.js';
 
-// Esqueleto: só /health, para que AD-002 (dois serviços, dois /health) valha
-// desde a feature 1. Sem .listen() — testável via supertest sem abrir porta,
-// mesmo padrão de apps/crm-api/src/app.ts (T20).
+// Sem .listen() — testável via supertest sem abrir porta, mesmo padrão de
+// apps/crm-api/src/app.ts (T20).
 //
 // SPEC_DEVIATION: db:'up' é um literal estático, não uma checagem ao vivo da
 // conexão. buildApp() não conecta (isso é start(), em server.ts) e uma
@@ -17,6 +19,14 @@ export const buildApp = (): Express => {
   app.get('/health', (_req, res) => {
     res.json(respObj({ data: { service: 'ai-gateway', db: 'up' } }));
   });
+
+  // AIG-05/06/07/08: única função que este app chama do ai-kit (design.md) —
+  // o webhook inteiro (GET handshake + POST síncrono) vive em webhook.router.ts.
+  const client = createAnthropicClient(env.ANTHROPIC_API_KEY);
+  app.use(
+    '/webhooks/whatsapp',
+    createWebhookRouter({ client, verifyToken: env.META_WEBHOOK_VERIFY_TOKEN, appSecret: env.META_APP_SECRET }),
+  );
 
   return app;
 };
