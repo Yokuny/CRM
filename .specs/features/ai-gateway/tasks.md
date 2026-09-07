@@ -1131,9 +1131,9 @@ claro.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Erro de duplicate key do repository vira `CustomError(409)` no controller
-- [ ] Resposta segue `{success,data?,message?}`
-- [ ] Coberto transitivamente pelo e2e do router (T36)
+- [x] Erro de duplicate key do repository vira `CustomError(409)` no controller
+- [x] Resposta segue `{success,data?,message?}`
+- [x] Coberto transitivamente pelo e2e do router (T36)
 
 **Tests**: none (provado por T36)
 **Gate**: — (validado junto com T36)
