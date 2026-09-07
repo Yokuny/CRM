@@ -1254,15 +1254,15 @@ no corpo de envio manual.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Operador do tenant assume (`takeover`) → `mode:'human'`, `assignee` gravado
-- [ ] `mode:'human'` bloqueia o loop do bot (teste integra com `runTurn`/T24 real: manda
+- [x] Operador do tenant assume (`takeover`) → `mode:'human'`, `assignee` gravado
+- [x] `mode:'human'` bloqueia o loop do bot (teste integra com `runTurn`/T24 real: manda
       mensagem de cliente depois do takeover, confirma que `runLoop` nunca é chamado)
-- [ ] Operador libera (`release`) antes do timeout → `mode:'bot'` imediato
-- [ ] Envio manual dentro da janela de 24h → `Message{status:'queued'}` criada
-- [ ] Envio manual com `text` livre fora da janela → rejeitado, nada enfileirado
-- [ ] Operador de outro tenant → 403/404 em qualquer um dos 3 endpoints, nada muda
-- [ ] Gate check passes: `pnpm vitest run --project e2e`
-- [ ] Test count: ≥ 8 tests pass
+- [x] Operador libera (`release`) antes do timeout → `mode:'bot'` imediato
+- [x] Envio manual dentro da janela de 24h → `Message{status:'queued'}` criada
+- [x] Envio manual com `text` livre fora da janela → rejeitado, nada enfileirado
+- [x] Operador de outro tenant → 403/404 em qualquer um dos 3 endpoints, nada muda
+- [x] Gate check passes: `pnpm vitest run --project e2e`
+- [x] Test count: ≥ 8 tests pass
 
 **Tests**: e2e
 **Gate**: full
