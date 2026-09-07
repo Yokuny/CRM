@@ -381,54 +381,54 @@ conteúdo transcrito; simular falha do Whisper (mock) e confirmar fallback fixo 
 
 | ID | Story | Fase | Status |
 | --- | --- | --- | --- |
-| AIG-01 | P1: Channel — criação com token criptografado, Tenant da sessão | Design | Pending |
-| AIG-02 | P1: Channel — `phoneNumberId` único entre tenants (409) | Design | Pending |
-| AIG-03 | P1: Channel — `Tenant`/`tenantId`/`orgId` forjado ignorado | Design | Pending |
-| AIG-04 | P1: Channel — `checkRole('admin')` no CRUD | Design | Pending |
-| AIG-05 | P1: Webhook — `GET` handshake de verificação | Design | Pending |
-| AIG-06 | P1: Webhook — assinatura `X-Hub-Signature-256` inválida rejeita | Design | Pending |
-| AIG-07 | P1: Webhook — dedup por `wamid` | Design | Pending |
-| AIG-08 | P1: Webhook — `phone_number_id` sem Channel: ack 200, não processa | Design | Pending |
-| AIG-09 | P1: Ingest — persiste Message `in` + Conversation | Design | Pending |
-| AIG-10 | P1: guard.input — limite de tamanho rejeita com resposta fixa | Design | Pending |
-| AIG-11 | P1: guard.input — rate limit por `(Tenant, Customer)` | Design | Pending |
-| AIG-12 | P1: guard.input — `mode:'human'` só persiste, loop não roda | Design | Pending |
-| AIG-13 | P1: context.build — system congelado, dinâmico só no turno de usuário | Design | Pending |
-| AIG-14 | P1: loop — só as 4 tools do Anel A; nenhum `input_schema` com tenant | Design | Pending |
-| AIG-15 | P1: `get_process_template` — template corrente do Tenant do `ToolContext` | Design | Pending |
-| AIG-16 | P1: `find_or_create_customer` — reusa por telefone, sem duplicar | Design | Pending |
-| AIG-17 | P1: `open_process` — `templateVersion` corrente + `stage` inicial | Design | Pending |
-| AIG-18 | P1: `open_process` — rejeita `customerId` de outro tenant | Design | Pending |
-| AIG-19 | P1: `set_process_fields` — valida contra `templateVersion` do Process | Design | Pending |
-| AIG-20 | P1: loop — teto de iterações nunca trava, fallback de texto | Design | Pending |
-| AIG-21 | P1: guard.output — trunca acima de 1600 caracteres | Design | Pending |
-| AIG-22 | P1: guard.output — remove `ObjectId` (24 hex) da resposta | Design | Pending |
-| AIG-23 | P1: persist — Message `out` + `AiSession` (histórico + sumário) | Design | Pending |
-| AIG-24 | P1: dispatch — insere outbox `queued`, nunca envia no mesmo passo | Design | Pending |
-| AIG-25 | P1: concorrência — serializa turnos da mesma Conversation | Design | Pending |
-| AIG-26 | P1: outbox — claim atômico, sem envio duplicado | Design | Pending |
-| AIG-27 | P1: outbox — janela de 24h só aceita template fora dela | Design | Pending |
-| AIG-28 | P1: outbox — grava `wamid` antes de marcar `sent` | Design | Pending |
-| AIG-29 | P1: outbox — retry 3x, `failed` terminal | Design | Pending |
-| AIG-30 | P1: outbox — reaper devolve `sending` preso a `queued` | Design | Pending |
-| AIG-31 | P1: takeover — muda `mode` para `human` + `assignee` | Design | Pending |
-| AIG-32 | P1: takeover — `mode:human` nunca chama o modelo | Design | Pending |
-| AIG-33 | P1: takeover — idle 30min volta a `bot` automaticamente | Design | Pending |
-| AIG-34 | P1: takeover — liberação manual antes do timeout | Design | Pending |
-| AIG-35 | P1: takeover — isolamento de tenant no endpoint (403/404) | Design | Pending |
-| AIG-36 | P1: envio manual — `text` ou template, cria `queued` | Design | Pending |
-| AIG-37 | P1: envio manual — rejeita `text` livre fora da janela | Design | Pending |
-| AIG-38 | P1: envio manual — mesmo caminho de claim/envio do bot | Design | Pending |
-| AIG-39 | P1: golden set — tool certa, argumentos certos, superfície fixa | Design | Pending |
-| AIG-40 | P1: golden set — teste estrutural de `input_schema` | Design | Pending |
-| AIG-41 | P1: golden set — dois tenants espelhados sem cruzamento | Design | Pending |
-| AIG-42 | P1: golden set — dedup de `wamid` provado via harness real | Design | Pending |
-| AIG-43 | P1: golden set — gate 100% determinístico no CI | Design | Pending |
-| AIG-44 | Dimensão: observabilidade (log estruturado em rejeição/erro/dedup) | Design | Pending |
-| AIG-45 | P2: áudio — baixa e transcreve (Whisper), sem armazenar binário | Design | Pending |
-| AIG-46 | P2: áudio — transcrição vira turno de texto normal | Design | Pending |
-| AIG-47 | P2: áudio — falha de transcrição cai no fallback de tipo não suportado | Design | Pending |
-| AIG-48 | P2: mídia não processada — persiste ponteiro, nunca binário | Design | Pending |
+| AIG-01 | P1: Channel — criação com token criptografado, Tenant da sessão | Execute | ✅ Verified |
+| AIG-02 | P1: Channel — `phoneNumberId` único entre tenants (409) | Execute | ✅ Verified |
+| AIG-03 | P1: Channel — `Tenant`/`tenantId`/`orgId` forjado ignorado | Execute | ✅ Verified |
+| AIG-04 | P1: Channel — `checkRole('admin')` no CRUD | Execute | ✅ Verified |
+| AIG-05 | P1: Webhook — `GET` handshake de verificação | Execute | ✅ Verified |
+| AIG-06 | P1: Webhook — assinatura `X-Hub-Signature-256` inválida rejeita | Execute | ✅ Verified |
+| AIG-07 | P1: Webhook — dedup por `wamid` | Execute | ✅ Verified |
+| AIG-08 | P1: Webhook — `phone_number_id` sem Channel: ack 200, não processa | Execute | ❌ Needs Fix (log do evento não resolvido nunca implementado) |
+| AIG-09 | P1: Ingest — persiste Message `in` + Conversation | Execute | ✅ Verified |
+| AIG-10 | P1: guard.input — limite de tamanho rejeita com resposta fixa | Execute | ⚠️ Verified — spec-precision gap (valor exato não confirmado) |
+| AIG-11 | P1: guard.input — rate limit por `(Tenant, Customer)` | Execute | ❌ Needs Fix (throttle "máx 1 aviso por janela" nunca implementado; números exatos também são spec-precision gap) |
+| AIG-12 | P1: guard.input — `mode:'human'` só persiste, loop não roda | Execute | ✅ Verified |
+| AIG-13 | P1: context.build — system congelado, dinâmico só no turno de usuário | Execute | ✅ Verified |
+| AIG-14 | P1: loop — só as 4 tools do Anel A; nenhum `input_schema` com tenant | Execute | ✅ Verified |
+| AIG-15 | P1: `get_process_template` — template corrente do Tenant do `ToolContext` | Execute | ✅ Verified |
+| AIG-16 | P1: `find_or_create_customer` — reusa por telefone, sem duplicar | Execute | ✅ Verified |
+| AIG-17 | P1: `open_process` — `templateVersion` corrente + `stage` inicial | Execute | ✅ Verified |
+| AIG-18 | P1: `open_process` — rejeita `customerId` de outro tenant | Execute | ✅ Verified |
+| AIG-19 | P1: `set_process_fields` — valida contra `templateVersion` do Process | Execute | ✅ Verified |
+| AIG-20 | P1: loop — teto de iterações nunca trava, fallback de texto | Execute | ✅ Verified |
+| AIG-21 | P1: guard.output — trunca acima de 1600 caracteres | Execute | ✅ Verified |
+| AIG-22 | P1: guard.output — remove `ObjectId` (24 hex) da resposta | Execute | ✅ Verified |
+| AIG-23 | P1: persist — Message `out` + `AiSession` (histórico + sumário) | Execute | ✅ Verified |
+| AIG-24 | P1: dispatch — insere outbox `queued`, nunca envia no mesmo passo | Execute | ✅ Verified |
+| AIG-25 | P1: concorrência — serializa turnos da mesma Conversation | Execute | ✅ Verified |
+| AIG-26 | P1: outbox — claim atômico, sem envio duplicado | Execute | ✅ Verified |
+| AIG-27 | P1: outbox — janela de 24h só aceita template fora dela | Execute | ✅ Verified |
+| AIG-28 | P1: outbox — grava `wamid` antes de marcar `sent` | Execute | ✅ Verified |
+| AIG-29 | P1: outbox — retry 3x, `failed` terminal | Execute | ⚠️ Verified — spec-precision gap (números exatos não confirmados) |
+| AIG-30 | P1: outbox — reaper devolve `sending` preso a `queued` | Execute | ⚠️ Verified — spec-precision gap (60s não confirmado) |
+| AIG-31 | P1: takeover — muda `mode` para `human` + `assignee` | Execute | ✅ Verified |
+| AIG-32 | P1: takeover — `mode:human` nunca chama o modelo | Execute | ✅ Verified |
+| AIG-33 | P1: takeover — idle 30min volta a `bot` automaticamente | Execute | ⚠️ Verified — spec-precision gap (30min não confirmado) |
+| AIG-34 | P1: takeover — liberação manual antes do timeout | Execute | ✅ Verified |
+| AIG-35 | P1: takeover — isolamento de tenant no endpoint (403/404) | Execute | ✅ Verified |
+| AIG-36 | P1: envio manual — `text` ou template, cria `queued` | Execute | ✅ Verified |
+| AIG-37 | P1: envio manual — rejeita `text` livre fora da janela | Execute | ✅ Verified |
+| AIG-38 | P1: envio manual — mesmo caminho de claim/envio do bot | Execute | ❌ Needs Fix (sem teste end-to-end ligando os dois; verdadeiro por inspeção de código) |
+| AIG-39 | P1: golden set — tool certa, argumentos certos, superfície fixa | Execute | ✅ Verified |
+| AIG-40 | P1: golden set — teste estrutural de `input_schema` | Execute | ✅ Verified |
+| AIG-41 | P1: golden set — dois tenants espelhados sem cruzamento | Execute | ❌ Needs Fix (Conversation/tool provados; AiSession sem teste dedicado) |
+| AIG-42 | P1: golden set — dedup de `wamid` provado via harness real | Execute | ✅ Verified |
+| AIG-43 | P1: golden set — gate 100% determinístico no CI | Execute | ❌ Needs Fix (nenhum pipeline de CI existe no repo — sistêmico, pré-existente, não exclusivo desta feature) |
+| AIG-44 | Dimensão: observabilidade (log estruturado em rejeição/erro/dedup) | Execute | ❌ Needs Fix (nenhum dos 5 logs exigidos foi implementado) |
+| AIG-45 | P2: áudio — baixa e transcreve (Whisper), sem armazenar binário | Execute | ✅ Verified |
+| AIG-46 | P2: áudio — transcrição vira turno de texto normal | Execute | ✅ Verified |
+| AIG-47 | P2: áudio — falha de transcrição cai no fallback de tipo não suportado | Execute | ✅ Verified |
+| AIG-48 | P2: mídia não processada — persiste ponteiro, nunca binário | Execute | ❌ Needs Fix (figurinha/vídeo nunca reconhecidos, ponteiro descartado; `caption` nunca populado) |
 
 **ID format:** `AIG-[NUMBER]`. **Status values:** Pending → In Design → In Tasks →
 Implementing → Verified.
