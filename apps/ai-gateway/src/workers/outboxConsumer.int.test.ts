@@ -144,6 +144,44 @@ describe('outboxConsumer (AIG-26/27/28/29)', () => {
     expect(updated?.wamid).toBe('wamid-tpl');
   });
 
+  // AIG-38: prova que uma mensagem enfileirada por um OPERADOR (via
+  // apps/crm-api's createOutboundMessage/POST /conversations/:id/messages)
+  // segue o MESMO caminho de claim/envio do bot — nenhuma lógica duplicada
+  // por origem. apps/ai-gateway nunca importa apps/crm-api (apps não
+  // dependem uma da outra neste monorepo — só packages/* são compartilhados),
+  // então a prova é por FORMA idêntica de documento, não por import direto
+  // do repository: `seedOutMessage` monta exatamente os mesmos campos que
+  // createOutboundMessage grava (Tenant/Conversation/Channel/Customer/
+  // direction:'out'/type:'text'/status:'queued'/text — confirmado linha a
+  // linha contra conversation.repository.ts) — o model Message não tem, e
+  // nunca teve, um campo de origem/discriminador (bot vs. operador) para
+  // processNextOutboxMessage sequer poder ramificar por ele.
+  it('an operator-enqueued message (same Message shape createOutboundMessage produces) is claimed and sent exactly like a bot message (AIG-38)', async () => {
+    const tenant = randomId();
+    const channel = await seedChannel(tenant);
+    const customer = await seedCustomer(tenant, randomPhone());
+    const conversation = await seedConversation(tenant, channel._id.toString(), customer._id.toString(), {
+      windowExpiresAt: new Date(Date.now() + 60_000),
+    });
+    const message = await seedOutMessage(
+      tenant,
+      conversation._id.toString(),
+      channel._id.toString(),
+      customer._id.toString(),
+      { text: 'Segue a atualização do seu pedido' },
+    );
+    const sendText = vi.fn().mockResolvedValue({ wamid: 'wamid-operator' });
+    const deps: OutboxConsumerDeps = { encKey: ENC_KEY, createClient: () => createFakeMetaClient({ sendText }) };
+
+    const result = await processNextOutboxMessage(deps);
+
+    expect(result).toBe('claimed');
+    expect(sendText).toHaveBeenCalledTimes(1);
+    const updated = await Message.findById(message._id).lean();
+    expect(updated?.status).toBe('sent');
+    expect(updated?.wamid).toBe('wamid-operator');
+  });
+
   it('retries a failing metaClient 2 times and succeeds on the 3rd, recording wamid and status:sent', async () => {
     const tenant = randomId();
     const channel = await seedChannel(tenant);
