@@ -604,10 +604,10 @@ cruzado referenciando o arquivo irmão
 
 **Done when**:
 
-- [ ] `getMediaUrl` retorna `{url, mimeType}` em sucesso, lança `MetaApiError` em não-2xx
-- [ ] `downloadMedia` retorna `Buffer`, lança `MetaApiError` em não-2xx
-- [ ] Token decifrado só no escopo da chamada (nunca logado/cacheado em claro)
-- [ ] Gate check passa: `pnpm vitest run --project unit`
+- [x] `getMediaUrl` retorna `{url, mimeType}` em sucesso, lança `MetaApiError` em não-2xx
+- [x] `downloadMedia` retorna `Buffer`, lança `MetaApiError` em não-2xx
+- [x] Token decifrado só no escopo da chamada (nunca logado/cacheado em claro)
+- [x] Gate check passa: `pnpm vitest run --project unit`
 
 **Tests**: unit
 **Gate**: quick
@@ -633,10 +633,10 @@ molde de `OutboxConsumerDeps.createClient`), traduz falha em `MetaMediaUnavailab
 
 **Done when**:
 
-- [ ] Mensagem sem mídia ou de outro tenant → erro tipado (404 na camada de cima)
-- [ ] Falha da Meta (mockada via cliente injetado) → `MetaMediaUnavailableError`
-- [ ] Sucesso retorna o buffer sem nenhuma escrita em disco/banco
-- [ ] Gate check passa: `pnpm vitest run --project integration`
+- [x] Mensagem sem mídia ou de outro tenant → erro tipado (404 na camada de cima)
+- [x] Falha da Meta (mockada via cliente injetado) → `MetaMediaUnavailableError`
+- [x] Sucesso retorna o buffer sem nenhuma escrita em disco/banco
+- [x] Gate check passa: `pnpm vitest run --project integration`
 
 **Tests**: integration
 **Gate**: full
@@ -662,10 +662,10 @@ mime)` + `res.send(buffer)` (nunca `res.json`/`respObj` — é binário), servic
 
 **Done when**:
 
-- [ ] `GET /:id/messages/:messageId/media` devolve o binário com `Content-Type` correto
-- [ ] Mídia indisponível → 502 com mensagem legível, log estruturado emitido
-- [ ] Sem `canOperate` → 403, nenhuma chamada à Meta é feita
-- [ ] Gate check passa: `pnpm vitest run --project e2e`
+- [x] `GET /:id/messages/:messageId/media` devolve o binário com `Content-Type` correto
+- [x] Mídia indisponível → 502 com mensagem legível, log estruturado emitido
+- [x] Sem `canOperate` → 403, nenhuma chamada à Meta é feita
+- [x] Gate check passa: `pnpm vitest run --project e2e`
 
 **Tests**: e2e
 **Gate**: full
@@ -690,10 +690,13 @@ factory, `buildQueryString` — mesmo formato de `query/customer.ts`.
 
 **Done when**:
 
-- [ ] `conversationsQuery`/`conversationQuery` tipados, `queryKey` estável por parâmetro
-- [ ] `buildQueryString` reflete `mode`/`assignee`/`page`/`limit`
-- [ ] `queryFn` lança com a mensagem de `ApiResponse.message` em falha
-- [ ] Gate check passa: `pnpm vitest run --project unit`
+- [x] `conversationsQuery`/`conversationQuery` tipados, `queryKey` estável por parâmetro
+      (SPEC_DEVIATION: `conversationQuery(id)` não foi implementada — não existe `GET
+      /conversations/:id` no backend, ver nota em `query/conversation.ts`; só
+      `conversationsQuery` (lista) foi implementada, mesmo precedente de `query/process.ts`)
+- [x] `buildQueryString` reflete `mode`/`assignee`/`page`/`limit`
+- [x] `queryFn` lança com a mensagem de `ApiResponse.message` em falha
+- [x] Gate check passa: `pnpm vitest run --project unit`
 
 **Tests**: unit
 **Gate**: quick
@@ -719,9 +722,9 @@ messageId)`, `mediaUrl(conversationId, messageId)` (helper de URL, não fetch �
 
 **Done when**:
 
-- [ ] `messagesQuery` tipado, paginado
-- [ ] `resendMessage` chama `POST .../resend` e invalida a query de mensagens
-- [ ] Gate check passa: `pnpm vitest run --project unit`
+- [x] `messagesQuery` tipado, paginado
+- [x] `resendMessage` chama `POST .../resend` e invalida a query de mensagens
+- [x] Gate check passa: `pnpm vitest run --project unit`
 
 **Tests**: unit
 **Gate**: quick
@@ -749,10 +752,10 @@ T18/T19
 
 **Done when**:
 
-- [ ] Conecta, recebe `message.new`/`conversation.updated`, atualiza o cache certo
-- [ ] Queda de conexão reconecta com backoff (sem loop apertado)
-- [ ] Troca de conversa aberta manda `unsubscribe` da antiga + `subscribe` da nova
-- [ ] Gate check passa: `pnpm vitest run --project unit` (com `WebSocket` global mockado)
+- [x] Conecta, recebe `message.new`/`conversation.updated`, atualiza o cache certo
+- [x] Queda de conexão reconecta com backoff (sem loop apertado)
+- [x] Troca de conversa aberta manda `unsubscribe` da antiga + `subscribe` da nova
+- [x] Gate check passa: `pnpm vitest run --project unit` (com `WebSocket` global mockado)
 
 **Tests**: unit
 **Gate**: quick
