@@ -259,13 +259,16 @@ Detalhamento completo (contexto, consequências, alternativas) em [`docs/adr/`](
 
 ## Handoff
 
-- **Feature**: `inbox-realtime` (feature 6 de 11) — Execute em andamento. `ai-gateway`
-  (feature 5) segue **Execute completo, Verifier PASS, 48/48 Verified**, mergeada em
-  `main` (PR #4, `bdf9aba`). Todas as 5 features anteriores estão em `main`.
+- **Feature**: `inbox-realtime` (feature 6 de 11) — Execute **completo, 26/26 tasks**.
+  `ai-gateway` (feature 5) segue **Execute completo, Verifier PASS, 48/48 Verified**,
+  mergeada em `main` (PR #4, `bdf9aba`). Todas as 5 features anteriores estão em `main`.
 - **Phase / Task**: Discuss → Specify → Design → Tasks completas e aprovadas em sessão
-  anterior. Execute em andamento via skill `tlc-spec-driven` (ativada por leitura manual
-  dos arquivos — ver nota abaixo), rodando em lotes de sub-agentes (~7 tarefas/lote, fases
-  inteiras, protocolo offer-then-confirm, usuário confirmou 4 lotes).
+  anterior. Execute completo via skill `tlc-spec-driven` (ativada por leitura manual dos
+  arquivos — ver nota abaixo), rodado em 4 lotes de sub-agentes (~7 tarefas/lote, fases
+  inteiras, protocolo offer-then-confirm, usuário confirmou 4 lotes). **Próximo passo:
+  Verifier independente de fim de feature** (spec-anchored coverage + discrimination
+  sensor + `validation.md`) — dispatch é responsabilidade do orquestrador principal, não
+  do worker do Lote 4; ainda não rodado.
 - **Completed**: Planejamento completo (ver histórico desta seção antes desta atualização,
   em `git log -p -- .specs/STATE.md`, para o resumo de Discuss/Specify/Design/Tasks).
   **Lote 1/4 completo** (T1–T8, Fases 1–5: Foundation, WebSocket layer, Poller worker,
@@ -330,21 +333,55 @@ Detalhamento completo (contexto, consequências, alternativas) em [`docs/adr/`](
   commitado no T15 (`metaMediaClient.unit.test.ts`) — separado num commit `style` próprio
   (`a30d031`) em vez de misturado ao commit de T17, mantendo "uma task = um commit".
   Nenhum teste enfraquecido/pulado/deletado.
-- **In-progress**: nenhum lote rodando neste instante — próxima ação é despachar o Lote 4.
-- **Next step**: despachar **Lote 4/4** (T21–T26, Fase 11: telas do Inbox —
-  `routes/_private/inbox/` esqueleto + `conversation-queue.tsx`, `thread.tsx`,
-  `media-card.tsx`, `composer.tsx`, `takeover-badge.tsx`). Depois desse lote (T26, última
-  task da feature), dispachar o Verifier independente para validação de feature completa
-  (spec-anchored coverage + discrimination sensor + `validation.md`) — nunca antes.
+  **Lote 4/4 completo — ÚLTIMO LOTE, feature Execute encerrado** (T21–T26, Fase 11: telas
+  do Inbox — esqueleto da rota, fila, thread, mídia sob demanda, composer com fallback
+  `wa.me`, badge de takeover/release) — 7 commits (6 de task + 1 docs: `9b80e85`→T21,
+  `7cb19c9`→T22, `cd3432c`→T23, `914743a`→T24, `47062c9`→T25, `ed660e5`→T26,
+  `2c86532`→docs), gate final `pnpm run check` verde (**874 testes**, 131 arquivos, tsc
+  limpo em todo o monorepo, biome só com os mesmos 9 warnings pré-existentes e não
+  relacionados em `apps/web/.../customers/list/index.tsx`, arquivo não tocado por esta
+  feature). Desvios registrados pelo worker (sem violar spec/design): (1) `routeTree.gen.ts`
+  regenerado via `pnpm --filter web exec vite build --logLevel error` (build real, não
+  `pnpm --filter web run dev`) — não deixa processo pendurado e já dobra como o passo de
+  build do CLAUDE.md ("único passo que empacota o app de fato"); (2)
+  `apps/web/src/lib/helpers/translate.helper.ts` (dicionário `t()` compartilhado) foi
+  tocado em TODAS as 6 tasks — fora do "Where" de cada uma, mas exigido pelo próprio texto
+  delas (toda string visível passa por `t()`, CLAUDE.md); (3) `index.tsx` (criado por T21)
+  foi reaberto por T22/T23/T25/T26 para trocar cada placeholder pelo componente real e
+  para adicionar uma segunda `conversationsQuery({limit:100})` dedicada a resolver a
+  Conversation de `search.id` (necessária a partir de T25: Composer/TakeoverBadge
+  precisam de `mode`/`assignee`/`windowOpen`, que `thread.tsx` não precisa) — mesmo padrão
+  de reabertura incremental já usado no Lote 1 (T6→app.ts); (4) **SPEC_DEVIATION
+  substancial**: `GET /conversations`/`POST /:id/takeover`/`/release` (T7/T11, já
+  commitados nos Lotes 1–2, fora do escopo deste lote) só devolvem `assignee` como o
+  ObjectId cru do User — não existe endpoint de diretório de usuários exposto ao
+  `apps/web`. spec.md (P1/AC5) pede "o nome do assignee"; como aproximação honesta e
+  documentada em código (`conversation-queue.tsx`, `takeover-badge.tsx`), mostra-se "Você"
+  quando o assignee é o próprio operador da sessão (`sessionQuery`) e "Outro operador"
+  caso contrário — nunca o ObjectId cru. O único lugar onde o NOME real aparece é o toast
+  de conflito 409 do takeover (`takeover-badge.tsx`), porque ali quem monta a mensagem é o
+  próprio back-end (`ConversationAlreadyAssignedError`, já resolvia `User.name` desde o
+  Lote 2) — plenamente conforme ao spec nesse caminho específico. Resolver a exibição
+  completa do nome em toda a UI exigiria uma task nova de diretório de usuários, fora do
+  plano de 26 tasks já aprovado — não implementado, não é um "fix" silencioso: fica
+  registrado aqui para uma feature futura. Nenhum teste enfraquecido/pulado/deletado.
+- **In-progress**: nenhum — todas as 26 tasks da feature estão commitadas e com gate
+  verde. Nenhum lote pendente.
+- **Next step**: dispachar o **Verifier independente de fim de feature** (spec-anchored
+  coverage check + discrimination sensor, `validate.md`) sobre o diff completo da feature
+  (`main`→`HEAD` em `feature/inbox-realtime`, commits desde antes de T1 até
+  `2c86532`), escrevendo `.specs/features/inbox-realtime/validation.md`. Isso é
+  responsabilidade do orquestrador principal — o worker do Lote 4 não o executou.
 - **Blockers**: nenhum. Mesma nota operacional pré-existente de flake em
   `apps/crm-api`/`ai-gateway` (`integration`/`e2e` compartilham UMA instância de
   `MongoMemoryServer`, `vitest.config.ts` documenta a causa raiz) — dois flakes desse tipo
   ocorreram durante o Lote 3 (`tenant-isolation.int.test.ts`, mesmo arquivo que já havia
   flakado no Lote 1; e depois `fieldTemplate.router.e2e.test.ts`), ambos autorresolvidos
   no retry (`pnpm run check` rodado de novo, 844/844 verde nas duas vezes), em arquivos
-  não tocados por esta feature — não é regressão.
-- **Uncommitted files**: nenhum — working tree limpo ao final do Lote 3 (todos os commits
-  de T15–T20 + `docs(tasks): mark T15-T20 complete` já feitos). `acc.txt` na raiz continua
+  não tocados por esta feature — não é regressão. Nenhum flake observado durante o Lote 4
+  (`pnpm run check` verde de primeira, 874/874).
+- **Uncommitted files**: nenhum — working tree limpo ao final do Lote 4 (todos os commits
+  de T21–T26 + `docs(tasks): mark T21-T26 complete` já feitos). `acc.txt` na raiz continua
   untracked (credenciais de dev local em texto puro) — não commitar.
 - **Branch**: `feature/inbox-realtime` (criada a partir de `main` no início desta sessão
   de Execute, antes do commit de T1) — sem push ainda.
