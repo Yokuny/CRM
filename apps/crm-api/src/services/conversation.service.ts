@@ -42,6 +42,30 @@ export type ListConversationsQuery = {
   limit?: number;
 };
 
+// INBOX-10/AC5 (Fix 1, validation.md): resolve o nome real do assignee via
+// findUserView (auth.repository.ts) — a MESMA função já usada para nomear o
+// assignee no conflito 409 (ConversationAlreadyAssignedError abaixo). `undefined`
+// quando não há assignee, ou quando o User não é encontrado (não deveria
+// acontecer em operação normal, mas nunca deve quebrar a resposta).
+const resolveAssigneeName = async (assigneeId: string | undefined): Promise<string | undefined> => {
+  if (!assigneeId) return undefined;
+  const user = await findUserView(assigneeId);
+  return user?.name;
+};
+
+// listConversations pode devolver várias linhas com o MESMO assignee —
+// resolve cada id único uma única vez (evita N findUserView repetidos para o
+// mesmo operador numa fila grande).
+const attachAssigneeNames = async (items: ConversationListItem[]): Promise<ConversationListItem[]> => {
+  const uniqueAssigneeIds = [...new Set(items.map((item) => item.assignee).filter((id): id is string => !!id))];
+  if (uniqueAssigneeIds.length === 0) return items;
+
+  const users = await Promise.all(uniqueAssigneeIds.map((id) => findUserView(id)));
+  const nameById = new Map(uniqueAssigneeIds.map((id, index) => [id, users[index]?.name]));
+
+  return items.map((item) => (item.assignee ? { ...item, assigneeName: nameById.get(item.assignee) } : item));
+};
+
 // INBOX-01/02/03: repassa filtro mode/assignee ao repository (T7) tal como
 // veio da query — só page/limit são clampados aqui (mesma fronteira já
 // estabelecida por customer.service.ts: query aceita qualquer número, o
@@ -49,12 +73,14 @@ export type ListConversationsQuery = {
 export const listConversations = async (
   tenantId: string,
   query: ListConversationsQuery,
-): Promise<{ items: ConversationListItem[]; total: number }> =>
-  conversationRepository.listConversations(
+): Promise<{ items: ConversationListItem[]; total: number }> => {
+  const result = await conversationRepository.listConversations(
     tenantId,
     { mode: query.mode, assignee: query.assignee },
     { page: clampPage(query.page), limit: clampLimit(query.limit) },
   );
+  return { items: await attachAssigneeNames(result.items), total: result.total };
+};
 
 export type GetMessagesQuery = { page?: number; limit?: number };
 
@@ -97,7 +123,7 @@ export const takeoverConversation = async (
   userId: string,
 ): Promise<ConversationRecord> => {
   const result = await conversationRepository.takeover(id, tenantId, userId);
-  if (result) return result;
+  if (result) return { ...result, assigneeName: await resolveAssigneeName(result.assignee) };
 
   const existing = await conversationRepository.findConversationById(id, tenantId);
   if (!existing) throw new CustomError('Conversation não encontrada', 404);
@@ -109,7 +135,7 @@ export const takeoverConversation = async (
 export const releaseConversation = async (id: string, tenantId: string): Promise<ConversationRecord> => {
   const result = await conversationRepository.release(id, tenantId);
   if (!result) throw new CustomError('Conversation não encontrada', 404);
-  return result;
+  return { ...result, assigneeName: await resolveAssigneeName(result.assignee) };
 };
 
 // Traduz os erros tipados do repository (T37) para o código HTTP certo — o

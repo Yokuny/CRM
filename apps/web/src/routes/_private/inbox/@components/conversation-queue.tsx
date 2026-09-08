@@ -8,7 +8,6 @@ import { DataTable } from '@/components/ui/data-table.js';
 import { formatDistanceToNow } from '@/lib/helpers/formatDate.helper.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 import { type ConversationMode, type ConversationRecord, conversationsQuery } from '@/query/conversation.js';
-import { sessionQuery } from '@/query/session.js';
 
 const PAGE_SIZE = 20;
 
@@ -18,22 +17,13 @@ const MODE_FILTERS: { value: ConversationMode | undefined; label: string }[] = [
   { value: 'human', label: t('inbox.mode.human') },
 ];
 
-// SPEC_DEVIATION: `GET /conversations` (T7/T8) só devolve `assignee` como o
-// ObjectId do User (conversation.repository.ts: `assignee: doc.assignee?.
-// toString()`) — não existe endpoint de diretório de usuários exposto ao
-// apps/web (fora do "Where" de T21-T26, que só tocam
-// routes/_private/inbox/**). spec.md (P1/AC5) pede "o nome do assignee";
-// como aproximação honesta dentro do escopo permitido, mostramos "Você"
-// quando o assignee é o próprio operador da sessão (sessionQuery já
-// carregada pelo guard de rota, AD-014) e "Outro operador" caso contrário —
-// nunca o ObjectId cru. O único lugar onde o NOME real aparece é o toast de
-// conflito 409 do takeover (takeover-badge.tsx, T26), porque ali quem monta
-// a mensagem é o próprio back-end (conversation.service.ts,
-// ConversationAlreadyAssignedError já resolve `User.name`).
-const assigneeLabel = (conversation: ConversationRecord, selfId: string | undefined): string => {
-  if (conversation.mode !== 'human' || !conversation.assignee) return '-';
-  return conversation.assignee === selfId ? t('inbox.assignee.you') : t('inbox.assignee.other');
-};
+// INBOX-10/AC5 (Fix 1, validation.md): `GET /conversations` agora resolve
+// `assigneeName` no back-end (conversation.service.ts) — spec.md pede
+// literalmente "o nome do assignee" quando mode:'human', sem exigir uma
+// distinção "é você"/"é outro operador"; mostra o nome real sempre que
+// existir.
+const assigneeLabel = (conversation: ConversationRecord): string =>
+  conversation.mode === 'human' && conversation.assigneeName ? conversation.assigneeName : '-';
 
 type ConversationQueueProps = { onSelect: (id: string) => void };
 
@@ -50,11 +40,9 @@ export function ConversationQueue({ onSelect }: ConversationQueueProps) {
   const [assignee, setAssignee] = useState('');
   const [page, setPage] = useState(1);
 
-  const sessionQueryResult = useQuery(sessionQuery);
   const query = useQuery(conversationsQuery({ mode, assignee: assignee || undefined, page, limit: PAGE_SIZE }));
 
   const pageCount = Math.max(1, Math.ceil((query.data?.total ?? 0) / PAGE_SIZE));
-  const selfId = sessionQueryResult.data?.user.id;
 
   const columns: ColumnDef<ConversationRecord, unknown>[] = [
     { accessorKey: 'customer', header: t('inbox.column.customer'), enableSorting: false },
@@ -72,7 +60,7 @@ export function ConversationQueue({ onSelect }: ConversationQueueProps) {
       id: 'assignee',
       header: t('inbox.column.assignee'),
       enableSorting: false,
-      cell: ({ row }) => assigneeLabel(row.original, selfId),
+      cell: ({ row }) => assigneeLabel(row.original),
     },
     {
       id: 'lastActivityAt',

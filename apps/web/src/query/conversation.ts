@@ -13,6 +13,10 @@ export type ConversationRecord = {
   customer: string;
   mode: ConversationMode;
   assignee?: string;
+  // INBOX-10/AC5 (Fix 1, validation.md): nome real do assignee, já resolvido
+  // no back-end (conversation.service.ts, mesmo findUserView usado pelo
+  // conflito 409) — undefined quando não há assignee.
+  assigneeName?: string;
   lastActivityAt: string;
   unread: boolean;
   windowOpen: boolean;

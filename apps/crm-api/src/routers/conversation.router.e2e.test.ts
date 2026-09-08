@@ -247,6 +247,21 @@ describe('conversation routes', () => {
       const persisted = await Conversation.findById(conversation._id).lean();
       expect(persisted?.assignee?.toString()).toBe(currentAssignee.id);
     });
+
+    it('responds with the real assignee name (assigneeName), never the raw User id (spec.md Takeover/AC5, validation.md Fix 1)', async () => {
+      const { tenant, user, cookie } = await seedTenantUser(['operador']);
+      const { conversation } = await seedConversationFixture(tenant._id.toString());
+      const app = buildTestApp();
+
+      const res = await request(app)
+        .post(`/conversations/${conversation._id.toString()}/takeover`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.assigneeName).toBe(user.name);
+      expect(res.body.data.assigneeName).not.toBe(user.id);
+    });
   });
 
   describe('POST /conversations/:id/release', () => {
@@ -294,6 +309,24 @@ describe('conversation routes', () => {
       const persisted = await Conversation.findById(conversation._id).lean();
       expect(persisted?.mode).toBe('bot');
       expect(persisted?.assignee).toBeFalsy();
+    });
+
+    it('clears assigneeName along with assignee once released (spec.md Takeover/AC5, validation.md Fix 1)', async () => {
+      const { tenant, user: assigneeUser } = await seedTenantUser(['operador']);
+      const { conversation } = await seedConversationFixture(tenant._id.toString(), {
+        mode: 'human',
+        assignee: assigneeUser._id,
+      });
+      const cookie = await issueSessionCookie(assigneeUser.id);
+      const app = buildTestApp();
+
+      const res = await request(app)
+        .post(`/conversations/${conversation._id.toString()}/release`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.assigneeName).toBeUndefined();
     });
   });
 
@@ -570,6 +603,32 @@ describe('conversation routes', () => {
       expect(res.status).toBe(200);
       expect(res.body.data.total).toBe(1);
       expect(res.body.data.items.map((item: { id: string }) => item.id)).toEqual([humanConversation._id.toString()]);
+    });
+
+    it('includes the real assignee name (assigneeName) resolved server-side, never the raw User id (spec.md Takeover/AC5, validation.md Fix 1)', async () => {
+      const { tenant, cookie } = await seedTenantUser(['gestor']);
+      const assigneeOperator = await User.create({
+        name: 'Operadora Responsável',
+        email: `assignee-${randomId()}@empresa.com`,
+        password: 'hash',
+        Tenant: tenant._id,
+        role: ['operador'],
+      });
+      const [humanConversation, botConversation] = await seedConversationsForTenant(tenant._id.toString(), [
+        { mode: 'human', assignee: assigneeOperator._id },
+        { mode: 'bot' },
+      ]);
+      const app = buildTestApp();
+
+      const res = await request(app).get('/conversations').set('Cookie', cookie).set('User-Agent', DEVICE);
+
+      expect(res.status).toBe(200);
+      const items = res.body.data.items as { id: string; assigneeName?: string }[];
+      const humanItem = items.find((item) => item.id === humanConversation._id.toString());
+      const botItem = items.find((item) => item.id === botConversation._id.toString());
+      expect(humanItem?.assigneeName).toBe(assigneeOperator.name);
+      expect(humanItem?.assigneeName).not.toBe(assigneeOperator.id);
+      expect(botItem?.assigneeName).toBeUndefined();
     });
   });
 

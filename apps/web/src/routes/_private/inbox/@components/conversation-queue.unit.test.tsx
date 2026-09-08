@@ -72,7 +72,7 @@ describe('ConversationQueue (T22 — INBOX-01/03/10)', () => {
     expect(getMock).toHaveBeenCalledWith('/conversations?page=1&limit=20');
   });
 
-  it('INBOX-10/AC5: mode:"human" shows "Você" when the assignee is the session user, never the raw id', async () => {
+  it(`INBOX-10/AC5: mode:"human" shows the assignee's real name (assigneeName, resolved server-side), never the raw id`, async () => {
     getMock.mockImplementation((path: string) => {
       if (path === '/auth/session') return Promise.resolve(SESSION_RESPONSE);
       return Promise.resolve({
@@ -84,6 +84,7 @@ describe('ConversationQueue (T22 — INBOX-01/03/10)', () => {
               customer: 'cust1',
               mode: 'human',
               assignee: 'u1',
+              assigneeName: 'Ana',
               lastActivityAt: '2026-01-01T00:00:00.000Z',
               unread: false,
               windowOpen: false,
@@ -96,11 +97,11 @@ describe('ConversationQueue (T22 — INBOX-01/03/10)', () => {
 
     renderQueue();
 
-    expect(await screen.findByText('Você')).toBeInTheDocument();
+    expect(await screen.findByText('Ana')).toBeInTheDocument();
     expect(screen.queryByText('u1')).not.toBeInTheDocument();
   });
 
-  it('INBOX-10/AC5: mode:"human" with a different assignee shows a generic label, never the raw id', async () => {
+  it(`INBOX-10/AC5: mode:"human" with a different assignee shows that assignee's real name, never the raw id`, async () => {
     getMock.mockImplementation((path: string) => {
       if (path === '/auth/session') return Promise.resolve(SESSION_RESPONSE);
       return Promise.resolve({
@@ -112,6 +113,7 @@ describe('ConversationQueue (T22 — INBOX-01/03/10)', () => {
               customer: 'cust1',
               mode: 'human',
               assignee: 'someone-else',
+              assigneeName: 'Carlos',
               lastActivityAt: '2026-01-01T00:00:00.000Z',
               unread: false,
               windowOpen: false,
@@ -124,7 +126,7 @@ describe('ConversationQueue (T22 — INBOX-01/03/10)', () => {
 
     renderQueue();
 
-    expect(await screen.findByText('Outro operador')).toBeInTheDocument();
+    expect(await screen.findByText('Carlos')).toBeInTheDocument();
     expect(screen.queryByText('someone-else')).not.toBeInTheDocument();
   });
 

@@ -18,6 +18,12 @@ export type ConversationRecord = {
   customer: string;
   mode: ConversationMode;
   assignee?: string;
+  // INBOX-10/AC5 (Fix 1, validation.md): NUNCA preenchido aqui — o
+  // repository só lê Conversation, sem acesso a User. O service
+  // (conversation.service.ts) resolve este campo via findUserView
+  // (auth.repository.ts), a mesma função já usada para nomear o assignee
+  // no conflito 409 — reuso, não duplicação de lógica de busca de User.
+  assigneeName?: string;
   windowExpiresAt?: Date;
   lastActivityAt: Date;
 };
@@ -79,6 +85,10 @@ export type ConversationListItem = {
   customer: string;
   mode: ConversationMode;
   assignee?: string;
+  // INBOX-10/AC5 (Fix 1, validation.md): mesma nota de ConversationRecord
+  // acima — nunca preenchido pelo repository, o service resolve via
+  // findUserView.
+  assigneeName?: string;
   lastActivityAt: Date;
   unread: boolean;
   windowOpen: boolean;

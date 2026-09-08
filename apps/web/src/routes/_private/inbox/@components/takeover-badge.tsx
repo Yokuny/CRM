@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge.js';
 import { Button } from '@/components/ui/button.js';
@@ -10,17 +10,17 @@ import {
   type ConversationsListResult,
   conversationKeys,
 } from '@/query/conversation.js';
-import { sessionQuery } from '@/query/session.js';
 
 type TakeoverBadgeProps = { conversation: ConversationRecord };
 
 // Resposta de POST /:id/takeover|release (conversation.controller.ts) —
 // espelha o `ConversationRecord` do REPOSITORY (tenant/channel/customer/
-// mode/assignee/windowExpiresAt/lastActivityAt), um shape DIFERENTE do
-// `ConversationRecord` deste front (query/conversation.ts, que espelha
-// `ConversationListItem`, com unread/windowOpen). Só os 2 campos usados
-// aqui (mode/assignee) são declarados — o resto da resposta é ignorado.
-type TakeoverResponse = { mode: ConversationMode; assignee?: string };
+// mode/assignee/assigneeName/windowExpiresAt/lastActivityAt), um shape
+// DIFERENTE do `ConversationRecord` deste front (query/conversation.ts, que
+// espelha `ConversationListItem`, com unread/windowOpen). Só os campos
+// usados aqui (mode/assignee/assigneeName) são declarados — o resto da
+// resposta é ignorado.
+type TakeoverResponse = { mode: ConversationMode; assignee?: string; assigneeName?: string };
 
 // INBOX-08/09/10 (design.md Componente 6, context.md decisão #6): badge de
 // mode + assignee, com "Assumir"/"Liberar" chamando os endpoints já
@@ -31,8 +31,6 @@ type TakeoverResponse = { mode: ConversationMode; assignee?: string };
 // estado global (CLAUDE.md).
 export function TakeoverBadge({ conversation }: TakeoverBadgeProps) {
   const queryClient = useQueryClient();
-  const sessionQueryResult = useQuery(sessionQuery);
-  const selfId = sessionQueryResult.data?.user.id;
 
   const applyUpdate = (updated: TakeoverResponse) => {
     queryClient.setQueriesData<ConversationsListResult>({ queryKey: conversationKeys.lists() }, (old) =>
@@ -40,7 +38,9 @@ export function TakeoverBadge({ conversation }: TakeoverBadgeProps) {
         ? {
             ...old,
             items: old.items.map((item) =>
-              item.id === conversation.id ? { ...item, mode: updated.mode, assignee: updated.assignee } : item,
+              item.id === conversation.id
+                ? { ...item, mode: updated.mode, assignee: updated.assignee, assigneeName: updated.assigneeName }
+                : item,
             ),
           }
         : old,
@@ -71,17 +71,12 @@ export function TakeoverBadge({ conversation }: TakeoverBadgeProps) {
     onError: (error: Error) => toast.error(error.message),
   });
 
-  // SPEC_DEVIATION (mesma nota de conversation-queue.tsx): `assignee` só
-  // chega como ObjectId — sem diretório de usuários exposto ao apps/web
-  // (fora do "Where" desta fase), "Você"/"Outro operador" é a aproximação
-  // honesta; o nome real só aparece no toast de conflito 409 acima, onde o
-  // back-end já resolve.
-  const assigneeLabel =
-    conversation.mode === 'human' && conversation.assignee
-      ? conversation.assignee === selfId
-        ? t('inbox.assignee.you')
-        : t('inbox.assignee.other')
-      : undefined;
+  // INBOX-10/AC5 (Fix 1, validation.md): `assigneeName` já vem resolvido do
+  // back-end (mesma resposta de takeover/release e de GET /conversations,
+  // conversation.service.ts) — spec.md pede literalmente "o nome do
+  // assignee" quando mode:'human', mostrado direto, sem distinção "é
+  // você"/"é outro operador".
+  const assigneeLabel = conversation.mode === 'human' ? conversation.assigneeName : undefined;
 
   return (
     <div className="flex items-center gap-2">

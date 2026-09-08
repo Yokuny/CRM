@@ -68,7 +68,7 @@ describe('TakeoverBadge (T26 — INBOX-08/09/10)', () => {
 
   it('INBOX-08/AC1: clicking "Assumir" on a free conversation succeeds and updates the badge without a manual reload', async () => {
     getMock.mockResolvedValue(SESSION_RESPONSE);
-    postMock.mockResolvedValue({ success: true, data: { mode: 'human', assignee: 'u1' } });
+    postMock.mockResolvedValue({ success: true, data: { mode: 'human', assignee: 'u1', assigneeName: 'Ana' } });
     const user = userEvent.setup();
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     // Popula o cache de conversationsQuery (mesma prática de useInboxSocket)
@@ -82,7 +82,7 @@ describe('TakeoverBadge (T26 — INBOX-08/09/10)', () => {
     await waitFor(() => expect(postMock).toHaveBeenCalledWith('/conversations/c1/takeover'));
     await waitFor(() =>
       expect(queryClient.getQueryData(conversationsQuery({ limit: 100 }).queryKey)).toEqual({
-        items: [{ ...BOT_CONVERSATION, mode: 'human', assignee: 'u1' }],
+        items: [{ ...BOT_CONVERSATION, mode: 'human', assignee: 'u1', assigneeName: 'Ana' }],
         total: 1,
       }),
     );
@@ -113,12 +113,12 @@ describe('TakeoverBadge (T26 — INBOX-08/09/10)', () => {
     await waitFor(() => expect(postMock).toHaveBeenCalledWith('/conversations/c1/release'));
   });
 
-  it('INBOX-10/AC5: shows "Você" when the assignee is the session user, never the raw id', async () => {
+  it("INBOX-10/AC5: shows the assignee's real name (assigneeName, resolved server-side), never the raw id", async () => {
     getMock.mockResolvedValue(SESSION_RESPONSE);
 
-    renderBadge({ ...BOT_CONVERSATION, mode: 'human', assignee: 'u1' });
+    renderBadge({ ...BOT_CONVERSATION, mode: 'human', assignee: 'u1', assigneeName: 'Ana' });
 
-    expect(await screen.findByText('Você')).toBeInTheDocument();
+    expect(await screen.findByText('Ana')).toBeInTheDocument();
     expect(screen.queryByText('u1')).not.toBeInTheDocument();
   });
 });
