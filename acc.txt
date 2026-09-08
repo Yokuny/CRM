@@ -1,0 +1,4 @@
+Perfil	Email	Senha	Onde acessa
+Admin de plataforma	admin@platform.local	plataforma123	Não é um tenant — é a conta usada via API para criar tenants/convites (não tem UI própria de login testada, mas o /auth/signin deve aceitar)
+Operador — Clínica Teste	operador@teste.local	senha12345	Tenant "Clínica Teste" — tem 1 cliente do teste inicial + os dados da 1ª rodada (Ana, Carlos, Fernanda — parou no rate limit)
+Demo User — Clínica Demo	demo@teste.local	senha12345	Tenant "Clínica Demo" — o mais completo: 4 clientes distribuídos no kanban, 2 processos criados, template "Atendimento Odontológico"

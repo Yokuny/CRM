@@ -1,7 +1,8 @@
 # Arquitetura
 
 Plataforma de CRM com atendimento a clientes por WhatsApp assistido por IA.
-Decisões formais em [`docs/adr/`](adr/README.md); vocabulário em [`docs/glossary.md`](glossary.md).
+Decisões formais em [`docs/adr/`](adr/README.md); vocabulário em [`docs/glossary.md`](glossary.md);
+sequência de entrega em [`docs/roadmap.md`](roadmap.md).
 
 ---
 

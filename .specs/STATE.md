@@ -259,11 +259,47 @@ Detalhamento completo (contexto, consequências, alternativas) em [`docs/adr/`](
 
 ## Handoff
 
-- **Feature**: `ai-gateway` (feature 5 de 11) — **Execute completo, Verifier PASS (iteração 3/3), 48/48 requisitos Verified**. `crm-web-shell` (feature 4) já está mergeada em `main` (PR #3, `076cfe5`). Ainda não mergeada em `main`, não pushada, sem PR aberto — decisão de merge fica para o usuário pedir explicitamente (mesmo padrão de `crm-core`/`crm-web-shell`).
-- **Phase / Task**: Specify → Design → Tasks → **Execute completo** → **Validate completo (PASS)**. Nada pendente nesta feature.
-- **Completed**: 48 tasks (47 originais + **T24B**, inserida em Execute — bug de `turnLock` nunca liberado em `human_mode`/`guard_rejected` + `fixedReply` nunca entregue ao cliente, achado pelo orquestrador antes da Fase 6, mesmo padrão do T25B/`crm-web-shell`) em 6 lotes de sub-agentes (Fase 1+2 → Fase 3+4 → Fase 5+T24B → Fase 6+7 → Fase 8+9 → Fase 10+11), seguidos de **3 iterações do loop fix→re-verify do Verifier** (teto do protocolo, todas usadas): iteração 1 achou 7 gaps reais (AIG-08/11/38/41/43/44/48) contra um sensor de mutação 6/6 morto (tier P0 — isolamento entre tenants, `turnLock`, janela de 24h, dedup, criptografia todos sólidos sob fault injection real); iteração 2 confirmou 6/7 corrigidos com evidência própria (incluindo julgar 2 desvios de engenharia documentados como sólidos, não atalhos) mas achou que a CI recém-criada (AD-031) ficaria permanentemente vermelha por causa de um erro de formatação pré-existente em `.specs/lessons.json` nunca endereçado; iteração 3 confirmou esse último fix e fechou com PASS limpo. 4 interrupções de infraestrutura ao longo do Execute (sleeps/stalls/turnos prematuros/rate-limit de sessão/"stopped by the user"), todas retomadas sem perda de trabalho real — cada task só commita depois do próprio gate passar. **739 testes passando** (497 antes da feature — baseline de `crm-web-shell` — +242), `tsc --noEmit` limpo, `biome check .` limpo (0 erros, 9 warnings pré-existentes de `crm-web-shell` fora de escopo), gate de build verificado de forma independente pelo orquestrador a cada lote e a cada iteração do Verifier, não só pelo relato dos sub-agentes. 1 nova AD gravada: **AD-031** (CI via GitHub Actions rodando o Build gate existente em todo push/PR — decisão de projeto, discutida e confirmada com o usuário, já que a lacuna de CI era sistêmica em todo o projeto, não específica desta feature). 7 lições gravadas em `.specs/lessons.json` (L-017 a L-023, todas `candidate`).
-- **In-progress**: nenhum.
-- **Next step**: usuário decide — mergear `ai-gateway` em `main` antes de iniciar a feature 6/11, ou seguir direto para a próxima feature sobre esta branch. Nenhuma ação automática deve ser tomada sem essa confirmação.
-- **Blockers**: nenhum. Nota operacional: risco de flake pré-existente e conhecido em `apps/crm-api`/`ai-gateway` — projects `integration`/`e2e` do Vitest compartilham UMA instância de `MongoMemoryServer` (`vitest.config.ts` já documenta a causa raiz), causando falhas intermitentes isoladas sob carga pesada que sempre reproduziram como pass num re-run isolado ao longo de toda a feature — não é regressão desta feature, gap de test-infra pré-existente, agora também anotado no trade-off de AD-031 (a CI pode eventualmente mostrar 1 run vermelho por causa disso, sem regressão real).
-- **Uncommitted files**: nenhum — working tree limpa (só o diretório `whatsapp-mcp/` untracked, pré-existente e não relacionado a esta feature — não tocar).
-- **Branch**: `feature/ai-gateway`, criada a partir de `main` (`d6df6da`, plan commit desta feature). NÃO pushada para `origin` nesta sessão. `feature/crm-web-shell`/`feature/crm-core`/`feature/dynamic-field-engine`/`feature/foundation-tenancy-auth` seguem intactas, históricas (conteúdo já em `main`).
+- **Feature**: `inbox-realtime` (feature 6 de 11) — planejamento completo. `ai-gateway`
+  (feature 5) segue **Execute completo, Verifier PASS, 48/48 Verified**, mergeada em
+  `main` (PR #4, `bdf9aba`). Todas as 5 features anteriores estão em `main`.
+- **Phase / Task**: Discuss → Specify → Design → Tasks — **todas as 4 completas e
+  aprovadas explicitamente pelo usuário nesta sessão**. Execute **não iniciado**.
+- **Completed**: `.specs/features/inbox-realtime/{context.md,spec.md,design.md,tasks.md}`
+  escritos e aprovados. `context.md`: 8 decisões de Discuss (3 pré-confirmadas antes da
+  sessão + 5 levantadas e resolvidas nesta sessão — fonte do "template HSM" resolvida
+  como botão `wa.me` fora da plataforma, não envio de template; mídia recebida = preview
+  sob demanda; corrida de takeover = claim condicional com erro nomeado; poller
+  multi-instância = assumido single-instance; reenvio de `failed` = clona em Message
+  nova, não reseta). `spec.md`: 19 requisitos (`INBOX-01..19`), 4 stories P1 + 2 P2,
+  todas as Assumptions logadas (incluindo 1 default do agente não perguntado ao usuário:
+  definição de "não lida" = `lastInboundAt > lastActivityAt`, sem campo novo). `design.md`:
+  biblioteca WS = `ws` puro (confirmado com o usuário sobre alternativa `socket.io`),
+  salas em memória `tenant:<id>`/`tenant:<id>:conversation:<id>`, poller único global
+  (~2s, espelha `startOutboxConsumer`), `authenticateSession` extraído de
+  `createAuthMiddleware` pra reuso no handshake WS, `metaMediaClient` duplicado
+  deliberadamente (mesmo precedente do `ai-gateway`), `server.ts` espelha
+  `StartOptions`/`StartHandle` de `apps/ai-gateway/src/server.ts`. Nenhuma AD nova
+  registrada (tudo conforma AD-002/006/014/017/028/030 já ativos). `tasks.md`: 26 tarefas
+  atômicas em 11 fases, Test Coverage Matrix + Gate Check Commands gerados (AD-017),
+  3 checks de validação (granularidade/diagrama/co-locação de teste) todos ✅, usuário
+  confirmou "nenhuma ferramenta extra" (MCP/Skill: NONE em todas as tarefas).
+- **In-progress**: nenhum — Execute não começou, nenhum arquivo de código tocado.
+- **Next step**: iniciar **Execute** a partir de `.specs/features/inbox-realtime/tasks.md`,
+  T1 (Fase 1: adicionar deps `ws`/`cookie`/`@types/ws` em `apps/crm-api/package.json`).
+  26 tarefas > ~8 → oferecer sub-agentes em lotes (~7 tarefas/lote, fases inteiras) antes
+  de despachar, conforme o protocolo Execute do skill `tlc-spec-driven`. Usuário pediu
+  para pausar aqui nesta sessão e pegar um prompt autocontido pra abrir uma nova janela
+  sem contexto prévio.
+- **Blockers**: nenhum. Mesma nota operacional pré-existente de flake em
+  `apps/crm-api`/`ai-gateway` (`integration`/`e2e` compartilham UMA instância de
+  `MongoMemoryServer`, `vitest.config.ts` documenta a causa raiz) — não é regressão desta
+  feature.
+- **Uncommitted files**: `.specs/features/inbox-realtime/` inteiro (novo, untracked —
+  `context.md`/`spec.md`/`design.md`/`tasks.md`), esta atualização de handoff,
+  `docs/roadmap.md` (já estava untracked antes desta sessão). `acc.txt` na raiz continua
+  untracked (credenciais de dev local em texto puro) — não commitar. Nenhum código de
+  `apps/`/`packages/` tocado ainda.
+- **Branch**: `main` (nenhuma branch de feature criada ainda para `inbox-realtime`) —
+  diferente do padrão de features anteriores (`feature/ai-gateway` etc., criadas no plan
+  commit); Execute deve decidir/criar `feature/inbox-realtime` a partir de `main` antes do
+  primeiro commit de task, seguindo o mesmo padrão.
