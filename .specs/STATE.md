@@ -302,20 +302,48 @@ Detalhamento completo (contexto, consequências, alternativas) em [`docs/adr/`](
   commit — corrigidos com anotações de tipo (`Awaited<ReturnType<typeof seedX>>`), um
   commit de fix isolado (`062a057`→re-splitado em `05b49bc`) para não misturar com o
   commit de feature de T10. Nenhum teste enfraquecido/pulado/deletado.
-- **In-progress**: nenhum lote rodando neste instante — próxima ação é despachar o Lote 3.
-- **Next step**: despachar **Lote 3/4** (T15–T20, Fases 9–10: `metaMediaClient`/proxy de
-  mídia sob demanda, camada de dados `apps/web` — `query/conversation.ts`,
-  `query/message.ts`, `useInboxSocket`). Depois Lote 4/4 (T21–T26, Fase 11: telas do
-  Inbox). Verifier roda automaticamente só depois do Lote 4 (último task, T26) — nunca
-  antes.
+  **Lote 3/4 completo** (T15–T20, Fases 9–10: `metaMediaClient`/proxy de mídia sob
+  demanda, camada de dados `apps/web` — `query/conversation.ts`, `query/message.ts`,
+  `useInboxSocket`) — 8 commits (6 de task + 1 fix de formatação + 1 docs:
+  `5aa4d44`→T15, `0ed4001`→T16, `a30d031`→style/format, `607a373`→T17, `25dd8cc`→T18,
+  `b6e4bdd`→T19, `eadbe6f`→T20, `57fb587`→docs), gate final `pnpm run check` verde (844
+  testes, tsc limpo em todo o monorepo, biome só com os mesmos 9 warnings pré-existentes
+  e não relacionados em `apps/web/.../customers/list/index.tsx`, arquivo não tocado por
+  esta feature). Desvios registrados pelo worker (sem violar spec/design): (1) T17 (`GET
+  /:id/messages/:messageId/media`) descobriu que o `errorHandler.middleware.ts` global
+  mascara toda mensagem de erro com status `>=500` ("Erro interno do servidor"), o que
+  apagaria a mensagem legível de `MetaMediaUnavailableError` exigida pelo spec.md (P2/AC3,
+  "erro legível") no 502 — resolvido SEM tocar o middleware global (fora do "Where" de
+  T17): o `conversation.controller.ts` responde `CustomError`s conhecidos diretamente
+  (`res.status(e.status).json(badRespObj(...))`) nessa rota específica, só delegando a
+  `next(e)` erros verdadeiramente desconhecidos; (2) T18 encontrou uma incompatibilidade
+  real entre o "Done when" da task (`conversationQuery(id)`, no molde de
+  `customerQuery(id)`) e o contrato de backend de fato — `conversation.router.ts` nunca
+  expõe `GET /conversations/:id` (confirmado lendo o arquivo inteiro, e os 26 tasks do
+  plano completo nunca alocam uma task pra criar esse endpoint) — resolvido seguindo o
+  MESMO precedente já aceito neste repositório em `query/process.ts` para a situação
+  idêntica ("Não há GET /processes/:id... resolve filtrando `items` da lista"): só
+  `conversationsQuery` (lista) foi implementada; `conversationQuery(id)` foi
+  propositalmente omitida (documentado como `SPEC_DEVIATION` no código e no checkbox de
+  `tasks.md`) em vez de chamar um endpoint inexistente; (3) durante o gate check do T17
+  foi descoberto que `pnpm run format` (Biome) teria reformatado um arquivo de teste já
+  commitado no T15 (`metaMediaClient.unit.test.ts`) — separado num commit `style` próprio
+  (`a30d031`) em vez de misturado ao commit de T17, mantendo "uma task = um commit".
+  Nenhum teste enfraquecido/pulado/deletado.
+- **In-progress**: nenhum lote rodando neste instante — próxima ação é despachar o Lote 4.
+- **Next step**: despachar **Lote 4/4** (T21–T26, Fase 11: telas do Inbox —
+  `routes/_private/inbox/` esqueleto + `conversation-queue.tsx`, `thread.tsx`,
+  `media-card.tsx`, `composer.tsx`, `takeover-badge.tsx`). Depois desse lote (T26, última
+  task da feature), dispachar o Verifier independente para validação de feature completa
+  (spec-anchored coverage + discrimination sensor + `validation.md`) — nunca antes.
 - **Blockers**: nenhum. Mesma nota operacional pré-existente de flake em
   `apps/crm-api`/`ai-gateway` (`integration`/`e2e` compartilham UMA instância de
-  `MongoMemoryServer`, `vitest.config.ts` documenta a causa raiz) — dois flakes desse tipo
-  ocorreram durante o Lote 1 (`tenant-isolation.int.test.ts`,
-  `webhook.router.e2e.test.ts`), autorresolvidos no retry, em arquivos não tocados por
-  esta feature — não é regressão. Nenhum flake observado durante o Lote 2.
-- **Uncommitted files**: nenhum — working tree limpo ao final do Lote 2 (todos os commits
-  de T9–T14 + `docs(tasks): mark T9-T14 complete` já feitos). `acc.txt` na raiz continua
+  `MongoMemoryServer`, `vitest.config.ts` documenta a causa raiz) — um flake desse tipo
+  ocorreu durante o Lote 3 (`tenant-isolation.int.test.ts`, mesmo arquivo que já havia
+  flakado no Lote 1), autorresolvido no retry (`pnpm run check` rodado de novo, 844/844
+  verde), em arquivo não tocado por esta feature — não é regressão.
+- **Uncommitted files**: nenhum — working tree limpo ao final do Lote 3 (todos os commits
+  de T15–T20 + `docs(tasks): mark T15-T20 complete` já feitos). `acc.txt` na raiz continua
   untracked (credenciais de dev local em texto puro) — não commitar.
 - **Branch**: `feature/inbox-realtime` (criada a partir de `main` no início desta sessão
   de Execute, antes do commit de T1) — sem push ainda.
