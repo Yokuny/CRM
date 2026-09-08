@@ -96,12 +96,16 @@ describe('InboxPage (T21 — esqueleto da rota)', () => {
     expect(screen.queryByTestId('inbox-selected-conversation')).not.toBeInTheDocument();
   });
 
-  it('search.id selects the open conversation', () => {
+  it('search.id selects the open conversation (renders the thread panel, not the "select a conversation" hint)', async () => {
     searchMock.mockReturnValue({ id: '507f1f77bcf86cd799439011' });
 
     renderPage();
 
-    expect(screen.getByTestId('inbox-selected-conversation')).toHaveTextContent('507f1f77bcf86cd799439011');
+    // ConversationThread (T23) resolve a lista vazia mockada — "Nenhuma
+    // mensagem ainda." é prova de que a thread montou para este id, em vez
+    // do hint de "selecione uma conversa".
+    expect(await screen.findByText('Nenhuma mensagem ainda.')).toBeInTheDocument();
+    expect(screen.queryByText('Selecione uma conversa na fila para ver o histórico.')).not.toBeInTheDocument();
   });
 
   it('connects useInboxSocket at the page level (one WebSocket regardless of selection)', () => {

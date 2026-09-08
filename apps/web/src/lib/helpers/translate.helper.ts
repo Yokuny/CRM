@@ -89,6 +89,9 @@ const translations: Record<string, string> = {
   'inbox.window.open': 'Aberta',
   'inbox.window.closed': 'Fechada',
   'inbox.filter.mode.all': 'Todas',
+  'inbox.thread.empty': 'Nenhuma mensagem ainda.',
+  'inbox.message.unsupported': 'Tipo de mensagem não suportado nesta tela.',
+  'inbox.message.failed': 'Falhou',
 };
 
 export const t = (key: string): string => translations[key] ?? key;

@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card.js';
 import { useInboxSocket } from '@/hooks/useInboxSocket.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 import { ConversationQueue } from './@components/conversation-queue.js';
+import { ConversationThread } from './@components/thread.js';
 import { type InboxSearch, inboxSearchSchema } from './@interface/inbox.interface.js';
 
 // design.md, Componente 6: página ÚNICA (não hub — CLAUDE.md reserva hub só
@@ -13,8 +14,10 @@ import { type InboxSearch, inboxSearchSchema } from './@interface/inbox.interfac
 // a conexão sobreviva à troca de thread aberta sem precisar remontar.
 //
 // T21 criou o esqueleto com dois painéis placeholder; T22 substitui o
-// painel esquerdo pela fila real (`ConversationQueue`). O painel direito
-// (thread/composer/badge) continua placeholder até T23/T25/T26.
+// painel esquerdo pela fila real (`ConversationQueue`); T23 substitui o
+// painel direito pela thread real (`ConversationThread`) quando há uma
+// conversa selecionada. Composer/badge (T25/T26) continuam a ser
+// adicionados ao painel direito nas próximas tasks desta mesma fase.
 export function InboxPage() {
   const search = useSearch({ strict: false }) as InboxSearch;
   const navigate = useNavigate();
@@ -29,7 +32,7 @@ export function InboxPage() {
         <ConversationQueue onSelect={handleSelect} />
         <div className="rounded-lg border p-4" data-testid="inbox-thread-panel">
           {search.id ? (
-            <p data-testid="inbox-selected-conversation">{search.id}</p>
+            <ConversationThread conversationId={search.id} />
           ) : (
             <p className="text-muted-foreground text-sm">{t('inbox.thread.select_hint')}</p>
           )}
