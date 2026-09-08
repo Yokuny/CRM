@@ -198,6 +198,54 @@ describe('conversation routes', () => {
       expect(result).toEqual({ outcome: 'human_mode' });
       expect(createMessage).not.toHaveBeenCalled();
     });
+
+    it('is idempotent: the same operator taking over again gets 200, not an error (spec.md INBOX-08/AC2)', async () => {
+      const { tenant, user, cookie } = await seedTenantUser(['operador']);
+      const { conversation } = await seedConversationFixture(tenant._id.toString(), {
+        mode: 'human',
+        assignee: user.id,
+      });
+      const app = buildTestApp();
+
+      const res = await request(app)
+        .post(`/conversations/${conversation._id.toString()}/takeover`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE);
+
+      expect(res.status).toBe(200);
+      const persisted = await Conversation.findById(conversation._id).lean();
+      expect(persisted?.mode).toBe('human');
+      expect(persisted?.assignee?.toString()).toBe(user.id);
+    });
+
+    it('responds 409 naming the current assignee when a DIFFERENT operator tries to take over (spec.md INBOX-08/AC3, context.md decision #6)', async () => {
+      const { tenant, user: currentAssignee } = await seedTenantUser(['operador']);
+      const { conversation } = await seedConversationFixture(tenant._id.toString(), {
+        mode: 'human',
+        assignee: currentAssignee._id,
+      });
+      // Segundo operador do MESMO tenant — User criado direto (seedTenantUser
+      // sempre cria um Tenant novo, o que não serve aqui).
+      const secondOperator = await User.create({
+        name: 'Segundo Operador',
+        email: `intruder-${randomId()}@empresa.com`,
+        password: 'hash',
+        Tenant: tenant._id,
+        role: ['gestor'],
+      });
+      const secondCookie = await issueSessionCookie(secondOperator.id);
+      const app = buildTestApp();
+
+      const res = await request(app)
+        .post(`/conversations/${conversation._id.toString()}/takeover`)
+        .set('Cookie', secondCookie)
+        .set('User-Agent', DEVICE);
+
+      expect(res.status).toBe(409);
+      expect(res.body.message).toContain(currentAssignee.name);
+      const persisted = await Conversation.findById(conversation._id).lean();
+      expect(persisted?.assignee?.toString()).toBe(currentAssignee.id);
+    });
   });
 
   describe('POST /conversations/:id/release', () => {
@@ -212,6 +260,33 @@ describe('conversation routes', () => {
       const res = await request(app)
         .post(`/conversations/${conversation._id.toString()}/release`)
         .set('Cookie', cookie)
+        .set('User-Agent', DEVICE);
+
+      expect(res.status).toBe(200);
+      const persisted = await Conversation.findById(conversation._id).lean();
+      expect(persisted?.mode).toBe('bot');
+      expect(persisted?.assignee).toBeFalsy();
+    });
+
+    it('releases even when the caller is NOT the current assignee — release stays unconditional for any canOperate (spec.md INBOX-09, regression)', async () => {
+      const { tenant, user: assigneeUser } = await seedTenantUser(['operador']);
+      const { conversation } = await seedConversationFixture(tenant._id.toString(), {
+        mode: 'human',
+        assignee: assigneeUser._id,
+      });
+      const otherOperator = await User.create({
+        name: 'Outro Operador',
+        email: `other-${randomId()}@empresa.com`,
+        password: 'hash',
+        Tenant: tenant._id,
+        role: ['gestor'],
+      });
+      const otherCookie = await issueSessionCookie(otherOperator.id);
+      const app = buildTestApp();
+
+      const res = await request(app)
+        .post(`/conversations/${conversation._id.toString()}/release`)
+        .set('Cookie', otherCookie)
         .set('User-Agent', DEVICE);
 
       expect(res.status).toBe(200);
