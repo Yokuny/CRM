@@ -5,6 +5,26 @@ import { cleanup, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+// T22: InboxPage agora renderiza <ConversationQueue> de verdade, que chama
+// sessionQuery (`/auth/session`) e conversationsQuery (`/conversations`) —
+// precisa de um `get` mockado para não bater na rede real neste teste de
+// página isolado (mesmo padrão de customers/details.unit.test.tsx). O
+// conteúdo da fila em si é testado em conversation-queue.unit.test.tsx.
+const getMock = vi.fn((path: string) => {
+  if (path === '/auth/session') {
+    return Promise.resolve({
+      success: true,
+      data: {
+        tenant: { id: 't1', name: 'Tenant', status: 'active' },
+        user: { id: 'u1', name: 'Ana', email: 'ana@x.com' },
+        role: ['operador'],
+      },
+    });
+  }
+  return Promise.resolve({ success: true, data: { items: [], total: 0 } });
+});
+vi.mock('../../../lib/api/client.api.js', () => ({ get: getMock }));
+
 // Mesmo mock mínimo (addEventListener-based) de hooks/useInboxSocket.unit.test.tsx
 // (T20) — a página só precisa provar que conecta UM socket e repassa o
 // `search.id` adiante, não reimplementar a lógica de conexão (já coberta lá).
@@ -59,6 +79,7 @@ describe('InboxPage (T21 — esqueleto da rota)', () => {
   afterEach(() => {
     cleanup();
     searchMock.mockReset();
+    getMock.mockClear();
     FakeWebSocket.instances = [];
   });
 
@@ -68,7 +89,10 @@ describe('InboxPage (T21 — esqueleto da rota)', () => {
     renderPage();
 
     expect(screen.getByText('Caixa de entrada')).toBeInTheDocument();
-    expect(screen.getByTestId('inbox-queue-panel')).toBeInTheDocument();
+    // ConversationQueue (T22) montada de verdade — filtro de mode é prova de
+    // que a fila renderizou, sem duplicar a cobertura de
+    // conversation-queue.unit.test.tsx aqui.
+    expect(screen.getByRole('button', { name: 'Todas' })).toBeInTheDocument();
     expect(screen.queryByTestId('inbox-selected-conversation')).not.toBeInTheDocument();
   });
 

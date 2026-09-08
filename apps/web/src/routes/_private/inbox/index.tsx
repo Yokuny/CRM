@@ -1,7 +1,8 @@
-import { createFileRoute, useSearch } from '@tanstack/react-router';
+import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router';
 import { Card, CardContent, CardHeader } from '@/components/ui/card.js';
 import { useInboxSocket } from '@/hooks/useInboxSocket.js';
 import { t } from '@/lib/helpers/translate.helper.js';
+import { ConversationQueue } from './@components/conversation-queue.js';
 import { type InboxSearch, inboxSearchSchema } from './@interface/inbox.interface.js';
 
 // design.md, Componente 6: página ÚNICA (não hub — CLAUDE.md reserva hub só
@@ -11,21 +12,21 @@ import { type InboxSearch, inboxSearchSchema } from './@interface/inbox.interfac
 // no nível da página (design.md: "primeiro hook de WS do projeto"), para que
 // a conexão sobreviva à troca de thread aberta sem precisar remontar.
 //
-// T21 é só o esqueleto: os dois painéis abaixo são placeholders — T22
-// (`conversation-queue.tsx`), T23 (`thread.tsx`), T25 (`composer.tsx`) e T26
-// (`takeover-badge.tsx`) substituem cada um pelo componente real nas
-// próximas tasks desta mesma fase.
+// T21 criou o esqueleto com dois painéis placeholder; T22 substitui o
+// painel esquerdo pela fila real (`ConversationQueue`). O painel direito
+// (thread/composer/badge) continua placeholder até T23/T25/T26.
 export function InboxPage() {
   const search = useSearch({ strict: false }) as InboxSearch;
+  const navigate = useNavigate();
   useInboxSocket(search.id);
+
+  const handleSelect = (id: string) => navigate({ to: '/inbox', search: { id } });
 
   return (
     <Card asPage>
       <CardHeader title={t('inbox.title')} />
       <CardContent className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
-        <div className="rounded-lg border p-4" data-testid="inbox-queue-panel">
-          {t('inbox.queue.title')}
-        </div>
+        <ConversationQueue onSelect={handleSelect} />
         <div className="rounded-lg border p-4" data-testid="inbox-thread-panel">
           {search.id ? (
             <p data-testid="inbox-selected-conversation">{search.id}</p>

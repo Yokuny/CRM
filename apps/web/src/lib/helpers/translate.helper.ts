@@ -75,6 +75,20 @@ const translations: Record<string, string> = {
   'inbox.title': 'Caixa de entrada',
   'inbox.queue.title': 'Fila de conversas',
   'inbox.thread.select_hint': 'Selecione uma conversa na fila para ver o histórico.',
+  'inbox.column.customer': 'Cliente',
+  'inbox.column.mode': 'Modo',
+  'inbox.column.assignee': 'Responsável',
+  'inbox.column.last_activity': 'Última atividade',
+  'inbox.column.unread': 'Não lida',
+  'inbox.column.window': 'Janela 24h',
+  'inbox.mode.bot': 'Bot',
+  'inbox.mode.human': 'Humano',
+  'inbox.assignee.you': 'Você',
+  'inbox.assignee.other': 'Outro operador',
+  'inbox.unread.yes': 'Nova',
+  'inbox.window.open': 'Aberta',
+  'inbox.window.closed': 'Fechada',
+  'inbox.filter.mode.all': 'Todas',
 };
 
 export const t = (key: string): string => translations[key] ?? key;
