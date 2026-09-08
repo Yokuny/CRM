@@ -145,9 +145,9 @@ dependência `ws`")
 
 **Done when**:
 
-- [ ] `ws`, `cookie` em `dependencies`; `@types/ws` em `devDependencies`
-- [ ] `pnpm install` resolve sem conflito de lockfile
-- [ ] `pnpm run check` continua limpo (nenhum código novo ainda, só dependência)
+- [x] `ws`, `cookie` em `dependencies`; `@types/ws` em `devDependencies`
+- [x] `pnpm install` resolve sem conflito de lockfile
+- [x] `pnpm run check` continua limpo (nenhum código novo ainda, só dependência)
 
 **Tests**: none
 **Gate**: build
@@ -175,12 +175,12 @@ reorganizada, nenhuma regra nova
 
 **Done when**:
 
-- [ ] `authenticateSession` exportada, mesma assinatura do design.md
-- [ ] `validToken` (mesmo comportamento observável de antes) delega pra ela
-- [ ] Toda mensagem/evento de log existente (`session.replay`, `session.device_mismatch`)
+- [x] `authenticateSession` exportada, mesma assinatura do design.md
+- [x] `validToken` (mesmo comportamento observável de antes) delega pra ela
+- [x] Toda mensagem/evento de log existente (`session.replay`, `session.device_mismatch`)
       preservada
-- [ ] Gate check passa: `pnpm vitest run --project integration`
-- [ ] Testes existentes de `authentication.middleware.int.test.ts` continuam verdes +
+- [x] Gate check passa: `pnpm vitest run --project integration`
+- [x] Testes existentes de `authentication.middleware.int.test.ts` continuam verdes +
       novos casos cobrindo `authenticateSession` chamada diretamente (fora do Express)
 
 **Tests**: integration
@@ -209,11 +209,11 @@ e um `createRoomRegistry()` com `join(room, socket)`/`leave(room, socket)`/
 
 **Done when**:
 
-- [ ] `extractHandshakeCookie` extrai `refreshToken` de um header `cookie` cru, `undefined`
+- [x] `extractHandshakeCookie` extrai `refreshToken` de um header `cookie` cru, `undefined`
       quando ausente/malformado
-- [ ] `createRoomRegistry()` suporta join/leave/broadcast (broadcast em sala vazia não lança)
-- [ ] `leave` remove o socket de todas as salas que participava (usado no `close` da conexão)
-- [ ] Gate check passa: `pnpm vitest run --project unit`
+- [x] `createRoomRegistry()` suporta join/leave/broadcast (broadcast em sala vazia não lança)
+- [x] `leave` remove o socket de todas as salas que participava (usado no `close` da conexão)
+- [x] Gate check passa: `pnpm vitest run --project unit`
 
 **Tests**: unit
 **Gate**: quick
@@ -242,16 +242,16 @@ conversationId}` pra entrar/sair de `tenant:<id>:conversation:<id>`; expõe
 
 **Done when**:
 
-- [ ] Handshake com cookie válido conecta e entra na sala do tenant
-- [ ] Handshake sem cookie ou com sessão inválida fecha com código `4401`, nenhuma sala
+- [x] Handshake com cookie válido conecta e entra na sala do tenant
+- [x] Handshake sem cookie ou com sessão inválida fecha com código `4401`, nenhuma sala
       é conjunta
-- [ ] `subscribe`/`unsubscribe` entram/saem da sala `tenant:<id>:conversation:<id>`
-- [ ] `broadcastToConversation` só entrega a sockets na sala certa (mesmo tenant e
+- [x] `subscribe`/`unsubscribe` entram/saem da sala `tenant:<id>:conversation:<id>`
+- [x] `broadcastToConversation` só entrega a sockets na sala certa (mesmo tenant e
       conversation); `broadcastToTenant` entrega a todos do tenant, ignora outros tenants
-- [ ] Desconexão remove o socket de todas as salas (sem leak de referência)
-- [ ] Log estruturado (`ws.connected`/`ws.disconnected`/`ws.auth_failed`, mesmo formato
+- [x] Desconexão remove o socket de todas as salas (sem leak de referência)
+- [x] Log estruturado (`ws.connected`/`ws.disconnected`/`ws.auth_failed`, mesmo formato
       `JSON.stringify({event...})` já usado no projeto)
-- [ ] Gate check passa: `pnpm vitest run --project e2e` — teste sobe um `http.Server` real
+- [x] Gate check passa: `pnpm vitest run --project e2e` — teste sobe um `http.Server` real
       em porta efêmera (`.listen(0)`), conecta um cliente `ws` de verdade
 
 **Tests**: e2e
@@ -282,16 +282,16 @@ intervalMs=2000)` — mesmo molde `setInterval`+catch+log de `startOutboxConsume
 
 **Done when**:
 
-- [ ] `pollOnce` só considera tenants com socket conectado (injeta um fake
+- [x] `pollOnce` só considera tenants com socket conectado (injeta um fake
       `InboxSocketServer` no teste, sem WS real — mesmo padrão de `createClient` fake em
       `outboxConsumer.int.test.ts`)
-- [ ] Nova `Message` gera `broadcastToConversation` (payload com o `Message` inteiro,
+- [x] Nova `Message` gera `broadcastToConversation` (payload com o `Message` inteiro,
       exceto binário) e `broadcastToTenant` (payload leve)
-- [ ] Cursor `since` avança mesmo quando não há mensagem nova (nunca reprocessa a mesma
+- [x] Cursor `since` avança mesmo quando não há mensagem nova (nunca reprocessa a mesma
       janela)
-- [ ] Falha no tick (erro de banco simulado) é capturada e logada, próximo tick roda
+- [x] Falha no tick (erro de banco simulado) é capturada e logada, próximo tick roda
       normalmente
-- [ ] Gate check passa: `pnpm vitest run --project integration`
+- [x] Gate check passa: `pnpm vitest run --project integration`
 
 **Tests**: integration
 **Gate**: full
@@ -322,11 +322,11 @@ acesso a banco)
 
 **Done when**:
 
-- [ ] `start()` retorna `{httpServer, stopWorkers}`, mesma forma de `ai-gateway`
-- [ ] `stopWorkers()` para o poller E fecha o WS server, sem processo pendurado
-- [ ] Boot-fail (`Mongo indisponível`) continua saindo com `process.exit(1)` — teste
+- [x] `start()` retorna `{httpServer, stopWorkers}`, mesma forma de `ai-gateway`
+- [x] `stopWorkers()` para o poller E fecha o WS server, sem processo pendurado
+- [x] Boot-fail (`Mongo indisponível`) continua saindo com `process.exit(1)` — teste
       existente não regride
-- [ ] Gate check passa: `pnpm vitest run --project integration`
+- [x] Gate check passa: `pnpm vitest run --project integration`
 
 **Tests**: integration
 **Gate**: full
@@ -354,11 +354,11 @@ sequência por convenção do protocolo)
 
 **Done when**:
 
-- [ ] Retorna só conversas do tenant da sessão (outro tenant nunca aparece)
-- [ ] Filtro por `mode` e por `assignee` funcionam isolados e combinados
-- [ ] `unread` bate com `lastInboundAt > lastActivityAt` nos casos true/false/ambos ausentes
-- [ ] Paginação (`page`/`limit`) reflete no `total` e no corte de `items`
-- [ ] Gate check passa: `pnpm vitest run --project integration`
+- [x] Retorna só conversas do tenant da sessão (outro tenant nunca aparece)
+- [x] Filtro por `mode` e por `assignee` funcionam isolados e combinados
+- [x] `unread` bate com `lastInboundAt > lastActivityAt` nos casos true/false/ambos ausentes
+- [x] Paginação (`page`/`limit`) reflete no `total` e no corte de `items`
+- [x] Gate check passa: `pnpm vitest run --project integration`
 
 **Tests**: integration
 **Gate**: full
@@ -388,10 +388,10 @@ já definido em `conversation.router.ts`
 
 **Done when**:
 
-- [ ] `GET /conversations` responde 200 com a lista paginada pro tenant da sessão
-- [ ] Sem papel `canOperate` → 403, sem tocar dados
-- [ ] Filtros de query aceitos e repassados ao repository
-- [ ] Gate check passa: `pnpm vitest run --project e2e`
+- [x] `GET /conversations` responde 200 com a lista paginada pro tenant da sessão
+- [x] Sem papel `canOperate` → 403, sem tocar dados
+- [x] Filtros de query aceitos e repassados ao repository
+- [x] Gate check passa: `pnpm vitest run --project e2e`
 
 **Tests**: e2e
 **Gate**: full
