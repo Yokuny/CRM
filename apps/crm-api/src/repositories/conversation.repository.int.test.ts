@@ -367,7 +367,7 @@ describe('conversation.repository', () => {
   describe('getMessages (INBOX-05/06)', () => {
     const seedMessage = async (
       tenantId: string,
-      conversation: { _id: unknown; Channel: unknown; Customer: unknown },
+      conversation: Awaited<ReturnType<typeof seedConversation>>['conversation'],
       overrides: Partial<Record<string, unknown>>,
     ) =>
       Message.create({
@@ -412,7 +412,7 @@ describe('conversation.repository', () => {
     it('paginates: total reflects the full set, items are cut to the requested page/limit', async () => {
       const tenantId = randomId();
       const { conversation } = await seedConversation(tenantId);
-      const messages = [];
+      const messages: Awaited<ReturnType<typeof seedMessage>>[] = [];
       for (let i = 0; i < 5; i += 1) {
         messages.push(
           await seedMessage(tenantId, conversation, {
