@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 24,
+  "next_id": 27,
   "lessons": [
     {
       "id": "L-001",
@@ -418,6 +418,60 @@
       ],
       "created": "2026-09-07T19:49:53Z",
       "last_seen": "2026-09-07T19:49:53Z"
+    },
+    {
+      "id": "L-024",
+      "key": "ac_gap::when a spec ac requires displaying another entity s name and no directory lookup endpoint is in the task s declared scope resolve the name server side in the same response instead of shipping a generic placeholder label in the ui",
+      "text": "When a spec AC requires displaying another entity's name and no directory/lookup endpoint is in the task's declared scope, resolve the name server-side in the same response instead of shipping a generic placeholder label in the UI.",
+      "signal": "ac_gap",
+      "scope": "apps/web",
+      "status": "candidate",
+      "features": [
+        "inbox-realtime"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "spec.md INBOX-10/AC5 — apps/web/src/routes/_private/inbox/@components/takeover-badge.tsx:74 (apps/web)"
+      ],
+      "created": "2026-09-08T22:22:31Z",
+      "last_seen": "2026-09-08T22:22:31Z"
+    },
+    {
+      "id": "L-025",
+      "key": "ac_gap::a websocket reconnect handler must trigger a query cache resync invalidatequeries for the data it mirrors not just resubscribe to rooms or messages missed during the outage are silently dropped",
+      "text": "A WebSocket reconnect handler must trigger a query-cache resync (invalidateQueries) for the data it mirrors, not just resubscribe to rooms, or messages missed during the outage are silently dropped.",
+      "signal": "ac_gap",
+      "scope": "apps/web",
+      "status": "candidate",
+      "features": [
+        "inbox-realtime"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "spec.md Edge Cases (WS disconnect) — apps/web/src/hooks/useInboxSocket.ts:111-116 (apps/web)"
+      ],
+      "created": "2026-09-08T22:22:35Z",
+      "last_seen": "2026-09-08T22:22:35Z"
+    },
+    {
+      "id": "L-026",
+      "key": "spec_deviation::when a task s what description names a specific function mirroring an existing pattern e g a by id query verify during tasks that a corresponding backend endpoint is actually planned before assigning the task so implementers don t discover the mismatch mid execute",
+      "text": "When a task's What description names a specific function mirroring an existing pattern (e.g. a by-id query), verify during Tasks that a corresponding backend endpoint is actually planned before assigning the task, so implementers don't discover the mismatch mid-Execute.",
+      "signal": "spec_deviation",
+      "scope": "tasks",
+      "status": "candidate",
+      "features": [
+        "inbox-realtime"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "apps/web/src/query/conversation.ts:31 (tasks)"
+      ],
+      "created": "2026-09-08T22:22:40Z",
+      "last_seen": "2026-09-08T22:22:40Z"
     }
   ]
 }

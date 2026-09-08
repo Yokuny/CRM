@@ -152,6 +152,24 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: .github/workflows/ci.yml / c2e3468 (pnpm biome check . exits 1 deterministically on the current tree due to the unaddressed pre-existing .specs/lessons.json formatting baseline) (ci-cd/gate-check)
 - last seen: 2026-09-07T19:49:53Z
 
+### L-024 — When a spec AC requires displaying another entity's name and no directory/lookup endpoint is in the task's declared scope, resolve the name server-side in the same response instead of shipping a generic placeholder label in the UI.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `apps/web` · harmful: 0
+- features: inbox-realtime
+- evidence: spec.md INBOX-10/AC5 — apps/web/src/routes/_private/inbox/@components/takeover-badge.tsx:74 (apps/web)
+- last seen: 2026-09-08T22:22:31Z
+
+### L-025 — A WebSocket reconnect handler must trigger a query-cache resync (invalidateQueries) for the data it mirrors, not just resubscribe to rooms, or messages missed during the outage are silently dropped.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `apps/web` · harmful: 0
+- features: inbox-realtime
+- evidence: spec.md Edge Cases (WS disconnect) — apps/web/src/hooks/useInboxSocket.ts:111-116 (apps/web)
+- last seen: 2026-09-08T22:22:35Z
+
+### L-026 — When a task's What description names a specific function mirroring an existing pattern (e.g. a by-id query), verify during Tasks that a corresponding backend endpoint is actually planned before assigning the task, so implementers don't discover the mismatch mid-Execute.
+- signal: `spec_deviation` · recurrence: 1 feature(s) · scope: `tasks` · harmful: 0
+- features: inbox-realtime
+- evidence: apps/web/src/query/conversation.ts:31 (tasks)
+- last seen: 2026-09-08T22:22:40Z
+
 ## Quarantined (failed when applied — ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
