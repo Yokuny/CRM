@@ -6,6 +6,7 @@ import { t } from '@/lib/helpers/translate.helper.js';
 import { conversationsQuery } from '@/query/conversation.js';
 import { Composer, ResendButton } from './@components/composer.js';
 import { ConversationQueue } from './@components/conversation-queue.js';
+import { TakeoverBadge } from './@components/takeover-badge.js';
 import { ConversationThread } from './@components/thread.js';
 import { type InboxSearch, inboxSearchSchema } from './@interface/inbox.interface.js';
 
@@ -28,9 +29,9 @@ const CONVERSATION_LOOKUP_LIMIT = 100;
 // no nível da página (design.md: "primeiro hook de WS do projeto"), para que
 // a conexão sobreviva à troca de thread aberta sem precisar remontar.
 //
-// T21 criou o esqueleto; T22 (fila), T23 (thread) e T25 (composer/reenvio)
-// substituíram os placeholders pelos componentes reais. T26 (badge) ainda
-// falta.
+// T21 criou o esqueleto; T22 (fila), T23 (thread), T25 (composer/reenvio) e
+// T26 (badge de mode/assignee/takeover/release) substituíram os placeholders
+// pelos componentes reais — última task da Fase 11.
 export function InboxPage() {
   const search = useSearch({ strict: false }) as InboxSearch;
   const navigate = useNavigate();
@@ -58,6 +59,7 @@ export function InboxPage() {
             )
           ) : (
             <>
+              <TakeoverBadge conversation={conversation} />
               <ConversationThread
                 conversationId={conversation.id}
                 renderFailedAction={(message) => (

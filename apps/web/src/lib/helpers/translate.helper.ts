@@ -103,6 +103,10 @@ const translations: Record<string, string> = {
   'inbox.composer.send': 'Enviar',
   'inbox.composer.error': 'Não foi possível enviar a mensagem.',
   'inbox.resend.action': 'Reenviar',
+  'inbox.takeover.action': 'Assumir',
+  'inbox.takeover.error': 'Não foi possível assumir esta conversa.',
+  'inbox.release.action': 'Liberar',
+  'inbox.release.error': 'Não foi possível liberar esta conversa.',
 };
 
 export const t = (key: string): string => translations[key] ?? key;
