@@ -270,29 +270,34 @@ que o binário aparece sem nenhum registro de asset criado no banco/disco.
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| INBOX-01 | P1: Fila de conversas ao vivo | In Tasks | Pending |
-| INBOX-02 | P1: Fila de conversas ao vivo | In Tasks | Pending |
-| INBOX-03 | P1: Fila de conversas ao vivo | In Tasks | Pending |
-| INBOX-04 | P1: Fila de conversas ao vivo | In Tasks | Pending |
-| INBOX-05 | P1: Histórico ao vivo | In Tasks | Pending |
-| INBOX-06 | P1: Histórico ao vivo | In Tasks | Pending |
-| INBOX-07 | P1: Histórico ao vivo | In Tasks | Pending |
-| INBOX-08 | P1: Takeover/release seguro | In Tasks | Pending |
-| INBOX-09 | P1: Takeover/release seguro | In Tasks | Pending |
-| INBOX-10 | P1: Takeover/release seguro | In Tasks | Pending |
-| INBOX-11 | P1: Composer + janela 24h | In Tasks | Pending |
-| INBOX-12 | P1: Composer + janela 24h | In Tasks | Pending |
-| INBOX-13 | P1: Composer + janela 24h | In Tasks | Pending |
-| INBOX-14 | P2: Reenvio de `failed` | In Tasks | Pending |
-| INBOX-15 | P2: Reenvio de `failed` | In Tasks | Pending |
-| INBOX-16 | P2: Reenvio de `failed` | In Tasks | Pending |
-| INBOX-17 | P2: Preview de mídia | In Tasks | Pending |
-| INBOX-18 | P2: Preview de mídia | In Tasks | Pending |
-| INBOX-19 | (transversal) Observabilidade WS/mídia | In Tasks | Pending |
+| INBOX-01 | P1: Fila de conversas ao vivo | Verified | ✅ Verified |
+| INBOX-02 | P1: Fila de conversas ao vivo | Verified | ✅ Verified |
+| INBOX-03 | P1: Fila de conversas ao vivo | Verified | ✅ Verified |
+| INBOX-04 | P1: Fila de conversas ao vivo | Verified | ✅ Verified |
+| INBOX-05 | P1: Histórico ao vivo | Verified | ✅ Verified |
+| INBOX-06 | P1: Histórico ao vivo | Verified | ✅ Verified |
+| INBOX-07 | P1: Histórico ao vivo | Verified | ✅ Verified |
+| INBOX-08 | P1: Takeover/release seguro | Verified | ✅ Verified |
+| INBOX-09 | P1: Takeover/release seguro | Verified | ✅ Verified |
+| INBOX-10 | P1: Takeover/release seguro | Verified | ⚠️ Verified with gap (validation.md Fix 1 — assignee name not shown in queue/badge UI, only in the 409 toast) |
+| INBOX-11 | P1: Composer + janela 24h | Verified | ✅ Verified |
+| INBOX-12 | P1: Composer + janela 24h | Verified | ✅ Verified |
+| INBOX-13 | P1: Composer + janela 24h | Verified | ✅ Verified |
+| INBOX-14 | P2: Reenvio de `failed` | Verified | ✅ Verified |
+| INBOX-15 | P2: Reenvio de `failed` | Verified | ✅ Verified |
+| INBOX-16 | P2: Reenvio de `failed` | Verified | ✅ Verified |
+| INBOX-17 | P2: Preview de mídia | Verified | ✅ Verified |
+| INBOX-18 | P2: Preview de mídia | Verified | ✅ Verified |
+| INBOX-19 | (transversal) Observabilidade WS/mídia | Verified | ✅ Verified |
 
 **ID format:** `INBOX-[NUMBER]`
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Verified
+
+**Verifier report:** `.specs/features/inbox-realtime/validation.md` (independent Verifier,
+2026-09-08) — 23/24 spec-anchored ACs matched precisely, 1 gap (INBOX-10/AC5), gate green
+(874/874), 3/3 discrimination-sensor mutations killed. See that file for the full
+evidence trail and Fix Plans.
 
 **Coverage:** 19 total, 19 mapped to tasks (`.specs/features/inbox-realtime/tasks.md`,
 T1–T26), 0 unmapped ⚠️
