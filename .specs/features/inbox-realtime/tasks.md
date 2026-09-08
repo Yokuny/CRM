@@ -417,11 +417,11 @@ mídia só com o ponteiro (`mediaId`/`mime`/`caption`).
 
 **Done when**:
 
-- [ ] Mensagens retornadas em ordem cronológica, paginadas
-- [ ] `Conversation` de outro tenant ou inexistente retorna `null`
-- [ ] Mensagem `image`/`document`/`audio`/`location` nunca inclui campo de binário —
+- [x] Mensagens retornadas em ordem cronológica, paginadas
+- [x] `Conversation` de outro tenant ou inexistente retorna `null`
+- [x] Mensagem `image`/`document`/`audio`/`location` nunca inclui campo de binário —
       só o shape de `MessageMedia`
-- [ ] Gate check passa: `pnpm vitest run --project integration`
+- [x] Gate check passa: `pnpm vitest run --project integration`
 
 **Tests**: integration
 **Gate**: full
@@ -447,10 +447,10 @@ com `canOperate`.
 
 **Done when**:
 
-- [ ] `GET /conversations/:id/messages` responde 200 com histórico paginado
-- [ ] `id` de outro tenant/inexistente → 404
-- [ ] Sem `canOperate` → 403
-- [ ] Gate check passa: `pnpm vitest run --project e2e`
+- [x] `GET /conversations/:id/messages` responde 200 com histórico paginado
+- [x] `id` de outro tenant/inexistente → 404
+- [x] Sem `canOperate` → 403
+- [x] Gate check passa: `pnpm vitest run --project e2e`
 
 **Tests**: e2e
 **Gate**: full
@@ -477,11 +477,11 @@ com outro `assignee` (distinto de "não existe", tratado por quem chama).
 
 **Done when**:
 
-- [ ] Conversa livre (`mode:'bot'`) → sucesso, `mode:'human'`, `assignee` setado
-- [ ] Mesmo `assignee` chamando de novo → sucesso idempotente (nenhuma mudança de estado
+- [x] Conversa livre (`mode:'bot'`) → sucesso, `mode:'human'`, `assignee` setado
+- [x] Mesmo `assignee` chamando de novo → sucesso idempotente (nenhuma mudança de estado
       inesperada)
-- [ ] Conversa em `human` com OUTRO `assignee` → `null` (nunca sobrescreve)
-- [ ] Gate check passa: `pnpm vitest run --project integration`
+- [x] Conversa em `human` com OUTRO `assignee` → `null` (nunca sobrescreve)
+- [x] Gate check passa: `pnpm vitest run --project integration`
 
 **Tests**: integration
 **Gate**: full
@@ -512,12 +512,12 @@ liberando qualquer conversa).
 
 **Done when**:
 
-- [ ] Operador diferente tentando assumir recebe 409 com o nome do `assignee` atual na
+- [x] Operador diferente tentando assumir recebe 409 com o nome do `assignee` atual na
       mensagem
-- [ ] Mesmo operador re-clicando "assumir" recebe 200 (idempotente)
-- [ ] `POST /:id/release` continua incondicional pra qualquer `canOperate` (regressão —
+- [x] Mesmo operador re-clicando "assumir" recebe 200 (idempotente)
+- [x] `POST /:id/release` continua incondicional pra qualquer `canOperate` (regressão —
       teste explícito cobrindo INBOX-09)
-- [ ] Gate check passa: `pnpm vitest run --project e2e`
+- [x] Gate check passa: `pnpm vitest run --project e2e`
 
 **Tests**: e2e
 **Gate**: full
@@ -545,10 +545,10 @@ documento original nunca é modificado.
 
 **Done when**:
 
-- [ ] `Message` original permanece `status:'failed'`, intocada, após o reenvio
-- [ ] Novo documento criado com `status:'queued'`, mesmo conteúdo, `_id` diferente
-- [ ] Reenviar uma `Message` que não está `failed` lança erro tipado (`MessageNotFailedError`)
-- [ ] Gate check passa: `pnpm vitest run --project integration`
+- [x] `Message` original permanece `status:'failed'`, intocada, após o reenvio
+- [x] Novo documento criado com `status:'queued'`, mesmo conteúdo, `_id` diferente
+- [x] Reenviar uma `Message` que não está `failed` lança erro tipado (`MessageNotFailedError`)
+- [x] Gate check passa: `pnpm vitest run --project integration`
 
 **Tests**: integration
 **Gate**: full
@@ -573,10 +573,10 @@ documento original nunca é modificado.
 
 **Done when**:
 
-- [ ] `POST /:id/messages/:messageId/resend` cria a nova `Message` e responde 201 com ela
-- [ ] `Message` inexistente/de outro tenant → 404; status diferente de `failed` → 400
-- [ ] Sem `canOperate` → 403
-- [ ] Gate check passa: `pnpm vitest run --project e2e`
+- [x] `POST /:id/messages/:messageId/resend` cria a nova `Message` e responde 201 com ela
+- [x] `Message` inexistente/de outro tenant → 404; status diferente de `failed` → 400
+- [x] Sem `canOperate` → 403
+- [x] Gate check passa: `pnpm vitest run --project e2e`
 
 **Tests**: e2e
 **Gate**: full
