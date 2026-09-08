@@ -30,19 +30,34 @@ const toRecord = (doc: ConversationDocument): ConversationRecord => ({
   lastActivityAt: doc.lastActivityAt,
 });
 
-// Guarda de transição pela própria query ({_id,Tenant}) — mesmo padrão de
-// transitionTenantStatus (tenant.model.ts): um id de outro tenant nunca casa,
-// então nunca existe um `if` de checagem de Tenant fora da query (AD-010).
+// INBOX-08: claim condicional (context.md decisão #6) — mesmo padrão de
+// findOneAndUpdate atômico de claimTurnLock/claimQueuedMessage. A query só
+// societa quando a Conversation está livre (mode:'bot') OU já pertence ao
+// MESMO userId (idempotente — reclicar "assumir" sendo o mesmo operador não
+// é erro). Guarda de transição pela própria query ({_id,Tenant}) — mesmo
+// padrão de transitionTenantStatus (tenant.model.ts): um id de outro tenant
+// nunca casa (AD-010). `null` cobre DOIS casos que quem chama (o service)
+// precisa distinguir: a Conversation não existe para este Tenant, OU existe
+// mas está com um assignee DIFERENTE — nunca sobrescreve nesse segundo caso.
 // `lastActivityAt` é atualizado junto: é "qualquer atividade... OU ação de
 // operador" (design.md) — a base do idle sweep (T31/AIG-33) reinicia no
 // momento do takeover, nunca no valor antigo de antes do operador assumir.
 export const takeover = async (id: string, tenantId: string, userId: string): Promise<ConversationRecord | null> =>
   withDbTiming('conversation.takeover', async () => {
     const doc = await Conversation.findOneAndUpdate(
-      tenantScoped({ _id: id, Tenant: tenantId }),
+      tenantScoped({ _id: id, Tenant: tenantId, $or: [{ mode: 'bot' as const }, { assignee: userId }] }),
       { $set: { mode: 'human', assignee: userId, lastActivityAt: new Date() } },
       { returnDocument: 'after' },
     ).lean();
+    return doc ? toRecord(doc) : null;
+  });
+
+// Leitura simples, tenant-scoped, usada pelo service (T12) SÓ quando o claim
+// condicional acima falha (retornou null) — para distinguir "não existe" de
+// "existe mas está com outro assignee" sem uma segunda escrita.
+export const findConversationById = async (id: string, tenantId: string): Promise<ConversationRecord | null> =>
+  withDbTiming('conversation.findConversationById', async () => {
+    const doc = await Conversation.findOne(tenantScoped({ _id: id, Tenant: tenantId })).lean();
     return doc ? toRecord(doc) : null;
   });
 

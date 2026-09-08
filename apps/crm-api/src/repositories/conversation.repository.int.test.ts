@@ -81,6 +81,57 @@ describe('conversation.repository', () => {
       expect(persisted?.mode).toBe('bot');
       expect(persisted?.assignee).toBeFalsy();
     });
+
+    it('is idempotent: the same assignee taking over again succeeds without corrupting state (spec.md INBOX-08/AC2)', async () => {
+      const tenantId = randomId();
+      const userId = randomId();
+      const { conversation } = await seedConversation(tenantId, { mode: 'human', assignee: userId });
+
+      const result = await conversationRepository.takeover(conversation._id.toString(), tenantId, userId);
+
+      expect(result?.mode).toBe('human');
+      expect(result?.assignee).toBe(userId);
+      const persisted = await Conversation.findById(conversation._id).lean();
+      expect(persisted?.mode).toBe('human');
+      expect(persisted?.assignee?.toString()).toBe(userId);
+    });
+
+    it('never overwrites a Conversation already assigned to a DIFFERENT operator — returns null, assignee untouched (spec.md INBOX-08/AC3, context.md decision #6)', async () => {
+      const tenantId = randomId();
+      const currentAssignee = randomId();
+      const otherUserId = randomId();
+      const { conversation } = await seedConversation(tenantId, { mode: 'human', assignee: currentAssignee });
+
+      const result = await conversationRepository.takeover(conversation._id.toString(), tenantId, otherUserId);
+
+      expect(result).toBeNull();
+      const persisted = await Conversation.findById(conversation._id).lean();
+      expect(persisted?.mode).toBe('human');
+      expect(persisted?.assignee?.toString()).toBe(currentAssignee);
+    });
+  });
+
+  describe('findConversationById (helper for the T12 already-assigned conflict lookup)', () => {
+    it('returns the Conversation record for the session tenant', async () => {
+      const tenantId = randomId();
+      const assignee = randomId();
+      const { conversation } = await seedConversation(tenantId, { mode: 'human', assignee });
+
+      const result = await conversationRepository.findConversationById(conversation._id.toString(), tenantId);
+
+      expect(result?.id).toBe(conversation._id.toString());
+      expect(result?.mode).toBe('human');
+      expect(result?.assignee).toBe(assignee);
+    });
+
+    it("returns null for another tenant's Conversation and for a non-existent id (AD-010)", async () => {
+      const ownerTenant = randomId();
+      const otherTenant = randomId();
+      const { conversation } = await seedConversation(ownerTenant);
+
+      expect(await conversationRepository.findConversationById(conversation._id.toString(), otherTenant)).toBeNull();
+      expect(await conversationRepository.findConversationById(randomId(), ownerTenant)).toBeNull();
+    });
   });
 
   describe('release', () => {
