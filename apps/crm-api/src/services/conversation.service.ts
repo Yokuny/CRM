@@ -1,5 +1,6 @@
 import type { SendMessage } from '@crm/contracts';
 import type { ConversationMode } from '@crm/db';
+import { env } from '../config/env.config.js';
 import { CustomError } from '../middlewares/errorHandler.middleware.js';
 import { findUserView } from '../repositories/auth.repository.js';
 import type {
@@ -13,6 +14,7 @@ import {
   ConversationNotFoundError,
   MessageNotFailedError,
   MessageNotFoundError,
+  MetaMediaUnavailableError,
   OutsideWindowError,
 } from '../repositories/conversation.repository.js';
 
@@ -133,6 +135,32 @@ export const resendMessage = async (id: string, tenantId: string, messageId: str
   } catch (e) {
     if (e instanceof MessageNotFoundError) throw new CustomError(e.message, 404);
     if (e instanceof MessageNotFailedError) throw new CustomError(e.message, 400);
+    throw e;
+  }
+};
+
+// INBOX-17/18/19: encKey vem sempre de env.CHANNEL_ENC_KEY (mesma variável de
+// channel.service.ts), nunca do corpo/query da requisição. Mídia
+// indisponível/expirada na Meta emite um log estruturado (INBOX-19, mesmo
+// formato JSON.stringify({event...}) já usado no projeto) ANTES de traduzir
+// para 502 — o controller (T17) devolve esse erro com a mensagem legível de
+// MetaMediaUnavailableError no corpo, nunca a mensagem genérica do
+// errorHandler global (que mascara qualquer status >= 500).
+export const getMessageMedia = async (
+  id: string,
+  tenantId: string,
+  messageId: string,
+): Promise<{ buffer: Buffer; mime?: string }> => {
+  try {
+    return await conversationRepository.getMessageMedia(tenantId, id, messageId, env.CHANNEL_ENC_KEY);
+  } catch (e) {
+    if (e instanceof MessageNotFoundError) throw new CustomError(e.message, 404);
+    if (e instanceof MetaMediaUnavailableError) {
+      console.error(
+        JSON.stringify({ event: 'inbox.media_fetch_failed', conversationId: id, messageId, message: e.message }),
+      );
+      throw new CustomError(e.message, 502);
+    }
     throw e;
   }
 };

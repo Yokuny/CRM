@@ -125,5 +125,17 @@ export const createConversationRouter = (deps: ConversationRouterDeps): Router =
     conversationController.resendMessage,
   );
 
+  // INBOX-17/18: mesmo par de params de resendMessageParamSchema (id +
+  // messageId) — canOperate roda ANTES do controller, então uma sessão sem
+  // papel nunca chega a chamar a Meta (spec.md P2/AC4).
+  router.get(
+    '/:id/messages/:messageId/media',
+    deps.validToken,
+    tenantAssignmentCheck,
+    canOperate,
+    validParams(resendMessageParamSchema),
+    conversationController.getMessageMedia,
+  );
+
   return router;
 };

@@ -8,6 +8,7 @@ import {
   Customer,
   connect,
   disconnect,
+  encrypt,
   hashToken,
   Message,
   Session,
@@ -19,7 +20,7 @@ import cookieParser from 'cookie-parser';
 import express from 'express';
 import * as jwt from 'jsonwebtoken';
 import request from 'supertest';
-import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { env } from '../config/env.config.js';
 import type { AuthDeps } from '../middlewares/authentication.middleware.js';
 import { createAuthMiddleware } from '../middlewares/authentication.middleware.js';
@@ -650,6 +651,124 @@ describe('conversation routes', () => {
 
       expect(res.status).toBe(403);
       expect(res.body.data).toBeUndefined();
+    });
+  });
+
+  describe('GET /conversations/:id/messages/:messageId/media (spec.md P2 "preview de mídia sob demanda", INBOX-17/18/19)', () => {
+    const RAW_TOKEN = 'meta-access-token-plano';
+
+    // Channel próprio (não seedConversationFixture, cujo accessTokenEnc é um
+    // fixture opaco {c,i,a} que nunca decifraria de verdade) — esta rota
+    // decifra o token de verdade (env.CHANNEL_ENC_KEY), então precisa de um
+    // ciphertext real.
+    const seedConversationWithMedia = async (tenantId: string) => {
+      const channel = await Channel.create({
+        Tenant: tenantId,
+        phoneNumberId: randomId(),
+        accessTokenEnc: encrypt(RAW_TOKEN, env.CHANNEL_ENC_KEY),
+        status: 'active',
+      });
+      const customer = await Customer.create({
+        Tenant: tenantId,
+        name: 'Cliente Teste',
+        phone: randomPhone(),
+        template: randomId(),
+        templateVersion: 1,
+        values: {},
+      });
+      const conversation = await Conversation.create({
+        Tenant: tenantId,
+        Channel: channel._id,
+        Customer: customer._id,
+      });
+      const message = await Message.create({
+        Tenant: tenantId,
+        Conversation: conversation._id,
+        Channel: channel._id,
+        Customer: customer._id,
+        direction: 'in',
+        type: 'image',
+        media: { mediaId: 'wamid-media-1', caption: 'foto' },
+      });
+      return { channel, customer, conversation, message };
+    };
+
+    beforeEach(() => {
+      vi.stubGlobal('fetch', vi.fn());
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it('responds 200 with the raw binary and the Content-Type resolved from the Meta media flow (spec.md P2/AC2)', async () => {
+      const { tenant, cookie } = await seedTenantUser(['operador']);
+      const { conversation, message } = await seedConversationWithMedia(tenant._id.toString());
+      const fetchMock = fetch as unknown as ReturnType<typeof vi.fn>;
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ url: 'https://lookaside.fbsbx.com/temp/media-1', mime_type: 'image/png' }),
+      } as unknown as Response);
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        arrayBuffer: () => Promise.resolve(new TextEncoder().encode('imagem-bytes').buffer),
+      } as unknown as Response);
+      const app = buildTestApp();
+
+      const res = await request(app)
+        .get(`/conversations/${conversation._id.toString()}/messages/${message.id}/media`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE)
+        .buffer(true)
+        .parse((response, callback) => {
+          const chunks: Buffer[] = [];
+          response.on('data', (chunk: Buffer) => chunks.push(chunk));
+          response.on('end', () => callback(null, Buffer.concat(chunks)));
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.headers['content-type']).toContain('image/png');
+      expect((res.body as Buffer).toString()).toBe('imagem-bytes');
+    });
+
+    it('responds 502 with a readable message when the media is unavailable on the Meta side (spec.md P2/AC3), and logs it (INBOX-19)', async () => {
+      const { tenant, cookie } = await seedTenantUser(['operador']);
+      const { conversation, message } = await seedConversationWithMedia(tenant._id.toString());
+      const fetchMock = fetch as unknown as ReturnType<typeof vi.fn>;
+      fetchMock.mockResolvedValueOnce({
+        ok: false,
+        status: 410,
+        json: () => Promise.resolve({}),
+      } as unknown as Response);
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      const app = buildTestApp();
+
+      const res = await request(app)
+        .get(`/conversations/${conversation._id.toString()}/messages/${message.id}/media`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE);
+
+      expect(res.status).toBe(502);
+      expect(res.body.message).toBe('Não foi possível carregar essa mídia agora');
+      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('inbox.media_fetch_failed'));
+      errorSpy.mockRestore();
+    });
+
+    it('responds 403 for a caller without canOperate, never calling the Meta media API', async () => {
+      const { tenant, cookie } = await seedTenantUser([]);
+      const { conversation, message } = await seedConversationWithMedia(tenant._id.toString());
+      const fetchMock = fetch as unknown as ReturnType<typeof vi.fn>;
+      const app = buildTestApp();
+
+      const res = await request(app)
+        .get(`/conversations/${conversation._id.toString()}/messages/${message.id}/media`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE);
+
+      expect(res.status).toBe(403);
+      expect(fetchMock).not.toHaveBeenCalled();
     });
   });
 });

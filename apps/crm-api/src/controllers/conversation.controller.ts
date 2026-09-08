@@ -1,5 +1,5 @@
 import type { SendMessage } from '@crm/contracts';
-import { respObj } from '@crm/contracts';
+import { badRespObj, respObj } from '@crm/contracts';
 import type { NextFunction, Request, Response } from 'express';
 import { CustomError } from '../middlewares/errorHandler.middleware.js';
 import type { GetMessagesQuery, ListConversationsQuery } from '../services/conversation.service.js';
@@ -93,6 +93,32 @@ export const resendMessage = async (req: Request, res: Response, next: NextFunct
     );
     res.status(201).json(respObj({ data: result }));
   } catch (e) {
+    next(e);
+  }
+};
+
+// INBOX-17/18: resposta É o binário — nunca respObj/res.json (design.md
+// Tech Decisions, "response passthrough"). Erros conhecidos (CustomError, já
+// traduzidos pelo service: 404/502) são respondidos AQUI, nunca via
+// next(e)/errorHandler global — o errorHandler mascara toda mensagem de
+// status >= 500 ("Erro interno do servidor"), o que apagaria a mensagem
+// legível de MetaMediaUnavailableError exigida pelo spec.md (P2/AC3). Um
+// erro desconhecido (bug real, não um CustomError) ainda segue para
+// next(e)/errorHandler, mesmo caminho de qualquer outra rota.
+export const getMessageMedia = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const result = await conversationService.getMessageMedia(
+      req.params.id as string,
+      req.tenantUser.tenant as string,
+      req.params.messageId as string,
+    );
+    res.set('Content-Type', result.mime ?? 'application/octet-stream');
+    res.send(result.buffer);
+  } catch (e) {
+    if (e instanceof CustomError) {
+      res.status(e.status).json(badRespObj({ message: e.message }));
+      return;
+    }
     next(e);
   }
 };
