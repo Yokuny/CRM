@@ -1,9 +1,9 @@
 import type { FieldDef } from '@crm/contracts';
 import type { RenderNode } from '@crm/field-engine';
+import { Calendar as IconCalendar } from 'lucide-react';
 import type { ReactElement } from 'react';
 import type { Control } from 'react-hook-form';
 import { useController } from 'react-hook-form';
-import IconCalendar from '@/components/icons/Calendar.Icon.js';
 import { Button } from '@/components/ui/button.js';
 import { Calendar } from '@/components/ui/calendar.js';
 import { Checkbox } from '@/components/ui/checkbox.js';

@@ -1,6 +1,6 @@
 import * as DialogPrimitive from '@radix-ui/react-dialog';
+import { X as IconCross } from 'lucide-react';
 import type { ComponentProps, HTMLAttributes } from 'react';
-import IconCross from '@/components/icons/Cross.Icon.js';
 import { cn } from '@/lib/utils.js';
 
 const Dialog = DialogPrimitive.Root;

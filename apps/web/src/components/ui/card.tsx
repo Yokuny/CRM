@@ -1,8 +1,6 @@
 import { Link, useLocation, useMatches, useRouter } from '@tanstack/react-router';
+import { ArrowLeft as ArrowLeftIcon, HelpCircle as HelpIcon, Home as HomeIcon } from 'lucide-react';
 import { type ComponentProps, Fragment } from 'react';
-import ArrowLeftIcon from '@/components/icons/Back.Icon.js';
-import HelpIcon from '@/components/icons/Help.Icon.js';
-import { HomeIcon } from '@/components/icons/Home.Icon.js';
 import {
   Breadcrumb,
   BreadcrumbItem,

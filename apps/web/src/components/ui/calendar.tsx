@@ -1,10 +1,8 @@
 import { ptBR } from 'date-fns/locale';
+import { ChevronDown as IconDown, ChevronLeft as IconLeft, ChevronRight as IconRight } from 'lucide-react';
 import type { ComponentProps } from 'react';
 import { useEffect, useRef } from 'react';
 import { type DayButton, DayPicker, getDefaultClassNames } from 'react-day-picker';
-import IconDown from '@/components/icons/Down.Icon.js';
-import IconLeft from '@/components/icons/Left.Icon.js';
-import IconRight from '@/components/icons/Right.Icon.js';
 import { formatDate } from '@/lib/helpers/formatDate.helper.js';
 import { cn } from '@/lib/utils.js';
 import { Button, btnVars } from './button.js';

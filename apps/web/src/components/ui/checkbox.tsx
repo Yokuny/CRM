@@ -1,7 +1,7 @@
 import * as CheckboxPrimitive from '@radix-ui/react-checkbox';
 import { cva, type VariantProps } from 'class-variance-authority';
+import { Check } from 'lucide-react';
 import { type ComponentProps, type ReactNode, useId } from 'react';
-import Check from '@/components/icons/Check.Icon.js';
 import { Label } from '@/components/ui/label.js';
 import { cn } from '@/lib/utils.js';
 

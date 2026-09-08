@@ -1,5 +1,5 @@
+import { Loader2 as Loader } from 'lucide-react';
 import type { ComponentProps } from 'react';
-import Loader from '@/components/icons/Loader.Icon.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 import { cn } from '@/lib/utils.js';
 

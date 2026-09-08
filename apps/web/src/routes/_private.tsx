@@ -1,5 +1,6 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
+import { MobileDock } from '../components/mobile-dock.js';
 import { sessionQuery } from '../query/session.js';
 
 // Tech Decisions (design.md): beforeLoad + ensureQueryData(GET /auth/session),
@@ -15,7 +16,15 @@ export const beforeLoad = async ({ context }: { context: { queryClient: QueryCli
   }
 };
 
+// Navegação desktop já é 100% coberta pelo breadcrumb automático de
+// components/ui/card.tsx (staticData.title por rota) — não há sidebar aqui
+// de propósito. MobileDock cobre só a navegação mobile (md:hidden).
 export const Route = createFileRoute('/_private')({
   beforeLoad,
-  component: () => <Outlet />,
+  component: () => (
+    <>
+      <Outlet />
+      <MobileDock />
+    </>
+  ),
 });

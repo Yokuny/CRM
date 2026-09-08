@@ -1,9 +1,7 @@
 import * as SelectPrimitive from '@radix-ui/react-select';
 import { cva } from 'class-variance-authority';
+import { Check as IconCheck, ChevronDown as IconDown, ChevronUp as IconUp } from 'lucide-react';
 import type { ComponentProps } from 'react';
-import IconCheck from '@/components/icons/Check.Icon.js';
-import IconDown from '@/components/icons/Down.Icon.js';
-import IconUp from '@/components/icons/Up.Icon.js';
 import { cn } from '@/lib/utils.js';
 
 type SelectTriggerSize = 'default' | 'sm' | 'lg' | 'icon' | 'icon-sm' | 'icon-lg';

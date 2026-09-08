@@ -6,16 +6,15 @@ import type { PointerEvent as ReactPointerEvent } from 'react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { DefaultLoading } from '@/components/default-loading.js';
-import { Card, CardAction, CardContent, CardHeader } from '@/components/ui/card.js';
+import { Card, CardContent, CardHeader } from '@/components/ui/card.js';
 import { KanbanBoard, KanbanCard, KanbanCards, KanbanHeader, KanbanProvider } from '@/components/ui/kanban.js';
 import { patch } from '@/lib/api/client.api.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 import { type CustomerStatusColumn, customerKeys, customerStatusColumns, customersQuery } from '@/query/customer.js';
 import { currentCustomerTemplateQuery } from '@/query/fieldTemplate.js';
-import { CustomersViewToggle } from '../@components/view-toggle.js';
 import { CustomerKanbanCardContent } from './@components/customer-kanban-card-content.js';
 
-type KanbanItem = { id: string; name: string; phone: string; column: string };
+type KanbanItem = { id: string; name: string; phone: string; createdAt: string; column: string };
 
 // Mesmo padrão de KanbanBoardView.tsx (referência): "dropped on the column
 // itself" (over.id é um column.id de verdade) vs. "dropped on top of another
@@ -57,6 +56,7 @@ export function CustomersKanbanPage() {
           id: customer.id,
           name: customer.name,
           phone: customer.phone,
+          createdAt: customer.createdAt,
           column: pendingMoves[customer.id] ?? column.key,
         }));
       }),
@@ -113,11 +113,8 @@ export function CustomersKanbanPage() {
 
   return (
     <Card asPage>
-      <CardHeader title={t('customers')}>
-        <CardAction>
-          <CustomersViewToggle />
-        </CardAction>
-      </CardHeader>
+      <CardHeader />
+
       <CardContent>
         {isLoading ? (
           <DefaultLoading />
@@ -150,6 +147,7 @@ export function CustomersKanbanPage() {
                       <CustomerKanbanCardContent
                         name={item.name}
                         phone={item.phone}
+                        createdAt={item.createdAt}
                         actions={
                           // WEB-10: atalho "novo Process" a partir do card,
                           // pré-preenchendo `customerId` — mesma rota de
@@ -181,5 +179,5 @@ export function CustomersKanbanPage() {
 
 export const Route = createFileRoute('/_private/customers/kanban/')({
   component: CustomersKanbanPage,
-  staticData: { title: t('customers') },
+  staticData: { title: t('customers.view.kanban') },
 });

@@ -1,5 +1,5 @@
+import { Calendar as IconCalendar } from 'lucide-react';
 import { useState } from 'react';
-import IconCalendar from '@/components/icons/Calendar.Icon.js';
 import { formatDate } from '@/lib/helpers/formatDate.helper.js';
 import { Button } from './button.js';
 import { Calendar } from './calendar.js';

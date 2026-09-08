@@ -19,16 +19,15 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
   };
 });
 
-const { CustomersIndexPage } = await import('./index.js');
+const { ProcessesIndexPage } = await import('./index.js');
 
-describe('CustomersIndexPage', () => {
+describe('ProcessesIndexPage', () => {
   afterEach(cleanup);
 
-  it('is a navigation hub linking to the listing, kanban, and add pages (mesmo padrão de settings/index.tsx de referência)', () => {
-    render(<CustomersIndexPage />);
+  it('is a navigation hub pointing back to Customers (Process has no destination without a customer)', () => {
+    render(<ProcessesIndexPage />);
 
-    expect(screen.getByRole('link', { name: /Listagem/ })).toHaveAttribute('href', '/customers/list');
-    expect(screen.getByRole('link', { name: /Kanban/ })).toHaveAttribute('href', '/customers/kanban');
-    expect(screen.getByRole('link', { name: /Novo cliente/ })).toHaveAttribute('href', '/customers/add');
+    expect(screen.getByRole('link', { name: /Clientes/ })).toHaveAttribute('href', '/customers');
+    expect(screen.getByText('Selecione um cliente para ver ou criar processos.')).toBeInTheDocument();
   });
 });

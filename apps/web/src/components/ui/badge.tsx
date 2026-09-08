@@ -1,9 +1,7 @@
 import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
+import { ChevronDown as IconDown, Minus as IconMinus, ChevronUp as IconUp } from 'lucide-react';
 import type { ComponentProps, HTMLAttributes, ReactNode } from 'react';
-import IconDown from '@/components/icons/Down.Icon.js';
-import IconMinus from '@/components/icons/Minus.Icon.js';
-import IconUp from '@/components/icons/Up.Icon.js';
 import { cn } from '@/lib/utils.js';
 
 // ─── CVA ────────────────────────────────────────────────────────────────────

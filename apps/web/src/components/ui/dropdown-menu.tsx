@@ -1,8 +1,6 @@
+import { Check as CheckIcon, ChevronRight as ChevronRightIcon, Dot as CircleIcon } from 'lucide-react';
 import { DropdownMenu as DropdownMenuPrimitive } from 'radix-ui';
 import type { ComponentProps } from 'react';
-import CheckIcon from '@/components/icons/Check.Icon.js';
-import CircleIcon from '@/components/icons/Dot.Icon.js';
-import ChevronRightIcon from '@/components/icons/Right.Icon.js';
 import { cn } from '@/lib/utils.js';
 
 function DropdownMenu({ ...props }: ComponentProps<typeof DropdownMenuPrimitive.Root>) {

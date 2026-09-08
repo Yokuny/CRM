@@ -1,13 +1,16 @@
 import type { ColumnDef, OnChangeFn, PaginationState, SortingState } from '@tanstack/react-table';
 import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
+import {
+  ChevronDown as IconDown,
+  ChevronLeft as IconLeft,
+  ChevronRight as IconRight,
+  ChevronUp as IconUp,
+} from 'lucide-react';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { DefaultEmptyData } from '@/components/default-empty-data.js';
 import { DefaultLoading } from '@/components/default-loading.js';
-import IconDown from '@/components/icons/Down.Icon.js';
-import IconLeft from '@/components/icons/Left.Icon.js';
-import IconRight from '@/components/icons/Right.Icon.js';
-import IconUp from '@/components/icons/Up.Icon.js';
 import { t } from '@/lib/helpers/translate.helper.js';
+import { cn } from '@/lib/utils.js';
 import { Button } from './button.js';
 import { Input } from './input.js';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './table.js';
@@ -23,6 +26,7 @@ export type DataTableProps<T> = {
   onSortingChange: OnChangeFn<SortingState>;
   searchValue: string;
   onSearchChange: (value: string) => void;
+  onRowClick?: (row: T) => void;
   loading?: boolean;
   emptyState?: ReactNode;
 };
@@ -39,6 +43,7 @@ export function DataTable<T>({
   onSortingChange,
   searchValue,
   onSearchChange,
+  onRowClick,
   loading = false,
   emptyState,
 }: DataTableProps<T>) {
@@ -116,7 +121,11 @@ export function DataTable<T>({
             </TableHeader>
             <TableBody>
               {table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow
+                  key={row.id}
+                  onClick={onRowClick ? () => onRowClick(row.original) : undefined}
+                  className={cn(onRowClick && 'cursor-pointer')}
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
                   ))}

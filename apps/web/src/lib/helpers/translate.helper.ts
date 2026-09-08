@@ -53,10 +53,23 @@ const translations: Record<string, string> = {
   'kanban.move.error': 'Não foi possível mover o cliente. Tente novamente.',
   'customers.view.table': 'Tabela',
   'customers.view.kanban': 'Kanban',
+  // Título da própria página de listagem (customers/list/index.tsx) — "Tabela"
+  // (customers.view.table) é o rótulo curto da aba do toggle, não serve como
+  // título de página/breadcrumb.
+  'customers.list.title': 'Listagem',
+  // Card index de customers/processes (hub de navegação, mesmo padrão do
+  // settings/index.tsx de referência) — indica que não há destino genérico
+  // pra Process sem escolher um cliente primeiro.
+  'process.index.hint': 'Selecione um cliente para ver ou criar processos.',
   'private.role': 'Papel',
   // Usado por BreadcrumbEllipsis (apps/web/src/components/ui/breadcrumb.tsx,
   // T8) — texto de acessibilidade (sr-only) do "..." de breadcrumbs longos.
   more: 'Mais',
+  home: 'Início',
+  // aria-label do <nav> da dock de navegação mobile (mobile-dock.tsx) — não
+  // pode ficar sem rótulo já que coexiste na tela com o <nav
+  // aria-label="breadcrumb"> do Card.
+  'nav.primary': 'Navegação principal',
 };
 
 export const t = (key: string): string => translations[key] ?? key;

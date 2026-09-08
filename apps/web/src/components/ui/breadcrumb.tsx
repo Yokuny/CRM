@@ -1,7 +1,6 @@
 import { Slot } from '@radix-ui/react-slot';
+import { Dot, ChevronRight as Right } from 'lucide-react';
 import type { ComponentProps } from 'react';
-import Dot from '@/components/icons/Dot.Icon.js';
-import Right from '@/components/icons/Right.Icon.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 import { cn } from '@/lib/utils.js';
 

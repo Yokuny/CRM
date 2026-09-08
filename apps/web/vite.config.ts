@@ -15,7 +15,17 @@ import { defineConfig } from 'vite';
 // @vitejs/plugin-react processar os arquivos (AD-030).
 export default defineConfig({
   plugins: [
-    tanstackRouter({ target: 'react', autoCodeSplitting: true, routeFileIgnorePrefix: '@', semicolons: true }),
+    tanstackRouter({
+      target: 'react',
+      autoCodeSplitting: true,
+      routeFileIgnorePrefix: '@',
+      // *.unit.test.ts(x) fica lado a lado do arquivo de rota (não em @algo/)
+      // — sem isso, o plugin avisa "does not export a Route" pra cada um
+      // deles a cada build/dev (o aviso ignora --logLevel do Vite, sai
+      // direto no stdout).
+      routeFileIgnorePattern: '\\.unit\\.test\\.tsx?$',
+      semicolons: true,
+    }),
     react(),
     tailwindcss(),
   ],
