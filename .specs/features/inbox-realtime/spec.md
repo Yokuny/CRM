@@ -279,7 +279,7 @@ que o binário aparece sem nenhum registro de asset criado no banco/disco.
 | INBOX-07 | P1: Histórico ao vivo | Verified | ✅ Verified |
 | INBOX-08 | P1: Takeover/release seguro | Verified | ✅ Verified |
 | INBOX-09 | P1: Takeover/release seguro | Verified | ✅ Verified |
-| INBOX-10 | P1: Takeover/release seguro | Verified | ⚠️ Verified with gap (validation.md Fix 1 — assignee name not shown in queue/badge UI, only in the 409 toast) |
+| INBOX-10 | P1: Takeover/release seguro | Verified | ✅ Verified (Fix 1 closed in Verifier iteration 2 — `apps/crm-api/src/services/conversation.service.ts:50-67`, `apps/web/src/routes/_private/inbox/@components/conversation-queue.tsx:21-27`, `takeover-badge.tsx:74-79`) |
 | INBOX-11 | P1: Composer + janela 24h | Verified | ✅ Verified |
 | INBOX-12 | P1: Composer + janela 24h | Verified | ✅ Verified |
 | INBOX-13 | P1: Composer + janela 24h | Verified | ✅ Verified |
@@ -295,9 +295,10 @@ que o binário aparece sem nenhum registro de asset criado no banco/disco.
 **Status values:** Pending → In Design → In Tasks → Implementing → Verified
 
 **Verifier report:** `.specs/features/inbox-realtime/validation.md` (independent Verifier,
-2026-09-08) — 23/24 spec-anchored ACs matched precisely, 1 gap (INBOX-10/AC5), gate green
-(874/874), 3/3 discrimination-sensor mutations killed. See that file for the full
-evidence trail and Fix Plans.
+2026-09-08, iteration 2) — 24/24 spec-anchored ACs matched precisely (Fix 1 closed the
+Takeover/AC5 gap from iteration 1), gate green (879/879), 6/6 discrimination-sensor
+mutations killed across both iterations (3 iteration 1 + 3 iteration 2, targeted at Fix 1
+and Fix 2). See that file for the full evidence trail.
 
 **Coverage:** 19 total, 19 mapped to tasks (`.specs/features/inbox-realtime/tasks.md`,
 T1–T26), 0 unmapped ⚠️

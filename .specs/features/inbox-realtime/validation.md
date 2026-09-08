@@ -1,9 +1,101 @@
 # Inbox Realtime Validation
 
-**Date**: 2026-09-08
+**Date**: 2026-09-08 (iteration 1) / 2026-09-08 (iteration 2 — same day, later session)
 **Spec**: `.specs/features/inbox-realtime/spec.md`
-**Diff range**: `main..HEAD` (`005ec9d..1ca864e`, 38 commits, 44 files changed, +5507/-244)
-**Verifier**: independent sub-agent (author ≠ verifier) — fresh agent, no context inherited from the 4 implementation workers.
+**Diff range (iteration 1)**: `main..HEAD` (`005ec9d..1ca864e`, 38 commits, 44 files changed, +5507/-244)
+**Diff range (iteration 2, extended)**: `main..HEAD` (`005ec9d..a254ab5`, 44 commits, 45 files
+changed). **Fix-only range**: `23d4a75..a254ab5` (2 fix commits `8695bb9`/`b78a91c` + 1
+`docs(state)` handoff commit; `git diff --stat 23d4a75..HEAD` touches exactly 11 files: the 2
+fix commits' 10 source/test files + `.specs/STATE.md`, nothing else — confirms no unrelated
+regression surface).
+**Verifier**: independent sub-agent (author ≠ verifier) — fresh agent each iteration, no
+context inherited from the implementation workers or from the prior Verifier run.
+
+---
+
+## Iteração 2 — Re-verificação dos Fixes (2026-09-08)
+
+Fresh Verifier, no memory of iteration 1's reasoning — re-derived both fixes independently
+from the diff and re-ran the full gate + a new discrimination sensor targeted at the fixed
+code. **Verdict: both gaps are genuinely closed — ✅ PASS, no open gaps.**
+
+### Fix 1 (Major — Takeover/AC5, assignee name) — ✅ CLOSED
+
+- **Backend**: `apps/crm-api/src/services/conversation.service.ts:50-67` —
+  `resolveAssigneeName` (used by `takeoverConversation:126` and `releaseConversation:138`)
+  and `attachAssigneeNames` (used by `listConversations:73-83`) both resolve the real
+  `User.name` via `findUserView` (same function already used for the 409 conflict message),
+  and are wired into all three endpoints (`GET /conversations`, `POST /:id/takeover`,
+  `POST /:id/release`).
+- **Frontend**: `apps/web/src/routes/_private/inbox/@components/conversation-queue.tsx:21-27`
+  and `takeover-badge.tsx:74-79` now render `conversation.assigneeName` directly, replacing
+  the `t('inbox.assignee.you')`/`t('inbox.assignee.other')` placeholder (and the now-unused
+  `sessionQuery` dependency was removed from both).
+- **Non-shallow evidence** (real value, not a placeholder existence check):
+  - `apps/crm-api/src/routers/conversation.router.e2e.test.ts:262-263` —
+    `expect(res.body.data.assigneeName).toBe(user.name); expect(res.body.data.assigneeName).not.toBe(user.id)` (takeover)
+  - `apps/crm-api/src/routers/conversation.router.e2e.test.ts:629-631` —
+    `expect(humanItem?.assigneeName).toBe(assigneeOperator.name); ...not.toBe(assigneeOperator.id); expect(botItem?.assigneeName).toBeUndefined()` (GET /conversations)
+  - `apps/web/src/routes/_private/inbox/@components/conversation-queue.unit.test.tsx:87-100` —
+    `expect(await screen.findByText('Ana')).toBeInTheDocument()` / `:113-129` —
+    `expect(await screen.findByText('Carlos')).toBeInTheDocument()` (two distinct real names, not a fixed placeholder)
+  - `apps/web/src/routes/_private/inbox/@components/takeover-badge.unit.test.tsx:118-121` —
+    `expect(await screen.findByText('Ana')).toBeInTheDocument()`
+- **Sensor confirmation**: two fresh mutations (below) killed by these exact tests — the
+  assertions target the literal name value, not just "a name exists."
+
+### Fix 2 (Minor — Edge Case 1, WS reconnect resync) — ✅ CLOSED
+
+- **Code**: `apps/web/src/hooks/useInboxSocket.ts:123-126` — the `open` handler now calls
+  `queryClient.invalidateQueries({ queryKey: conversationKeys.lists() })` unconditionally,
+  and `queryClient.invalidateQueries({ queryKey: messageKeys.listsForConversation(conversationIdRef.current) })`
+  when a thread is open, immediately after resubscribing.
+- **Non-shallow evidence** (exact queryKey args, not just call count):
+  - `apps/web/src/hooks/useInboxSocket.unit.test.tsx:174-181` —
+    `expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: conversationKeys.lists() }); expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: messageKeys.listsForConversation('conv-1') })` on a close→backoff→new-socket→open cycle
+  - `apps/web/src/hooks/useInboxSocket.unit.test.tsx:184-196` —
+    `expect(invalidateSpy).toHaveBeenCalledExactlyOnceWith({ queryKey: conversationKeys.lists() })` when no thread is open (proves the thread key is NOT invalidated when there's nothing to resync — a real conjunction check, not a loose "called at least once")
+
+### Discrimination Sensor — iteration 2 (3 new mutations, scratch state, all reverted)
+
+| # | File:line | Description | Killed? |
+| - | --------- | ------------ | ------- |
+| 1 | `apps/crm-api/src/services/conversation.service.ts:53` | `resolveAssigneeName` forced to `return undefined;` regardless of `findUserView` result | ✅ Killed — `conversation.router.e2e.test.ts` ("responds with the real assignee name...") failed: `expected undefined to be 'Fulano de Tal'` |
+| 2 | `apps/crm-api/src/services/conversation.service.ts:66` | `attachAssigneeNames` made a no-op (`return items;`, dropping the `assigneeName` map) | ✅ Killed — `conversation.router.e2e.test.ts` ("includes the real assignee name...") failed: `expected undefined to be 'Operadora Responsável'` |
+| 3 | `apps/web/src/hooks/useInboxSocket.ts:123-126` | Removed both `invalidateQueries` calls from the `open` handler | ✅ Killed — both new `useInboxSocket.unit.test.tsx` reconnect-resync tests failed with `Number of calls: 0` |
+
+**Result**: 3/3 new mutations killed (6/6 across both iterations, once combined with
+iteration 1's 3). No surviving mutants. All mutations applied via `Edit` on the real tree
+and reverted with `git checkout --` immediately after each run; `git status --short` and
+`git diff --stat` confirmed empty before moving to the next mutation and at the end of the
+sensor pass.
+
+### Gate Check — iteration 2
+
+- **Command**: `pnpm run check` (same Build gate as iteration 1).
+- **Result**: exit `0`, **879 tests passed, 0 failed, 0 skipped**, 131 files (874 iteration-1
+  baseline + 3 Fix 1 tests + 2 Fix 2 tests = 879, matching the implementer's reported count).
+- **Flake note**: one interim re-run (not the run of record) showed 1 failure in
+  `apps/crm-api/tests/integration/tenant-isolation.int.test.ts` ("GET /field-templates/:id/versions/:version responds 404 for tenant B") — re-running that file alone passed cleanly
+  (12/12), and a clean full `pnpm run check` re-run immediately after also passed 879/879.
+  This is the pre-existing, already-documented flake from the shared `MongoMemoryServer`
+  instance across the `integration`/`e2e` Vitest projects (`.specs/STATE.md`, Trade-off
+  note under AD-017/AD-031; also flagged during the original Execute batch 3). The failing
+  test belongs to `crm-web-shell`'s field-templates feature (`WEB-14`), entirely outside
+  this feature's diff surface — not a regression introduced by either fix.
+- **No other ACs regressed**: `git diff --stat 23d4a75..HEAD` touches only the 11 files
+  listed above; no file outside the Fix 1/Fix 2 scope was modified, so the other 22 ACs
+  validated in iteration 1 (whose code was untouched) stand without needing re-derivation.
+
+### Iteration 2 verdict
+
+**Overall**: ✅ Ready — both gaps from iteration 1 are closed with non-shallow,
+value-specific evidence; the new discrimination-sensor mutations targeting exactly the
+fixed code are all killed; the gate is green (879/879); no unrelated files were touched.
+Fix 3 (advisory-only, `conversationQuery(id)` naming mismatch in tasks.md) required no
+code change in iteration 1 and remains unchanged — it was never a spec.md AC violation.
+
+**Ranked gaps**: none. Feature is ready to merge.
 
 ---
 
@@ -83,7 +175,7 @@ just "an assertion exists."
 | 2 | Same assignee re-calling `takeover` → idempotent success, no error | `200`, no state corruption | `apps/crm-api/src/repositories/conversation.repository.int.test.ts:86-99`; `apps/crm-api/src/routers/conversation.router.e2e.test.ts:203-220` — `expect(res.status).toBe(200)` | ✅ PASS |
 | 3 | Different operator on an already-`human` conversation → rejected, names the current assignee, never overwrites | `409` + assignee's real name in message; `assignee` field untouched | `apps/crm-api/src/repositories/conversation.repository.int.test.ts:100-114` — `expect(result).toBeNull()`; `apps/crm-api/src/routers/conversation.router.e2e.test.ts:222-249` — `expect(res.status).toBe(409); expect(res.body.message).toContain(currentAssignee.name)` | ✅ PASS |
 | 4 | Any `canOperate` → `release` unconditionally returns to `mode:'bot'`, `assignee:null`, regardless of current assignee | Exact state, no ownership check | `apps/crm-api/src/repositories/conversation.repository.int.test.ts:138-151`; `apps/crm-api/src/routers/conversation.router.e2e.test.ts:272-297` — release succeeds when caller ≠ assignee, `expect(persisted?.assignee).toBeFalsy()` | ✅ PASS |
-| 5 | UI visibly shows `mode` and, when `human`, the assignee's **name** | Spec text: "o nome do assignee" (the operator's actual name) | `apps/web/src/routes/_private/inbox/@components/takeover-badge.tsx:74-84` (own `SPEC_DEVIATION` comment) — shows `t('inbox.assignee.you')`/`t('inbox.assignee.other')` ("Você"/"Outro operador"), never the real name, because `GET /conversations` only exposes `assignee` as a raw `User` ObjectId and no user-directory endpoint is in scope (`apps/web/src/routes/_private/inbox/@components/conversation-queue.tsx:21-32`); the real name only surfaces in the unrelated 409-conflict toast (`conversation.service.ts:105` resolves `User.name` server-side) | ❌ GAP (spec-precision mismatch, self-documented) |
+| 5 | UI visibly shows `mode` and, when `human`, the assignee's **name** | Spec text: "o nome do assignee" (the operator's actual name) | ~~`apps/web/src/routes/_private/inbox/@components/takeover-badge.tsx:74-84` (iteration 1, now stale) — showed `t('inbox.assignee.you')`/`t('inbox.assignee.other')` placeholder~~ **Iteration 2 (Fix 1, `8695bb9`) — closed**: `apps/crm-api/src/services/conversation.service.ts:50-67` resolves `assigneeName` server-side (`findUserView`, same fn as the 409 message) for `GET /conversations`/`takeover`/`release`; `apps/web/.../conversation-queue.tsx:21-27` + `takeover-badge.tsx:74-79` render it directly. Proof with real values (not placeholders): `conversation.router.e2e.test.ts:262-263` — `expect(res.body.data.assigneeName).toBe(user.name)`; `:629-631` — `expect(humanItem?.assigneeName).toBe(assigneeOperator.name)`; `conversation-queue.unit.test.tsx:87-100`/`:113-129` — `expect(await screen.findByText('Ana'))`/`findByText('Carlos')`; `takeover-badge.unit.test.tsx:118-121` — `findByText('Ana')` | ✅ PASS (iteration 2) |
 
 ### P1: Operador envia mensagem manual, respeitando a janela de 24h (3 ACs)
 
@@ -111,10 +203,14 @@ just "an assertion exists."
 | 3 | Media unavailable/expired → readable error, UI doesn't break | `502` + exact readable message; UI shows error text | `apps/crm-api/src/routers/conversation.router.e2e.test.ts:736-757` — `expect(res.status).toBe(502); expect(res.body.message).toBe('Não foi possível carregar essa mídia agora')`; `apps/web/src/routes/_private/inbox/@components/media-card.unit.test.tsx:78-90` | ✅ PASS |
 | 4 | Caller without `canOperate` → 403, no Meta call | `403`, `fetch` never called | `apps/crm-api/src/routers/conversation.router.e2e.test.ts:759-772` — `expect(res.status).toBe(403); expect(fetchMock).not.toHaveBeenCalled()` | ✅ PASS |
 
-**Status**: 23/24 ACs matched the spec's precise outcome. 1 GAP flagged (Takeover/AC5,
-self-documented `SPEC_DEVIATION`, see Fix Plans). 0 vague/unclaimed spec-precision gaps —
-every AC above has a specific value/state being asserted, not a generic "no error"
-assertion.
+**Status (iteration 1)**: 23/24 ACs matched the spec's precise outcome. 1 GAP flagged
+(Takeover/AC5, self-documented `SPEC_DEVIATION`, see Fix Plans). 0 vague/unclaimed
+spec-precision gaps — every AC above has a specific value/state being asserted, not a
+generic "no error" assertion.
+
+**Status (iteration 2, current)**: **24/24 ACs matched the spec's precise outcome.**
+Takeover/AC5 closed by Fix 1 (`8695bb9`) — see the updated row above and the "Iteração 2"
+section at the top of this file for full evidence.
 
 ---
 
@@ -122,7 +218,7 @@ assertion.
 
 | # | Edge Case | `file:line` + assertion | Result |
 |---|---|---|---|
-| 1 | WS client loses connection → UI reconnects automatically **and** resyncs via normal `GET` (never stuck showing stale data without indication) | Reconnect: `apps/web/src/hooks/useInboxSocket.unit.test.tsx:134-150` — new socket instance created after backoff delay. **Resync: no evidence.** `apps/web/src/hooks/useInboxSocket.ts:111-129` — the `open` handler only re-sends `subscribe`; no `invalidateQueries`/`refetchQueries` call anywhere in the hook or in `index.tsx`/`thread.tsx`/`conversation-queue.tsx` (`grep -rn "invalidateQueries" apps/web/src/routes/_private/inbox apps/web/src/hooks/useInboxSocket.ts` → 0 hits inside the reconnect path) | ❌ NOT fully handled — reconnect works, explicit resync does not |
+| 1 | WS client loses connection → UI reconnects automatically **and** resyncs via normal `GET` (never stuck showing stale data without indication) | Reconnect: `apps/web/src/hooks/useInboxSocket.unit.test.tsx:134-150` — new socket instance created after backoff delay. **Iteration 2 (Fix 2, `b78a91c`) — resync now closed**: `apps/web/src/hooks/useInboxSocket.ts:123-126` — the `open` handler now calls `queryClient.invalidateQueries({queryKey: conversationKeys.lists()})` unconditionally and `invalidateQueries({queryKey: messageKeys.listsForConversation(...)})` when a thread is open. Proof with exact args (not just call count): `useInboxSocket.unit.test.tsx:174-181` — `expect(invalidateSpy).toHaveBeenCalledWith({queryKey: conversationKeys.lists()}); expect(invalidateSpy).toHaveBeenCalledWith({queryKey: messageKeys.listsForConversation('conv-1')})`; `:184-196` — `expect(invalidateSpy).toHaveBeenCalledExactlyOnceWith({queryKey: conversationKeys.lists()})` when no thread is open (proves the thread key is correctly NOT invalidated absent an open thread) | ✅ Fully handled (iteration 2) |
 | 2 | Two operators with the same thread open (no takeover) both receive the same new-message events — no exclusive read | `apps/crm-api/src/ws/inboxSocket.ts:64-69` — `broadcast()` iterates every socket in the room's `Set` and calls `.send()` on each, unconditionally. No dedicated 2-same-tenant-same-room test exists (`inboxSocket.e2e.test.ts`'s multi-client test uses two *different* tenants to prove isolation, not two sockets sharing one room) | ⚠️ Handled by implementation (structural guarantee), not directly exercised by a test |
 | 3 | Conversation with no messages yet → empty state, no error | `apps/web/src/routes/_private/inbox/@components/thread.unit.test.tsx:29-35` — `expect(await screen.findByText('Nenhuma mensagem ainda.')).toBeInTheDocument()` | ✅ Handled correctly |
 | 4 | Resending the same failed Message more than once → each click produces an independent new clone, no cap | `apps/crm-api/src/repositories/conversation.repository.ts:290-291` — the only guard (`if (original.status !== 'failed') throw`) reads the **original** document, which the function never mutates (confirmed by the discrimination-sensor mutation below); therefore a second call with the same `messageId` is provably unaffected by the first. No test literally calls `resendMessage` twice on the same id | ⚠️ Handled by implementation (code-level guarantee), not directly exercised by a test |
@@ -150,6 +246,10 @@ feature touching a concurrency-sensitive claim).
 **Result**: 3/3 killed — ✅ PASS. No surviving mutants; no fix task required from the
 sensor.
 
+**Iteration 2 update**: 3 additional mutations targeted specifically at Fix 1/Fix 2 — all
+3/3 killed. See the "Iteração 2" section at the top of this file for the mutation table.
+**Combined total: 6/6 mutations killed across both iterations.**
+
 ---
 
 ## Code Quality
@@ -171,7 +271,7 @@ router/controller (`routers/conversation.router.ts` + `controllers/conversation.
 | Matches existing patterns/style | ✅ | `validListConversationsQuery`/`validGetMessagesQuery` mirror `validListCustomersQuery`'s `Object.defineProperty` workaround verbatim; `query/conversation.ts` mirrors `query/customer.ts`'s queryOptions/keys-factory shape |
 | Would senior engineer approve? | ✅ | Code is well-commented with direct spec/design/context citations, consistent error-typing convention (typed repository errors translated once in the service layer) |
 | Tests map to acceptance criteria and are non-shallow (spot-check one story) | ✅ | Takeover/release story: every AC (1-5) has both a repository-level and (for 1/2/3/4) a router e2e-level test, checking actual persisted state, not just HTTP status |
-| Spec-anchored outcome check | ✅ (23/24) | See AC table — 1 flagged gap (Takeover AC5) |
+| Spec-anchored outcome check | ✅ (24/24, iteration 2) | See AC table — was 23/24 (Takeover AC5 gap) in iteration 1, closed by Fix 1 |
 | Per-layer Coverage Expectation met | ✅ | Domain logic (repository) has 1:1 AC mapping with dedicated `it()` blocks; router/e2e layer covers happy + edge (403/404/409/400/502) for every route in scope |
 | Every test maps to a spec AC/edge case/Done-when — no unclaimed tests | ✅ | Sampled test files consistently cite `INBOX-NN`/`spec.md`/`AC` references in test names |
 | Documented guidelines followed | ✅ | `.specs/STATE.md` AD-017 (Vitest `unit`/`integration`/`e2e`/`structural` projects, suffix convention) and `apps/web/CLAUDE.md` (route/component `@tanstack/react-router` mock, `t()`/`formatDate` usage, `<DataTable>` server-driven) both followed exactly |
@@ -182,6 +282,7 @@ router/controller (`routers/conversation.router.ts` + `controllers/conversation.
 
 ## Gate Check
 
+**Iteration 1** (superseded numbers, kept for history):
 - **Gate command**: `pnpm run check` (`pnpm -r exec tsc --noEmit && pnpm biome check . && pnpm vitest run`) — the Build gate from `tasks.md`.
 - **Result**: exit code `0`. 874 tests passed, 0 failed, 0 skipped, across 131 test files. Biome reported 9 pre-existing `noExplicitAny` warnings in `apps/web/src/routes/_private/customers/list/index.tsx` (a file untouched by this feature's diff) — warnings, not errors; they do not fail `biome check`.
 - **Test count before feature**: 740 tests / 118 files (measured via an isolated `git worktree add <scratch> main` + `pnpm install` + `pnpm vitest run`, never touching the real working tree).
@@ -191,9 +292,33 @@ router/controller (`routers/conversation.router.ts` + `controllers/conversation.
 - **Skipped tests**: none.
 - **Failures**: none.
 
+**Iteration 2** (current numbers):
+- **Gate command**: same (`pnpm run check`), re-run independently 3 times.
+- **Result**: exit code `0` on the run of record. **879 tests passed, 0 failed, 0 skipped,
+  across 131 test files.** Same 9 pre-existing, out-of-scope Biome `noExplicitAny`
+  warnings (untouched file) — do not fail the gate.
+- **Test count before this fix batch**: 874 tests / 131 files (iteration 1's after-count).
+- **Test count after this fix batch**: 879 tests / 131 files.
+- **Delta**: +5 new tests (3 for Fix 1, 2 for Fix 2), 0 tests removed, 0 test files added
+  (all 5 new tests live in existing files).
+- **Test Integrity Check**: `git diff --numstat 23d4a75..HEAD` on test files shows only
+  additions in `conversation.router.e2e.test.ts`/`useInboxSocket.unit.test.tsx`, plus two
+  pre-existing assertions rewritten (documented in Fix 1 above: `conversation-queue.unit.test.tsx`/`takeover-badge.unit.test.tsx` previously asserted the placeholder text
+  "Você"/"Outro operador"/"Carlos"-equivalent generic label; now assert the real injected
+  name — a legitimate strengthening tied directly to closing the gap, not a weakening).
+- **Skipped tests**: none.
+- **Failures on the run of record**: none. One interim re-run hit the pre-existing
+  `MongoMemoryServer`-sharing flake in an unrelated `crm-web-shell` test — see the
+  "Iteração 2" section above for detail; isolated re-run of that file passed 12/12.
+
 ---
 
 ## Fix Plans
+
+**Status update (iteration 2, 2026-09-08): Fix 1 and Fix 2 below are both ✅ CLOSED.**
+Verified independently with `file:line` evidence in the "Iteração 2" section at the top of
+this file — not just re-stated from the implementer's commit messages. Fix 3 remains
+advisory-only (no code change was ever required).
 
 ### Fix 1: Takeover/AC5 — UI never shows the assignee's real name outside the 409 toast
 
@@ -230,7 +355,7 @@ router/controller (`routers/conversation.router.ts` + `controllers/conversation.
 | INBOX-07 | P1: Histórico ao vivo | Pending | ✅ Verified |
 | INBOX-08 | P1: Takeover/release seguro | Pending | ✅ Verified |
 | INBOX-09 | P1: Takeover/release seguro | Pending | ✅ Verified |
-| INBOX-10 | P1: Takeover/release seguro | Pending | ⚠️ Verified with gap (Fix 1 — assignee name not shown in queue/badge) |
+| INBOX-10 | P1: Takeover/release seguro | Pending | ✅ Verified (iteration 2 — Fix 1 `8695bb9` closed the gap, see updated AC5 row above) |
 | INBOX-11 | P1: Composer + janela 24h | Pending | ✅ Verified |
 | INBOX-12 | P1: Composer + janela 24h | Pending | ✅ Verified |
 | INBOX-13 | P1: Composer + janela 24h | Pending | ✅ Verified |
@@ -247,6 +372,8 @@ router/controller (`routers/conversation.router.ts` + `controllers/conversation.
 
 ## Summary
 
+### Iteration 1 (superseded — kept for history)
+
 **Overall**: ⚠️ Issues (PASS with 2 gaps flagged — consistent with this repo's precedent of
 shipping a P1 feature with minor, well-understood gaps rather than blocking on them, see
 `crm-web-shell`'s "PASS (2 minor gaps flagged)").
@@ -256,13 +383,6 @@ AC5 — assignee name).
 **Sensor**: 3/3 mutations killed.
 **Gate**: 874 passed, 0 failed, 0 skipped (exit 0).
 
-**What works**: Live queue + thread over WebSocket (poller-driven, ~2s cadence, tenant-
-scoped rooms), claim-conditional takeover with named 409 conflict and unconditional
-release (concurrency-safe, mutation-tested), 24h-window-aware composer with `wa.me`
-fallback (uses phone verbatim, no normalization), failed-message resend as an independent
-clone (original provably immutable, mutation-tested), on-demand media proxy with no
-persistence and a readable 502 on Meta failure, structured WS/media observability logs.
-
 **Issues found**:
 1. Takeover/release UI shows a generic "Você"/"Outro operador" label instead of the
    assignee's real name in the queue and badge (only the 409 toast carries the real
@@ -271,6 +391,33 @@ persistence and a readable 502 on Meta failure, structured WS/media observabilit
 3. (Advisory only) `conversationQuery(id)` from tasks.md/T18 was never built; functionally
    compensated for, but worth tightening in future task authoring — Fix 3 above.
 
-**Next steps**: Route Fix 1 and Fix 2 as fix tasks to an implementer (both are small,
-additive changes — no architecture change needed); re-verify after. Fix 3 requires no
-code change, only awareness for future `tasks.md` authoring.
+### Iteration 2 (current — final verdict)
+
+**Overall**: ✅ Ready. Both gaps from iteration 1 are closed with non-shallow,
+value-specific evidence (real names asserted, exact `invalidateQueries` args asserted) and
+a fresh discrimination sensor targeted at the exact fixed lines — no gaps remain open.
+
+**Spec-anchored check**: 24/24 ACs matched the spec's precise outcome (was 23/24; Fix 1
+closed Takeover/AC5).
+**Sensor**: 6/6 mutations killed across both iterations (3 iteration 1 + 3 iteration 2).
+**Gate**: 879 passed, 0 failed, 0 skipped (exit 0) — re-run 3 times for confirmation; one
+interim run hit the pre-existing, already-documented `MongoMemoryServer`-sharing flake in
+an unrelated `crm-web-shell` test file, isolated and confirmed unrelated to this feature.
+
+**What works**: Live queue + thread over WebSocket (poller-driven, ~2s cadence, tenant-
+scoped rooms), claim-conditional takeover with named 409 conflict and unconditional
+release (concurrency-safe, mutation-tested), takeover/release/queue now show the
+assignee's real name everywhere (Fix 1), WS reconnect resyncs both queue and open-thread
+caches via `invalidateQueries` (Fix 2), 24h-window-aware composer with `wa.me` fallback
+(uses phone verbatim, no normalization), failed-message resend as an independent clone
+(original provably immutable, mutation-tested), on-demand media proxy with no persistence
+and a readable 502 on Meta failure, structured WS/media observability logs.
+
+**Issues found**: none open.
+1. ~~Takeover/release UI shows a generic label instead of the real name~~ — ✅ CLOSED (Fix 1, `8695bb9`).
+2. ~~WS reconnect does not resync via GET~~ — ✅ CLOSED (Fix 2, `b78a91c`).
+3. (Advisory only, no code change ever required) `conversationQuery(id)` from tasks.md/T18
+   naming mismatch — unchanged, informational for future task authoring.
+
+**Next steps**: None required for this feature — ready for merge/PR. Fix 3 remains a
+process note only (future `tasks.md` authoring hygiene), not a blocker.
