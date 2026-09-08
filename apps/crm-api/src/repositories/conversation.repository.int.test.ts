@@ -531,4 +531,105 @@ describe('conversation.repository', () => {
       expect(Object.keys(item?.media ?? {}).sort()).toEqual(['caption', 'mediaId', 'mime']);
     });
   });
+
+  describe('resendMessage (INBOX-14/15)', () => {
+    const seedFailedMessage = async (
+      tenantId: string,
+      conversation: Awaited<ReturnType<typeof seedConversation>>['conversation'],
+      overrides: Partial<Record<string, unknown>> = {},
+    ) =>
+      Message.create({
+        Tenant: tenantId,
+        Conversation: conversation._id,
+        Channel: conversation.Channel,
+        Customer: conversation.Customer,
+        direction: 'out',
+        type: 'text',
+        status: 'failed',
+        text: 'mensagem que falhou',
+        ...overrides,
+      });
+
+    it('creates a NEW Message{status:queued} with the same text, leaving the original failed Message untouched (spec.md INBOX-14/15/AC2/AC3)', async () => {
+      const tenantId = randomId();
+      const { conversation } = await seedConversation(tenantId);
+      const original = await seedFailedMessage(tenantId, conversation);
+
+      const clone = await conversationRepository.resendMessage(tenantId, conversation._id.toString(), original.id);
+
+      expect(clone.id).not.toBe(original.id);
+      expect(clone.status).toBe('queued');
+      expect(clone.text).toBe('mensagem que falhou');
+      const persistedOriginal = await Message.findById(original._id).lean();
+      expect(persistedOriginal?.status).toBe('failed');
+      expect(persistedOriginal?.text).toBe('mensagem que falhou');
+      const persistedClone = await Message.findById(clone.id).lean();
+      expect(persistedClone?.status).toBe('queued');
+      expect(persistedClone?.direction).toBe('out');
+      expect(persistedClone?.type).toBe('text');
+    });
+
+    it('clones a failed template Message with templateName/templateLanguage/templateParams', async () => {
+      const tenantId = randomId();
+      const { conversation } = await seedConversation(tenantId);
+      const original = await seedFailedMessage(tenantId, conversation, {
+        text: undefined,
+        templateName: 'confirmacao',
+        templateLanguage: 'pt_BR',
+        templateParams: { nome: 'Maria' },
+      });
+
+      const clone = await conversationRepository.resendMessage(tenantId, conversation._id.toString(), original.id);
+
+      expect(clone.status).toBe('queued');
+      expect(clone.templateName).toBe('confirmacao');
+      expect(clone.templateLanguage).toBe('pt_BR');
+      expect(clone.templateParams).toEqual({ nome: 'Maria' });
+    });
+
+    it('never carries wamid/claimedBy/claimedAt/error over to the clone, even when the original had them (context.md decision #8)', async () => {
+      const tenantId = randomId();
+      const { conversation } = await seedConversation(tenantId);
+      const original = await seedFailedMessage(tenantId, conversation, {
+        wamid: `wamid-${randomId()}`,
+        claimedBy: randomId(),
+        claimedAt: new Date(),
+        error: 'timeout na Meta',
+      });
+
+      const clone = await conversationRepository.resendMessage(tenantId, conversation._id.toString(), original.id);
+
+      const persistedClone = await Message.findById(clone.id).lean();
+      expect(persistedClone?.wamid).toBeUndefined();
+      expect(persistedClone?.claimedBy).toBeUndefined();
+      expect(persistedClone?.claimedAt).toBeUndefined();
+      expect(persistedClone?.error).toBeUndefined();
+    });
+
+    it('throws MessageNotFailedError and creates nothing when the Message is not status:failed (spec.md, defesa em profundidade)', async () => {
+      const tenantId = randomId();
+      const { conversation } = await seedConversation(tenantId);
+      const sent = await seedFailedMessage(tenantId, conversation, { status: 'sent' });
+
+      await expect(
+        conversationRepository.resendMessage(tenantId, conversation._id.toString(), sent.id),
+      ).rejects.toThrow(conversationRepository.MessageNotFailedError);
+      expect(await Message.countDocuments({})).toBe(1);
+    });
+
+    it('throws MessageNotFoundError for a non-existent Message or one from another tenant/Conversation (spec.md INBOX-16, AD-010)', async () => {
+      const tenantId = randomId();
+      const otherTenant = randomId();
+      const { conversation } = await seedConversation(tenantId);
+      const original = await seedFailedMessage(tenantId, conversation);
+
+      await expect(
+        conversationRepository.resendMessage(tenantId, conversation._id.toString(), randomId()),
+      ).rejects.toThrow(conversationRepository.MessageNotFoundError);
+      await expect(
+        conversationRepository.resendMessage(otherTenant, conversation._id.toString(), original.id),
+      ).rejects.toThrow(conversationRepository.MessageNotFoundError);
+      expect(await Message.countDocuments({})).toBe(1);
+    });
+  });
 });

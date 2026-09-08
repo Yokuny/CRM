@@ -255,3 +255,62 @@ export const getMessages = async (
 
     return { items: docs.map(toMessageListItem), total };
   });
+
+export class MessageNotFoundError extends Error {
+  constructor() {
+    super('Mensagem não encontrada');
+  }
+}
+
+export class MessageNotFailedError extends Error {
+  constructor() {
+    super('Só é possível reenviar uma mensagem com status failed');
+  }
+}
+
+// INBOX-14/15 (context.md decisão #8): reenvio NUNCA reseta o documento
+// original — a Message failed permanece intocada, visível na thread com seu
+// selo de falha. Um clone NOVO nasce com status:'queued' e entra na fila
+// normal do outbox, mesmo shape de criação de createOutboundMessage. Nunca
+// carrega wamid/claimedBy/claimedAt/error do original: essas colunas são
+// propriedade de escrita do ai-gateway/outbox sobre aquele documento
+// específico (docs/architecture.md) — o clone começa sua própria vida.
+export const resendMessage = async (
+  tenantId: string,
+  conversationId: string,
+  messageId: string,
+): Promise<MessageRecord> =>
+  withDbTiming('conversation.resendMessage', async () => {
+    const original = await Message.findOne(
+      tenantScoped({ _id: messageId, Tenant: tenantId, Conversation: conversationId }),
+    ).lean();
+    if (!original) throw new MessageNotFoundError();
+    if (original.status !== 'failed') throw new MessageNotFailedError();
+
+    const clone = await Message.create({
+      Tenant: original.Tenant,
+      Conversation: original.Conversation,
+      Channel: original.Channel,
+      Customer: original.Customer,
+      direction: original.direction,
+      type: original.type,
+      status: 'queued',
+      ...(original.text !== undefined ? { text: original.text } : {}),
+      ...(original.templateName !== undefined
+        ? {
+            templateName: original.templateName,
+            templateLanguage: original.templateLanguage,
+            templateParams: original.templateParams,
+          }
+        : {}),
+    });
+
+    return {
+      id: clone._id.toString(),
+      status: clone.status as string,
+      text: clone.text,
+      templateName: clone.templateName,
+      templateLanguage: clone.templateLanguage,
+      templateParams: clone.templateParams,
+    };
+  });
