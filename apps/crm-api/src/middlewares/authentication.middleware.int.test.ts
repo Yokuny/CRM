@@ -8,8 +8,8 @@ import request from 'supertest';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { env } from '../config/env.config.js';
 import type { AuthDeps } from './authentication.middleware.js';
-import { createAuthMiddleware, extractToken } from './authentication.middleware.js';
-import { errorHandler } from './errorHandler.middleware.js';
+import { authenticateSession, createAuthMiddleware, extractToken } from './authentication.middleware.js';
+import { CustomError, errorHandler } from './errorHandler.middleware.js';
 
 describe('extractToken', () => {
   const buildReq = (overrides: { cookies?: Record<string, string>; headers?: Record<string, string> }): Request =>
@@ -230,5 +230,115 @@ describe('createAuthMiddleware', () => {
       .set('User-Agent', 'agent-real');
     expect(matched.status).toBe(200);
     expect(matched.body.tenantUser.user).toBe(user.id);
+  });
+
+  // T2/design.md Componente 1: authenticateSession chamada diretamente, sem
+  // Express — mesmo caminho que o handshake WS (inboxSocket.ts, T4) vai usar.
+  // Todas as branches replicam exatamente o comportamento já provado acima
+  // via HTTP, confirmando que a extração não mudou nada observável.
+  describe('authenticateSession (called directly, outside Express)', () => {
+    it('throws CustomError(401, "Acesso inválido") when no token is provided', async () => {
+      let caught: unknown;
+      try {
+        await authenticateSession(undefined, 'agent-1', buildDeps());
+      } catch (e) {
+        caught = e;
+      }
+      expect(caught).toBeInstanceOf(CustomError);
+      expect(caught).toMatchObject({ message: 'Acesso inválido', status: 401 });
+    });
+
+    it('throws CustomError(401, "Acesso inválido ou expirado") for a malformed/invalid JWT', async () => {
+      await expect(authenticateSession('not-a-valid-jwt', 'agent-1', buildDeps())).rejects.toMatchObject({
+        message: 'Acesso inválido ou expirado',
+        status: 401,
+      });
+    });
+
+    it('throws 401 and logs only {event, userId} on session.replay when the JWT is valid but no Session exists', async () => {
+      const tenant = await Tenant.create({ name: 'Empresa E', document: '55555555000105', status: 'active' });
+      const user = await User.create({
+        name: 'Elis',
+        email: 'elis@example.com',
+        password: 'hash',
+        Tenant: tenant._id,
+        role: ['operador'],
+      });
+      const rawToken = jwt.sign({ user: user.id }, env.SESSION_JWT_SECRET);
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+      await expect(authenticateSession(rawToken, 'agent-1', buildDeps())).rejects.toMatchObject({
+        message: 'Acesso inválido',
+        status: 401,
+      });
+      const logged = JSON.parse(errorSpy.mock.calls[0][0] as string);
+      expect(logged).toEqual({ event: 'session.replay', userId: user.id });
+
+      errorSpy.mockRestore();
+    });
+
+    it('throws 401, revokes every session, and logs only {event, userId} on session.device_mismatch', async () => {
+      const tenant = await Tenant.create({ name: 'Empresa F', document: '66666666000106', status: 'active' });
+      const user = await User.create({
+        name: 'Fábio',
+        email: 'fabio@example.com',
+        password: 'hash',
+        Tenant: tenant._id,
+        role: ['admin'],
+      });
+      const rawToken = await issueSession({ userId: user.id, deviceInfo: 'agent-original' });
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+      await expect(authenticateSession(rawToken, 'agent-attacker', buildDeps())).rejects.toMatchObject({
+        message: 'Acesso inválido',
+        status: 401,
+      });
+      expect(await Session.countDocuments({ user: user.id })).toBe(0);
+      const logged = JSON.parse(errorSpy.mock.calls[0][0] as string);
+      expect(logged).toEqual({ event: 'session.device_mismatch', userId: user.id });
+
+      errorSpy.mockRestore();
+    });
+
+    it('throws CustomError(401, "Acesso inválido") when the User is inactive', async () => {
+      const tenant = await Tenant.create({ name: 'Empresa G', document: '77777777000107', status: 'active' });
+      const user = await User.create({
+        name: 'Gabriela',
+        email: 'gabriela@example.com',
+        password: 'hash',
+        Tenant: tenant._id,
+        role: ['operador'],
+        active: false,
+      });
+      const rawToken = await issueSession({ userId: user.id, deviceInfo: 'agent-1' });
+
+      await expect(authenticateSession(rawToken, 'agent-1', buildDeps())).rejects.toMatchObject({
+        message: 'Acesso inválido',
+        status: 401,
+      });
+    });
+
+    it('returns a TenantUser built strictly from the database, ignoring role/tenant forged into the token payload (FND-05)', async () => {
+      const tenant = await Tenant.create({ name: 'Empresa H', document: '88888888000108', status: 'active' });
+      const user = await User.create({
+        name: 'Heitor',
+        email: 'heitor@example.com',
+        password: 'hash',
+        Tenant: tenant._id,
+        role: ['gestor'],
+      });
+      const rawToken = jwt.sign({ user: user.id, role: ['admin'], tenant: 'forged-tenant-id' }, env.SESSION_JWT_SECRET);
+      const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+      await Session.create({
+        user: user.id,
+        tokenHash,
+        deviceInfo: 'agent-1',
+        expiresAt: new Date(Date.now() + 3600_000),
+      });
+
+      const result = await authenticateSession(rawToken, 'agent-1', buildDeps());
+
+      expect(result).toEqual({ tenant: tenant.id, user: user.id, role: ['gestor'], isPlatformAdmin: false });
+    });
   });
 });

@@ -1,5 +1,15 @@
-import { Conversation, type ConversationDocument, type ConversationMode, Message, tenantScoped } from '@crm/db';
+import {
+  Channel,
+  type ChannelDocument,
+  Conversation,
+  type ConversationDocument,
+  type ConversationMode,
+  Message,
+  type MessageDocument,
+  tenantScoped,
+} from '@crm/db';
 import { withDbTiming } from '../metrics/db.metric.js';
+import { createMetaMediaClient, type MetaMediaClient } from '../providers/metaMediaClient.js';
 
 export type ConversationRecord = {
   id: string;
@@ -8,6 +18,12 @@ export type ConversationRecord = {
   customer: string;
   mode: ConversationMode;
   assignee?: string;
+  // INBOX-10/AC5 (Fix 1, validation.md): NUNCA preenchido aqui — o
+  // repository só lê Conversation, sem acesso a User. O service
+  // (conversation.service.ts) resolve este campo via findUserView
+  // (auth.repository.ts), a mesma função já usada para nomear o assignee
+  // no conflito 409 — reuso, não duplicação de lógica de busca de User.
+  assigneeName?: string;
   windowExpiresAt?: Date;
   lastActivityAt: Date;
 };
@@ -23,19 +39,34 @@ const toRecord = (doc: ConversationDocument): ConversationRecord => ({
   lastActivityAt: doc.lastActivityAt,
 });
 
-// Guarda de transição pela própria query ({_id,Tenant}) — mesmo padrão de
-// transitionTenantStatus (tenant.model.ts): um id de outro tenant nunca casa,
-// então nunca existe um `if` de checagem de Tenant fora da query (AD-010).
+// INBOX-08: claim condicional (context.md decisão #6) — mesmo padrão de
+// findOneAndUpdate atômico de claimTurnLock/claimQueuedMessage. A query só
+// societa quando a Conversation está livre (mode:'bot') OU já pertence ao
+// MESMO userId (idempotente — reclicar "assumir" sendo o mesmo operador não
+// é erro). Guarda de transição pela própria query ({_id,Tenant}) — mesmo
+// padrão de transitionTenantStatus (tenant.model.ts): um id de outro tenant
+// nunca casa (AD-010). `null` cobre DOIS casos que quem chama (o service)
+// precisa distinguir: a Conversation não existe para este Tenant, OU existe
+// mas está com um assignee DIFERENTE — nunca sobrescreve nesse segundo caso.
 // `lastActivityAt` é atualizado junto: é "qualquer atividade... OU ação de
 // operador" (design.md) — a base do idle sweep (T31/AIG-33) reinicia no
 // momento do takeover, nunca no valor antigo de antes do operador assumir.
 export const takeover = async (id: string, tenantId: string, userId: string): Promise<ConversationRecord | null> =>
   withDbTiming('conversation.takeover', async () => {
     const doc = await Conversation.findOneAndUpdate(
-      tenantScoped({ _id: id, Tenant: tenantId }),
+      tenantScoped({ _id: id, Tenant: tenantId, $or: [{ mode: 'bot' as const }, { assignee: userId }] }),
       { $set: { mode: 'human', assignee: userId, lastActivityAt: new Date() } },
       { returnDocument: 'after' },
     ).lean();
+    return doc ? toRecord(doc) : null;
+  });
+
+// Leitura simples, tenant-scoped, usada pelo service (T12) SÓ quando o claim
+// condicional acima falha (retornou null) — para distinguir "não existe" de
+// "existe mas está com outro assignee" sem uma segunda escrita.
+export const findConversationById = async (id: string, tenantId: string): Promise<ConversationRecord | null> =>
+  withDbTiming('conversation.findConversationById', async () => {
+    const doc = await Conversation.findOne(tenantScoped({ _id: id, Tenant: tenantId })).lean();
     return doc ? toRecord(doc) : null;
   });
 
@@ -47,6 +78,66 @@ export const release = async (id: string, tenantId: string): Promise<Conversatio
       { returnDocument: 'after' },
     ).lean();
     return doc ? toRecord(doc) : null;
+  });
+
+export type ConversationListItem = {
+  id: string;
+  customer: string;
+  mode: ConversationMode;
+  assignee?: string;
+  // INBOX-10/AC5 (Fix 1, validation.md): mesma nota de ConversationRecord
+  // acima — nunca preenchido pelo repository, o service resolve via
+  // findUserView.
+  assigneeName?: string;
+  lastActivityAt: Date;
+  unread: boolean;
+  windowOpen: boolean;
+  windowExpiresAt?: Date;
+};
+
+export type ListConversationsFilters = { mode?: ConversationMode; assignee?: string };
+export type ListConversationsPagination = { page: number; limit: number };
+
+// spec.md Assumptions: "não lida" é computado, sem campo novo —
+// lastInboundAt > lastActivityAt. Ausência de lastInboundAt (nenhuma
+// mensagem recebida ainda) sempre resolve pra false.
+const isUnread = (doc: ConversationDocument): boolean =>
+  !!doc.lastInboundAt && doc.lastInboundAt.getTime() > doc.lastActivityAt.getTime();
+
+const toListItem = (doc: ConversationDocument): ConversationListItem => ({
+  id: doc._id.toString(),
+  customer: doc.Customer.toString(),
+  mode: doc.mode,
+  assignee: doc.assignee?.toString(),
+  lastActivityAt: doc.lastActivityAt,
+  unread: isUnread(doc),
+  windowOpen: !!doc.windowExpiresAt && doc.windowExpiresAt.getTime() > Date.now(),
+  windowExpiresAt: doc.windowExpiresAt,
+});
+
+// INBOX-01/03: fila de conversas do tenant da sessão, com filtro opcional
+// por mode/assignee e paginação server-side (AD-028). Ordena por
+// lastActivityAt desc (mais recentemente ativa primeiro) — mesmo índice já
+// existente {Tenant,mode,lastActivityAt} (AIG-33/T31).
+export const listConversations = async (
+  tenantId: string,
+  filters: ListConversationsFilters,
+  pagination: ListConversationsPagination,
+): Promise<{ items: ConversationListItem[]; total: number }> =>
+  withDbTiming('conversation.listConversations', async () => {
+    const filter = tenantScoped({
+      Tenant: tenantId,
+      ...(filters.mode ? { mode: filters.mode } : {}),
+      ...(filters.assignee ? { assignee: filters.assignee } : {}),
+    });
+    const skip = (pagination.page - 1) * pagination.limit;
+
+    const [docs, total] = await Promise.all([
+      Conversation.find(filter).sort({ lastActivityAt: -1 }).skip(skip).limit(pagination.limit).lean(),
+      Conversation.countDocuments(filter),
+    ]);
+
+    return { items: docs.map(toListItem), total };
   });
 
 // Erros tipados (não CustomError/HTTP-aware) — o service (T38) é quem
@@ -120,4 +211,173 @@ export const createOutboundMessage = async (
       templateLanguage: doc.templateLanguage,
       templateParams: doc.templateParams,
     };
+  });
+
+export type MessageListItem = {
+  id: string;
+  direction: MessageDocument['direction'];
+  type: MessageDocument['type'];
+  status?: MessageDocument['status'];
+  text?: string;
+  media?: MessageDocument['media'];
+  templateName?: string;
+  templateLanguage?: string;
+  templateParams?: Record<string, string>;
+  createdAt: Date;
+};
+
+export type GetMessagesPagination = { page: number; limit: number };
+
+const toMessageListItem = (doc: MessageDocument): MessageListItem => ({
+  id: doc._id.toString(),
+  direction: doc.direction,
+  type: doc.type,
+  status: doc.status,
+  text: doc.text,
+  media: doc.media,
+  templateName: doc.templateName,
+  templateLanguage: doc.templateLanguage,
+  templateParams: doc.templateParams,
+  createdAt: doc.createdAt,
+});
+
+// INBOX-05/06: histórico paginado de uma Conversation, em ordem cronológica
+// (createdAt asc — mesmo índice já existente {Tenant,Conversation,createdAt}
+// em message.model.ts, comentado lá como "histórico de uma Conversation, em
+// ordem"). `null` quando a Conversation não existe ou é de outro tenant —
+// mesmo idioma 404 de sendManualMessage/ConversationNotFoundError (quem
+// chama, o service, traduz pra HTTP). Mensagem de mídia nunca carrega
+// binário: `MessageDocument.media` (message.model.ts) já é só o ponteiro
+// (mediaId/mime/caption) — nenhum campo de binário existe no schema.
+export const getMessages = async (
+  tenantId: string,
+  conversationId: string,
+  pagination: GetMessagesPagination,
+): Promise<{ items: MessageListItem[]; total: number } | null> =>
+  withDbTiming('conversation.getMessages', async () => {
+    const conversation = await Conversation.findOne(tenantScoped({ _id: conversationId, Tenant: tenantId })).lean();
+    if (!conversation) return null;
+
+    const filter = tenantScoped({ Tenant: tenantId, Conversation: conversation._id });
+    const skip = (pagination.page - 1) * pagination.limit;
+
+    const [docs, total] = await Promise.all([
+      Message.find(filter).sort({ createdAt: 1 }).skip(skip).limit(pagination.limit).lean(),
+      Message.countDocuments(filter),
+    ]);
+
+    return { items: docs.map(toMessageListItem), total };
+  });
+
+export class MessageNotFoundError extends Error {
+  constructor() {
+    super('Mensagem não encontrada');
+  }
+}
+
+export class MessageNotFailedError extends Error {
+  constructor() {
+    super('Só é possível reenviar uma mensagem com status failed');
+  }
+}
+
+// INBOX-14/15 (context.md decisão #8): reenvio NUNCA reseta o documento
+// original — a Message failed permanece intocada, visível na thread com seu
+// selo de falha. Um clone NOVO nasce com status:'queued' e entra na fila
+// normal do outbox, mesmo shape de criação de createOutboundMessage. Nunca
+// carrega wamid/claimedBy/claimedAt/error do original: essas colunas são
+// propriedade de escrita do ai-gateway/outbox sobre aquele documento
+// específico (docs/architecture.md) — o clone começa sua própria vida.
+export const resendMessage = async (
+  tenantId: string,
+  conversationId: string,
+  messageId: string,
+): Promise<MessageRecord> =>
+  withDbTiming('conversation.resendMessage', async () => {
+    const original = await Message.findOne(
+      tenantScoped({ _id: messageId, Tenant: tenantId, Conversation: conversationId }),
+    ).lean();
+    if (!original) throw new MessageNotFoundError();
+    if (original.status !== 'failed') throw new MessageNotFailedError();
+
+    const clone = await Message.create({
+      Tenant: original.Tenant,
+      Conversation: original.Conversation,
+      Channel: original.Channel,
+      Customer: original.Customer,
+      direction: original.direction,
+      type: original.type,
+      status: 'queued',
+      ...(original.text !== undefined ? { text: original.text } : {}),
+      ...(original.templateName !== undefined
+        ? {
+            templateName: original.templateName,
+            templateLanguage: original.templateLanguage,
+            templateParams: original.templateParams,
+          }
+        : {}),
+    });
+
+    return {
+      id: clone._id.toString(),
+      status: clone.status as string,
+      text: clone.text,
+      templateName: clone.templateName,
+      templateLanguage: clone.templateLanguage,
+      templateParams: clone.templateParams,
+    };
+  });
+
+// INBOX-18: chamada à Meta indisponível/expirada (erro de rede, não-2xx, ou
+// qualquer outra falha do metaMediaClient injetado) — erro tipado, nunca um
+// erro genérico; o service (T17) traduz para 502 (design.md Error Handling
+// Strategy).
+export class MetaMediaUnavailableError extends Error {
+  constructor() {
+    super('Não foi possível carregar essa mídia agora');
+  }
+}
+
+export type GetMessageMediaDeps = {
+  // Injetável (mesmo molde de OutboxConsumerDeps.createClient,
+  // apps/ai-gateway/src/workers/outboxConsumer.ts) — produção usa
+  // createMetaMediaClient real, testes injetam um fake determinístico (nunca
+  // a rede real).
+  createClient?: (channel: ChannelDocument, encKey: string) => MetaMediaClient;
+};
+
+// INBOX-17/18 (design.md Componente 4/5): carrega a Message (tenant+
+// conversation-scoped, AD-010) e seu Channel, decifra o accessToken (mesmo
+// crypto.helper/env.CHANNEL_ENC_KEY de channel.service.ts) e busca o binário
+// na Media API da Meta — NUNCA persiste em disco/banco (design.md Tech
+// Decisions: response passthrough). Mensagem inexistente/de outro tenant/sem
+// campo `media` reusa o mesmo MessageNotFoundError já usado por
+// resendMessage (T13) — o service (T17) traduz para 404, mesmo idioma dos
+// demais 404 deste arquivo.
+export const getMessageMedia = async (
+  tenantId: string,
+  conversationId: string,
+  messageId: string,
+  encKey: string,
+  deps: GetMessageMediaDeps = {},
+): Promise<{ buffer: Buffer; mime?: string }> =>
+  withDbTiming('conversation.getMessageMedia', async () => {
+    const message = await Message.findOne(
+      tenantScoped({ _id: messageId, Tenant: tenantId, Conversation: conversationId }),
+    ).lean();
+    if (!message?.media) throw new MessageNotFoundError();
+
+    const channel = await Channel.findOne(tenantScoped({ _id: message.Channel, Tenant: tenantId })).lean();
+    if (!channel) throw new MessageNotFoundError();
+
+    const buildClient = deps.createClient ?? createMetaMediaClient;
+    const client = buildClient(channel, encKey);
+
+    try {
+      const { url, mimeType } = await client.getMediaUrl(message.media.mediaId);
+      const buffer = await client.downloadMedia(url);
+      return { buffer, mime: mimeType ?? message.media.mime };
+    } catch {
+      throw new MetaMediaUnavailableError();
+    }
   });

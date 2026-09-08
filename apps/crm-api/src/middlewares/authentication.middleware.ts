@@ -63,47 +63,61 @@ export const extractToken = (req: Request): string | undefined => {
   return parts[1];
 };
 
+// Função pura (design.md, Componente 1): mesma validação jwt→hash→Session→
+// device match→User/Tenant de antes, extraída de createAuthMiddleware para
+// ser reusada fora do pipeline Express (handshake WS, apps/crm-api/src/ws/
+// inboxSocket.ts). `token` aceita `undefined` porque `extractToken`
+// (Express) e `extractHandshakeCookie` (WS) já podem retornar isso quando a
+// credencial simplesmente não veio — o 401 correspondente é o mesmo de
+// antes, só que resolvido aqui em vez de no chamador.
+export const authenticateSession = async (
+  token: string | undefined,
+  deviceInfo: string,
+  deps: AuthDeps,
+): Promise<TenantUser> => {
+  if (!token) throw new CustomError('Acesso inválido', 401);
+
+  let userIdFromToken: string;
+  try {
+    const decoded = jwt.verify(token, env.SESSION_JWT_SECRET);
+    if (typeof decoded === 'string' || !decoded.user) throw new Error('payload inválido');
+    userIdFromToken = decoded.user as string;
+  } catch {
+    throw new CustomError('Acesso inválido ou expirado', 401);
+  }
+
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+  const session = await deps.findSessionByHash(tokenHash);
+  if (!session) {
+    console.error(JSON.stringify({ event: 'session.replay', userId: userIdFromToken }));
+    throw new CustomError('Acesso inválido', 401);
+  }
+
+  if (session.deviceInfo !== deviceInfo) {
+    await deps.revokeAllSessions(session.user);
+    console.error(JSON.stringify({ event: 'session.device_mismatch', userId: session.user }));
+    throw new CustomError('Acesso inválido', 401);
+  }
+
+  const user = await deps.getUserById(session.user);
+  if (!user?.active) throw new CustomError('Acesso inválido', 401);
+
+  const tenant = user.tenant ? await deps.getTenantById(user.tenant) : undefined;
+
+  return {
+    tenant: tenant?.id,
+    user: user.id,
+    role: user.role,
+    isPlatformAdmin: user.isPlatformAdmin,
+  };
+};
+
 export const createAuthMiddleware = (deps: AuthDeps) => {
   const validToken = async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
     try {
       const token = extractToken(req);
-      if (!token) throw new CustomError('Acesso inválido', 401);
-
-      let userIdFromToken: string;
-      try {
-        const decoded = jwt.verify(token, env.SESSION_JWT_SECRET);
-        if (typeof decoded === 'string' || !decoded.user) throw new Error('payload inválido');
-        userIdFromToken = decoded.user as string;
-      } catch {
-        throw new CustomError('Acesso inválido ou expirado', 401);
-      }
-
-      const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-      const session = await deps.findSessionByHash(tokenHash);
-      if (!session) {
-        console.error(JSON.stringify({ event: 'session.replay', userId: userIdFromToken }));
-        throw new CustomError('Acesso inválido', 401);
-      }
-
       const deviceInfo = req.headers['user-agent'] ?? 'unknown';
-      if (session.deviceInfo !== deviceInfo) {
-        await deps.revokeAllSessions(session.user);
-        console.error(JSON.stringify({ event: 'session.device_mismatch', userId: session.user }));
-        throw new CustomError('Acesso inválido', 401);
-      }
-
-      const user = await deps.getUserById(session.user);
-      if (!user?.active) throw new CustomError('Acesso inválido', 401);
-
-      const tenant = user.tenant ? await deps.getTenantById(user.tenant) : undefined;
-
-      req.tenantUser = {
-        tenant: tenant?.id,
-        user: user.id,
-        role: user.role,
-        isPlatformAdmin: user.isPlatformAdmin,
-      };
-
+      req.tenantUser = await authenticateSession(token, deviceInfo, deps);
       next();
     } catch (e) {
       next(e);

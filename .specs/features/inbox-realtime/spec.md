@@ -270,29 +270,35 @@ que o binário aparece sem nenhum registro de asset criado no banco/disco.
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| INBOX-01 | P1: Fila de conversas ao vivo | In Tasks | Pending |
-| INBOX-02 | P1: Fila de conversas ao vivo | In Tasks | Pending |
-| INBOX-03 | P1: Fila de conversas ao vivo | In Tasks | Pending |
-| INBOX-04 | P1: Fila de conversas ao vivo | In Tasks | Pending |
-| INBOX-05 | P1: Histórico ao vivo | In Tasks | Pending |
-| INBOX-06 | P1: Histórico ao vivo | In Tasks | Pending |
-| INBOX-07 | P1: Histórico ao vivo | In Tasks | Pending |
-| INBOX-08 | P1: Takeover/release seguro | In Tasks | Pending |
-| INBOX-09 | P1: Takeover/release seguro | In Tasks | Pending |
-| INBOX-10 | P1: Takeover/release seguro | In Tasks | Pending |
-| INBOX-11 | P1: Composer + janela 24h | In Tasks | Pending |
-| INBOX-12 | P1: Composer + janela 24h | In Tasks | Pending |
-| INBOX-13 | P1: Composer + janela 24h | In Tasks | Pending |
-| INBOX-14 | P2: Reenvio de `failed` | In Tasks | Pending |
-| INBOX-15 | P2: Reenvio de `failed` | In Tasks | Pending |
-| INBOX-16 | P2: Reenvio de `failed` | In Tasks | Pending |
-| INBOX-17 | P2: Preview de mídia | In Tasks | Pending |
-| INBOX-18 | P2: Preview de mídia | In Tasks | Pending |
-| INBOX-19 | (transversal) Observabilidade WS/mídia | In Tasks | Pending |
+| INBOX-01 | P1: Fila de conversas ao vivo | Verified | ✅ Verified |
+| INBOX-02 | P1: Fila de conversas ao vivo | Verified | ✅ Verified |
+| INBOX-03 | P1: Fila de conversas ao vivo | Verified | ✅ Verified |
+| INBOX-04 | P1: Fila de conversas ao vivo | Verified | ✅ Verified |
+| INBOX-05 | P1: Histórico ao vivo | Verified | ✅ Verified |
+| INBOX-06 | P1: Histórico ao vivo | Verified | ✅ Verified |
+| INBOX-07 | P1: Histórico ao vivo | Verified | ✅ Verified |
+| INBOX-08 | P1: Takeover/release seguro | Verified | ✅ Verified |
+| INBOX-09 | P1: Takeover/release seguro | Verified | ✅ Verified |
+| INBOX-10 | P1: Takeover/release seguro | Verified | ✅ Verified (Fix 1 closed in Verifier iteration 2 — `apps/crm-api/src/services/conversation.service.ts:50-67`, `apps/web/src/routes/_private/inbox/@components/conversation-queue.tsx:21-27`, `takeover-badge.tsx:74-79`) |
+| INBOX-11 | P1: Composer + janela 24h | Verified | ✅ Verified |
+| INBOX-12 | P1: Composer + janela 24h | Verified | ✅ Verified |
+| INBOX-13 | P1: Composer + janela 24h | Verified | ✅ Verified |
+| INBOX-14 | P2: Reenvio de `failed` | Verified | ✅ Verified |
+| INBOX-15 | P2: Reenvio de `failed` | Verified | ✅ Verified |
+| INBOX-16 | P2: Reenvio de `failed` | Verified | ✅ Verified |
+| INBOX-17 | P2: Preview de mídia | Verified | ✅ Verified |
+| INBOX-18 | P2: Preview de mídia | Verified | ✅ Verified |
+| INBOX-19 | (transversal) Observabilidade WS/mídia | Verified | ✅ Verified |
 
 **ID format:** `INBOX-[NUMBER]`
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Verified
+
+**Verifier report:** `.specs/features/inbox-realtime/validation.md` (independent Verifier,
+2026-09-08, iteration 2) — 24/24 spec-anchored ACs matched precisely (Fix 1 closed the
+Takeover/AC5 gap from iteration 1), gate green (879/879), 6/6 discrimination-sensor
+mutations killed across both iterations (3 iteration 1 + 3 iteration 2, targeted at Fix 1
+and Fix 2). See that file for the full evidence trail.
 
 **Coverage:** 19 total, 19 mapped to tasks (`.specs/features/inbox-realtime/tasks.md`,
 T1–T26), 0 unmapped ⚠️

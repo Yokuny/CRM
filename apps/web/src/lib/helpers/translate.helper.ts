@@ -70,6 +70,43 @@ const translations: Record<string, string> = {
   // pode ficar sem rótulo já que coexiste na tela com o <nav
   // aria-label="breadcrumb"> do Card.
   'nav.primary': 'Navegação principal',
+  // Inbox (feature inbox-realtime, Fase 11) — chaves novas usadas por
+  // routes/_private/inbox/** (index.tsx + @components/*).
+  'inbox.title': 'Caixa de entrada',
+  'inbox.queue.title': 'Fila de conversas',
+  'inbox.thread.select_hint': 'Selecione uma conversa na fila para ver o histórico.',
+  'inbox.thread.not_found': 'Conversa não encontrada nesta página da fila. Ajuste os filtros ou a paginação.',
+  'inbox.column.customer': 'Cliente',
+  'inbox.column.mode': 'Modo',
+  'inbox.column.assignee': 'Responsável',
+  'inbox.column.last_activity': 'Última atividade',
+  'inbox.column.unread': 'Não lida',
+  'inbox.column.window': 'Janela 24h',
+  'inbox.mode.bot': 'Bot',
+  'inbox.mode.human': 'Humano',
+  'inbox.assignee.you': 'Você',
+  'inbox.assignee.other': 'Outro operador',
+  'inbox.unread.yes': 'Nova',
+  'inbox.window.open': 'Aberta',
+  'inbox.window.closed': 'Fechada',
+  'inbox.filter.mode.all': 'Todas',
+  'inbox.thread.empty': 'Nenhuma mensagem ainda.',
+  'inbox.message.unsupported': 'Tipo de mensagem não suportado nesta tela.',
+  'inbox.message.failed': 'Falhou',
+  'inbox.media.view': 'Ver',
+  'inbox.media.download': 'Baixar',
+  'inbox.media.loading': 'Carregando mídia…',
+  'inbox.media.error': 'Não foi possível carregar essa mídia agora.',
+  'inbox.composer.window_closed': 'A janela de 24h está fechada. Continue a conversa pelo seu WhatsApp.',
+  'inbox.composer.open_whatsapp': 'Abrir no WhatsApp',
+  'inbox.composer.placeholder': 'Escreva uma mensagem…',
+  'inbox.composer.send': 'Enviar',
+  'inbox.composer.error': 'Não foi possível enviar a mensagem.',
+  'inbox.resend.action': 'Reenviar',
+  'inbox.takeover.action': 'Assumir',
+  'inbox.takeover.error': 'Não foi possível assumir esta conversa.',
+  'inbox.release.action': 'Liberar',
+  'inbox.release.error': 'Não foi possível liberar esta conversa.',
 };
 
 export const t = (key: string): string => translations[key] ?? key;

@@ -145,9 +145,9 @@ dependência `ws`")
 
 **Done when**:
 
-- [ ] `ws`, `cookie` em `dependencies`; `@types/ws` em `devDependencies`
-- [ ] `pnpm install` resolve sem conflito de lockfile
-- [ ] `pnpm run check` continua limpo (nenhum código novo ainda, só dependência)
+- [x] `ws`, `cookie` em `dependencies`; `@types/ws` em `devDependencies`
+- [x] `pnpm install` resolve sem conflito de lockfile
+- [x] `pnpm run check` continua limpo (nenhum código novo ainda, só dependência)
 
 **Tests**: none
 **Gate**: build
@@ -175,12 +175,12 @@ reorganizada, nenhuma regra nova
 
 **Done when**:
 
-- [ ] `authenticateSession` exportada, mesma assinatura do design.md
-- [ ] `validToken` (mesmo comportamento observável de antes) delega pra ela
-- [ ] Toda mensagem/evento de log existente (`session.replay`, `session.device_mismatch`)
+- [x] `authenticateSession` exportada, mesma assinatura do design.md
+- [x] `validToken` (mesmo comportamento observável de antes) delega pra ela
+- [x] Toda mensagem/evento de log existente (`session.replay`, `session.device_mismatch`)
       preservada
-- [ ] Gate check passa: `pnpm vitest run --project integration`
-- [ ] Testes existentes de `authentication.middleware.int.test.ts` continuam verdes +
+- [x] Gate check passa: `pnpm vitest run --project integration`
+- [x] Testes existentes de `authentication.middleware.int.test.ts` continuam verdes +
       novos casos cobrindo `authenticateSession` chamada diretamente (fora do Express)
 
 **Tests**: integration
@@ -209,11 +209,11 @@ e um `createRoomRegistry()` com `join(room, socket)`/`leave(room, socket)`/
 
 **Done when**:
 
-- [ ] `extractHandshakeCookie` extrai `refreshToken` de um header `cookie` cru, `undefined`
+- [x] `extractHandshakeCookie` extrai `refreshToken` de um header `cookie` cru, `undefined`
       quando ausente/malformado
-- [ ] `createRoomRegistry()` suporta join/leave/broadcast (broadcast em sala vazia não lança)
-- [ ] `leave` remove o socket de todas as salas que participava (usado no `close` da conexão)
-- [ ] Gate check passa: `pnpm vitest run --project unit`
+- [x] `createRoomRegistry()` suporta join/leave/broadcast (broadcast em sala vazia não lança)
+- [x] `leave` remove o socket de todas as salas que participava (usado no `close` da conexão)
+- [x] Gate check passa: `pnpm vitest run --project unit`
 
 **Tests**: unit
 **Gate**: quick
@@ -242,16 +242,16 @@ conversationId}` pra entrar/sair de `tenant:<id>:conversation:<id>`; expõe
 
 **Done when**:
 
-- [ ] Handshake com cookie válido conecta e entra na sala do tenant
-- [ ] Handshake sem cookie ou com sessão inválida fecha com código `4401`, nenhuma sala
+- [x] Handshake com cookie válido conecta e entra na sala do tenant
+- [x] Handshake sem cookie ou com sessão inválida fecha com código `4401`, nenhuma sala
       é conjunta
-- [ ] `subscribe`/`unsubscribe` entram/saem da sala `tenant:<id>:conversation:<id>`
-- [ ] `broadcastToConversation` só entrega a sockets na sala certa (mesmo tenant e
+- [x] `subscribe`/`unsubscribe` entram/saem da sala `tenant:<id>:conversation:<id>`
+- [x] `broadcastToConversation` só entrega a sockets na sala certa (mesmo tenant e
       conversation); `broadcastToTenant` entrega a todos do tenant, ignora outros tenants
-- [ ] Desconexão remove o socket de todas as salas (sem leak de referência)
-- [ ] Log estruturado (`ws.connected`/`ws.disconnected`/`ws.auth_failed`, mesmo formato
+- [x] Desconexão remove o socket de todas as salas (sem leak de referência)
+- [x] Log estruturado (`ws.connected`/`ws.disconnected`/`ws.auth_failed`, mesmo formato
       `JSON.stringify({event...})` já usado no projeto)
-- [ ] Gate check passa: `pnpm vitest run --project e2e` — teste sobe um `http.Server` real
+- [x] Gate check passa: `pnpm vitest run --project e2e` — teste sobe um `http.Server` real
       em porta efêmera (`.listen(0)`), conecta um cliente `ws` de verdade
 
 **Tests**: e2e
@@ -282,16 +282,16 @@ intervalMs=2000)` — mesmo molde `setInterval`+catch+log de `startOutboxConsume
 
 **Done when**:
 
-- [ ] `pollOnce` só considera tenants com socket conectado (injeta um fake
+- [x] `pollOnce` só considera tenants com socket conectado (injeta um fake
       `InboxSocketServer` no teste, sem WS real — mesmo padrão de `createClient` fake em
       `outboxConsumer.int.test.ts`)
-- [ ] Nova `Message` gera `broadcastToConversation` (payload com o `Message` inteiro,
+- [x] Nova `Message` gera `broadcastToConversation` (payload com o `Message` inteiro,
       exceto binário) e `broadcastToTenant` (payload leve)
-- [ ] Cursor `since` avança mesmo quando não há mensagem nova (nunca reprocessa a mesma
+- [x] Cursor `since` avança mesmo quando não há mensagem nova (nunca reprocessa a mesma
       janela)
-- [ ] Falha no tick (erro de banco simulado) é capturada e logada, próximo tick roda
+- [x] Falha no tick (erro de banco simulado) é capturada e logada, próximo tick roda
       normalmente
-- [ ] Gate check passa: `pnpm vitest run --project integration`
+- [x] Gate check passa: `pnpm vitest run --project integration`
 
 **Tests**: integration
 **Gate**: full
@@ -322,11 +322,11 @@ acesso a banco)
 
 **Done when**:
 
-- [ ] `start()` retorna `{httpServer, stopWorkers}`, mesma forma de `ai-gateway`
-- [ ] `stopWorkers()` para o poller E fecha o WS server, sem processo pendurado
-- [ ] Boot-fail (`Mongo indisponível`) continua saindo com `process.exit(1)` — teste
+- [x] `start()` retorna `{httpServer, stopWorkers}`, mesma forma de `ai-gateway`
+- [x] `stopWorkers()` para o poller E fecha o WS server, sem processo pendurado
+- [x] Boot-fail (`Mongo indisponível`) continua saindo com `process.exit(1)` — teste
       existente não regride
-- [ ] Gate check passa: `pnpm vitest run --project integration`
+- [x] Gate check passa: `pnpm vitest run --project integration`
 
 **Tests**: integration
 **Gate**: full
@@ -354,11 +354,11 @@ sequência por convenção do protocolo)
 
 **Done when**:
 
-- [ ] Retorna só conversas do tenant da sessão (outro tenant nunca aparece)
-- [ ] Filtro por `mode` e por `assignee` funcionam isolados e combinados
-- [ ] `unread` bate com `lastInboundAt > lastActivityAt` nos casos true/false/ambos ausentes
-- [ ] Paginação (`page`/`limit`) reflete no `total` e no corte de `items`
-- [ ] Gate check passa: `pnpm vitest run --project integration`
+- [x] Retorna só conversas do tenant da sessão (outro tenant nunca aparece)
+- [x] Filtro por `mode` e por `assignee` funcionam isolados e combinados
+- [x] `unread` bate com `lastInboundAt > lastActivityAt` nos casos true/false/ambos ausentes
+- [x] Paginação (`page`/`limit`) reflete no `total` e no corte de `items`
+- [x] Gate check passa: `pnpm vitest run --project integration`
 
 **Tests**: integration
 **Gate**: full
@@ -388,10 +388,10 @@ já definido em `conversation.router.ts`
 
 **Done when**:
 
-- [ ] `GET /conversations` responde 200 com a lista paginada pro tenant da sessão
-- [ ] Sem papel `canOperate` → 403, sem tocar dados
-- [ ] Filtros de query aceitos e repassados ao repository
-- [ ] Gate check passa: `pnpm vitest run --project e2e`
+- [x] `GET /conversations` responde 200 com a lista paginada pro tenant da sessão
+- [x] Sem papel `canOperate` → 403, sem tocar dados
+- [x] Filtros de query aceitos e repassados ao repository
+- [x] Gate check passa: `pnpm vitest run --project e2e`
 
 **Tests**: e2e
 **Gate**: full
@@ -417,11 +417,11 @@ mídia só com o ponteiro (`mediaId`/`mime`/`caption`).
 
 **Done when**:
 
-- [ ] Mensagens retornadas em ordem cronológica, paginadas
-- [ ] `Conversation` de outro tenant ou inexistente retorna `null`
-- [ ] Mensagem `image`/`document`/`audio`/`location` nunca inclui campo de binário —
+- [x] Mensagens retornadas em ordem cronológica, paginadas
+- [x] `Conversation` de outro tenant ou inexistente retorna `null`
+- [x] Mensagem `image`/`document`/`audio`/`location` nunca inclui campo de binário —
       só o shape de `MessageMedia`
-- [ ] Gate check passa: `pnpm vitest run --project integration`
+- [x] Gate check passa: `pnpm vitest run --project integration`
 
 **Tests**: integration
 **Gate**: full
@@ -447,10 +447,10 @@ com `canOperate`.
 
 **Done when**:
 
-- [ ] `GET /conversations/:id/messages` responde 200 com histórico paginado
-- [ ] `id` de outro tenant/inexistente → 404
-- [ ] Sem `canOperate` → 403
-- [ ] Gate check passa: `pnpm vitest run --project e2e`
+- [x] `GET /conversations/:id/messages` responde 200 com histórico paginado
+- [x] `id` de outro tenant/inexistente → 404
+- [x] Sem `canOperate` → 403
+- [x] Gate check passa: `pnpm vitest run --project e2e`
 
 **Tests**: e2e
 **Gate**: full
@@ -477,11 +477,11 @@ com outro `assignee` (distinto de "não existe", tratado por quem chama).
 
 **Done when**:
 
-- [ ] Conversa livre (`mode:'bot'`) → sucesso, `mode:'human'`, `assignee` setado
-- [ ] Mesmo `assignee` chamando de novo → sucesso idempotente (nenhuma mudança de estado
+- [x] Conversa livre (`mode:'bot'`) → sucesso, `mode:'human'`, `assignee` setado
+- [x] Mesmo `assignee` chamando de novo → sucesso idempotente (nenhuma mudança de estado
       inesperada)
-- [ ] Conversa em `human` com OUTRO `assignee` → `null` (nunca sobrescreve)
-- [ ] Gate check passa: `pnpm vitest run --project integration`
+- [x] Conversa em `human` com OUTRO `assignee` → `null` (nunca sobrescreve)
+- [x] Gate check passa: `pnpm vitest run --project integration`
 
 **Tests**: integration
 **Gate**: full
@@ -512,12 +512,12 @@ liberando qualquer conversa).
 
 **Done when**:
 
-- [ ] Operador diferente tentando assumir recebe 409 com o nome do `assignee` atual na
+- [x] Operador diferente tentando assumir recebe 409 com o nome do `assignee` atual na
       mensagem
-- [ ] Mesmo operador re-clicando "assumir" recebe 200 (idempotente)
-- [ ] `POST /:id/release` continua incondicional pra qualquer `canOperate` (regressão —
+- [x] Mesmo operador re-clicando "assumir" recebe 200 (idempotente)
+- [x] `POST /:id/release` continua incondicional pra qualquer `canOperate` (regressão —
       teste explícito cobrindo INBOX-09)
-- [ ] Gate check passa: `pnpm vitest run --project e2e`
+- [x] Gate check passa: `pnpm vitest run --project e2e`
 
 **Tests**: e2e
 **Gate**: full
@@ -545,10 +545,10 @@ documento original nunca é modificado.
 
 **Done when**:
 
-- [ ] `Message` original permanece `status:'failed'`, intocada, após o reenvio
-- [ ] Novo documento criado com `status:'queued'`, mesmo conteúdo, `_id` diferente
-- [ ] Reenviar uma `Message` que não está `failed` lança erro tipado (`MessageNotFailedError`)
-- [ ] Gate check passa: `pnpm vitest run --project integration`
+- [x] `Message` original permanece `status:'failed'`, intocada, após o reenvio
+- [x] Novo documento criado com `status:'queued'`, mesmo conteúdo, `_id` diferente
+- [x] Reenviar uma `Message` que não está `failed` lança erro tipado (`MessageNotFailedError`)
+- [x] Gate check passa: `pnpm vitest run --project integration`
 
 **Tests**: integration
 **Gate**: full
@@ -573,10 +573,10 @@ documento original nunca é modificado.
 
 **Done when**:
 
-- [ ] `POST /:id/messages/:messageId/resend` cria a nova `Message` e responde 201 com ela
-- [ ] `Message` inexistente/de outro tenant → 404; status diferente de `failed` → 400
-- [ ] Sem `canOperate` → 403
-- [ ] Gate check passa: `pnpm vitest run --project e2e`
+- [x] `POST /:id/messages/:messageId/resend` cria a nova `Message` e responde 201 com ela
+- [x] `Message` inexistente/de outro tenant → 404; status diferente de `failed` → 400
+- [x] Sem `canOperate` → 403
+- [x] Gate check passa: `pnpm vitest run --project e2e`
 
 **Tests**: e2e
 **Gate**: full
@@ -604,10 +604,10 @@ cruzado referenciando o arquivo irmão
 
 **Done when**:
 
-- [ ] `getMediaUrl` retorna `{url, mimeType}` em sucesso, lança `MetaApiError` em não-2xx
-- [ ] `downloadMedia` retorna `Buffer`, lança `MetaApiError` em não-2xx
-- [ ] Token decifrado só no escopo da chamada (nunca logado/cacheado em claro)
-- [ ] Gate check passa: `pnpm vitest run --project unit`
+- [x] `getMediaUrl` retorna `{url, mimeType}` em sucesso, lança `MetaApiError` em não-2xx
+- [x] `downloadMedia` retorna `Buffer`, lança `MetaApiError` em não-2xx
+- [x] Token decifrado só no escopo da chamada (nunca logado/cacheado em claro)
+- [x] Gate check passa: `pnpm vitest run --project unit`
 
 **Tests**: unit
 **Gate**: quick
@@ -633,10 +633,10 @@ molde de `OutboxConsumerDeps.createClient`), traduz falha em `MetaMediaUnavailab
 
 **Done when**:
 
-- [ ] Mensagem sem mídia ou de outro tenant → erro tipado (404 na camada de cima)
-- [ ] Falha da Meta (mockada via cliente injetado) → `MetaMediaUnavailableError`
-- [ ] Sucesso retorna o buffer sem nenhuma escrita em disco/banco
-- [ ] Gate check passa: `pnpm vitest run --project integration`
+- [x] Mensagem sem mídia ou de outro tenant → erro tipado (404 na camada de cima)
+- [x] Falha da Meta (mockada via cliente injetado) → `MetaMediaUnavailableError`
+- [x] Sucesso retorna o buffer sem nenhuma escrita em disco/banco
+- [x] Gate check passa: `pnpm vitest run --project integration`
 
 **Tests**: integration
 **Gate**: full
@@ -662,10 +662,10 @@ mime)` + `res.send(buffer)` (nunca `res.json`/`respObj` — é binário), servic
 
 **Done when**:
 
-- [ ] `GET /:id/messages/:messageId/media` devolve o binário com `Content-Type` correto
-- [ ] Mídia indisponível → 502 com mensagem legível, log estruturado emitido
-- [ ] Sem `canOperate` → 403, nenhuma chamada à Meta é feita
-- [ ] Gate check passa: `pnpm vitest run --project e2e`
+- [x] `GET /:id/messages/:messageId/media` devolve o binário com `Content-Type` correto
+- [x] Mídia indisponível → 502 com mensagem legível, log estruturado emitido
+- [x] Sem `canOperate` → 403, nenhuma chamada à Meta é feita
+- [x] Gate check passa: `pnpm vitest run --project e2e`
 
 **Tests**: e2e
 **Gate**: full
@@ -690,10 +690,13 @@ factory, `buildQueryString` — mesmo formato de `query/customer.ts`.
 
 **Done when**:
 
-- [ ] `conversationsQuery`/`conversationQuery` tipados, `queryKey` estável por parâmetro
-- [ ] `buildQueryString` reflete `mode`/`assignee`/`page`/`limit`
-- [ ] `queryFn` lança com a mensagem de `ApiResponse.message` em falha
-- [ ] Gate check passa: `pnpm vitest run --project unit`
+- [x] `conversationsQuery`/`conversationQuery` tipados, `queryKey` estável por parâmetro
+      (SPEC_DEVIATION: `conversationQuery(id)` não foi implementada — não existe `GET
+      /conversations/:id` no backend, ver nota em `query/conversation.ts`; só
+      `conversationsQuery` (lista) foi implementada, mesmo precedente de `query/process.ts`)
+- [x] `buildQueryString` reflete `mode`/`assignee`/`page`/`limit`
+- [x] `queryFn` lança com a mensagem de `ApiResponse.message` em falha
+- [x] Gate check passa: `pnpm vitest run --project unit`
 
 **Tests**: unit
 **Gate**: quick
@@ -719,9 +722,9 @@ messageId)`, `mediaUrl(conversationId, messageId)` (helper de URL, não fetch �
 
 **Done when**:
 
-- [ ] `messagesQuery` tipado, paginado
-- [ ] `resendMessage` chama `POST .../resend` e invalida a query de mensagens
-- [ ] Gate check passa: `pnpm vitest run --project unit`
+- [x] `messagesQuery` tipado, paginado
+- [x] `resendMessage` chama `POST .../resend` e invalida a query de mensagens
+- [x] Gate check passa: `pnpm vitest run --project unit`
 
 **Tests**: unit
 **Gate**: quick
@@ -749,10 +752,10 @@ T18/T19
 
 **Done when**:
 
-- [ ] Conecta, recebe `message.new`/`conversation.updated`, atualiza o cache certo
-- [ ] Queda de conexão reconecta com backoff (sem loop apertado)
-- [ ] Troca de conversa aberta manda `unsubscribe` da antiga + `subscribe` da nova
-- [ ] Gate check passa: `pnpm vitest run --project unit` (com `WebSocket` global mockado)
+- [x] Conecta, recebe `message.new`/`conversation.updated`, atualiza o cache certo
+- [x] Queda de conexão reconecta com backoff (sem loop apertado)
+- [x] Troca de conversa aberta manda `unsubscribe` da antiga + `subscribe` da nova
+- [x] Gate check passa: `pnpm vitest run --project unit` (com `WebSocket` global mockado)
 
 **Tests**: unit
 **Gate**: quick
@@ -778,11 +781,11 @@ split (fila à esquerda, thread à direita), conectando `useInboxSocket` no nív
 
 **Done when**:
 
-- [ ] Rota registrada (`routeTree.gen.ts` regenerado — `pnpm --filter web run dev` antes
+- [x] Rota registrada (`routeTree.gen.ts` regenerado — `pnpm --filter web run dev` antes
       do `check`)
-- [ ] `search.id` seleciona a conversa aberta, ausente = nenhuma thread selecionada
-- [ ] Mock de `@tanstack/react-router` conforme `apps/web/CLAUDE.md`
-- [ ] Gate check passa: `pnpm vitest run --project unit`
+- [x] `search.id` seleciona a conversa aberta, ausente = nenhuma thread selecionada
+- [x] Mock de `@tanstack/react-router` conforme `apps/web/CLAUDE.md`
+- [x] Gate check passa: `pnpm vitest run --project unit`
 
 **Tests**: unit
 **Gate**: quick
@@ -809,10 +812,10 @@ mode/assignee, navega pra `search:{id}` ao clicar numa linha.
 
 **Done when**:
 
-- [ ] Lista renderiza com paginação/filtro server-driven (nunca corta `data` em memória)
-- [ ] Indicador `unread` e badge de `mode` visíveis por linha
-- [ ] Clique seleciona a conversa (`search.id`)
-- [ ] Gate check passa: `pnpm vitest run --project unit`
+- [x] Lista renderiza com paginação/filtro server-driven (nunca corta `data` em memória)
+- [x] Indicador `unread` e badge de `mode` visíveis por linha
+- [x] Clique seleciona a conversa (`search.id`)
+- [x] Gate check passa: `pnpm vitest run --project unit`
 
 **Tests**: unit
 **Gate**: quick
@@ -840,10 +843,10 @@ completo).
 
 **Done when**:
 
-- [ ] Histórico paginado renderiza em ordem cronológica
-- [ ] Mensagem `failed` visível com selo, nunca some/substitui após reenvio
-- [ ] Nova mensagem via WS aparece sem `refetch` completo da lista
-- [ ] Gate check passa: `pnpm vitest run --project unit`
+- [x] Histórico paginado renderiza em ordem cronológica
+- [x] Mensagem `failed` visível com selo, nunca some/substitui após reenvio
+- [x] Nova mensagem via WS aparece sem `refetch` completo da lista
+- [x] Gate check passa: `pnpm vitest run --project unit`
 
 **Tests**: unit
 **Gate**: quick
@@ -869,10 +872,10 @@ a mídia está indisponível.
 
 **Done when**:
 
-- [ ] Card mostra ícone/mime/caption sem nenhuma chamada automática à Meta
-- [ ] Clique em "Ver"/"Baixar" busca o binário sob demanda
-- [ ] Falha (502) mostra mensagem de erro sem quebrar a tela
-- [ ] Gate check passa: `pnpm vitest run --project unit`
+- [x] Card mostra ícone/mime/caption sem nenhuma chamada automática à Meta
+- [x] Clique em "Ver"/"Baixar" busca o binário sob demanda
+- [x] Falha (502) mostra mensagem de erro sem quebrar a tela
+- [x] Gate check passa: `pnpm vitest run --project unit`
 
 **Tests**: unit
 **Gate**: quick
@@ -899,12 +902,12 @@ mensagens `failed` da thread (chama `resendMessage` de T19).
 
 **Done when**:
 
-- [ ] Janela aberta → texto livre habilitado, `POST /:id/messages` chamado ao enviar
-- [ ] Janela fechada → texto desabilitado, botão `wa.me` visível, nenhuma chamada de envio
+- [x] Janela aberta → texto livre habilitado, `POST /:id/messages` chamado ao enviar
+- [x] Janela fechada → texto desabilitado, botão `wa.me` visível, nenhuma chamada de envio
       disparada por ele
-- [ ] Botão de reenvio aparece só em mensagens `failed`, cria a nova tentativa (T19) e o
+- [x] Botão de reenvio aparece só em mensagens `failed`, cria a nova tentativa (T19) e o
       selo original continua visível (integra com T23)
-- [ ] Gate check passa: `pnpm vitest run --project unit`
+- [x] Gate check passa: `pnpm vitest run --project unit`
 
 **Tests**: unit
 **Gate**: quick
@@ -929,11 +932,11 @@ chamando os endpoints existentes; toast nomeado em conflito de takeover (409 de 
 
 **Done when**:
 
-- [ ] Badge mostra `mode` e `assignee` corretamente
-- [ ] "Assumir" bem-sucedido atualiza o badge sem refresh manual da página
-- [ ] Conflito (409) mostra toast nomeando quem já assumiu, sem quebrar a tela
-- [ ] "Liberar" funciona pra qualquer operador (regressão INBOX-09)
-- [ ] Gate check passa: `pnpm vitest run --project unit`
+- [x] Badge mostra `mode` e `assignee` corretamente
+- [x] "Assumir" bem-sucedido atualiza o badge sem refresh manual da página
+- [x] Conflito (409) mostra toast nomeando quem já assumiu, sem quebrar a tela
+- [x] "Liberar" funciona pra qualquer operador (regressão INBOX-09)
+- [x] Gate check passa: `pnpm vitest run --project unit`
 
 **Tests**: unit
 **Gate**: quick
