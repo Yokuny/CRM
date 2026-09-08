@@ -259,47 +259,48 @@ Detalhamento completo (contexto, consequências, alternativas) em [`docs/adr/`](
 
 ## Handoff
 
-- **Feature**: `inbox-realtime` (feature 6 de 11) — planejamento completo. `ai-gateway`
+- **Feature**: `inbox-realtime` (feature 6 de 11) — Execute em andamento. `ai-gateway`
   (feature 5) segue **Execute completo, Verifier PASS, 48/48 Verified**, mergeada em
   `main` (PR #4, `bdf9aba`). Todas as 5 features anteriores estão em `main`.
-- **Phase / Task**: Discuss → Specify → Design → Tasks — **todas as 4 completas e
-  aprovadas explicitamente pelo usuário nesta sessão**. Execute **não iniciado**.
-- **Completed**: `.specs/features/inbox-realtime/{context.md,spec.md,design.md,tasks.md}`
-  escritos e aprovados. `context.md`: 8 decisões de Discuss (3 pré-confirmadas antes da
-  sessão + 5 levantadas e resolvidas nesta sessão — fonte do "template HSM" resolvida
-  como botão `wa.me` fora da plataforma, não envio de template; mídia recebida = preview
-  sob demanda; corrida de takeover = claim condicional com erro nomeado; poller
-  multi-instância = assumido single-instance; reenvio de `failed` = clona em Message
-  nova, não reseta). `spec.md`: 19 requisitos (`INBOX-01..19`), 4 stories P1 + 2 P2,
-  todas as Assumptions logadas (incluindo 1 default do agente não perguntado ao usuário:
-  definição de "não lida" = `lastInboundAt > lastActivityAt`, sem campo novo). `design.md`:
-  biblioteca WS = `ws` puro (confirmado com o usuário sobre alternativa `socket.io`),
-  salas em memória `tenant:<id>`/`tenant:<id>:conversation:<id>`, poller único global
-  (~2s, espelha `startOutboxConsumer`), `authenticateSession` extraído de
-  `createAuthMiddleware` pra reuso no handshake WS, `metaMediaClient` duplicado
-  deliberadamente (mesmo precedente do `ai-gateway`), `server.ts` espelha
-  `StartOptions`/`StartHandle` de `apps/ai-gateway/src/server.ts`. Nenhuma AD nova
-  registrada (tudo conforma AD-002/006/014/017/028/030 já ativos). `tasks.md`: 26 tarefas
-  atômicas em 11 fases, Test Coverage Matrix + Gate Check Commands gerados (AD-017),
-  3 checks de validação (granularidade/diagrama/co-locação de teste) todos ✅, usuário
-  confirmou "nenhuma ferramenta extra" (MCP/Skill: NONE em todas as tarefas).
-- **In-progress**: nenhum — Execute não começou, nenhum arquivo de código tocado.
-- **Next step**: iniciar **Execute** a partir de `.specs/features/inbox-realtime/tasks.md`,
-  T1 (Fase 1: adicionar deps `ws`/`cookie`/`@types/ws` em `apps/crm-api/package.json`).
-  26 tarefas > ~8 → oferecer sub-agentes em lotes (~7 tarefas/lote, fases inteiras) antes
-  de despachar, conforme o protocolo Execute do skill `tlc-spec-driven`. Usuário pediu
-  para pausar aqui nesta sessão e pegar um prompt autocontido pra abrir uma nova janela
-  sem contexto prévio.
+- **Phase / Task**: Discuss → Specify → Design → Tasks completas e aprovadas em sessão
+  anterior. Execute em andamento via skill `tlc-spec-driven` (ativada por leitura manual
+  dos arquivos — ver nota abaixo), rodando em lotes de sub-agentes (~7 tarefas/lote, fases
+  inteiras, protocolo offer-then-confirm, usuário confirmou 4 lotes).
+- **Completed**: Planejamento completo (ver histórico desta seção antes desta atualização,
+  em `git log -p -- .specs/STATE.md`, para o resumo de Discuss/Specify/Design/Tasks).
+  **Lote 1/4 completo** (T1–T8, Fases 1–5: Foundation, WebSocket layer, Poller worker,
+  Server wiring, `GET /conversations`) — 8 commits, gate final `pnpm run check` verde
+  (786 testes). Desvios registrados pelo worker (sem violar spec/design): (1) bug real
+  corrigido no cursor do `inboxPoller.pollOnce` (`$gt`+`new Date()` perdia mensagem no
+  mesmo milissegundo do cursor — trocado por `$gte` + cursor avançado ao
+  `max(updatedAt)+1ms`); (2) dependência `cookie` fixada em `2.0.1` (self-typed) em vez de
+  `0.7.2` (base do `cookie-parser`, citada no design.md) — mitigado com teste comparando
+  `extractHandshakeCookie` ao middleware `cookie-parser` real; (3) T6 tocou também
+  `app.ts` e um novo `authDeps.ts` (não listados no "Where" da tarefa, mas exigidos pelo
+  próprio texto "Reuses" da tarefa — construção de `authDeps` movida para módulo
+  compartilhado). Nenhum teste enfraquecido/pulado/deletado.
+- **In-progress**: nenhum lote rodando neste instante — próxima ação é despachar o Lote 2.
+- **Next step**: despachar **Lote 2/4** (T9–T14, Fases 6–8: `GET /conversations/:id/messages`,
+  takeover claim-condicional + conflito nomeado, reenvio de `Message failed`). Depois
+  Lote 3/4 (T15–T20, Fases 9–10: `metaMediaClient`/proxy de mídia, camada de dados
+  `apps/web`) e Lote 4/4 (T21–T26, Fase 11: telas do Inbox). Verifier roda automaticamente
+  só depois do Lote 4 (último task, T26) — nunca antes.
 - **Blockers**: nenhum. Mesma nota operacional pré-existente de flake em
   `apps/crm-api`/`ai-gateway` (`integration`/`e2e` compartilham UMA instância de
-  `MongoMemoryServer`, `vitest.config.ts` documenta a causa raiz) — não é regressão desta
-  feature.
-- **Uncommitted files**: `.specs/features/inbox-realtime/` inteiro (novo, untracked —
-  `context.md`/`spec.md`/`design.md`/`tasks.md`), esta atualização de handoff,
-  `docs/roadmap.md` (já estava untracked antes desta sessão). `acc.txt` na raiz continua
-  untracked (credenciais de dev local em texto puro) — não commitar. Nenhum código de
-  `apps/`/`packages/` tocado ainda.
-- **Branch**: `main` (nenhuma branch de feature criada ainda para `inbox-realtime`) —
-  diferente do padrão de features anteriores (`feature/ai-gateway` etc., criadas no plan
-  commit); Execute deve decidir/criar `feature/inbox-realtime` a partir de `main` antes do
-  primeiro commit de task, seguindo o mesmo padrão.
+  `MongoMemoryServer`, `vitest.config.ts` documenta a causa raiz) — dois flakes desse tipo
+  ocorreram durante o Lote 1 (`tenant-isolation.int.test.ts`,
+  `webhook.router.e2e.test.ts`), autorresolvidos no retry, em arquivos não tocados por
+  esta feature — não é regressão.
+- **Uncommitted files**: nenhum — working tree limpo ao final do Lote 1 (todos os commits
+  de T1–T8 + `docs(tasks): mark T1-T8 complete` já feitos). `acc.txt` na raiz continua
+  untracked (credenciais de dev local em texto puro) — não commitar.
+- **Branch**: `feature/inbox-realtime` (criada a partir de `main` no início desta sessão
+  de Execute, antes do commit de T1) — sem push ainda.
+- **Nota operacional — skill não registrada**: a skill `tlc-spec-driven` não aparece no
+  listing de skills desta sessão (arquivos existem em `tlc-spec-driven/` na raiz do repo,
+  versionados no git, mas não há `.claude/skills/` no CRM). O usuário optou explicitamente
+  por "apenas leia `./tlc-spec-driven/SKILL.md`" em vez de registrar em `.claude/skills/`
+  — mesma resolução (a) já documentada numa memória de outro projeto (IOT) pra esse
+  padrão de problema. Sessões futuras devem esperar a mesma falha e ler os arquivos
+  manualmente (`SKILL.md` + `references/{implement,sub-agents,coding-principles}.md` no
+  mínimo), a menos que o usuário peça o registro formal.
