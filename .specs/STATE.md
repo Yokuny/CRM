@@ -259,12 +259,15 @@ Detalhamento completo (contexto, consequências, alternativas) em [`docs/adr/`](
 
 ## Handoff
 
-- **Feature**: `inbox-realtime` (feature 6 de 11) — Execute completo (26/26 tasks),
-  Verifier independente PASS com 2 gaps menores (`.specs/features/inbox-realtime/
-  validation.md`, 2026-09-08), e agora **os 2 fix tasks do Verifier aplicados** (fix
-  batch, iteração 1 de fix→re-verify, máx. 3). `ai-gateway` (feature 5) segue Execute
-  completo, Verifier PASS, 48/48 Verified, mergeada em `main` (PR #4, `bdf9aba`). Todas as
-  5 features anteriores estão em `main`.
+- **Feature**: `inbox-realtime` (feature 6 de 11) — Execute completo (26/26 tasks) **+
+  Verifier independente iteração 2 completa, PASS limpo, sem gaps abertos**
+  (`.specs/features/inbox-realtime/validation.md`, 2026-09-08). Os 2 gaps da iteração 1
+  (Fix 1 `8695bb9`/assignee name, Fix 2 `b78a91c`/WS reconnect resync) foram
+  re-verificados por um agente fresco (não confiou no relato do implementador) com
+  evidência `file:line` + valor real (não placeholder) e 3 mutações novas do sensor de
+  discriminação, todas mortas — **feature pronta para PR/merge em `main`**. `ai-gateway`
+  (feature 5) segue Execute completo, Verifier PASS, 48/48 Verified, mergeada em `main`
+  (PR #4, `bdf9aba`). Todas as 5 features anteriores estão em `main`.
 - **Phase / Task**: Discuss → Specify → Design → Tasks → Execute (4 lotes) → Verifier
   completos — ver histórico desta seção (`git log -p -- .specs/STATE.md`) para o
   detalhamento de cada fase/lote antes desta atualização. **Fix batch pós-Verifier
@@ -419,24 +422,50 @@ Detalhamento completo (contexto, consequências, alternativas) em [`docs/adr/`](
   comparada contra `main` via `git worktree` isolado (740→874, +134 testes, 0 removido/
   enfraquecido). 3 lições destiladas em `.specs/lessons.json` (L-024/025/026, todas
   `candidate`).
+  **Verifier iteração 2 completa** (agente fresco, dispatch pós-fix-batch, sem contexto
+  herdado do implementador nem do Verifier da iteração 1) — re-derivou os 2 gaps
+  independentemente em vez de confiar no relato do implementador. **Fix 1 confirmado
+  fechado**: `conversation.service.ts:50-67` (`resolveAssigneeName`/`attachAssigneeNames`)
+  resolve o nome real em `GET /conversations`/`takeover`/`release`; evidência com VALOR
+  real (não placeholder) — `conversation.router.e2e.test.ts:262-263,629-631` (`expect(...
+  assigneeName).toBe(user.name)`), `conversation-queue.unit.test.tsx`/`takeover-badge.
+  unit.test.tsx` (`findByText('Ana')`/`findByText('Carlos')`). **Fix 2 confirmado
+  fechado**: `useInboxSocket.ts:123-126` chama `invalidateQueries` com os 2 `queryKey`s
+  exatos no handler `open`; evidência com args exatos (não só call count) —
+  `useInboxSocket.unit.test.tsx:174-196` (`toHaveBeenCalledWith`/`toHaveBeenCalledExactlyOnceWith`
+  nos `queryKey`s literais). **Sensor de discriminação: 3 mutações novas focadas nos 2
+  fixes** (forçar `assigneeName` sempre `undefined`, `attachAssigneeNames` virar no-op,
+  remover os 2 `invalidateQueries` do handler `open`) — as 3 mortas pelos testes novos
+  (6/6 mutações mortas somando as 2 iterações), todas aplicadas em estado descartável e
+  revertidas (`git checkout --`, `git status --short` vazio ao final). `git diff --stat
+  23d4a75..HEAD` confirmado tocando só os 11 arquivos esperados (nada fora do escopo dos 2
+  fixes) — os outros 22 ACs da iteração 1 permanecem válidos sem re-derivação. Gate
+  rodado do zero 3x: **879/879, exit 0** no run de registro; uma execução intermediária
+  bateu no flake pré-existente e já documentado (`MongoMemoryServer` compartilhado) num
+  teste não relacionado de `crm-web-shell` (`tenant-isolation.int.test.ts`), isolado e
+  confirmado não-regressão (12/12 rodando sozinho). Nenhuma lição nova destilada — L-024/
+  L-025 (iteração 1) já cobrem os 2 sinais; sem mutante sobrevivente/gap novo desta vez.
+  **Veredito: ✅ Ready, PASS limpo, sem gaps abertos.** `validation.md`/`spec.md`
+  atualizados no commit `dd787fe` (INBOX-10: "Verified with gap" → "Verified" limpo).
 - **In-progress**: nenhum — as 26 tasks da feature + os 2 fix tasks do Verifier (Fix 1
-  `8695bb9`, Fix 2 `b78a91c`) estão todos commitados com gate verde. 1/3 ciclos de
-  fix→re-verify usados (implementador aplicou os fixes; a re-verificação em si ainda não
-  rodou — ver Next step).
-- **Next step**: o orquestrador principal deve re-rodar o Verifier independente
-  (iteração 2 de no máximo 3 fix→re-verify) sobre o diff desde `validation.md`
-  (`23d4a75..b78a91c`) para confirmar que os 2 gaps foram fechados sem regressão antes de
-  decidir sobre PR/merge para `main`. Fix 3 (advisory, `conversationQuery(id)` nunca
-  construído) não tinha ação de código pendente — nenhuma mudança necessária.
+  `8695bb9`, Fix 2 `b78a91c`) + a re-verificação independente (iteração 2, `dd787fe`)
+  estão todos commitados com gate verde. Ciclo de fix→re-verify encerrado na iteração 2
+  (de no máximo 3) — PASS limpo, sem necessidade de iteração 3.
+- **Next step**: nenhuma ação de código pendente nesta feature. Decisão de produto/
+  processo: abrir PR de `feature/inbox-realtime` para `main` (branch ainda não tem push) e
+  seguir o merge. Fix 3 (advisory, `conversationQuery(id)` nunca construído) não tinha
+  ação de código pendente — nenhuma mudança necessária, só nota para autoria futura de
+  `tasks.md`.
 - **Blockers**: nenhum. Mesma nota operacional pré-existente de flake em
   `apps/crm-api`/`ai-gateway` (`integration`/`e2e` compartilham UMA instância de
   `MongoMemoryServer`, `vitest.config.ts` documenta a causa raiz) — dois flakes desse tipo
-  ocorreram durante o Lote 3 (ver acima), ambos autorresolvidos no retry, em arquivos não
-  tocados por esta feature — não é regressão. Nenhum flake observado durante o Lote 4 nem
-  durante este fix batch (`pnpm run check` verde de primeira nos dois casos).
-- **Uncommitted files**: nenhum — working tree limpo após os commits de Fix 1 (`8695bb9`)
-  e Fix 2 (`b78a91c`). `acc.txt` na raiz continua untracked (credenciais de dev local em
-  texto puro) — não commitar.
+  ocorreram durante o Lote 3 (ver acima) e mais um durante o gate check da re-verificação
+  da iteração 2 (`tenant-isolation.int.test.ts`, `crm-web-shell`), todos autorresolvidos no
+  retry, em arquivos não tocados por esta feature — não é regressão. Nenhum flake
+  observado durante o Lote 4 nem durante o fix batch em si.
+- **Uncommitted files**: nenhum — working tree limpo após os commits de Fix 1 (`8695bb9`),
+  Fix 2 (`b78a91c`) e da re-verificação/Verifier iteração 2 (`dd787fe`). `acc.txt` na raiz
+  continua untracked (credenciais de dev local em texto puro) — não commitar.
 - **Branch**: `feature/inbox-realtime` (criada a partir de `main` no início da sessão de
   Execute, antes do commit de T1) — sem push ainda.
 - **Nota operacional — skill não registrada**: a skill `tlc-spec-driven` não aparece no
