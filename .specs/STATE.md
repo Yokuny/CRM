@@ -259,16 +259,22 @@ Detalhamento completo (contexto, consequências, alternativas) em [`docs/adr/`](
 
 ## Handoff
 
-- **Feature**: `inbox-realtime` (feature 6 de 11) — Execute **completo, 26/26 tasks**.
-  `ai-gateway` (feature 5) segue **Execute completo, Verifier PASS, 48/48 Verified**,
-  mergeada em `main` (PR #4, `bdf9aba`). Todas as 5 features anteriores estão em `main`.
+- **Feature**: `inbox-realtime` (feature 6 de 11) — Execute **completo, 26/26 tasks**,
+  **Verifier independente rodado: PASS com 2 gaps menores sinalizados** (ver
+  `.specs/features/inbox-realtime/validation.md`, 2026-09-08). `ai-gateway` (feature 5)
+  segue **Execute completo, Verifier PASS, 48/48 Verified**, mergeada em `main` (PR #4,
+  `bdf9aba`). Todas as 5 features anteriores estão em `main`.
 - **Phase / Task**: Discuss → Specify → Design → Tasks completas e aprovadas em sessão
   anterior. Execute completo via skill `tlc-spec-driven` (ativada por leitura manual dos
   arquivos — ver nota abaixo), rodado em 4 lotes de sub-agentes (~7 tarefas/lote, fases
-  inteiras, protocolo offer-then-confirm, usuário confirmou 4 lotes). **Próximo passo:
-  Verifier independente de fim de feature** (spec-anchored coverage + discrimination
-  sensor + `validation.md`) — dispatch é responsabilidade do orquestrador principal, não
-  do worker do Lote 4; ainda não rodado.
+  inteiras, protocolo offer-then-confirm, usuário confirmou 4 lotes). **Verifier
+  independente de fim de feature rodado** (agente fresco, sem contexto dos 4 workers de
+  implementação) — spec-anchored coverage check (23/24 ACs bateram o outcome exato do
+  spec, 1 gap), discrimination sensor (3/3 mutações mortas), gate check do zero (874/874,
+  exit 0), `validation.md` escrito, `spec.md` Requirement Traceability atualizado
+  (INBOX-01..19 → Verified, INBOX-10 com nota de gap). **Próximo passo real**: rotear os 2
+  fix tasks do Verifier (ver abaixo) para um implementador, ou decidir explicitamente
+  adiá-los antes do PR/merge para `main`.
 - **Completed**: Planejamento completo (ver histórico desta seção antes desta atualização,
   em `git log -p -- .specs/STATE.md`, para o resumo de Discuss/Specify/Design/Tasks).
   **Lote 1/4 completo** (T1–T8, Fases 1–5: Foundation, WebSocket layer, Poller worker,
@@ -365,13 +371,27 @@ Detalhamento completo (contexto, consequências, alternativas) em [`docs/adr/`](
   completa do nome em toda a UI exigiria uma task nova de diretório de usuários, fora do
   plano de 26 tasks já aprovado — não implementado, não é um "fix" silencioso: fica
   registrado aqui para uma feature futura. Nenhum teste enfraquecido/pulado/deletado.
+  **Verifier independente completo** (agente fresco, dispatch pós-Lote 4) — reconfirma o
+  SPEC_DEVIATION do parágrafo anterior como um gap real e nomeado (não uma aprovação
+  silenciosa): a UI de fila/badge nunca mostra o nome real do assignee (spec.md P1
+  Takeover/AC5), só "Você"/"Outro operador" — Fix 1 em `validation.md`. Achou um segundo
+  gap não registrado pelos workers: `useInboxSocket.ts` reconecta com backoff mas nunca
+  dispara `invalidateQueries` no `open` handler, então o edge case de spec.md ("reconectar
+  E resincronizar via GET normal") só está meio-implementado — Fix 2 em `validation.md`.
+  Discrimination sensor (3 mutações: claim condicional do `takeover`, cálculo de `unread`,
+  preservação do original em `resendMessage`) — as 3 mortas pelos testes existentes,
+  nenhum mutante sobrevivente. Gate rodado do zero: 874/874, exit 0, contagem de teste
+  comparada contra `main` via `git worktree` isolado (740→874, +134 testes, 0 removido/
+  enfraquecido). 3 lições destiladas em `.specs/lessons.json` (L-024/025/026, todas
+  `candidate`).
 - **In-progress**: nenhum — todas as 26 tasks da feature estão commitadas e com gate
-  verde. Nenhum lote pendente.
-- **Next step**: dispachar o **Verifier independente de fim de feature** (spec-anchored
-  coverage check + discrimination sensor, `validate.md`) sobre o diff completo da feature
-  (`main`→`HEAD` em `feature/inbox-realtime`, commits desde antes de T1 até
-  `2c86532`), escrevendo `.specs/features/inbox-realtime/validation.md`. Isso é
-  responsabilidade do orquestrador principal — o worker do Lote 4 não o executou.
+  verde. Nenhum lote pendente. Verifier completo, não há re-verificação pendente (0/3
+  ciclos de fix→re-verify usados — os 2 gaps foram só registrados, não corrigidos:
+  Verifier não escreve código de feature).
+- **Next step**: decidir com o usuário se os 2 fix tasks de `validation.md` (nome real do
+  assignee na UI; resync por `GET` no reconnect do WS) são corrigidos antes do PR/merge
+  para `main`, ou se ficam registrados como débito conhecido para uma iteração seguinte —
+  nenhum dos dois bloqueia o MVP funcionalmente (gate verde, sensor sem sobrevivente).
 - **Blockers**: nenhum. Mesma nota operacional pré-existente de flake em
   `apps/crm-api`/`ai-gateway` (`integration`/`e2e` compartilham UMA instância de
   `MongoMemoryServer`, `vitest.config.ts` documenta a causa raiz) — dois flakes desse tipo
