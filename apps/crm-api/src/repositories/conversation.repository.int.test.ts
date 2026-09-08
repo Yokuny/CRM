@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import { Channel, Conversation, Customer, connect, disconnect, Message } from '@crm/db';
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import type { MetaMediaClient } from '../providers/metaMediaClient.js';
 import * as conversationRepository from './conversation.repository.js';
 
 // Sem `mongoose` aqui (AD-010/boundary estrutural: só packages/db importa
@@ -630,6 +631,106 @@ describe('conversation.repository', () => {
         conversationRepository.resendMessage(otherTenant, conversation._id.toString(), original.id),
       ).rejects.toThrow(conversationRepository.MessageNotFoundError);
       expect(await Message.countDocuments({})).toBe(1);
+    });
+  });
+
+  describe('getMessageMedia (INBOX-17/18 — spec.md P2 "preview de mídia sob demanda")', () => {
+    const ENC_KEY = 'unused-in-these-tests-because-createClient-is-injected';
+
+    const seedMediaMessage = async (
+      tenantId: string,
+      conversation: Awaited<ReturnType<typeof seedConversation>>['conversation'],
+      overrides: Partial<Record<string, unknown>> = {},
+    ) =>
+      Message.create({
+        Tenant: tenantId,
+        Conversation: conversation._id,
+        Channel: conversation.Channel,
+        Customer: conversation.Customer,
+        direction: 'in',
+        type: 'image',
+        media: { mediaId: 'wamid-media-1', mime: 'image/png', caption: 'foto' },
+        ...overrides,
+      });
+
+    const fakeClient = (impl: Partial<MetaMediaClient>): MetaMediaClient => ({
+      getMediaUrl: vi.fn(async () => ({ url: 'https://lookaside.fbsbx.com/temp/media-1', mimeType: 'image/png' })),
+      downloadMedia: vi.fn(async () => Buffer.from('imagem-bytes')),
+      ...impl,
+    });
+
+    it('returns the buffer (and resolved mime) from the Meta media flow on success, persisting nothing new (spec.md P2/AC2)', async () => {
+      const tenantId = randomId();
+      const { conversation } = await seedConversation(tenantId);
+      const message = await seedMediaMessage(tenantId, conversation);
+      const client = fakeClient({});
+      const createClient = vi.fn(() => client);
+
+      const result = await conversationRepository.getMessageMedia(
+        tenantId,
+        conversation._id.toString(),
+        message.id,
+        ENC_KEY,
+        { createClient },
+      );
+
+      expect(result.buffer).toEqual(Buffer.from('imagem-bytes'));
+      expect(result.mime).toBe('image/png');
+      expect(client.getMediaUrl).toHaveBeenCalledWith('wamid-media-1');
+      expect(client.downloadMedia).toHaveBeenCalledWith('https://lookaside.fbsbx.com/temp/media-1');
+      // Nunca persiste em disco/banco (design.md Tech Decisions) — nenhum
+      // documento novo nasce a partir de uma leitura de mídia.
+      expect(await Message.countDocuments({})).toBe(1);
+    });
+
+    it('throws MessageNotFoundError when the Message has no media pointer (e.g. a text message)', async () => {
+      const tenantId = randomId();
+      const { conversation } = await seedConversation(tenantId);
+      const textMessage = await Message.create({
+        Tenant: tenantId,
+        Conversation: conversation._id,
+        Channel: conversation.Channel,
+        Customer: conversation.Customer,
+        direction: 'in',
+        type: 'text',
+        text: 'sem mídia aqui',
+      });
+
+      await expect(
+        conversationRepository.getMessageMedia(tenantId, conversation._id.toString(), textMessage.id, ENC_KEY),
+      ).rejects.toThrow(conversationRepository.MessageNotFoundError);
+    });
+
+    it("throws MessageNotFoundError for a non-existent messageId or one from another tenant's Conversation (AD-010)", async () => {
+      const tenantId = randomId();
+      const otherTenant = randomId();
+      const { conversation } = await seedConversation(tenantId);
+      const message = await seedMediaMessage(tenantId, conversation);
+
+      await expect(
+        conversationRepository.getMessageMedia(tenantId, conversation._id.toString(), randomId(), ENC_KEY),
+      ).rejects.toThrow(conversationRepository.MessageNotFoundError);
+      await expect(
+        conversationRepository.getMessageMedia(otherTenant, conversation._id.toString(), message.id, ENC_KEY),
+      ).rejects.toThrow(conversationRepository.MessageNotFoundError);
+    });
+
+    it('throws MetaMediaUnavailableError when the injected client fails (e.g. expired media URL, spec.md P2/AC3)', async () => {
+      const tenantId = randomId();
+      const { conversation } = await seedConversation(tenantId);
+      const message = await seedMediaMessage(tenantId, conversation);
+      const client = fakeClient({
+        getMediaUrl: vi.fn(async () => {
+          throw new Error('Falha ao resolver URL de mídia (status 410)');
+        }),
+      });
+      const createClient = vi.fn(() => client);
+
+      await expect(
+        conversationRepository.getMessageMedia(tenantId, conversation._id.toString(), message.id, ENC_KEY, {
+          createClient,
+        }),
+      ).rejects.toThrow(conversationRepository.MetaMediaUnavailableError);
     });
   });
 });

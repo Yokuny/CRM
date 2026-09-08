@@ -1,4 +1,6 @@
 import {
+  Channel,
+  type ChannelDocument,
   Conversation,
   type ConversationDocument,
   type ConversationMode,
@@ -7,6 +9,7 @@ import {
   tenantScoped,
 } from '@crm/db';
 import { withDbTiming } from '../metrics/db.metric.js';
+import { createMetaMediaClient, type MetaMediaClient } from '../providers/metaMediaClient.js';
 
 export type ConversationRecord = {
   id: string;
@@ -313,4 +316,58 @@ export const resendMessage = async (
       templateLanguage: clone.templateLanguage,
       templateParams: clone.templateParams,
     };
+  });
+
+// INBOX-18: chamada à Meta indisponível/expirada (erro de rede, não-2xx, ou
+// qualquer outra falha do metaMediaClient injetado) — erro tipado, nunca um
+// erro genérico; o service (T17) traduz para 502 (design.md Error Handling
+// Strategy).
+export class MetaMediaUnavailableError extends Error {
+  constructor() {
+    super('Não foi possível carregar essa mídia agora');
+  }
+}
+
+export type GetMessageMediaDeps = {
+  // Injetável (mesmo molde de OutboxConsumerDeps.createClient,
+  // apps/ai-gateway/src/workers/outboxConsumer.ts) — produção usa
+  // createMetaMediaClient real, testes injetam um fake determinístico (nunca
+  // a rede real).
+  createClient?: (channel: ChannelDocument, encKey: string) => MetaMediaClient;
+};
+
+// INBOX-17/18 (design.md Componente 4/5): carrega a Message (tenant+
+// conversation-scoped, AD-010) e seu Channel, decifra o accessToken (mesmo
+// crypto.helper/env.CHANNEL_ENC_KEY de channel.service.ts) e busca o binário
+// na Media API da Meta — NUNCA persiste em disco/banco (design.md Tech
+// Decisions: response passthrough). Mensagem inexistente/de outro tenant/sem
+// campo `media` reusa o mesmo MessageNotFoundError já usado por
+// resendMessage (T13) — o service (T17) traduz para 404, mesmo idioma dos
+// demais 404 deste arquivo.
+export const getMessageMedia = async (
+  tenantId: string,
+  conversationId: string,
+  messageId: string,
+  encKey: string,
+  deps: GetMessageMediaDeps = {},
+): Promise<{ buffer: Buffer; mime?: string }> =>
+  withDbTiming('conversation.getMessageMedia', async () => {
+    const message = await Message.findOne(
+      tenantScoped({ _id: messageId, Tenant: tenantId, Conversation: conversationId }),
+    ).lean();
+    if (!message?.media) throw new MessageNotFoundError();
+
+    const channel = await Channel.findOne(tenantScoped({ _id: message.Channel, Tenant: tenantId })).lean();
+    if (!channel) throw new MessageNotFoundError();
+
+    const buildClient = deps.createClient ?? createMetaMediaClient;
+    const client = buildClient(channel, encKey);
+
+    try {
+      const { url, mimeType } = await client.getMediaUrl(message.media.mediaId);
+      const buffer = await client.downloadMedia(url);
+      return { buffer, mime: mimeType ?? message.media.mime };
+    } catch {
+      throw new MetaMediaUnavailableError();
+    }
   });
