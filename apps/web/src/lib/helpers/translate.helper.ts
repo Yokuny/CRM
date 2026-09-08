@@ -92,6 +92,10 @@ const translations: Record<string, string> = {
   'inbox.thread.empty': 'Nenhuma mensagem ainda.',
   'inbox.message.unsupported': 'Tipo de mensagem não suportado nesta tela.',
   'inbox.message.failed': 'Falhou',
+  'inbox.media.view': 'Ver',
+  'inbox.media.download': 'Baixar',
+  'inbox.media.loading': 'Carregando mídia…',
+  'inbox.media.error': 'Não foi possível carregar essa mídia agora.',
 };
 
 export const t = (key: string): string => translations[key] ?? key;

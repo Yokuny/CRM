@@ -6,6 +6,7 @@ import { formatDate } from '@/lib/helpers/formatDate.helper.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 import { cn } from '@/lib/utils.js';
 import { type MessageRecord, messagesQuery } from '@/query/message.js';
+import { MediaCard } from './media-card.js';
 
 // Limite único, sem "carregar mais": T23's Done-when só pede histórico
 // paginado renderizado em ordem cronológica (a paginação em si já é
@@ -15,10 +16,10 @@ import { type MessageRecord, messagesQuery } from '@/query/message.js';
 // nenhum Done-when desta task pede.
 const MESSAGE_LIMIT = 100;
 
-// T23 renderiza inline: texto e template. T24 (media-card.tsx) ainda não
-// existe nesta task — mensagens image/document mostram um placeholder
-// textual mínimo aqui; T24 substitui este branch pelo <MediaCard> real.
-function renderMessageBody(message: MessageRecord): ReactNode {
+// INBOX-17/18: texto e template renderizam inline; image/document delegam
+// pro <MediaCard> (T24) — fetch sob demanda, nunca automático ao renderizar
+// a thread.
+function renderMessageBody(message: MessageRecord, conversationId: string): ReactNode {
   if (message.text !== undefined) return <p className="text-sm">{message.text}</p>;
   if (message.templateName !== undefined) {
     return (
@@ -31,11 +32,7 @@ function renderMessageBody(message: MessageRecord): ReactNode {
     );
   }
   if (message.type === 'image' || message.type === 'document') {
-    return (
-      <p className="text-muted-foreground text-sm italic">
-        {message.type} · {message.media?.mime ?? ''} {message.media?.caption ?? ''}
-      </p>
-    );
+    return <MediaCard conversationId={conversationId} message={message} />;
   }
   return <p className="text-muted-foreground text-sm italic">{t('inbox.message.unsupported')}</p>;
 }
@@ -74,7 +71,7 @@ export function ConversationThread({ conversationId, renderFailedAction }: Threa
           key={message.id}
           className={cn('max-w-[80%] rounded-md border p-2', message.direction === 'out' ? 'ml-auto' : 'mr-auto')}
         >
-          {renderMessageBody(message)}
+          {renderMessageBody(message, conversationId)}
           <p className="text-muted-foreground text-xs">{formatDate(message.createdAt, 'dd/MM HH:mm')}</p>
           {message.status === 'failed' && (
             <div className="mt-1 flex items-center gap-2">
