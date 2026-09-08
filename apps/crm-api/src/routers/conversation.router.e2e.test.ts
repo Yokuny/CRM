@@ -353,6 +353,94 @@ describe('conversation routes', () => {
     });
   });
 
+  describe('POST /conversations/:id/messages/:messageId/resend (INBOX-14/16)', () => {
+    const seedFailedMessage = async (
+      tenantId: string,
+      conversation: Awaited<ReturnType<typeof seedConversationFixture>>['conversation'],
+      overrides: Partial<Record<string, unknown>> = {},
+    ) =>
+      Message.create({
+        Tenant: tenantId,
+        Conversation: conversation._id,
+        Channel: conversation.Channel,
+        Customer: conversation.Customer,
+        direction: 'out',
+        type: 'text',
+        status: 'failed',
+        text: 'mensagem que falhou',
+        ...overrides,
+      });
+
+    it('creates the new Message and responds 201 with it, leaving the original failed Message untouched (spec.md INBOX-14)', async () => {
+      const { tenant, cookie } = await seedTenantUser(['operador']);
+      const { conversation } = await seedConversationFixture(tenant._id.toString());
+      const original = await seedFailedMessage(tenant._id.toString(), conversation);
+      const app = buildTestApp();
+
+      const res = await request(app)
+        .post(`/conversations/${conversation._id.toString()}/messages/${original.id}/resend`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE);
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.id).not.toBe(original.id);
+      expect(res.body.data.status).toBe('queued');
+      expect(res.body.data.text).toBe('mensagem que falhou');
+      const persistedOriginal = await Message.findById(original._id).lean();
+      expect(persistedOriginal?.status).toBe('failed');
+    });
+
+    it('responds 400 when the Message is not status:failed (spec.md INBOX-16)', async () => {
+      const { tenant, cookie } = await seedTenantUser(['operador']);
+      const { conversation } = await seedConversationFixture(tenant._id.toString());
+      const sent = await seedFailedMessage(tenant._id.toString(), conversation, { status: 'sent' });
+      const app = buildTestApp();
+
+      const res = await request(app)
+        .post(`/conversations/${conversation._id.toString()}/messages/${sent.id}/resend`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE);
+
+      expect(res.status).toBe(400);
+      expect(await Message.countDocuments({})).toBe(1);
+    });
+
+    it("responds 404 for a non-existent messageId or one from another tenant's Conversation (spec.md INBOX-16)", async () => {
+      const { tenant, cookie } = await seedTenantUser(['operador']);
+      const { conversation } = await seedConversationFixture(tenant._id.toString());
+      const original = await seedFailedMessage(tenant._id.toString(), conversation);
+      const app = buildTestApp();
+
+      const notFoundRes = await request(app)
+        .post(`/conversations/${conversation._id.toString()}/messages/${randomId()}/resend`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE);
+      expect(notFoundRes.status).toBe(404);
+
+      const intruder = await seedTenantUser(['gestor']);
+      const crossTenantRes = await request(app)
+        .post(`/conversations/${conversation._id.toString()}/messages/${original.id}/resend`)
+        .set('Cookie', intruder.cookie)
+        .set('User-Agent', DEVICE);
+      expect(crossTenantRes.status).toBe(404);
+    });
+
+    it('responds 403 for a caller without canOperate, resending nothing', async () => {
+      const { tenant, cookie } = await seedTenantUser([]);
+      const { conversation } = await seedConversationFixture(tenant._id.toString());
+      const original = await seedFailedMessage(tenant._id.toString(), conversation);
+      const app = buildTestApp();
+
+      const res = await request(app)
+        .post(`/conversations/${conversation._id.toString()}/messages/${original.id}/resend`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE);
+
+      expect(res.status).toBe(403);
+      expect(await Message.countDocuments({})).toBe(1);
+    });
+  });
+
   describe('tenant isolation across all 3 endpoints (AIG-35)', () => {
     it("responds 404 for another tenant's operator on takeover, leaving mode untouched", async () => {
       const owner = await seedTenantUser(['admin']);

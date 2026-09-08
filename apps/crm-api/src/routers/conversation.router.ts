@@ -8,6 +8,7 @@ import { tenantAssignmentCheck } from '../middlewares/tenantAssign.middleware.js
 import { validBody, validParams } from '../middlewares/validation.middleware.js';
 
 const conversationIdParamSchema = z.object({ id: idSchema }).strict();
+const resendMessageParamSchema = z.object({ id: idSchema, messageId: idSchema }).strict();
 
 // spec.md "Papel exigido nos 3 endpoints headless": takeover/liberar/enviar
 // são ações operacionais (CORE-14) — qualquer papel autenticado do tenant,
@@ -113,6 +114,15 @@ export const createConversationRouter = (deps: ConversationRouterDeps): Router =
     validParams(conversationIdParamSchema),
     validBody(sendMessageSchema),
     conversationController.sendManualMessage,
+  );
+
+  router.post(
+    '/:id/messages/:messageId/resend',
+    deps.validToken,
+    tenantAssignmentCheck,
+    canOperate,
+    validParams(resendMessageParamSchema),
+    conversationController.resendMessage,
   );
 
   return router;

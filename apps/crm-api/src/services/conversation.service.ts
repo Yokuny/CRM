@@ -9,7 +9,12 @@ import type {
   MessageRecord,
 } from '../repositories/conversation.repository.js';
 import * as conversationRepository from '../repositories/conversation.repository.js';
-import { ConversationNotFoundError, OutsideWindowError } from '../repositories/conversation.repository.js';
+import {
+  ConversationNotFoundError,
+  MessageNotFailedError,
+  MessageNotFoundError,
+  OutsideWindowError,
+} from '../repositories/conversation.repository.js';
 
 // Mesmo clamp de page/limit de customer.service.ts (CORE-12) — local a este
 // arquivo (não importado do módulo irmão) porque page/limit já é um
@@ -113,6 +118,21 @@ export const sendManualMessage = async (id: string, tenantId: string, dto: SendM
   } catch (e) {
     if (e instanceof ConversationNotFoundError) throw new CustomError(e.message, 404);
     if (e instanceof OutsideWindowError) throw new CustomError(e.message, 400);
+    throw e;
+  }
+};
+
+// INBOX-14/16: traduz os erros tipados do repository (T13) — mensagem
+// inexistente/de outro tenant é 404 (mesmo idioma dos demais 404 deste
+// arquivo); status diferente de 'failed' é 400 (defesa em profundidade — a
+// UI só mostra o botão de reenvio para mensagens failed, mas o backend
+// valida de qualquer forma, design.md Error Handling Strategy).
+export const resendMessage = async (id: string, tenantId: string, messageId: string): Promise<MessageRecord> => {
+  try {
+    return await conversationRepository.resendMessage(tenantId, id, messageId);
+  } catch (e) {
+    if (e instanceof MessageNotFoundError) throw new CustomError(e.message, 404);
+    if (e instanceof MessageNotFailedError) throw new CustomError(e.message, 400);
     throw e;
   }
 };

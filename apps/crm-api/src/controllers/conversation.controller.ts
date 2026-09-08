@@ -81,3 +81,18 @@ export const sendManualMessage = async (req: Request, res: Response, next: NextF
     next(e);
   }
 };
+
+// INBOX-14/16: params já validados por resendMessageParamSchema (router) — o
+// Tenant vem sempre de req.tenantUser (AD-010).
+export const resendMessage = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const result = await conversationService.resendMessage(
+      req.params.id as string,
+      req.tenantUser.tenant as string,
+      req.params.messageId as string,
+    );
+    res.status(201).json(respObj({ data: result }));
+  } catch (e) {
+    next(e);
+  }
+};
