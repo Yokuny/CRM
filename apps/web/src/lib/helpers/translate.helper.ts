@@ -75,6 +75,7 @@ const translations: Record<string, string> = {
   'inbox.title': 'Caixa de entrada',
   'inbox.queue.title': 'Fila de conversas',
   'inbox.thread.select_hint': 'Selecione uma conversa na fila para ver o histórico.',
+  'inbox.thread.not_found': 'Conversa não encontrada nesta página da fila. Ajuste os filtros ou a paginação.',
   'inbox.column.customer': 'Cliente',
   'inbox.column.mode': 'Modo',
   'inbox.column.assignee': 'Responsável',
@@ -96,6 +97,12 @@ const translations: Record<string, string> = {
   'inbox.media.download': 'Baixar',
   'inbox.media.loading': 'Carregando mídia…',
   'inbox.media.error': 'Não foi possível carregar essa mídia agora.',
+  'inbox.composer.window_closed': 'A janela de 24h está fechada. Continue a conversa pelo seu WhatsApp.',
+  'inbox.composer.open_whatsapp': 'Abrir no WhatsApp',
+  'inbox.composer.placeholder': 'Escreva uma mensagem…',
+  'inbox.composer.send': 'Enviar',
+  'inbox.composer.error': 'Não foi possível enviar a mensagem.',
+  'inbox.resend.action': 'Reenviar',
 };
 
 export const t = (key: string): string => translations[key] ?? key;

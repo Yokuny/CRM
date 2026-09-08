@@ -10,6 +10,18 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 // precisa de um `get` mockado para não bater na rede real neste teste de
 // página isolado (mesmo padrão de customers/details.unit.test.tsx). O
 // conteúdo da fila em si é testado em conversation-queue.unit.test.tsx.
+// T25: InboxPage também resolve a Conversation aberta via uma segunda
+// conversationsQuery (limit alto, sem filtro — ver index.tsx) para montar
+// Composer/ResendButton; sem isso o painel cairia no estado "não
+// encontrada" em vez de montar a thread.
+const OPEN_CONVERSATION = {
+  id: '507f1f77bcf86cd799439011',
+  customer: 'cust1',
+  mode: 'bot',
+  lastActivityAt: '2026-01-01T00:00:00.000Z',
+  unread: false,
+  windowOpen: true,
+};
 const getMock = vi.fn((path: string) => {
   if (path === '/auth/session') {
     return Promise.resolve({
@@ -20,6 +32,9 @@ const getMock = vi.fn((path: string) => {
         role: ['operador'],
       },
     });
+  }
+  if (path === '/conversations?limit=100') {
+    return Promise.resolve({ success: true, data: { items: [OPEN_CONVERSATION], total: 1 } });
   }
   return Promise.resolve({ success: true, data: { items: [], total: 0 } });
 });
