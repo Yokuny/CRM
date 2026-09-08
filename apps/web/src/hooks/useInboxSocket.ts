@@ -113,6 +113,17 @@ export function useInboxSocket(conversationId: string | undefined): void {
         if (conversationIdRef.current) {
           socket.send(JSON.stringify({ type: 'subscribe', conversationId: conversationIdRef.current }));
         }
+        // spec.md Edge Case 1: uma queda de conexão pode ter perdido eventos
+        // (ex.: reinício do crm-api) — ao (re)conectar, resincroniza via GET
+        // normal (invalidateQueries, nunca um refetch imediato de rede: só
+        // marca stale, quem decide buscar de novo é o observer ativo de cada
+        // query, mesmo padrão de query/message.ts). A fila é sempre
+        // resincronizada; a thread aberta só quando existe uma (T20 mesma
+        // ref usada para o subscribe acima).
+        queryClient.invalidateQueries({ queryKey: conversationKeys.lists() });
+        if (conversationIdRef.current) {
+          queryClient.invalidateQueries({ queryKey: messageKeys.listsForConversation(conversationIdRef.current) });
+        }
       });
 
       socket.addEventListener('message', (event) => {

@@ -162,6 +162,39 @@ describe('useInboxSocket (INBOX-04/07)', () => {
     expect(instances[1].sent).toContainEqual(JSON.stringify({ type: 'subscribe', conversationId: 'conv-1' }));
   });
 
+  it('resyncs the queue and the open-thread caches via invalidateQueries on reconnect (spec.md edge case: "reconectar e resincronizar via GET", validation.md Fix 2)', () => {
+    const queryClient = new QueryClient();
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+    renderWithClient('conv-1', queryClient);
+    instances[0].emitOpen();
+    // A conexão inicial também passa pelo handler 'open' — isola só as
+    // chamadas disparadas pelo ciclo close→backoff→novo socket→open (o
+    // reconnect que o edge case do spec.md descreve).
+    invalidateSpy.mockClear();
+
+    instances[0].emitClose();
+    vi.advanceTimersByTime(1000);
+    expect(instances).toHaveLength(2);
+    instances[1].emitOpen();
+
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: conversationKeys.lists() });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: messageKeys.listsForConversation('conv-1') });
+  });
+
+  it('resyncs only the queue (not a thread) on reconnect when no Conversation is open', () => {
+    const queryClient = new QueryClient();
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+    renderWithClient(undefined, queryClient);
+    instances[0].emitOpen();
+    invalidateSpy.mockClear();
+
+    instances[0].emitClose();
+    vi.advanceTimersByTime(1000);
+    instances[1].emitOpen();
+
+    expect(invalidateSpy).toHaveBeenCalledExactlyOnceWith({ queryKey: conversationKeys.lists() });
+  });
+
   it('sends unsubscribe for the previous Conversation and subscribe for the new one when the open thread changes', () => {
     const queryClient = new QueryClient();
     const { rerender } = renderWithClient('conv-1', queryClient);
