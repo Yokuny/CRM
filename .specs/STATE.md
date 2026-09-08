@@ -259,220 +259,40 @@ Detalhamento completo (contexto, consequências, alternativas) em [`docs/adr/`](
 
 ## Handoff
 
-- **Feature**: `inbox-realtime` (feature 6 de 11) — Execute completo (26/26 tasks) **+
-  Verifier independente iteração 2 completa, PASS limpo, sem gaps abertos**
-  (`.specs/features/inbox-realtime/validation.md`, 2026-09-08). Os 2 gaps da iteração 1
-  (Fix 1 `8695bb9`/assignee name, Fix 2 `b78a91c`/WS reconnect resync) foram
-  re-verificados por um agente fresco (não confiou no relato do implementador) com
-  evidência `file:line` + valor real (não placeholder) e 3 mutações novas do sensor de
-  discriminação, todas mortas — **feature pronta para PR/merge em `main`**. `ai-gateway`
-  (feature 5) segue Execute completo, Verifier PASS, 48/48 Verified, mergeada em `main`
-  (PR #4, `bdf9aba`). Todas as 5 features anteriores estão em `main`.
-- **Phase / Task**: Discuss → Specify → Design → Tasks → Execute (4 lotes) → Verifier
-  completos — ver histórico desta seção (`git log -p -- .specs/STATE.md`) para o
-  detalhamento de cada fase/lote antes desta atualização. **Fix batch pós-Verifier
-  completo nesta sessão** (implementador único, sem sub-agentes — só 2 tarefas atômicas):
-  Fix 1 e Fix 2 de `validation.md`, cada um seguindo o ciclo implementar→testar→gate→
-  commit de `implement.md`, um commit por fix.
-  - **Fix 1** (`8695bb9`, Major — Takeover/AC5): `GET /conversations`, `POST
-    /:id/takeover` e `POST /:id/release` agora resolvem `assigneeName` no back-end
-    (`conversation.service.ts`: `resolveAssigneeName`/`attachAssigneeNames`, reusando o
-    MESMO `findUserView` de `auth.repository.ts` já usado para o conflito 409 — nenhuma
-    lógica de busca de User duplicada). `ConversationRecord`/`ConversationListItem`
-    (repository) e o espelho do front (`query/conversation.ts`) ganharam
-    `assigneeName?: string`, nunca preenchido pelo repository (só o service tem acesso ao
-    User). `conversation-queue.tsx`/`takeover-badge.tsx` passaram a mostrar o nome real
-    (`assigneeName`) em vez de "Você"/"Outro operador" — decisão: spec.md AC5 pede
-    literalmente só "o nome do assignee" quando `mode:'human'`, sem exigir distinção
-    "é você"/"é outro operador", então essa distinção (e a dependência de `sessionQuery`
-    que só existia para ela) foi removida dos dois componentes, não só substituída.
-    Testes: 3 novos no `conversation.router.e2e.test.ts` (as 3 rotas, assertando o nome
-    real vs. o id cru) + assertions reescritas em `conversation-queue.unit.test.tsx`/
-    `takeover-badge.unit.test.tsx` (antes esperavam "Você"/"Outro operador" — texto do
-    próprio gap sendo corrigido, não um teste "genuinamente errado"; documentado, não
-    silencioso). Desvio deliberado do texto literal do fix task: `conversation.repository.
-    int.test.ts` NÃO foi estendido — `assigneeName` é resolvido no SERVICE (não no
-    repository, que não tem acesso a User), então só o teste e2e (que exercita o service)
-    pode provar o campo; adicionar a asserção no nível de repository teria testado um
-    campo que o repository nunca preenche.
-  - **Fix 2** (`b78a91c`, Minor — Edge Case 1): o handler `open` de `useInboxSocket.ts`
-    (reconexão) agora chama `queryClient.invalidateQueries({queryKey:
-    conversationKeys.lists()})` sempre, e `invalidateQueries({queryKey:
-    messageKeys.listsForConversation(conversationIdRef.current)})` quando há uma
-    conversa aberta — antes só reenviava `subscribe`, nunca resincronizava via GET,
-    violando o edge case do spec.md ("reconectar E resincronizar via GET normal"). 2
-    testes novos em `useInboxSocket.unit.test.tsx` (ciclo close→backoff→novo
-    socket→open, asserta os 2 `queryKey`s exatos chamados; e um segundo caso sem thread
-    aberta, asserta que SÓ a fila é invalidada). Todos os 6 testes pré-existentes do
-    arquivo continuam verdes sem alteração.
-  - Gate final da sessão: `pnpm run check` verde, **879 testes** (874 base + 3 do Fix 1 +
-    2 do Fix 2), 131 arquivos, exit 0. `pnpm -r exec tsc --noEmit` rodado limpo em TODO o
-    monorepo antes de cada um dos 2 commits (precaução extra pedida pelo usuário — nenhum
-    bug de tipagem novo encontrado desta vez). Biome só com os mesmos 9 warnings
-    pré-existentes e não relacionados em `apps/web/.../customers/list/index.tsx` (arquivo
-    não tocado por esta feature nem por este fix batch). Nenhum teste deletado/pulado; os
-    únicos ajustes de asserção pré-existente são os documentados no Fix 1 acima.
-- **Completed (Execute original, antes deste fix batch)**: Planejamento completo (ver
-  histórico desta seção antes desta atualização, em `git log -p -- .specs/STATE.md`, para
-  o resumo de Discuss/Specify/Design/Tasks).
-  **Lote 1/4 completo** (T1–T8, Fases 1–5: Foundation, WebSocket layer, Poller worker,
-  Server wiring, `GET /conversations`) — 8 commits, gate final `pnpm run check` verde
-  (786 testes). Desvios registrados pelo worker (sem violar spec/design): (1) bug real
-  corrigido no cursor do `inboxPoller.pollOnce` (`$gt`+`new Date()` perdia mensagem no
-  mesmo milissegundo do cursor — trocado por `$gte` + cursor avançado ao
-  `max(updatedAt)+1ms`); (2) dependência `cookie` fixada em `2.0.1` (self-typed) em vez de
-  `0.7.2` (base do `cookie-parser`, citada no design.md) — mitigado com teste comparando
-  `extractHandshakeCookie` ao middleware `cookie-parser` real; (3) T6 tocou também
-  `app.ts` e um novo `authDeps.ts` (não listados no "Where" da tarefa, mas exigidos pelo
-  próprio texto "Reuses" da tarefa — construção de `authDeps` movida para módulo
-  compartilhado). Nenhum teste enfraquecido/pulado/deletado.
-  **Lote 2/4 completo** (T9–T14, Fases 6–8: `GET /conversations/:id/messages`, takeover
-  claim-condicional + conflito nomeado 409, `POST /:id/messages/:messageId/resend`) — 8
-  commits (6 de task + 1 fix de tipagem + 1 docs), gate final `pnpm run check` verde (811
-  testes, tsc limpo em todo o monorepo, biome só com 9 warnings pré-existentes e não
-  relacionados em `apps/web/.../customers/list/index.tsx`, arquivo não tocado por esta
-  feature). Desvios registrados pelo worker (sem violar spec/design): (1) T11 também
-  adicionou `findConversationById` (leitura simples, tenant-scoped) em
-  `conversation.repository.ts` — não estava no "Where" de T12 (que só lista
-  service+controller), mas o próprio texto de T12 exige que o service "busque a
-  Conversation de novo" pra distinguir "não existe" de "já assumida por outro", e não
-  havia leitura genérica de Conversation por id já exposta; colocado em T11 (mesmo
-  arquivo já em escopo) em vez de expandir o escopo de T12; (2)
-  `ConversationAlreadyAssignedError` foi definida em `conversation.service.ts` (não em
-  `conversation.repository.ts` como os erros tipados anteriores) porque é o service —
-  não o repository — quem tem a informação (nome do assignee) pra construir a mensagem;
-  o controller a importa e traduz pra 409, exatamente como design.md descreve ("service
-  lança → controller traduz"); (3) durante o gate check foi descoberto que o Full gate
-  (`pnpm vitest run`) não roda `tsc`, então dois bugs de tipagem em helpers de teste
-  (`seedMessage`/`messages[]` implicitamente `any`, herdados de T9; e o mesmo padrão
-  depois em T14) só apareceram ao rodar `tsc --noEmit` preventivamente antes de cada
-  commit — corrigidos com anotações de tipo (`Awaited<ReturnType<typeof seedX>>`), um
-  commit de fix isolado (`062a057`→re-splitado em `05b49bc`) para não misturar com o
-  commit de feature de T10. Nenhum teste enfraquecido/pulado/deletado.
-  **Lote 3/4 completo** (T15–T20, Fases 9–10: `metaMediaClient`/proxy de mídia sob
-  demanda, camada de dados `apps/web` — `query/conversation.ts`, `query/message.ts`,
-  `useInboxSocket`) — 8 commits (6 de task + 1 fix de formatação + 1 docs:
-  `5aa4d44`→T15, `0ed4001`→T16, `a30d031`→style/format, `607a373`→T17, `25dd8cc`→T18,
-  `b6e4bdd`→T19, `eadbe6f`→T20, `57fb587`→docs), gate final `pnpm run check` verde (844
-  testes, tsc limpo em todo o monorepo, biome só com os mesmos 9 warnings pré-existentes
-  e não relacionados em `apps/web/.../customers/list/index.tsx`, arquivo não tocado por
-  esta feature). Desvios registrados pelo worker (sem violar spec/design): (1) T17 (`GET
-  /:id/messages/:messageId/media`) descobriu que o `errorHandler.middleware.ts` global
-  mascara toda mensagem de erro com status `>=500` ("Erro interno do servidor"), o que
-  apagaria a mensagem legível de `MetaMediaUnavailableError` exigida pelo spec.md (P2/AC3,
-  "erro legível") no 502 — resolvido SEM tocar o middleware global (fora do "Where" de
-  T17): o `conversation.controller.ts` responde `CustomError`s conhecidos diretamente
-  (`res.status(e.status).json(badRespObj(...))`) nessa rota específica, só delegando a
-  `next(e)` erros verdadeiramente desconhecidos; (2) T18 encontrou uma incompatibilidade
-  real entre o "Done when" da task (`conversationQuery(id)`, no molde de
-  `customerQuery(id)`) e o contrato de backend de fato — `conversation.router.ts` nunca
-  expõe `GET /conversations/:id` (confirmado lendo o arquivo inteiro, e os 26 tasks do
-  plano completo nunca alocam uma task pra criar esse endpoint) — resolvido seguindo o
-  MESMO precedente já aceito neste repositório em `query/process.ts` para a situação
-  idêntica ("Não há GET /processes/:id... resolve filtrando `items` da lista"): só
-  `conversationsQuery` (lista) foi implementada; `conversationQuery(id)` foi
-  propositalmente omitida (documentado como `SPEC_DEVIATION` no código e no checkbox de
-  `tasks.md`) em vez de chamar um endpoint inexistente; (3) durante o gate check do T17
-  foi descoberto que `pnpm run format` (Biome) teria reformatado um arquivo de teste já
-  commitado no T15 (`metaMediaClient.unit.test.ts`) — separado num commit `style` próprio
-  (`a30d031`) em vez de misturado ao commit de T17, mantendo "uma task = um commit".
-  Nenhum teste enfraquecido/pulado/deletado.
-  **Lote 4/4 completo — ÚLTIMO LOTE, feature Execute encerrado** (T21–T26, Fase 11: telas
-  do Inbox — esqueleto da rota, fila, thread, mídia sob demanda, composer com fallback
-  `wa.me`, badge de takeover/release) — 7 commits (6 de task + 1 docs: `9b80e85`→T21,
-  `7cb19c9`→T22, `cd3432c`→T23, `914743a`→T24, `47062c9`→T25, `ed660e5`→T26,
-  `2c86532`→docs), gate final `pnpm run check` verde (**874 testes**, 131 arquivos, tsc
-  limpo em todo o monorepo, biome só com os mesmos 9 warnings pré-existentes e não
-  relacionados em `apps/web/.../customers/list/index.tsx`, arquivo não tocado por esta
-  feature). Desvios registrados pelo worker (sem violar spec/design): (1) `routeTree.gen.ts`
-  regenerado via `pnpm --filter web exec vite build --logLevel error` (build real, não
-  `pnpm --filter web run dev`) — não deixa processo pendurado e já dobra como o passo de
-  build do CLAUDE.md ("único passo que empacota o app de fato"); (2)
-  `apps/web/src/lib/helpers/translate.helper.ts` (dicionário `t()` compartilhado) foi
-  tocado em TODAS as 6 tasks — fora do "Where" de cada uma, mas exigido pelo próprio texto
-  delas (toda string visível passa por `t()`, CLAUDE.md); (3) `index.tsx` (criado por T21)
-  foi reaberto por T22/T23/T25/T26 para trocar cada placeholder pelo componente real e
-  para adicionar uma segunda `conversationsQuery({limit:100})` dedicada a resolver a
-  Conversation de `search.id` (necessária a partir de T25: Composer/TakeoverBadge
-  precisam de `mode`/`assignee`/`windowOpen`, que `thread.tsx` não precisa) — mesmo padrão
-  de reabertura incremental já usado no Lote 1 (T6→app.ts); (4) **SPEC_DEVIATION
-  substancial**: `GET /conversations`/`POST /:id/takeover`/`/release` (T7/T11, já
-  commitados nos Lotes 1–2, fora do escopo deste lote) só devolvem `assignee` como o
-  ObjectId cru do User — não existe endpoint de diretório de usuários exposto ao
-  `apps/web`. spec.md (P1/AC5) pede "o nome do assignee"; como aproximação honesta e
-  documentada em código (`conversation-queue.tsx`, `takeover-badge.tsx`), mostra-se "Você"
-  quando o assignee é o próprio operador da sessão (`sessionQuery`) e "Outro operador"
-  caso contrário — nunca o ObjectId cru. O único lugar onde o NOME real aparece é o toast
-  de conflito 409 do takeover (`takeover-badge.tsx`), porque ali quem monta a mensagem é o
-  próprio back-end (`ConversationAlreadyAssignedError`, já resolvia `User.name` desde o
-  Lote 2) — plenamente conforme ao spec nesse caminho específico. Resolver a exibição
-  completa do nome em toda a UI exigiria uma task nova de diretório de usuários, fora do
-  plano de 26 tasks já aprovado — não implementado, não é um "fix" silencioso: fica
-  registrado aqui para uma feature futura. Nenhum teste enfraquecido/pulado/deletado.
-  **Verifier independente completo** (agente fresco, dispatch pós-Lote 4) — reconfirma o
-  SPEC_DEVIATION do parágrafo anterior como um gap real e nomeado (não uma aprovação
-  silenciosa): a UI de fila/badge nunca mostra o nome real do assignee (spec.md P1
-  Takeover/AC5), só "Você"/"Outro operador" — Fix 1 em `validation.md`. Achou um segundo
-  gap não registrado pelos workers: `useInboxSocket.ts` reconecta com backoff mas nunca
-  dispara `invalidateQueries` no `open` handler, então o edge case de spec.md ("reconectar
-  E resincronizar via GET normal") só está meio-implementado — Fix 2 em `validation.md`.
-  Discrimination sensor (3 mutações: claim condicional do `takeover`, cálculo de `unread`,
-  preservação do original em `resendMessage`) — as 3 mortas pelos testes existentes,
-  nenhum mutante sobrevivente. Gate rodado do zero: 874/874, exit 0, contagem de teste
-  comparada contra `main` via `git worktree` isolado (740→874, +134 testes, 0 removido/
-  enfraquecido). 3 lições destiladas em `.specs/lessons.json` (L-024/025/026, todas
-  `candidate`).
-  **Verifier iteração 2 completa** (agente fresco, dispatch pós-fix-batch, sem contexto
-  herdado do implementador nem do Verifier da iteração 1) — re-derivou os 2 gaps
-  independentemente em vez de confiar no relato do implementador. **Fix 1 confirmado
-  fechado**: `conversation.service.ts:50-67` (`resolveAssigneeName`/`attachAssigneeNames`)
-  resolve o nome real em `GET /conversations`/`takeover`/`release`; evidência com VALOR
-  real (não placeholder) — `conversation.router.e2e.test.ts:262-263,629-631` (`expect(...
-  assigneeName).toBe(user.name)`), `conversation-queue.unit.test.tsx`/`takeover-badge.
-  unit.test.tsx` (`findByText('Ana')`/`findByText('Carlos')`). **Fix 2 confirmado
-  fechado**: `useInboxSocket.ts:123-126` chama `invalidateQueries` com os 2 `queryKey`s
-  exatos no handler `open`; evidência com args exatos (não só call count) —
-  `useInboxSocket.unit.test.tsx:174-196` (`toHaveBeenCalledWith`/`toHaveBeenCalledExactlyOnceWith`
-  nos `queryKey`s literais). **Sensor de discriminação: 3 mutações novas focadas nos 2
-  fixes** (forçar `assigneeName` sempre `undefined`, `attachAssigneeNames` virar no-op,
-  remover os 2 `invalidateQueries` do handler `open`) — as 3 mortas pelos testes novos
-  (6/6 mutações mortas somando as 2 iterações), todas aplicadas em estado descartável e
-  revertidas (`git checkout --`, `git status --short` vazio ao final). `git diff --stat
-  23d4a75..HEAD` confirmado tocando só os 11 arquivos esperados (nada fora do escopo dos 2
-  fixes) — os outros 22 ACs da iteração 1 permanecem válidos sem re-derivação. Gate
-  rodado do zero 3x: **879/879, exit 0** no run de registro; uma execução intermediária
-  bateu no flake pré-existente e já documentado (`MongoMemoryServer` compartilhado) num
-  teste não relacionado de `crm-web-shell` (`tenant-isolation.int.test.ts`), isolado e
-  confirmado não-regressão (12/12 rodando sozinho). Nenhuma lição nova destilada — L-024/
-  L-025 (iteração 1) já cobrem os 2 sinais; sem mutante sobrevivente/gap novo desta vez.
-  **Veredito: ✅ Ready, PASS limpo, sem gaps abertos.** `validation.md`/`spec.md`
-  atualizados no commit `dd787fe` (INBOX-10: "Verified with gap" → "Verified" limpo).
-- **In-progress**: nenhum — as 26 tasks da feature + os 2 fix tasks do Verifier (Fix 1
-  `8695bb9`, Fix 2 `b78a91c`) + a re-verificação independente (iteração 2, `dd787fe`)
-  estão todos commitados com gate verde. Ciclo de fix→re-verify encerrado na iteração 2
-  (de no máximo 3) — PASS limpo, sem necessidade de iteração 3.
-- **Next step**: nenhuma ação de código pendente nesta feature. Decisão de produto/
-  processo: abrir PR de `feature/inbox-realtime` para `main` (branch ainda não tem push) e
-  seguir o merge. Fix 3 (advisory, `conversationQuery(id)` nunca construído) não tinha
-  ação de código pendente — nenhuma mudança necessária, só nota para autoria futura de
-  `tasks.md`.
-- **Blockers**: nenhum. Mesma nota operacional pré-existente de flake em
-  `apps/crm-api`/`ai-gateway` (`integration`/`e2e` compartilham UMA instância de
-  `MongoMemoryServer`, `vitest.config.ts` documenta a causa raiz) — dois flakes desse tipo
-  ocorreram durante o Lote 3 (ver acima) e mais um durante o gate check da re-verificação
-  da iteração 2 (`tenant-isolation.int.test.ts`, `crm-web-shell`), todos autorresolvidos no
-  retry, em arquivos não tocados por esta feature — não é regressão. Nenhum flake
-  observado durante o Lote 4 nem durante o fix batch em si.
-- **Uncommitted files**: nenhum — working tree limpo após os commits de Fix 1 (`8695bb9`),
-  Fix 2 (`b78a91c`) e da re-verificação/Verifier iteração 2 (`dd787fe`). `acc.txt` na raiz
+- **Feature**: `inbox-realtime` (feature 6 de 11) — **COMPLETA e mergeada em `main`**
+  (PR #5, merge commit `7713f41`, 2026-09-08). Discuss→Specify→Design→Tasks→Execute (4
+  lotes de sub-agentes)→Verifier (2 iterações, PASS limpo na 2ª) — todo o histórico
+  detalhado de cada fase/lote/fix fica em `git log -p -- .specs/STATE.md` (procure pelos
+  commits `docs(state)` desta feature) e em
+  `.specs/features/inbox-realtime/validation.md`. Resumo executivo em
+  [`docs/roadmap.md`](../docs/roadmap.md#6-inbox-realtime-). `docs/roadmap.md` também
+  atualizado nesta sessão: feature 6 movida pra "Entregue", feature 7 (`catalog-orders`)
+  marcada 🔜, baseline de testes atualizado pra 879.
+- **Phase / Task**: nenhuma — feature encerrada. Próxima feature do roadmap
+  (`catalog-orders`, 7/11) ainda não iniciou nenhuma fase (Discuss não começou).
+- **Completed**: 26/26 tasks + 2 fix tasks pós-Verifier (nome real do assignee,
+  resync de cache no reconnect WS) + Verifier iteração 2 com PASS limpo (24/24 ACs, 6/6
+  mutações do sensor mortas no total, 879 testes). PR #5 aberta e mergeada nesta sessão
+  (squash não usado — merge commit simples, mesmo padrão de PR #2/#3; branch
+  `feature/inbox-realtime` mantida no remoto, não deletada, a pedido do usuário — ele vai
+  abrir uma worktree numa outra sessão referenciando este trabalho).
+- **In-progress**: nenhum.
+- **Next step**: iniciar o Discuss/Specify da feature 7 (`catalog-orders`) quando o
+  usuário pedir — ver `docs/roadmap.md` para o escopo já rascunhado (models `Product`/
+  `Order`, tools `search_products`/`get_order_status`/Anel A, `create_order`/Anel B com
+  `pending_approval`, dependência da feature 6 já satisfeita — liberação do operador via
+  Inbox já existe).
+- **Blockers**: nenhum.
+- **Uncommitted files**: nenhum além desta própria atualização de `STATE.md` +
+  `docs/roadmap.md` (ambos commitados juntos logo após esta escrita). `acc.txt` na raiz
   continua untracked (credenciais de dev local em texto puro) — não commitar.
-- **Branch**: `feature/inbox-realtime` (criada a partir de `main` no início da sessão de
-  Execute, antes do commit de T1) — sem push ainda.
-- **Nota operacional — skill não registrada**: a skill `tlc-spec-driven` não aparece no
-  listing de skills desta sessão (arquivos existem em `tlc-spec-driven/` na raiz do repo,
-  versionados no git, mas não há `.claude/skills/` no CRM). O usuário optou explicitamente
-  por "apenas leia `./tlc-spec-driven/SKILL.md`" em vez de registrar em `.claude/skills/`
-  — mesma resolução (a) já documentada numa memória de outro projeto (IOT) pra esse
-  padrão de problema. Sessões futuras devem esperar a mesma falha e ler os arquivos
-  manualmente (`SKILL.md` + `references/{implement,sub-agents,coding-principles}.md` no
-  mínimo), a menos que o usuário peça o registro formal.
+- **Branch**: `main` (mergeado). `feature/inbox-realtime` existe no remoto, não deletada.
+- **Nota operacional — skill não registrada** (ainda vale para a próxima feature): a
+  skill `tlc-spec-driven` não aparece no listing de skills desta sessão (arquivos existem
+  em `tlc-spec-driven/` na raiz do repo, versionados no git, mas não há `.claude/skills/`
+  no CRM). Em sessão anterior o usuário optou explicitamente por "apenas leia
+  `./tlc-spec-driven/SKILL.md`" em vez de registrar em `.claude/skills/` — mesma
+  resolução (a) já documentada numa memória de outro projeto (IOT) pra esse padrão de
+  problema. Sessões futuras devem esperar a mesma falha e ler os arquivos manualmente
+  (`SKILL.md` + `references/{implement,sub-agents,coding-principles,validate,lessons}.md`
+  no mínimo), a menos que o usuário peça o registro formal.

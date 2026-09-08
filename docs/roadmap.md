@@ -17,14 +17,14 @@ em [`.specs/STATE.md`](../.specs/STATE.md); specs por feature em [`.specs/featur
 | 3 | `crm-core` | ✅ | 18 (`CORE-*`) | `main` (squash, PR #2) |
 | 4 | `crm-web-shell` | ✅ | 17 (`WEB-*`) | `main` (squash, PR #3) |
 | 5 | `ai-gateway` | ✅ | 48 (`AIG-01..48`) | `main` (squash, PR #4) |
-| 6 | `inbox-realtime` | 🔜 | — | — |
-| 7 | `catalog-orders` | ⬜ | — | — |
+| 6 | `inbox-realtime` | ✅ | 19 (`INBOX-01..19`) | `main` (PR #5) |
+| 7 | `catalog-orders` | 🔜 | — | — |
 | 8 | `payments-asaas` | ⬜ | — | — |
 | 9 | `scheduling` | ⬜ | — | — |
 | 10 | `kanban-tool` | ⬜ | — | — |
 | 11 | `ops-hardening` | ⬜ | — | — |
 
-Baseline atual: **739 testes passando**, `tsc --noEmit` limpo, `biome check .` limpo,
+Baseline atual: **879 testes passando**, `tsc --noEmit` limpo, `biome check .` limpo,
 CI rodando o Build gate em todo push/PR ([AD-031](../.specs/STATE.md)).
 
 > As features 6 a 11 tiveram nome e escopo derivados dos ADRs ainda não implementados e dos
@@ -66,6 +66,17 @@ harness `ingest → guard.input → context.build → loop → guard.output → 
 com `claude-haiku-4-5`, `turnLock` por conversa, outbox com claim atômico + reaper,
 janela de 24h, idle takeover sweep, golden set determinístico no CI.
 
+### 6. `inbox-realtime` ✅
+
+WebSocket (`ws`) no `crm-api`, alimentado por poller global ~2s ([AD-006](../.specs/STATE.md)),
+com fan-out por salas `tenant:<id>`/`tenant:<id>:conversation:<id>`. Leitura (`GET /conversations`,
+`GET /conversations/:id/messages`), `takeover` reescrito como claim condicional com conflito
+nomeado (409), reenvio de `Message failed` como clone, proxy de mídia sob demanda da Meta.
+Telas de Inbox no `apps/web` (fila, thread, composer com fallback `wa.me` para janela fechada,
+badge de takeover/release, preview de mídia). Verificado em 2 iterações do Verifier — 2 gaps
+reais corrigidos (nome do assignee, resync de cache no reconnect WS), 6/6 mutações do sensor
+de discriminação mortas.
+
 ---
 
 ## Superfície de tools (ADR-0004 / ADR-0009)
@@ -89,39 +100,7 @@ Fixa e idêntica entre tenants. 4 de 10 implementadas.
 
 ## A fazer
 
-### 6. `inbox-realtime` 🔜
-
-Superfície humana da conversa. Hoje o bot atende e ninguém do time enxerga: o takeover
-existe como endpoint, sem tela.
-
-**O que já existe:** `Conversation`, `Message`, `AiSession`, `Channel`; `POST /conversations/:id/takeover`,
-`/release` e `/messages` ([conversation.router.ts](../apps/crm-api/src/routers/conversation.router.ts));
-`lastInboundAt` / `windowExpiresAt` no `Conversation`; idle sweep devolvendo a conversa ao bot.
-
-**O que falta:**
-- WebSocket no `crm-api` alimentado por poller (~2s) que só varre tenants com socket conectado
-  ([AD-006](../.specs/STATE.md)) — **nenhuma linha existe hoje**, nem dependência `ws` em nenhum `package.json`
-- Leitura: `GET /conversations` (fila, não lidas, filtro por `mode`/assignee) e `GET /conversations/:id/messages` (paginado)
-- Telas de Inbox no `apps/web`: fila, thread, composer, indicador de `mode` bot/human, takeover/release
-- Reenvio manual de `Message` com `status: failed` — adiado explicitamente pela feature 5
-- Envio de template HSM quando a janela de 24h estiver fechada
-
-**Decisões já tomadas (Discuss, 2026-09-08):**
-
-| Questão | Decisão |
-|---|---|
-| Auth do WebSocket | Cookie httpOnly do [AD-014](../.specs/STATE.md) validado no handshake — sem ticket de conexão, sem access token separado |
-| Escopo do push | Só mensagens novas. Mudança de `mode` e transição de `status` de envio não são empurradas nesta rodada |
-| Janela de 24h na UI | Sem campo novo: a UI deriva o estado de `windowExpiresAt`/`lastInboundAt`, que o `ai-gateway` já grava, mais os `createdAt`/`updatedAt` do `timestamps: true` |
-
-**Ainda aberto (levar para o Discuss/Specify):** de onde vem o nome do template HSM (a plataforma
-não integra a API de gestão de templates da Meta); como a UI renderiza mídia recebida
-(só o ponteiro da Meta é guardado, nunca o binário); atribuição de conversa por operador e
-corrida de dois takeovers simultâneos; comportamento do poller com múltiplas instâncias do `crm-api`.
-
-**Dependências:** nenhuma.
-
-### 7. `catalog-orders` ⬜
+### 7. `catalog-orders` 🔜
 
 Catálogo e pedidos — destrava o Anel B inteiro.
 
