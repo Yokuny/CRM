@@ -60,7 +60,11 @@ describe('createMetaMediaClient (spec.md P2 AC2 — preview de mídia sob demand
 
   it('downloadMedia rejects with a typed MetaApiError (not a generic Error) on a non-2xx response (e.g. expired URL)', async () => {
     const fetchMock = fetch as unknown as ReturnType<typeof vi.fn>;
-    fetchMock.mockResolvedValueOnce({ ok: false, status: 410, arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)) } as unknown as Response);
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 410,
+      arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+    } as unknown as Response);
     const client = createMetaMediaClient(CHANNEL, ENC_KEY);
 
     await expect(client.downloadMedia('https://lookaside.fbsbx.com/temp/expired')).rejects.toBeInstanceOf(MetaApiError);
