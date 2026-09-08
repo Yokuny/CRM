@@ -9,8 +9,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest
 import { env } from '../config/env.config.js';
 import type { AuthDeps } from './authentication.middleware.js';
 import { authenticateSession, createAuthMiddleware, extractToken } from './authentication.middleware.js';
-import { CustomError } from './errorHandler.middleware.js';
-import { errorHandler } from './errorHandler.middleware.js';
+import { CustomError, errorHandler } from './errorHandler.middleware.js';
 
 describe('extractToken', () => {
   const buildReq = (overrides: { cookies?: Record<string, string>; headers?: Record<string, string> }): Request =>
@@ -328,10 +327,7 @@ describe('createAuthMiddleware', () => {
         Tenant: tenant._id,
         role: ['gestor'],
       });
-      const rawToken = jwt.sign(
-        { user: user.id, role: ['admin'], tenant: 'forged-tenant-id' },
-        env.SESSION_JWT_SECRET,
-      );
+      const rawToken = jwt.sign({ user: user.id, role: ['admin'], tenant: 'forged-tenant-id' }, env.SESSION_JWT_SECRET);
       const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
       await Session.create({
         user: user.id,
