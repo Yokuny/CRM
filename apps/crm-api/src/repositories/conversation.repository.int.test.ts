@@ -363,4 +363,121 @@ describe('conversation.repository', () => {
       expect(page1Ids.some((id) => page2Ids.includes(id))).toBe(false);
     });
   });
+
+  describe('getMessages (INBOX-05/06)', () => {
+    const seedMessage = async (
+      tenantId: string,
+      conversation: { _id: unknown; Channel: unknown; Customer: unknown },
+      overrides: Partial<Record<string, unknown>>,
+    ) =>
+      Message.create({
+        Tenant: tenantId,
+        Conversation: conversation._id,
+        Channel: conversation.Channel,
+        Customer: conversation.Customer,
+        direction: 'in',
+        type: 'text',
+        ...overrides,
+      });
+
+    it('returns messages of the Conversation in chronological order (spec.md INBOX-05/AC1)', async () => {
+      const tenantId = randomId();
+      const { conversation } = await seedConversation(tenantId);
+      const second = await seedMessage(tenantId, conversation, {
+        text: 'segunda',
+        createdAt: new Date('2026-01-01T00:02:00.000Z'),
+      });
+      const first = await seedMessage(tenantId, conversation, {
+        text: 'primeira',
+        createdAt: new Date('2026-01-01T00:01:00.000Z'),
+      });
+      const third = await seedMessage(tenantId, conversation, {
+        text: 'terceira',
+        createdAt: new Date('2026-01-01T00:03:00.000Z'),
+      });
+
+      const result = await conversationRepository.getMessages(tenantId, conversation._id.toString(), {
+        page: 1,
+        limit: 20,
+      });
+
+      expect(result?.total).toBe(3);
+      expect(result?.items.map((item) => item.id)).toEqual([
+        first._id.toString(),
+        second._id.toString(),
+        third._id.toString(),
+      ]);
+    });
+
+    it('paginates: total reflects the full set, items are cut to the requested page/limit', async () => {
+      const tenantId = randomId();
+      const { conversation } = await seedConversation(tenantId);
+      const messages = [];
+      for (let i = 0; i < 5; i += 1) {
+        messages.push(
+          await seedMessage(tenantId, conversation, {
+            text: `msg-${i}`,
+            createdAt: new Date(Date.UTC(2026, 0, 1, 0, i, 0)),
+          }),
+        );
+      }
+
+      const page1 = await conversationRepository.getMessages(tenantId, conversation._id.toString(), {
+        page: 1,
+        limit: 2,
+      });
+      const page2 = await conversationRepository.getMessages(tenantId, conversation._id.toString(), {
+        page: 2,
+        limit: 2,
+      });
+
+      expect(page1?.total).toBe(5);
+      expect(page1?.items).toHaveLength(2);
+      expect(page2?.total).toBe(5);
+      expect(page2?.items).toHaveLength(2);
+      expect(page1?.items.map((item) => item.id)).toEqual([messages[0]._id.toString(), messages[1]._id.toString()]);
+      expect(page2?.items.map((item) => item.id)).toEqual([messages[2]._id.toString(), messages[3]._id.toString()]);
+    });
+
+    it("returns null for another tenant's Conversation, never leaking its messages (AD-010)", async () => {
+      const ownerTenant = randomId();
+      const otherTenant = randomId();
+      const { conversation } = await seedConversation(ownerTenant);
+      await seedMessage(ownerTenant, conversation, { text: 'só do dono' });
+
+      const result = await conversationRepository.getMessages(otherTenant, conversation._id.toString(), {
+        page: 1,
+        limit: 20,
+      });
+
+      expect(result).toBeNull();
+    });
+
+    it('returns null for a non-existent Conversation id', async () => {
+      const tenantId = randomId();
+
+      const result = await conversationRepository.getMessages(tenantId, randomId(), { page: 1, limit: 20 });
+
+      expect(result).toBeNull();
+    });
+
+    it('returns only the media pointer (mediaId/mime/caption) for image/document/audio/location messages, never a binary field (spec.md INBOX-05/AC3)', async () => {
+      const tenantId = randomId();
+      const { conversation } = await seedConversation(tenantId);
+      await seedMessage(tenantId, conversation, {
+        type: 'image',
+        text: undefined,
+        media: { mediaId: 'wamid-media-1', mime: 'image/png', caption: 'foto' },
+      });
+
+      const result = await conversationRepository.getMessages(tenantId, conversation._id.toString(), {
+        page: 1,
+        limit: 20,
+      });
+
+      const item = result?.items[0];
+      expect(item?.media).toEqual({ mediaId: 'wamid-media-1', mime: 'image/png', caption: 'foto' });
+      expect(Object.keys(item?.media ?? {}).sort()).toEqual(['caption', 'mediaId', 'mime']);
+    });
+  });
 });

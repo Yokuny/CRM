@@ -1,4 +1,11 @@
-import { Conversation, type ConversationDocument, type ConversationMode, Message, tenantScoped } from '@crm/db';
+import {
+  Conversation,
+  type ConversationDocument,
+  type ConversationMode,
+  Message,
+  type MessageDocument,
+  tenantScoped,
+} from '@crm/db';
 import { withDbTiming } from '../metrics/db.metric.js';
 
 export type ConversationRecord = {
@@ -176,4 +183,60 @@ export const createOutboundMessage = async (
       templateLanguage: doc.templateLanguage,
       templateParams: doc.templateParams,
     };
+  });
+
+export type MessageListItem = {
+  id: string;
+  direction: MessageDocument['direction'];
+  type: MessageDocument['type'];
+  status?: MessageDocument['status'];
+  text?: string;
+  media?: MessageDocument['media'];
+  templateName?: string;
+  templateLanguage?: string;
+  templateParams?: Record<string, string>;
+  createdAt: Date;
+};
+
+export type GetMessagesPagination = { page: number; limit: number };
+
+const toMessageListItem = (doc: MessageDocument): MessageListItem => ({
+  id: doc._id.toString(),
+  direction: doc.direction,
+  type: doc.type,
+  status: doc.status,
+  text: doc.text,
+  media: doc.media,
+  templateName: doc.templateName,
+  templateLanguage: doc.templateLanguage,
+  templateParams: doc.templateParams,
+  createdAt: doc.createdAt,
+});
+
+// INBOX-05/06: histórico paginado de uma Conversation, em ordem cronológica
+// (createdAt asc — mesmo índice já existente {Tenant,Conversation,createdAt}
+// em message.model.ts, comentado lá como "histórico de uma Conversation, em
+// ordem"). `null` quando a Conversation não existe ou é de outro tenant —
+// mesmo idioma 404 de sendManualMessage/ConversationNotFoundError (quem
+// chama, o service, traduz pra HTTP). Mensagem de mídia nunca carrega
+// binário: `MessageDocument.media` (message.model.ts) já é só o ponteiro
+// (mediaId/mime/caption) — nenhum campo de binário existe no schema.
+export const getMessages = async (
+  tenantId: string,
+  conversationId: string,
+  pagination: GetMessagesPagination,
+): Promise<{ items: MessageListItem[]; total: number } | null> =>
+  withDbTiming('conversation.getMessages', async () => {
+    const conversation = await Conversation.findOne(tenantScoped({ _id: conversationId, Tenant: tenantId })).lean();
+    if (!conversation) return null;
+
+    const filter = tenantScoped({ Tenant: tenantId, Conversation: conversation._id });
+    const skip = (pagination.page - 1) * pagination.limit;
+
+    const [docs, total] = await Promise.all([
+      Message.find(filter).sort({ createdAt: 1 }).skip(skip).limit(pagination.limit).lean(),
+      Message.countDocuments(filter),
+    ]);
+
+    return { items: docs.map(toMessageListItem), total };
   });
