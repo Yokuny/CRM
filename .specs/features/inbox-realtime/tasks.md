@@ -781,11 +781,11 @@ split (fila à esquerda, thread à direita), conectando `useInboxSocket` no nív
 
 **Done when**:
 
-- [ ] Rota registrada (`routeTree.gen.ts` regenerado — `pnpm --filter web run dev` antes
+- [x] Rota registrada (`routeTree.gen.ts` regenerado — `pnpm --filter web run dev` antes
       do `check`)
-- [ ] `search.id` seleciona a conversa aberta, ausente = nenhuma thread selecionada
-- [ ] Mock de `@tanstack/react-router` conforme `apps/web/CLAUDE.md`
-- [ ] Gate check passa: `pnpm vitest run --project unit`
+- [x] `search.id` seleciona a conversa aberta, ausente = nenhuma thread selecionada
+- [x] Mock de `@tanstack/react-router` conforme `apps/web/CLAUDE.md`
+- [x] Gate check passa: `pnpm vitest run --project unit`
 
 **Tests**: unit
 **Gate**: quick
@@ -812,10 +812,10 @@ mode/assignee, navega pra `search:{id}` ao clicar numa linha.
 
 **Done when**:
 
-- [ ] Lista renderiza com paginação/filtro server-driven (nunca corta `data` em memória)
-- [ ] Indicador `unread` e badge de `mode` visíveis por linha
-- [ ] Clique seleciona a conversa (`search.id`)
-- [ ] Gate check passa: `pnpm vitest run --project unit`
+- [x] Lista renderiza com paginação/filtro server-driven (nunca corta `data` em memória)
+- [x] Indicador `unread` e badge de `mode` visíveis por linha
+- [x] Clique seleciona a conversa (`search.id`)
+- [x] Gate check passa: `pnpm vitest run --project unit`
 
 **Tests**: unit
 **Gate**: quick
@@ -843,10 +843,10 @@ completo).
 
 **Done when**:
 
-- [ ] Histórico paginado renderiza em ordem cronológica
-- [ ] Mensagem `failed` visível com selo, nunca some/substitui após reenvio
-- [ ] Nova mensagem via WS aparece sem `refetch` completo da lista
-- [ ] Gate check passa: `pnpm vitest run --project unit`
+- [x] Histórico paginado renderiza em ordem cronológica
+- [x] Mensagem `failed` visível com selo, nunca some/substitui após reenvio
+- [x] Nova mensagem via WS aparece sem `refetch` completo da lista
+- [x] Gate check passa: `pnpm vitest run --project unit`
 
 **Tests**: unit
 **Gate**: quick
@@ -872,10 +872,10 @@ a mídia está indisponível.
 
 **Done when**:
 
-- [ ] Card mostra ícone/mime/caption sem nenhuma chamada automática à Meta
-- [ ] Clique em "Ver"/"Baixar" busca o binário sob demanda
-- [ ] Falha (502) mostra mensagem de erro sem quebrar a tela
-- [ ] Gate check passa: `pnpm vitest run --project unit`
+- [x] Card mostra ícone/mime/caption sem nenhuma chamada automática à Meta
+- [x] Clique em "Ver"/"Baixar" busca o binário sob demanda
+- [x] Falha (502) mostra mensagem de erro sem quebrar a tela
+- [x] Gate check passa: `pnpm vitest run --project unit`
 
 **Tests**: unit
 **Gate**: quick
@@ -902,12 +902,12 @@ mensagens `failed` da thread (chama `resendMessage` de T19).
 
 **Done when**:
 
-- [ ] Janela aberta → texto livre habilitado, `POST /:id/messages` chamado ao enviar
-- [ ] Janela fechada → texto desabilitado, botão `wa.me` visível, nenhuma chamada de envio
+- [x] Janela aberta → texto livre habilitado, `POST /:id/messages` chamado ao enviar
+- [x] Janela fechada → texto desabilitado, botão `wa.me` visível, nenhuma chamada de envio
       disparada por ele
-- [ ] Botão de reenvio aparece só em mensagens `failed`, cria a nova tentativa (T19) e o
+- [x] Botão de reenvio aparece só em mensagens `failed`, cria a nova tentativa (T19) e o
       selo original continua visível (integra com T23)
-- [ ] Gate check passa: `pnpm vitest run --project unit`
+- [x] Gate check passa: `pnpm vitest run --project unit`
 
 **Tests**: unit
 **Gate**: quick
@@ -932,11 +932,11 @@ chamando os endpoints existentes; toast nomeado em conflito de takeover (409 de 
 
 **Done when**:
 
-- [ ] Badge mostra `mode` e `assignee` corretamente
-- [ ] "Assumir" bem-sucedido atualiza o badge sem refresh manual da página
-- [ ] Conflito (409) mostra toast nomeando quem já assumiu, sem quebrar a tela
-- [ ] "Liberar" funciona pra qualquer operador (regressão INBOX-09)
-- [ ] Gate check passa: `pnpm vitest run --project unit`
+- [x] Badge mostra `mode` e `assignee` corretamente
+- [x] "Assumir" bem-sucedido atualiza o badge sem refresh manual da página
+- [x] Conflito (409) mostra toast nomeando quem já assumiu, sem quebrar a tela
+- [x] "Liberar" funciona pra qualquer operador (regressão INBOX-09)
+- [x] Gate check passa: `pnpm vitest run --project unit`
 
 **Tests**: unit
 **Gate**: quick
