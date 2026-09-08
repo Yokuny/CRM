@@ -279,20 +279,43 @@ Detalhamento completo (contexto, consequências, alternativas) em [`docs/adr/`](
   `app.ts` e um novo `authDeps.ts` (não listados no "Where" da tarefa, mas exigidos pelo
   próprio texto "Reuses" da tarefa — construção de `authDeps` movida para módulo
   compartilhado). Nenhum teste enfraquecido/pulado/deletado.
-- **In-progress**: nenhum lote rodando neste instante — próxima ação é despachar o Lote 2.
-- **Next step**: despachar **Lote 2/4** (T9–T14, Fases 6–8: `GET /conversations/:id/messages`,
-  takeover claim-condicional + conflito nomeado, reenvio de `Message failed`). Depois
-  Lote 3/4 (T15–T20, Fases 9–10: `metaMediaClient`/proxy de mídia, camada de dados
-  `apps/web`) e Lote 4/4 (T21–T26, Fase 11: telas do Inbox). Verifier roda automaticamente
-  só depois do Lote 4 (último task, T26) — nunca antes.
+  **Lote 2/4 completo** (T9–T14, Fases 6–8: `GET /conversations/:id/messages`, takeover
+  claim-condicional + conflito nomeado 409, `POST /:id/messages/:messageId/resend`) — 8
+  commits (6 de task + 1 fix de tipagem + 1 docs), gate final `pnpm run check` verde (811
+  testes, tsc limpo em todo o monorepo, biome só com 9 warnings pré-existentes e não
+  relacionados em `apps/web/.../customers/list/index.tsx`, arquivo não tocado por esta
+  feature). Desvios registrados pelo worker (sem violar spec/design): (1) T11 também
+  adicionou `findConversationById` (leitura simples, tenant-scoped) em
+  `conversation.repository.ts` — não estava no "Where" de T12 (que só lista
+  service+controller), mas o próprio texto de T12 exige que o service "busque a
+  Conversation de novo" pra distinguir "não existe" de "já assumida por outro", e não
+  havia leitura genérica de Conversation por id já exposta; colocado em T11 (mesmo
+  arquivo já em escopo) em vez de expandir o escopo de T12; (2)
+  `ConversationAlreadyAssignedError` foi definida em `conversation.service.ts` (não em
+  `conversation.repository.ts` como os erros tipados anteriores) porque é o service —
+  não o repository — quem tem a informação (nome do assignee) pra construir a mensagem;
+  o controller a importa e traduz pra 409, exatamente como design.md descreve ("service
+  lança → controller traduz"); (3) durante o gate check foi descoberto que o Full gate
+  (`pnpm vitest run`) não roda `tsc`, então dois bugs de tipagem em helpers de teste
+  (`seedMessage`/`messages[]` implicitamente `any`, herdados de T9; e o mesmo padrão
+  depois em T14) só apareceram ao rodar `tsc --noEmit` preventivamente antes de cada
+  commit — corrigidos com anotações de tipo (`Awaited<ReturnType<typeof seedX>>`), um
+  commit de fix isolado (`062a057`→re-splitado em `05b49bc`) para não misturar com o
+  commit de feature de T10. Nenhum teste enfraquecido/pulado/deletado.
+- **In-progress**: nenhum lote rodando neste instante — próxima ação é despachar o Lote 3.
+- **Next step**: despachar **Lote 3/4** (T15–T20, Fases 9–10: `metaMediaClient`/proxy de
+  mídia sob demanda, camada de dados `apps/web` — `query/conversation.ts`,
+  `query/message.ts`, `useInboxSocket`). Depois Lote 4/4 (T21–T26, Fase 11: telas do
+  Inbox). Verifier roda automaticamente só depois do Lote 4 (último task, T26) — nunca
+  antes.
 - **Blockers**: nenhum. Mesma nota operacional pré-existente de flake em
   `apps/crm-api`/`ai-gateway` (`integration`/`e2e` compartilham UMA instância de
   `MongoMemoryServer`, `vitest.config.ts` documenta a causa raiz) — dois flakes desse tipo
   ocorreram durante o Lote 1 (`tenant-isolation.int.test.ts`,
   `webhook.router.e2e.test.ts`), autorresolvidos no retry, em arquivos não tocados por
-  esta feature — não é regressão.
-- **Uncommitted files**: nenhum — working tree limpo ao final do Lote 1 (todos os commits
-  de T1–T8 + `docs(tasks): mark T1-T8 complete` já feitos). `acc.txt` na raiz continua
+  esta feature — não é regressão. Nenhum flake observado durante o Lote 2.
+- **Uncommitted files**: nenhum — working tree limpo ao final do Lote 2 (todos os commits
+  de T9–T14 + `docs(tasks): mark T9-T14 complete` já feitos). `acc.txt` na raiz continua
   untracked (credenciais de dev local em texto puro) — não commitar.
 - **Branch**: `feature/inbox-realtime` (criada a partir de `main` no início desta sessão
   de Execute, antes do commit de T1) — sem push ainda.
