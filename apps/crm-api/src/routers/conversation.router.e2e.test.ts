@@ -408,4 +408,85 @@ describe('conversation routes', () => {
       expect(res.body.data.items.map((item: { id: string }) => item.id)).toEqual([humanConversation._id.toString()]);
     });
   });
+
+  describe('GET /conversations/:id/messages (INBOX-05/06)', () => {
+    it("responds 200 with the Conversation's message history, in chronological order (spec.md INBOX-05/AC1)", async () => {
+      const { tenant, cookie } = await seedTenantUser(['operador']);
+      const { conversation } = await seedConversationFixture(tenant._id.toString());
+      const first = await Message.create({
+        Tenant: tenant._id,
+        Conversation: conversation._id,
+        Channel: conversation.Channel,
+        Customer: conversation.Customer,
+        direction: 'in',
+        type: 'text',
+        text: 'primeira',
+        createdAt: new Date('2026-01-01T00:01:00.000Z'),
+      });
+      const second = await Message.create({
+        Tenant: tenant._id,
+        Conversation: conversation._id,
+        Channel: conversation.Channel,
+        Customer: conversation.Customer,
+        direction: 'out',
+        type: 'text',
+        status: 'sent',
+        text: 'segunda',
+        createdAt: new Date('2026-01-01T00:02:00.000Z'),
+      });
+      const app = buildTestApp();
+
+      const res = await request(app)
+        .get(`/conversations/${conversation._id.toString()}/messages`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.total).toBe(2);
+      expect(res.body.data.items.map((item: { id: string }) => item.id)).toEqual([
+        first._id.toString(),
+        second._id.toString(),
+      ]);
+    });
+
+    it("responds 404 for another tenant's Conversation (spec.md INBOX-05/AC2)", async () => {
+      const owner = await seedTenantUser(['admin']);
+      const { conversation } = await seedConversationFixture(owner.tenant._id.toString());
+      const intruder = await seedTenantUser(['operador']);
+      const app = buildTestApp();
+
+      const res = await request(app)
+        .get(`/conversations/${conversation._id.toString()}/messages`)
+        .set('Cookie', intruder.cookie)
+        .set('User-Agent', DEVICE);
+
+      expect(res.status).toBe(404);
+    });
+
+    it('responds 404 for a non-existent Conversation id (spec.md INBOX-05/AC2)', async () => {
+      const { cookie } = await seedTenantUser(['admin']);
+      const app = buildTestApp();
+
+      const res = await request(app)
+        .get(`/conversations/${randomId()}/messages`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE);
+
+      expect(res.status).toBe(404);
+    });
+
+    it('responds 403 for a caller without canOperate, without returning any message data', async () => {
+      const { tenant, cookie } = await seedTenantUser([]);
+      const { conversation } = await seedConversationFixture(tenant._id.toString());
+      const app = buildTestApp();
+
+      const res = await request(app)
+        .get(`/conversations/${conversation._id.toString()}/messages`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE);
+
+      expect(res.status).toBe(403);
+      expect(res.body.data).toBeUndefined();
+    });
+  });
 });

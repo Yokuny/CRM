@@ -4,6 +4,7 @@ import { CustomError } from '../middlewares/errorHandler.middleware.js';
 import type {
   ConversationListItem,
   ConversationRecord,
+  MessageListItem,
   MessageRecord,
 } from '../repositories/conversation.repository.js';
 import * as conversationRepository from '../repositories/conversation.repository.js';
@@ -46,6 +47,24 @@ export const listConversations = async (
     { mode: query.mode, assignee: query.assignee },
     { page: clampPage(query.page), limit: clampLimit(query.limit) },
   );
+
+export type GetMessagesQuery = { page?: number; limit?: number };
+
+// INBOX-05/06: traduz o null do repository (T9) — conversa inexistente OU de
+// outro tenant — pro mesmo idioma 404 já usado por takeover/release/
+// sendManualMessage (AD-010: ambos os casos são indistinguíveis por design).
+export const getMessages = async (
+  id: string,
+  tenantId: string,
+  query: GetMessagesQuery,
+): Promise<{ items: MessageListItem[]; total: number }> => {
+  const result = await conversationRepository.getMessages(tenantId, id, {
+    page: clampPage(query.page),
+    limit: clampLimit(query.limit),
+  });
+  if (!result) throw new CustomError('Conversation não encontrada', 404);
+  return result;
+};
 
 // AD-010: takeover/release já são tenant-scoped ({_id,Tenant} na própria
 // query, T37) — null aqui significa "não existe para esta sessão", mesmo

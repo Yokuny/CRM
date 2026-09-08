@@ -41,6 +41,28 @@ const validListConversationsQuery: RequestHandler = (req, _res, next) => {
   next();
 };
 
+const getMessagesQuerySchema = z
+  .object({
+    page: z.coerce.number().optional(),
+    limit: z.coerce.number().optional(),
+  })
+  .strict();
+
+// Mesmo workaround de validListConversationsQuery (acima) — req.query em
+// Express 5 é um getter sem cache.
+const validGetMessagesQuery: RequestHandler = (req, _res, next) => {
+  const result = getMessagesQuerySchema.safeParse(req.query);
+  if (!result.success) {
+    const message = result.error.issues
+      .map((issue) => `${issue.path.join('.') || 'query'}: ${issue.message}`)
+      .join('; ');
+    next(Object.assign(new Error(message), { status: 400 }));
+    return;
+  }
+  Object.defineProperty(req, 'query', { value: result.data, configurable: true, enumerable: true, writable: true });
+  next();
+};
+
 export type ConversationRouterDeps = { validToken: RequestHandler };
 
 export const createConversationRouter = (deps: ConversationRouterDeps): Router => {
@@ -53,6 +75,16 @@ export const createConversationRouter = (deps: ConversationRouterDeps): Router =
     canOperate,
     validListConversationsQuery,
     conversationController.listConversations,
+  );
+
+  router.get(
+    '/:id/messages',
+    deps.validToken,
+    tenantAssignmentCheck,
+    canOperate,
+    validParams(conversationIdParamSchema),
+    validGetMessagesQuery,
+    conversationController.getMessages,
   );
 
   router.post(
