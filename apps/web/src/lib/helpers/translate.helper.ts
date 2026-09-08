@@ -70,6 +70,11 @@ const translations: Record<string, string> = {
   // pode ficar sem rótulo já que coexiste na tela com o <nav
   // aria-label="breadcrumb"> do Card.
   'nav.primary': 'Navegação principal',
+  // Inbox (feature inbox-realtime, Fase 11) — chaves novas usadas por
+  // routes/_private/inbox/** (index.tsx + @components/*).
+  'inbox.title': 'Caixa de entrada',
+  'inbox.queue.title': 'Fila de conversas',
+  'inbox.thread.select_hint': 'Selecione uma conversa na fila para ver o histórico.',
 };
 
 export const t = (key: string): string => translations[key] ?? key;
