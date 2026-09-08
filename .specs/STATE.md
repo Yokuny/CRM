@@ -338,10 +338,11 @@ Detalhamento completo (contexto, consequências, alternativas) em [`docs/adr/`](
   (spec-anchored coverage + discrimination sensor + `validation.md`) — nunca antes.
 - **Blockers**: nenhum. Mesma nota operacional pré-existente de flake em
   `apps/crm-api`/`ai-gateway` (`integration`/`e2e` compartilham UMA instância de
-  `MongoMemoryServer`, `vitest.config.ts` documenta a causa raiz) — um flake desse tipo
-  ocorreu durante o Lote 3 (`tenant-isolation.int.test.ts`, mesmo arquivo que já havia
-  flakado no Lote 1), autorresolvido no retry (`pnpm run check` rodado de novo, 844/844
-  verde), em arquivo não tocado por esta feature — não é regressão.
+  `MongoMemoryServer`, `vitest.config.ts` documenta a causa raiz) — dois flakes desse tipo
+  ocorreram durante o Lote 3 (`tenant-isolation.int.test.ts`, mesmo arquivo que já havia
+  flakado no Lote 1; e depois `fieldTemplate.router.e2e.test.ts`), ambos autorresolvidos
+  no retry (`pnpm run check` rodado de novo, 844/844 verde nas duas vezes), em arquivos
+  não tocados por esta feature — não é regressão.
 - **Uncommitted files**: nenhum — working tree limpo ao final do Lote 3 (todos os commits
   de T15–T20 + `docs(tasks): mark T15-T20 complete` já feitos). `acc.txt` na raiz continua
   untracked (credenciais de dev local em texto puro) — não commitar.
