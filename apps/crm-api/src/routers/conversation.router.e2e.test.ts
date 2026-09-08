@@ -333,4 +333,79 @@ describe('conversation routes', () => {
       expect(await Message.countDocuments({ Conversation: conversation._id })).toBe(0);
     });
   });
+
+  describe('GET /conversations (INBOX-01/02/03)', () => {
+    // Channel.Tenant é único e Conversation{Channel,Customer} também
+    // (packages/db) — vários seeds no MESMO tenant reusam um único Channel e
+    // criam um Customer novo por conversa (mesmo padrão de
+    // conversation.repository.int.test.ts, T7).
+    const seedConversationsForTenant = async (tenantId: string, overridesList: Partial<Record<string, unknown>>[]) => {
+      const channel = await Channel.create({
+        Tenant: tenantId,
+        phoneNumberId: randomId(),
+        accessTokenEnc: { ciphertext: 'c', iv: 'i', authTag: 'a' },
+        status: 'active',
+      });
+      const conversations = [];
+      for (const overrides of overridesList) {
+        const customer = await Customer.create({
+          Tenant: tenantId,
+          name: 'Cliente Teste',
+          phone: randomPhone(),
+          template: randomId(),
+          templateVersion: 1,
+          values: {},
+        });
+        conversations.push(
+          await Conversation.create({ Tenant: tenantId, Channel: channel._id, Customer: customer._id, ...overrides }),
+        );
+      }
+      return conversations;
+    };
+
+    it('responds 200 with the paginated list scoped to the session tenant (never another tenant)', async () => {
+      const { tenant, cookie } = await seedTenantUser(['operador']);
+      const { conversation } = await seedConversationFixture(tenant._id.toString());
+      const other = await seedTenantUser(['admin']);
+      await seedConversationFixture(other.tenant._id.toString());
+      const app = buildTestApp();
+
+      const res = await request(app).get('/conversations').set('Cookie', cookie).set('User-Agent', DEVICE);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.total).toBe(1);
+      expect(res.body.data.items.map((item: { id: string }) => item.id)).toEqual([conversation._id.toString()]);
+    });
+
+    it('responds 403 for a caller without canOperate, without returning any conversation data', async () => {
+      const { tenant, cookie } = await seedTenantUser([]);
+      await seedConversationFixture(tenant._id.toString());
+      const app = buildTestApp();
+
+      const res = await request(app).get('/conversations').set('Cookie', cookie).set('User-Agent', DEVICE);
+
+      expect(res.status).toBe(403);
+      expect(res.body.data).toBeUndefined();
+    });
+
+    it('accepts mode/assignee query filters and passes them through to the repository', async () => {
+      const { tenant, cookie } = await seedTenantUser(['gestor']);
+      const [humanConversation] = await seedConversationsForTenant(tenant._id.toString(), [
+        { mode: 'human', assignee: randomId() },
+        { mode: 'bot' },
+      ]);
+      const app = buildTestApp();
+
+      const res = await request(app)
+        .get('/conversations')
+        .query({ mode: 'human' })
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.total).toBe(1);
+      expect(res.body.data.items.map((item: { id: string }) => item.id)).toEqual([humanConversation._id.toString()]);
+    });
+  });
 });

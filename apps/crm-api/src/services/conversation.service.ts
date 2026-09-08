@@ -1,8 +1,51 @@
 import type { SendMessage } from '@crm/contracts';
+import type { ConversationMode } from '@crm/db';
 import { CustomError } from '../middlewares/errorHandler.middleware.js';
-import type { ConversationRecord, MessageRecord } from '../repositories/conversation.repository.js';
+import type {
+  ConversationListItem,
+  ConversationRecord,
+  MessageRecord,
+} from '../repositories/conversation.repository.js';
 import * as conversationRepository from '../repositories/conversation.repository.js';
 import { ConversationNotFoundError, OutsideWindowError } from '../repositories/conversation.repository.js';
+
+// Mesmo clamp de page/limit de customer.service.ts (CORE-12) — local a este
+// arquivo (não importado do módulo irmão) porque page/limit já é um
+// predicado pequeno e de arquivo único, mesmo precedente de isWithinWindow
+// duplicado entre conversation.repository.ts e outboxConsumer.ts.
+const DEFAULT_PAGE_SIZE = 20;
+const MAX_PAGE_SIZE = 100;
+
+const clampPage = (page: number | undefined): number => {
+  if (page === undefined || !Number.isFinite(page) || page < 1) return 1;
+  return Math.floor(page);
+};
+
+const clampLimit = (limit: number | undefined): number => {
+  if (limit === undefined || !Number.isFinite(limit) || limit < 1) return DEFAULT_PAGE_SIZE;
+  return Math.min(Math.floor(limit), MAX_PAGE_SIZE);
+};
+
+export type ListConversationsQuery = {
+  mode?: ConversationMode;
+  assignee?: string;
+  page?: number;
+  limit?: number;
+};
+
+// INBOX-01/02/03: repassa filtro mode/assignee ao repository (T7) tal como
+// veio da query — só page/limit são clampados aqui (mesma fronteira já
+// estabelecida por customer.service.ts: query aceita qualquer número, o
+// service decide o que fazer com valores fora dos limites).
+export const listConversations = async (
+  tenantId: string,
+  query: ListConversationsQuery,
+): Promise<{ items: ConversationListItem[]; total: number }> =>
+  conversationRepository.listConversations(
+    tenantId,
+    { mode: query.mode, assignee: query.assignee },
+    { page: clampPage(query.page), limit: clampLimit(query.limit) },
+  );
 
 // AD-010: takeover/release já são tenant-scoped ({_id,Tenant} na própria
 // query, T37) — null aqui significa "não existe para esta sessão", mesmo

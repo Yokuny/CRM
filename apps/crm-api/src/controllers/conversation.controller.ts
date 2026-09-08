@@ -1,7 +1,22 @@
 import type { SendMessage } from '@crm/contracts';
 import { respObj } from '@crm/contracts';
 import type { NextFunction, Request, Response } from 'express';
+import type { ListConversationsQuery } from '../services/conversation.service.js';
 import * as conversationService from '../services/conversation.service.js';
+
+// INBOX-01/02/03: query já validada/coercida por validListConversationsQuery
+// (router) — o Tenant vem sempre de req.tenantUser (AD-010).
+export const listConversations = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const result = await conversationService.listConversations(
+      req.tenantUser.tenant as string,
+      req.query as unknown as ListConversationsQuery,
+    );
+    res.json(respObj({ data: result }));
+  } catch (e) {
+    next(e);
+  }
+};
 
 // O Tenant vem sempre de req.tenantUser (AD-010), o assignee de takeover vem
 // do usuário autenticado (req.tenantUser.user) — nunca do corpo ou da query,

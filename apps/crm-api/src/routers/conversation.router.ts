@@ -11,13 +11,49 @@ const conversationIdParamSchema = z.object({ id: idSchema }).strict();
 
 // spec.md "Papel exigido nos 3 endpoints headless": takeover/liberar/enviar
 // são ações operacionais (CORE-14) — qualquer papel autenticado do tenant,
-// nunca isAdmin (esse gate é só para Channel, ver channel.router.ts).
+// nunca isAdmin (esse gate é só para Channel, ver channel.router.ts). Mesmo
+// papel (canOperate) exigido em GET /conversations (INBOX-02).
 const canOperate = checkRole(['admin', 'gestor', 'operador']);
+
+const listConversationsQuerySchema = z
+  .object({
+    mode: z.enum(['bot', 'human']).optional(),
+    assignee: z.string().trim().optional(),
+    page: z.coerce.number().optional(),
+    limit: z.coerce.number().optional(),
+  })
+  .strict();
+
+// Mesmo workaround de validListCustomersQuery (customer.router.ts:29-42): no
+// Express 5, req.query é um getter sem cache — Object.assign de
+// validQuery/validation.middleware.ts se perde antes do controller ler de
+// novo. Aqui req.query é substituído por um valor gravável de fato.
+const validListConversationsQuery: RequestHandler = (req, _res, next) => {
+  const result = listConversationsQuerySchema.safeParse(req.query);
+  if (!result.success) {
+    const message = result.error.issues
+      .map((issue) => `${issue.path.join('.') || 'query'}: ${issue.message}`)
+      .join('; ');
+    next(Object.assign(new Error(message), { status: 400 }));
+    return;
+  }
+  Object.defineProperty(req, 'query', { value: result.data, configurable: true, enumerable: true, writable: true });
+  next();
+};
 
 export type ConversationRouterDeps = { validToken: RequestHandler };
 
 export const createConversationRouter = (deps: ConversationRouterDeps): Router => {
   const router = Router();
+
+  router.get(
+    '/',
+    deps.validToken,
+    tenantAssignmentCheck,
+    canOperate,
+    validListConversationsQuery,
+    conversationController.listConversations,
+  );
 
   router.post(
     '/:id/takeover',
