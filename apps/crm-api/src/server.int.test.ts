@@ -1,3 +1,4 @@
+import { connect } from '@crm/db';
 import request from 'supertest';
 import { describe, expect, it, vi } from 'vitest';
 import { buildApp } from './app.js';
@@ -34,5 +35,29 @@ describe('start', () => {
 
     exitSpy.mockRestore();
     errorSpy.mockRestore();
+  });
+});
+
+// T6/design.md: start() passa a devolver {httpServer, stopWorkers}, mesma
+// forma de apps/ai-gateway/src/server.ts — smoke test de wiring apenas
+// (comportamento profundo do WS server e do poller já coberto por
+// inboxSocket.e2e.test.ts, T4, e inboxPoller.int.test.ts, T5). `connect` é
+// sobrescrito só para ESTA chamada (mockResolvedValueOnce) — o mock default
+// do arquivo (sempre rejeita) continua valendo pra qualquer outro teste.
+describe('start (success path — wiring smoke test)', () => {
+  it('returns {httpServer, stopWorkers}: the WS server and poller are wired to the same httpServer, and stopWorkers() tears both down without a hanging process', async () => {
+    vi.mocked(connect).mockResolvedValueOnce(undefined);
+
+    const { start } = await import('./server.js');
+    const handle = await start({ port: 0, pollerIntervalMs: 20 });
+
+    expect(handle).toBeDefined();
+    expect(handle?.httpServer.listening).toBe(true);
+    expect(typeof handle?.stopWorkers).toBe('function');
+
+    handle?.stopWorkers();
+    await new Promise<void>((resolve, reject) => {
+      handle?.httpServer.close((err) => (err ? reject(err) : resolve()));
+    });
   });
 });

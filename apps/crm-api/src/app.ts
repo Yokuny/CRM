@@ -1,11 +1,10 @@
 import { respObj } from '@crm/contracts';
-import { Session, Tenant, User } from '@crm/db';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express, { type Express } from 'express';
 import nodemailer from 'nodemailer';
+import { buildAuthDeps } from './authDeps.js';
 import { env } from './config/env.config.js';
-import type { AuthDeps } from './middlewares/authentication.middleware.js';
 import { createAuthMiddleware } from './middlewares/authentication.middleware.js';
 import { errorHandler } from './middlewares/errorHandler.middleware.js';
 import { responseTime } from './middlewares/responseTime.middleware.js';
@@ -23,35 +22,6 @@ import { inviteRouter } from './routers/invite.router.js';
 import { createPlatformRouter } from './routers/platform.router.js';
 import { createProcessRouter } from './routers/process.router.js';
 import type { FieldValueStores } from './services/fieldTemplate.service.js';
-
-// Adaptador real de AuthDeps sobre @crm/db — a única fonte de req.tenantUser
-// (FND-05). Construído aqui (composition root) e reusado por toda rota que
-// exige sessão, para nunca duplicar a leitura do banco entre módulos.
-const authDeps: AuthDeps = {
-  findSessionByHash: async (tokenHash) => {
-    const session = await Session.findOne({ tokenHash }).lean();
-    return session ? { user: session.user.toString(), deviceInfo: session.deviceInfo } : null;
-  },
-  revokeAllSessions: async (userId) => {
-    await Session.deleteMany({ user: userId });
-  },
-  getUserById: async (userId) => {
-    const user = await User.findById(userId).lean();
-    return user
-      ? {
-          id: user._id.toString(),
-          tenant: user.Tenant?.toString(),
-          role: user.role,
-          isPlatformAdmin: user.isPlatformAdmin,
-          active: user.active,
-        }
-      : null;
-  },
-  getTenantById: async (tenantId) => {
-    const tenant = await Tenant.findById(tenantId).lean();
-    return tenant ? { id: tenant._id.toString(), name: tenant.name, status: tenant.status } : null;
-  },
-};
 
 const buildMailProvider = (): MailProvider => {
   if (env.MAIL_PROVIDER === 'nodemailer') {
@@ -75,7 +45,7 @@ export const buildApp = (): Express => {
   app.use(express.json());
   app.use(responseTime);
 
-  const { validToken } = createAuthMiddleware(authDeps);
+  const { validToken } = createAuthMiddleware(buildAuthDeps());
   const mailProvider = buildMailProvider();
   const inviteBaseUrl = `${env.CORS_ORIGIN}/invite`;
 
