@@ -172,4 +172,195 @@ describe('conversation.repository', () => {
       expect(await Message.countDocuments({})).toBe(0);
     });
   });
+
+  describe('listConversations (INBOX-01/03)', () => {
+    // Channel.Tenant é único (um canal por tenant) e Conversation{Channel,
+    // Customer} também — testes que precisam de VÁRIAS conversas no MESMO
+    // tenant reusam um único Channel e criam um Customer novo por conversa.
+    const seedConversationsForTenant = async (tenantId: string, overridesList: Partial<Record<string, unknown>>[]) => {
+      const channel = await Channel.create({
+        Tenant: tenantId,
+        phoneNumberId: randomId(),
+        accessTokenEnc: { ciphertext: 'c', iv: 'i', authTag: 'a' },
+        status: 'active',
+      });
+      const conversations = [];
+      for (const overrides of overridesList) {
+        const customer = await Customer.create({
+          Tenant: tenantId,
+          name: 'Cliente Teste',
+          phone: `119${crypto.randomInt(10000000, 99999999)}`,
+          template: randomId(),
+          templateVersion: 1,
+          values: {},
+        });
+        conversations.push(
+          await Conversation.create({
+            Tenant: tenantId,
+            Channel: channel._id,
+            Customer: customer._id,
+            mode: 'bot',
+            lastActivityAt: new Date('2024-01-01T00:00:00.000Z'),
+            ...overrides,
+          }),
+        );
+      }
+      return conversations;
+    };
+
+    it("returns only Conversations of the session's tenant, never another tenant's (AD-010)", async () => {
+      const ownerTenant = randomId();
+      const otherTenant = randomId();
+      const { conversation } = await seedConversation(ownerTenant);
+      await seedConversation(otherTenant);
+
+      const result = await conversationRepository.listConversations(ownerTenant, {}, { page: 1, limit: 20 });
+
+      expect(result.total).toBe(1);
+      expect(result.items.map((item) => item.id)).toEqual([conversation._id.toString()]);
+    });
+
+    it('filters by mode alone, returning only matching Conversations', async () => {
+      const tenantId = randomId();
+      const [botConversation] = await seedConversationsForTenant(tenantId, [
+        { mode: 'bot' },
+        { mode: 'human', assignee: randomId() },
+      ]);
+
+      const result = await conversationRepository.listConversations(tenantId, { mode: 'bot' }, { page: 1, limit: 20 });
+
+      expect(result.total).toBe(1);
+      expect(result.items.map((item) => item.id)).toEqual([botConversation._id.toString()]);
+    });
+
+    it('filters by assignee alone, returning only matching Conversations', async () => {
+      const tenantId = randomId();
+      const assigneeA = randomId();
+      const assigneeB = randomId();
+      const [conversationA] = await seedConversationsForTenant(tenantId, [
+        { mode: 'human', assignee: assigneeA },
+        { mode: 'human', assignee: assigneeB },
+      ]);
+
+      const result = await conversationRepository.listConversations(
+        tenantId,
+        { assignee: assigneeA },
+        { page: 1, limit: 20 },
+      );
+
+      expect(result.total).toBe(1);
+      expect(result.items.map((item) => item.id)).toEqual([conversationA._id.toString()]);
+    });
+
+    it('combines mode and assignee filters (AND, not OR)', async () => {
+      const tenantId = randomId();
+      const assignee = randomId();
+      const [target] = await seedConversationsForTenant(tenantId, [
+        { mode: 'human', assignee },
+        // Mesmo assignee, mode diferente — não deveria casar.
+        { mode: 'bot' },
+        // Mesmo mode, assignee diferente — não deveria casar.
+        { mode: 'human', assignee: randomId() },
+      ]);
+
+      const result = await conversationRepository.listConversations(
+        tenantId,
+        { mode: 'human', assignee },
+        { page: 1, limit: 20 },
+      );
+
+      expect(result.total).toBe(1);
+      expect(result.items.map((item) => item.id)).toEqual([target._id.toString()]);
+    });
+
+    it('computes unread as true when lastInboundAt is after lastActivityAt', async () => {
+      const tenantId = randomId();
+      const { conversation } = await seedConversation(tenantId, {
+        lastActivityAt: new Date('2026-01-01T00:00:00.000Z'),
+        lastInboundAt: new Date('2026-01-01T00:05:00.000Z'),
+      });
+
+      const result = await conversationRepository.listConversations(tenantId, {}, { page: 1, limit: 20 });
+
+      const item = result.items.find((i) => i.id === conversation._id.toString());
+      expect(item?.unread).toBe(true);
+    });
+
+    it('computes unread as false when lastInboundAt is before (or equal to) lastActivityAt', async () => {
+      const tenantId = randomId();
+      const { conversation } = await seedConversation(tenantId, {
+        lastActivityAt: new Date('2026-01-01T00:10:00.000Z'),
+        lastInboundAt: new Date('2026-01-01T00:00:00.000Z'),
+      });
+
+      const result = await conversationRepository.listConversations(tenantId, {}, { page: 1, limit: 20 });
+
+      const item = result.items.find((i) => i.id === conversation._id.toString());
+      expect(item?.unread).toBe(false);
+    });
+
+    it('computes unread as false when lastInboundAt is absent (no inbound message yet)', async () => {
+      const tenantId = randomId();
+      const { conversation } = await seedConversation(tenantId, {
+        lastActivityAt: new Date('2026-01-01T00:00:00.000Z'),
+      });
+
+      const result = await conversationRepository.listConversations(tenantId, {}, { page: 1, limit: 20 });
+
+      const item = result.items.find((i) => i.id === conversation._id.toString());
+      expect(item?.unread).toBe(false);
+    });
+
+    it('derives the 24h window state as open when windowExpiresAt is in the future (spec.md INBOX-01/AC1)', async () => {
+      const tenantId = randomId();
+      const windowExpiresAt = new Date(Date.now() + 60_000);
+      const { conversation } = await seedConversation(tenantId, { windowExpiresAt });
+
+      const result = await conversationRepository.listConversations(tenantId, {}, { page: 1, limit: 20 });
+
+      const item = result.items.find((i) => i.id === conversation._id.toString());
+      expect(item?.windowOpen).toBe(true);
+      expect(item?.windowExpiresAt).toEqual(windowExpiresAt);
+    });
+
+    it('derives the 24h window state as closed when windowExpiresAt is in the past, or absent entirely (spec.md INBOX-01/AC1)', async () => {
+      const tenantId = randomId();
+      const [expired, neverSet] = await seedConversationsForTenant(tenantId, [
+        { windowExpiresAt: new Date(Date.now() - 60_000) },
+        {},
+      ]);
+
+      const result = await conversationRepository.listConversations(tenantId, {}, { page: 1, limit: 20 });
+
+      const expiredItem = result.items.find((i) => i.id === expired._id.toString());
+      const neverSetItem = result.items.find((i) => i.id === neverSet._id.toString());
+      expect(expiredItem?.windowOpen).toBe(false);
+      expect(neverSetItem?.windowOpen).toBe(false);
+      expect(neverSetItem?.windowExpiresAt).toBeUndefined();
+    });
+
+    it('paginates: total reflects the full matching set, items are cut to the requested page/limit', async () => {
+      const tenantId = randomId();
+      const conversations = await seedConversationsForTenant(
+        tenantId,
+        Array.from({ length: 5 }, (_, i) => ({ lastActivityAt: new Date(Date.UTC(2026, 0, 1, 0, i, 0)) })),
+      );
+
+      const page1 = await conversationRepository.listConversations(tenantId, {}, { page: 1, limit: 2 });
+      const page2 = await conversationRepository.listConversations(tenantId, {}, { page: 2, limit: 2 });
+
+      expect(page1.total).toBe(5);
+      expect(page1.items).toHaveLength(2);
+      expect(page2.total).toBe(5);
+      expect(page2.items).toHaveLength(2);
+      // Ordenado por lastActivityAt desc — página 1 traz os 2 mais recentes
+      // (índices 4,3), página 2 os 2 seguintes (índices 2,1); nenhuma
+      // sobreposição de id entre as páginas.
+      const page1Ids = page1.items.map((item) => item.id);
+      const page2Ids = page2.items.map((item) => item.id);
+      expect(page1Ids).toEqual([conversations[4]._id.toString(), conversations[3]._id.toString()]);
+      expect(page2Ids).toEqual([conversations[2]._id.toString(), conversations[1]._id.toString()]);
+      expect(page1Ids.some((id) => page2Ids.includes(id))).toBe(false);
+    });
+  });
 });

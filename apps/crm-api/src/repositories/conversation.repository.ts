@@ -49,6 +49,62 @@ export const release = async (id: string, tenantId: string): Promise<Conversatio
     return doc ? toRecord(doc) : null;
   });
 
+export type ConversationListItem = {
+  id: string;
+  customer: string;
+  mode: ConversationMode;
+  assignee?: string;
+  lastActivityAt: Date;
+  unread: boolean;
+  windowOpen: boolean;
+  windowExpiresAt?: Date;
+};
+
+export type ListConversationsFilters = { mode?: ConversationMode; assignee?: string };
+export type ListConversationsPagination = { page: number; limit: number };
+
+// spec.md Assumptions: "não lida" é computado, sem campo novo —
+// lastInboundAt > lastActivityAt. Ausência de lastInboundAt (nenhuma
+// mensagem recebida ainda) sempre resolve pra false.
+const isUnread = (doc: ConversationDocument): boolean =>
+  !!doc.lastInboundAt && doc.lastInboundAt.getTime() > doc.lastActivityAt.getTime();
+
+const toListItem = (doc: ConversationDocument): ConversationListItem => ({
+  id: doc._id.toString(),
+  customer: doc.Customer.toString(),
+  mode: doc.mode,
+  assignee: doc.assignee?.toString(),
+  lastActivityAt: doc.lastActivityAt,
+  unread: isUnread(doc),
+  windowOpen: !!doc.windowExpiresAt && doc.windowExpiresAt.getTime() > Date.now(),
+  windowExpiresAt: doc.windowExpiresAt,
+});
+
+// INBOX-01/03: fila de conversas do tenant da sessão, com filtro opcional
+// por mode/assignee e paginação server-side (AD-028). Ordena por
+// lastActivityAt desc (mais recentemente ativa primeiro) — mesmo índice já
+// existente {Tenant,mode,lastActivityAt} (AIG-33/T31).
+export const listConversations = async (
+  tenantId: string,
+  filters: ListConversationsFilters,
+  pagination: ListConversationsPagination,
+): Promise<{ items: ConversationListItem[]; total: number }> =>
+  withDbTiming('conversation.listConversations', async () => {
+    const filter = tenantScoped({
+      Tenant: tenantId,
+      ...(filters.mode ? { mode: filters.mode } : {}),
+      ...(filters.assignee ? { assignee: filters.assignee } : {}),
+    });
+    const skip = (pagination.page - 1) * pagination.limit;
+
+    const [docs, total] = await Promise.all([
+      Conversation.find(filter).sort({ lastActivityAt: -1 }).skip(skip).limit(pagination.limit).lean(),
+      Conversation.countDocuments(filter),
+    ]);
+
+    return { items: docs.map(toListItem), total };
+  });
+
 // Erros tipados (não CustomError/HTTP-aware) — o service (T38) é quem
 // traduz cada um para o código HTTP certo, o repository nunca decide isso.
 export class ConversationNotFoundError extends Error {
