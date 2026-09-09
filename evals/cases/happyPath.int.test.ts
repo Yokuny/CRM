@@ -174,11 +174,13 @@ describe('golden set — happy path do Anel A (AIG-39, AIG-43)', () => {
     expectTool(client.createMessage, 'set_process_fields', { values: { motivo: MOTIVO_VALUE } });
   });
 
-  it('never offers nor calls any tool outside the fixed Anel A surface (AIG-39 AC1, 6 tools fora do Anel A)', async () => {
+  it('never offers nor calls any tool outside the fixed tool surface (AIG-39 AC1, 4 tools ainda inexistentes)', async () => {
     const { client } = await runHappyPathTurn();
 
-    expectNoTool(client.createMessage, 'search_products');
-    expectNoTool(client.createMessage, 'create_order');
+    // catalog-orders/T14: search_products/get_order_status/create_order
+    // passaram a existir de verdade (TOOL_DEFINITIONS) — não são mais um
+    // exemplo válido de "tool fora da superfície". Os 4 abaixo continuam
+    // inexistentes nesta rodada (payments-asaas, feature 8, fora de escopo).
     expectNoTool(client.createMessage, 'issue_payment_link');
     expectNoTool(client.createMessage, 'cancel_order');
     expectNoTool(client.createMessage, 'apply_discount');
