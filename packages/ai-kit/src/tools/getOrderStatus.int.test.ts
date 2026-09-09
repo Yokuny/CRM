@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { connect, disconnect, Order } from '@crm/db';
+import { connect, disconnect, Order, Payment } from '@crm/db';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { getOrderStatus } from './getOrderStatus.js';
 import type { ToolContext } from './toolContext.js';
@@ -31,6 +31,7 @@ describe('getOrderStatus tool (spec.md P1 "Cliente pesquisa produtos e consulta 
 
   afterEach(async () => {
     await Order.deleteMany({});
+    await Payment.deleteMany({});
   });
 
   afterAll(async () => {
@@ -90,5 +91,45 @@ describe('getOrderStatus tool (spec.md P1 "Cliente pesquisa produtos e consulta 
     const result = await getOrderStatus({}, baseCtx(randomId(), randomId()));
 
     expect(result).toEqual({ error: expect.any(String) });
+  });
+
+  // payments-asaas T19 (spec.md P1 AC5 / PAY-05): a chave `payment` deve
+  // ficar AUSENTE do objeto (não `undefined`) quando o Order não tem nenhum
+  // Payment — `in` prova ausência de verdade, ao contrário de
+  // `toBe(undefined)` (que passaria mesmo se a chave existisse com valor
+  // undefined, um falso verde).
+  it('an Order with NO Payment omits the "payment" key entirely (PAY-05, not just undefined)', async () => {
+    const tenant = randomId();
+    const conversation = randomId();
+    const order = await seedOrder(tenant, conversation);
+
+    const result = await getOrderStatus({ orderId: order._id.toString() }, baseCtx(tenant, conversation));
+
+    expect('payment' in result).toBe(false);
+  });
+
+  it('an Order WITH a Payment includes payment.status/pixPayload from the associated Payment record (PAY-05)', async () => {
+    const tenant = randomId();
+    const conversation = randomId();
+    const order = await seedOrder(tenant, conversation, { status: 'confirmed' });
+    await Payment.create({
+      Tenant: tenant,
+      order: order._id,
+      asaasChargeId: randomId(),
+      asaasCustomerId: randomId(),
+      billingType: 'PIX',
+      value: order.totalPrice,
+      status: 'paid',
+      asaasStatus: 'CONFIRMED',
+      pixPayload: '00020126-fake-pix-payload',
+    });
+
+    const result = await getOrderStatus({ orderId: order._id.toString() }, baseCtx(tenant, conversation));
+
+    expect('payment' in result).toBe(true);
+    expect((result as { payment?: { status: string; pixPayload?: string } }).payment).toEqual({
+      status: 'paid',
+      pixPayload: '00020126-fake-pix-payload',
+    });
   });
 });
