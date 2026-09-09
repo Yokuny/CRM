@@ -15,7 +15,30 @@ import {
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { MAX_INPUT_TEXT_LENGTH, RATE_LIMIT_MAX_MESSAGES, RATE_LIMITED_REPLY } from './guardInput.js';
 import type { AnthropicClient, AnthropicMessage } from './providers/anthropicClient.js';
+import type { AsaasClient } from './providers/asaasClient.js';
 import { runTurn } from './runTurn.js';
+import type { ToolContext } from './tools/toolContext.js';
+
+// T17 (payments-asaas): prova de que `runTurn` monta `ctx.asaasClient` a partir de
+// `opts.asaasClient` — nenhuma das 7 tools existentes lê esse campo ainda (só
+// issue_payment_link, T18, vai ler), então a única forma de observar a MONTAGEM do
+// ctx sem inventar uma tool fora de escopo é capturar o argumento real que runTurn
+// passa para runLoop. `vi.spyOn` direto no namespace de um módulo ESM lança "Module
+// namespace is not configurable" neste projeto (mesmo motivo documentado em
+// webhookSignature.middleware.unit.test.ts) — por isso o mock com `importOriginal`
+// que delega pra implementação real, preservando o comportamento de TODOS os outros
+// testes deste arquivo (que não inspecionam este spy).
+const runLoopArgsSpy = vi.fn();
+vi.mock('./loop.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./loop.js')>();
+  return {
+    ...actual,
+    runLoop: (...args: Parameters<typeof actual.runLoop>) => {
+      runLoopArgsSpy(...args);
+      return actual.runLoop(...args);
+    },
+  };
+});
 
 const randomId = (): string => crypto.randomBytes(12).toString('hex');
 const randomPhone = (): string => `119${crypto.randomInt(10000000, 99999999)}`;
@@ -423,5 +446,33 @@ describe('runTurn (AIG-12/20, edge case de injeção de prompt)', () => {
     expect(await Process.countDocuments({ Tenant: tenantB })).toBe(0);
     // Nenhum dado do outro tenant (nem o ObjectId forjado) vaza na resposta final:
     expect(result.reply).not.toContain(tenantBCustomer._id.toString());
+  });
+
+  it('ctx.asaasClient is opts.asaasClient when provided, undefined otherwise (T17 plumbing, payments-asaas)', async () => {
+    const tenant = randomId();
+    const phoneNumberId = randomId();
+    const from = randomPhone();
+    await seedCustomerTemplate(tenant);
+    await seedChannel(tenant, phoneNumberId);
+    const client = createFakeClient([endTurn('ok'), endTurn('ok')]);
+    const fakeAsaasClient: AsaasClient = {
+      ensureCustomer: vi.fn(),
+      createPixCharge: vi.fn(),
+      getCharge: vi.fn(),
+    };
+    runLoopArgsSpy.mockClear();
+
+    await runTurn(
+      client,
+      { phoneNumberId, wamid: 'wamid-asaas-ctx', from, type: 'text', text: 'oi' },
+      { asaasClient: fakeAsaasClient },
+    );
+    await runTurn(client, { phoneNumberId, wamid: 'wamid-no-asaas-ctx', from, type: 'text', text: 'oi de novo' });
+
+    expect(runLoopArgsSpy).toHaveBeenCalledTimes(2);
+    const [, ctxWithClient] = runLoopArgsSpy.mock.calls[0] as [unknown, ToolContext];
+    const [, ctxWithoutClient] = runLoopArgsSpy.mock.calls[1] as [unknown, ToolContext];
+    expect(ctxWithClient.asaasClient).toBe(fakeAsaasClient);
+    expect(ctxWithoutClient.asaasClient).toBeUndefined();
   });
 });

@@ -7,6 +7,7 @@ import { checkConversationMode, type IngestInput, type IngestOptions, ingest } f
 import { runLoop } from './loop.js';
 import { dispatch, dispatchFixedReply, type PersistConversation, persist } from './persist.js';
 import type { AnthropicClient } from './providers/anthropicClient.js';
+import type { AsaasClient } from './providers/asaasClient.js';
 import type { ToolContext } from './tools/toolContext.js';
 
 // Error Handling Strategy (design.md): Anthropic indisponível → Message{in}
@@ -22,7 +23,12 @@ export type RunTurnOutcome =
   | { outcome: 'sent'; reply: string }
   | { outcome: 'fallback'; reply: string };
 
-export type RunTurnOptions = { ingestOptions?: IngestOptions };
+// `asaasClient` (payments-asaas T17): sibling field to `ingestOptions`, NOT nested
+// under it (design.md Tech Decisions) — `ingestOptions` feeds `ingest()` (pre-loop,
+// audio-transcription-shaped); `asaasClient` is read by `issue_payment_link`, a Ring B
+// TOOL executed inside `runLoop`/`executeTool`. A different pipeline stage needs it,
+// so it gets its own seam instead of conflating the two.
+export type RunTurnOptions = { ingestOptions?: IngestOptions; asaasClient?: AsaasClient };
 
 // catalog-orders T16 (design.md "guard.output — extensão de escopo de
 // preço"): extrai os tool_results que este turno realmente produziu, já
@@ -136,7 +142,12 @@ export const runTurn = async (
     guardResult.text,
   );
 
-  const ctx: ToolContext = { tenantId, channelId: channel._id.toString(), conversationId };
+  const ctx: ToolContext = {
+    tenantId,
+    channelId: channel._id.toString(),
+    conversationId,
+    asaasClient: opts.asaasClient,
+  };
 
   let reply: string;
   let rawTurn: Anthropic.MessageParam[] = [];
