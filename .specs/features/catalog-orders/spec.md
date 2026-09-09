@@ -289,18 +289,18 @@ não contém esse valor.
 | CAT-04 | P1: Cadastro de catálogo | In Tasks | Implementing |
 | CAT-05 | P1: Cadastro de catálogo | In Tasks | Implementing |
 | CAT-06 | P1: Cadastro de catálogo | In Tasks | Pending |
-| CAT-07 | P1: Busca/status pela conversa | In Tasks | Pending |
-| CAT-08 | P1: Busca/status pela conversa | In Tasks | Pending |
-| CAT-09 | P1: Busca/status pela conversa | In Tasks | Pending |
-| CAT-10 | P1: Busca/status pela conversa | In Tasks | Pending |
-| CAT-11 | P1: Busca/status pela conversa | In Tasks | Pending |
+| CAT-07 | P1: Busca/status pela conversa | In Tasks | Implementing |
+| CAT-08 | P1: Busca/status pela conversa | In Tasks | Implementing |
+| CAT-09 | P1: Busca/status pela conversa | In Tasks | Implementing |
+| CAT-10 | P1: Busca/status pela conversa | In Tasks | Implementing |
+| CAT-11 | P1: Busca/status pela conversa | In Tasks | Implementing |
 | CAT-12 | P1: Montar/confirmar pedido | In Tasks | Implementing |
-| CAT-13 | P1: Montar/confirmar pedido | In Tasks | Pending |
+| CAT-13 | P1: Montar/confirmar pedido | In Tasks | Implementing |
 | CAT-14 | P1: Montar/confirmar pedido | In Tasks | Implementing |
 | CAT-15 | P1: Montar/confirmar pedido | In Tasks | Implementing |
 | CAT-16 | P1: Montar/confirmar pedido | In Tasks | Implementing |
 | CAT-17 | P1: Montar/confirmar pedido | In Tasks | Implementing |
-| CAT-18 | P1: Aprovar/rejeitar pedido | In Tasks | Pending |
+| CAT-18 | P1: Aprovar/rejeitar pedido | In Tasks | Implementing |
 | CAT-19 | P1: Aprovar/rejeitar pedido | In Tasks | Pending |
 | CAT-20 | P1: Aprovar/rejeitar pedido | In Tasks | Pending |
 | CAT-21 | P1: Aprovar/rejeitar pedido | In Tasks | Implementing |

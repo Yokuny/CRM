@@ -332,9 +332,9 @@ listagem paginada + populate)
 - Skill: NONE
 
 **Done when**:
-- [ ] `listOrders` filtra por `status` (default nenhum — todos) e `conversation` opcional
-- [ ] `customer.name` populado na listagem (uso da tela de Pedidos e do card inline)
-- [ ] Gate check passa: `pnpm vitest run --project integration`
+- [x] `listOrders` filtra por `status` (default nenhum — todos) e `conversation` opcional
+- [x] `customer.name` populado na listagem (uso da tela de Pedidos e do card inline)
+- [x] Gate check passa: `pnpm vitest run --project integration`
 
 **Tests**: integration
 **Gate**: full
@@ -357,13 +357,13 @@ tradução; mesmo espírito de `ConversationAlreadyAssignedError`)
 - Skill: NONE
 
 **Done when**:
-- [ ] `approveOrder`/`rejectOrder` sobre `Order` inexistente/outro tenant →
+- [x] `approveOrder`/`rejectOrder` sobre `Order` inexistente/outro tenant →
       `OrderNotFoundError`
-- [ ] `approveOrder`/`rejectOrder` sobre `Order` já `confirmed`/`rejected` →
+- [x] `approveOrder`/`rejectOrder` sobre `Order` já `confirmed`/`rejected` →
       `OrderAlreadyTerminalError`
-- [ ] `approveOrder` bem-sucedido retorna o `Order` atual mesmo quando a reserva de
+- [x] `approveOrder` bem-sucedido retorna o `Order` atual mesmo quando a reserva de
       estoque falha (sem lançar erro nesse caso — ver `design.md`, Tech Decisions)
-- [ ] Gate check passa: `pnpm vitest run --project unit`
+- [x] Gate check passa: `pnpm vitest run --project unit`
 
 **Tests**: unit
 **Gate**: quick
@@ -386,12 +386,12 @@ controller)
 - Skill: NONE
 
 **Done when**:
-- [ ] `OrderNotFoundError`→404, `OrderAlreadyTerminalError`→409, sem `canOperate`→403
-- [ ] `app.use('/orders', createOrderRouter({validToken}))` montado
-- [ ] Gate check passa: `pnpm vitest run --project e2e`
-- [ ] Contagem de testes: pelo menos 7 (list, approve feliz, approve com falha de
+- [x] `OrderNotFoundError`→404, `OrderAlreadyTerminalError`→409, sem `canOperate`→403
+- [x] `app.use('/orders', createOrderRouter({validToken}))` montado
+- [x] Gate check passa: `pnpm vitest run --project e2e`
+- [x] Contagem de testes: pelo menos 7 (list, approve feliz, approve com falha de
       estoque, approve sobre terminal, reject feliz, reject sobre terminal, sem
-      permissão)
+      permissão) — 10 testes escritos
 
 **Tests**: e2e
 **Gate**: full
@@ -415,10 +415,10 @@ controller)
 - Skill: NONE
 
 **Done when**:
-- [ ] Retorna só `Product`s `active:true` do `Tenant` do `ToolContext`
-- [ ] Sem `query`, retorna os 5 mais recentes/relevantes; com `query`, filtra por `name`
-- [ ] Nenhum match → lista vazia, nunca `{error}`
-- [ ] Gate check passa: `pnpm vitest run --project integration`
+- [x] Retorna só `Product`s `active:true` do `Tenant` do `ToolContext`
+- [x] Sem `query`, retorna os 5 mais recentes/relevantes; com `query`, filtra por `name`
+- [x] Nenhum match → lista vazia, nunca `{error}`
+- [x] Gate check passa: `pnpm vitest run --project integration`
 
 **Tests**: integration
 **Gate**: full
@@ -439,9 +439,9 @@ controller)
 - Skill: NONE
 
 **Done when**:
-- [ ] `orderId` informado mas de outra `conversation`/`Tenant` → `{error}`, sem vazar dado
-- [ ] `orderId` omitido → `Order` mais recente da `conversation`, ou `{error}` se nenhum
-- [ ] Gate check passa: `pnpm vitest run --project integration`
+- [x] `orderId` informado mas de outra `conversation`/`Tenant` → `{error}`, sem vazar dado
+- [x] `orderId` omitido → `Order` mais recente da `conversation`, ou `{error}` se nenhum
+- [x] Gate check passa: `pnpm vitest run --project integration`
 
 **Tests**: integration
 **Gate**: full
@@ -464,18 +464,19 @@ validado), `orderTransitions.ts`
 - Skill: NONE
 
 **Done when**:
-- [ ] 1ª chamada: item com `productId` inexistente/`active:false` ou `quantity` fora de
+- [x] 1ª chamada: item com `productId` inexistente/`active:false` ou `quantity` fora de
       `1..100` → `{error}`, nenhum `Order` criado
-- [ ] 1ª chamada válida: `Order` `pending_approval`, `customerConfirmed:false`, snapshot
+- [x] 1ª chamada válida: `Order` `pending_approval`, `customerConfirmed:false`, snapshot
       de `name`/`unitPrice` por item, `totalPrice` calculado
-- [ ] 2ª chamada (`customerConfirmed:true`) com `items` idêntico → atualiza o MESMO
+- [x] 2ª chamada (`customerConfirmed:true`) com `items` idêntico → atualiza o MESMO
       `Order` (nunca cria um segundo)
-- [ ] 2ª chamada com `items` divergente → `{error}`, `Order` original intocado
-- [ ] `customerConfirmed:true` sem `Order pending_approval` correspondente → `{error}`
-- [ ] Chamada (1ª ou 2ª forma) sobre `idempotencyKey` de `Order` já terminal → retorna o
+- [x] 2ª chamada com `items` divergente → `{error}`, `Order` original intocado
+- [x] `customerConfirmed:true` sem `Order pending_approval` correspondente → `{error}`
+- [x] Chamada (1ª ou 2ª forma) sobre `idempotencyKey` de `Order` já terminal → retorna o
       estado atual, sem mutar
-- [ ] Gate check passa: `pnpm vitest run --project integration`
-- [ ] Contagem de testes: pelo menos 8 (cobrindo todos os `Done when` acima)
+- [x] Gate check passa: `pnpm vitest run --project integration`
+- [x] Contagem de testes: pelo menos 8 (cobrindo todos os `Done when` acima) — 11 testes
+      escritos
 
 **Tests**: integration
 **Gate**: full
@@ -499,11 +500,11 @@ no `input_schema`, AD-010) e ao `switch` de `executeTool`; atualizar
 - Skill: NONE
 
 **Done when**:
-- [ ] `TOOL_DEFINITIONS` tem as 3 entradas novas, `input_schema` sem `tenant`/`channelId`/
+- [x] `TOOL_DEFINITIONS` tem as 3 entradas novas, `input_schema` sem `tenant`/`channelId`/
       `conversationId`
-- [ ] `executeTool` despacha os 3 nomes novos pros handlers de T11/T12/T13
-- [ ] `EXPECTED_TOOL_NAMES` e `toHaveLength(4)`→`toHaveLength(7)` atualizados
-- [ ] Gate check passa: `pnpm vitest run --project unit --project structural`
+- [x] `executeTool` despacha os 3 nomes novos pros handlers de T11/T12/T13
+- [x] `EXPECTED_TOOL_NAMES` e `toHaveLength(4)`→`toHaveLength(7)` atualizados
+- [x] Gate check passa: `pnpm vitest run --project unit --project structural`
 
 **Tests**: structural
 **Gate**: quick
