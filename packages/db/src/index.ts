@@ -30,6 +30,8 @@ export type {
 export { Message } from './models/message.model.js';
 export type { ProcessDocument } from './models/process.model.js';
 export { Process } from './models/process.model.js';
+export type { ProductDocument } from './models/product.model.js';
+export { Product } from './models/product.model.js';
 export type { SessionDocument } from './models/session.model.js';
 export { Session } from './models/session.model.js';
 export type { TenantDocument, TenantStatus } from './models/tenant.model.js';
@@ -47,6 +49,7 @@ import { FieldTemplateVersion } from './models/fieldTemplateVersion.model.js';
 import { Invite } from './models/invite.model.js';
 import { Message } from './models/message.model.js';
 import { Process } from './models/process.model.js';
+import { Product } from './models/product.model.js';
 import { Session } from './models/session.model.js';
 import { Tenant } from './models/tenant.model.js';
 import { User } from './models/user.model.js';
@@ -61,6 +64,7 @@ export const syncIndexes = async (): Promise<void> => {
     FieldTemplateVersion.createIndexes(),
     Customer.createIndexes(),
     Process.createIndexes(),
+    Product.createIndexes(),
     Channel.createIndexes(),
     Conversation.createIndexes(),
     Message.createIndexes(),
