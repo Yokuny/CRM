@@ -121,10 +121,20 @@ describe('asaasClient (spec.md P1 "Tenant configura sua própria chave Asaas")',
     it('posts the expected payload shape and returns {asaasWebhookId} from the created webhook id', async () => {
       const fetchMock = fetch as unknown as ReturnType<typeof vi.fn>;
       fetchMock.mockResolvedValueOnce(
-        jsonResponse(200, { id: 'wh_123', name: 'CRM Payments', url: 'https://app.example.com/webhooks/asaas/tok', enabled: true }),
+        jsonResponse(200, {
+          id: 'wh_123',
+          name: 'CRM Payments',
+          url: 'https://app.example.com/webhooks/asaas/tok',
+          enabled: true,
+        }),
       );
 
-      const result = await registerWebhook(API_KEY, 'sandbox', 'https://app.example.com/webhooks/asaas/tok', 'auth-token-abc');
+      const result = await registerWebhook(
+        API_KEY,
+        'sandbox',
+        'https://app.example.com/webhooks/asaas/tok',
+        'auth-token-abc',
+      );
 
       expect(result).toEqual({ asaasWebhookId: 'wh_123' });
       const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
@@ -143,7 +153,9 @@ describe('asaasClient (spec.md P1 "Tenant configura sua própria chave Asaas")',
       const fetchMock = fetch as unknown as ReturnType<typeof vi.fn>;
       fetchMock.mockResolvedValueOnce(jsonResponse(400, { errors: [{ description: 'invalid url' }] }));
 
-      await expect(registerWebhook(API_KEY, 'sandbox', 'not-a-url', 'auth-token-abc')).rejects.toBeInstanceOf(AsaasApiError);
+      await expect(registerWebhook(API_KEY, 'sandbox', 'not-a-url', 'auth-token-abc')).rejects.toBeInstanceOf(
+        AsaasApiError,
+      );
       expect(fetchMock).toHaveBeenCalledTimes(1);
     });
 
@@ -153,7 +165,12 @@ describe('asaasClient (spec.md P1 "Tenant configura sua própria chave Asaas")',
         .mockResolvedValueOnce(jsonResponse(503, { errors: [{ description: 'unavailable' }] }))
         .mockResolvedValueOnce(jsonResponse(200, { id: 'wh_456' }));
 
-      const result = await registerWebhook(API_KEY, 'sandbox', 'https://app.example.com/webhooks/asaas/tok', 'auth-token-abc');
+      const result = await registerWebhook(
+        API_KEY,
+        'sandbox',
+        'https://app.example.com/webhooks/asaas/tok',
+        'auth-token-abc',
+      );
 
       expect(result).toEqual({ asaasWebhookId: 'wh_456' });
       expect(fetchMock).toHaveBeenCalledTimes(2);

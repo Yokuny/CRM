@@ -54,7 +54,10 @@ describe('asaasIntegration.repository', () => {
     it('persists the encrypted key and environment, never a plaintext apiKey field (spec.md P1 AC1)', async () => {
       const tenantId = randomId();
 
-      const result = await asaasIntegrationRepository.createIntegration(tenantId, sampleData({ environment: 'production' }));
+      const result = await asaasIntegrationRepository.createIntegration(
+        tenantId,
+        sampleData({ environment: 'production' }),
+      );
 
       expect(result.environment).toBe('production');
       expect(result).not.toHaveProperty('apiKey');

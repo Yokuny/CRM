@@ -67,7 +67,10 @@ describe('asaasIntegration.service (spec.md P1 "Tenant configura sua própria ch
         expect.any(String),
         expect.any(String),
       );
-      expect(createIntegrationMock).toHaveBeenCalledWith(TENANT_ID, expect.objectContaining({ environment: 'production' }));
+      expect(createIntegrationMock).toHaveBeenCalledWith(
+        TENANT_ID,
+        expect.objectContaining({ environment: 'production' }),
+      );
     });
 
     it('auto-detects "sandbox" for any non-$aact_prod_ prefix (e.g. $aact_hmlg_)', async () => {
@@ -79,7 +82,10 @@ describe('asaasIntegration.service (spec.md P1 "Tenant configura sua própria ch
       await createIntegration(TENANT_ID, { apiKey: '$aact_hmlg_real-key-value' });
 
       expect(validateApiKeyMock).toHaveBeenCalledWith('$aact_hmlg_real-key-value', 'sandbox');
-      expect(createIntegrationMock).toHaveBeenCalledWith(TENANT_ID, expect.objectContaining({ environment: 'sandbox' }));
+      expect(createIntegrationMock).toHaveBeenCalledWith(
+        TENANT_ID,
+        expect.objectContaining({ environment: 'sandbox' }),
+      );
     });
 
     it('persists an encrypted apiKey (apiKeyEnc), never the plaintext key, in the repository call', async () => {
@@ -94,7 +100,11 @@ describe('asaasIntegration.service (spec.md P1 "Tenant configura sua própria ch
       const persistedData = createIntegrationMock.mock.calls[0][1] as { apiKeyEnc: unknown };
       expect(persistedData.apiKeyEnc).not.toBe(plainKey);
       expect(JSON.stringify(persistedData.apiKeyEnc)).not.toContain(plainKey);
-      expect(persistedData.apiKeyEnc).toMatchObject({ ciphertext: expect.any(String), iv: expect.any(String), authTag: expect.any(String) });
+      expect(persistedData.apiKeyEnc).toMatchObject({
+        ciphertext: expect.any(String),
+        iv: expect.any(String),
+        authTag: expect.any(String),
+      });
     });
 
     it('persists webhookAuthTokenHash as the exact sha256 of the generated authToken passed to registerWebhook (never the raw token)', async () => {
