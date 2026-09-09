@@ -17,6 +17,17 @@ export const envSchema = z.object({
   // accessToken do Channel com a MESMA chave que o outbox consumer do
   // ai-gateway usa para decifrar e enviar (packages/db/src/crypto.helper.ts).
   CHANNEL_ENC_KEY: z.string().min(1, 'CHANNEL_ENC_KEY é obrigatória'),
+  // AD-012/AD-034 (payments-asaas): asaasIntegration.service.ts criptografa a
+  // apiKey do tenant com a MESMA chave que apps/ai-gateway usa para decifrar
+  // ao chamar o Asaas (packages/db/src/crypto.helper.ts) — mesmo padrão de
+  // CHANNEL_ENC_KEY acima.
+  ASAAS_ENC_KEY: z.string().min(1, 'ASAAS_ENC_KEY é obrigatória'),
+  // Base URL pública usada para montar a URL do webhook por tenant
+  // registrado no Asaas (`${ASAAS_WEBHOOK_BASE_URL}/webhooks/asaas/:webhookToken`)
+  // — o Asaas chama essa URL a partir de fora, então precisa ser a URL
+  // pública do apps/ai-gateway (onde o webhook é recebido), nunca localhost
+  // em produção.
+  ASAAS_WEBHOOK_BASE_URL: z.string().min(1, 'ASAAS_WEBHOOK_BASE_URL é obrigatória'),
 });
 
 export type Env = z.infer<typeof envSchema>;
