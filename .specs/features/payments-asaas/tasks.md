@@ -127,10 +127,10 @@ T29 → T30 → T31
 **Tools**: MCP: NONE / Skill: NONE
 
 **Done when**:
-- [ ] Schema matches design.md exactly: `order` unique index, `status` enum `pending|paid|expired|refunded|canceled`, `billingType: 'PIX'` literal, `value` int validated
-- [ ] Exported from `packages/db/src/index.ts`
-- [ ] Gate check passes: `pnpm vitest run --project integration`
-- [ ] Test count: baseline + new model tests pass (no silent deletions)
+- [x] Schema matches design.md exactly: `order` unique index, `status` enum `pending|paid|expired|refunded|canceled`, `billingType: 'PIX'` literal, `value` int validated
+- [x] Exported from `packages/db/src/index.ts`
+- [x] Gate check passes: `pnpm vitest run --project integration`
+- [x] Test count: baseline + new model tests pass (no silent deletions)
 
 **Tests**: integration
 **Gate**: full
@@ -148,10 +148,10 @@ T29 → T30 → T31
 **Tools**: MCP: NONE / Skill: NONE
 
 **Done when**:
-- [ ] Schema matches design.md: unique `Tenant`, unique `webhookToken`, `environment` enum, `status` enum `active|inactive`
-- [ ] Exported from `packages/db/src/index.ts`
-- [ ] Gate check passes: `pnpm vitest run --project integration`
-- [ ] Test count: baseline + new model tests pass (no silent deletions)
+- [x] Schema matches design.md: unique `Tenant`, unique `webhookToken`, `environment` enum, `status` enum `active|inactive`
+- [x] Exported from `packages/db/src/index.ts`
+- [x] Gate check passes: `pnpm vitest run --project integration`
+- [x] Test count: baseline + new model tests pass (no silent deletions)
 
 **Tests**: integration
 **Gate**: full
@@ -169,10 +169,10 @@ T29 → T30 → T31
 **Tools**: MCP: NONE / Skill: NONE
 
 **Done when**:
-- [ ] Schema matches design.md: unique `asaasEventId`, `status` enum `received|processed|failed`, `payload: Mixed`
-- [ ] Exported from `packages/db/src/index.ts`
-- [ ] Gate check passes: `pnpm vitest run --project integration`
-- [ ] Test count: baseline + new model tests pass (no silent deletions)
+- [x] Schema matches design.md: unique `asaasEventId`, `status` enum `received|processed|failed`, `payload: Mixed`
+- [x] Exported from `packages/db/src/index.ts`
+- [x] Gate check passes: `pnpm vitest run --project integration`
+- [x] Test count: baseline + new model tests pass (no silent deletions)
 
 **Tests**: integration
 **Gate**: full
@@ -190,10 +190,10 @@ T29 → T30 → T31
 **Tools**: MCP: NONE / Skill: NONE
 
 **Done when**:
-- [ ] Field is optional, absent for every existing `Customer` document/test without a migration
-- [ ] `customer.model.int.test.ts` extended with one case asserting the field round-trips
-- [ ] Gate check passes: `pnpm vitest run --project integration`
-- [ ] Test count: baseline + 1 new case pass (no silent deletions)
+- [x] Field is optional, absent for every existing `Customer` document/test without a migration
+- [x] `customer.model.int.test.ts` extended with one case asserting the field round-trips
+- [x] Gate check passes: `pnpm vitest run --project integration`
+- [x] Test count: baseline + 1 new case pass (no silent deletions)
 
 **Tests**: integration
 **Gate**: full
@@ -211,10 +211,10 @@ T29 → T30 → T31
 **Tools**: MCP: NONE / Skill: NONE
 
 **Done when**:
-- [ ] `'payment_expired'` is a valid, persistable `Order.status` value everywhere the union is defined
-- [ ] No existing `Order` document/test with the 3 old values changes behavior
-- [ ] Gate check passes: `pnpm vitest run --project integration`
-- [ ] Test count: baseline + new enum-value case passes (no silent deletions)
+- [x] `'payment_expired'` is a valid, persistable `Order.status` value everywhere the union is defined
+- [x] No existing `Order` document/test with the 3 old values changes behavior
+- [x] Gate check passes: `pnpm vitest run --project integration`
+- [x] Test count: baseline + new enum-value case passes (no silent deletions)
 
 **Tests**: integration
 **Gate**: full
@@ -232,11 +232,11 @@ T29 → T30 → T31
 **Tools**: MCP: NONE / Skill: NONE
 
 **Done when**:
-- [ ] `applyAsaasPaymentStatus` maps `asaasStatus`→domain `status`, never downgrades rank (`pending<paid`, and `paid`/`refunded`/`canceled` are never overwritten by a lower-rank status)
-- [ ] `expireOrderPayment` only acts on a still-`pending` Payment; releases every item's stock (`Product.stock` `$inc` positive); sets `Order.status = 'payment_expired'`; no-ops safely on a Payment already left `pending`
-- [ ] All branches covered by tests (1:1 to PAY-08/11/12), matching `orderTransitions.int.test.ts`'s depth
-- [ ] Gate check passes: `pnpm vitest run --project integration`
-- [ ] Test count: baseline + N new tests pass (no silent deletions)
+- [x] `applyAsaasPaymentStatus` maps `asaasStatus`→domain `status`, never downgrades rank (`pending<paid`, and `paid`/`refunded`/`canceled` are never overwritten by a lower-rank status)
+- [x] `expireOrderPayment` only acts on a still-`pending` Payment; releases every item's stock (`Product.stock` `$inc` positive); sets `Order.status = 'payment_expired'`; no-ops safely on a Payment already left `pending`
+- [x] All branches covered by tests (1:1 to PAY-08/11/12), matching `orderTransitions.int.test.ts`'s depth
+- [x] Gate check passes: `pnpm vitest run --project integration`
+- [x] Test count: baseline + N new tests pass (no silent deletions)
 
 **Tests**: integration
 **Gate**: full
