@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 27,
+  "next_id": 28,
   "lessons": [
     {
       "id": "L-001",
@@ -474,6 +474,24 @@
       ],
       "created": "2026-09-08T22:22:40Z",
       "last_seen": "2026-09-09T16:52:33Z"
+    },
+    {
+      "id": "L-027",
+      "key": "surviving_mutant::when a conditional write guard exists specifically to defend an atomic read modify write race between concurrent callers write at least one test that issues genuinely concurrent promise all calls against the same document a sequential call test can pass even after the atomic filter s guarding condition is deleted because an earlier non atomic read check silently absorbs the sequential case",
+      "text": "When a conditional-write guard exists specifically to defend an atomic read-modify-write race between concurrent callers, write at least one test that issues genuinely concurrent (Promise.all) calls against the same document — a sequential-call test can pass even after the atomic filter's guarding condition is deleted, because an earlier non-atomic read-check silently absorbs the sequential case.",
+      "signal": "surviving_mutant",
+      "scope": "db-transitions",
+      "status": "candidate",
+      "features": [
+        "payments-asaas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "packages/db/src/paymentTransitions.ts:105 (mutant #5, validation.md Discrimination Sensor) (db-transitions)"
+      ],
+      "created": "2026-09-09T22:35:43Z",
+      "last_seen": "2026-09-09T22:35:43Z"
     }
   ]
 }

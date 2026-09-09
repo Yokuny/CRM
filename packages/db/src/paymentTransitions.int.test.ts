@@ -295,6 +295,47 @@ describe('paymentTransitions', () => {
       expect(reloadedProduct?.stock).toBe(5);
     });
 
+    // validation.md (Verifier, sensor #5): a mutação que remove
+    // `status:'pending'` do filtro atômico do findOneAndUpdate (:105)
+    // sobreviveu ao teste sequencial acima — a 2ª chamada sequencial já é
+    // barrada pelo guard de leitura anterior (:96), então nunca chega a
+    // exercitar o filtro atômico de verdade. Este teste força as DUAS
+    // chamadas a lerem o MESMO estado 'pending' ANTES de qualquer escrita
+    // (Promise.all, não sequencial) — só o filtro atômico pode impedir a
+    // corrida de liberar o estoque duas vezes aqui.
+    it('is safe under a genuine concurrent race (Promise.all) — two simultaneous calls release stock exactly once', async () => {
+      const Tenant = new mongoose.Types.ObjectId();
+      const product = await seedProduct(Tenant, { stock: 3 });
+      const order = await seedOrder(Tenant, [
+        { product: product._id, name: 'Produto Teste', unitPrice: 1000, quantity: 2 },
+      ]);
+      const payment = await seedPayment(Tenant, order._id);
+
+      const [first, second] = await Promise.all([
+        expireOrderPayment(Tenant.toString(), payment._id.toString()),
+        expireOrderPayment(Tenant.toString(), payment._id.toString()),
+      ]);
+
+      expect(isError(first)).toBe(false);
+      expect(isError(second)).toBe(false);
+      // A vencedora da corrida atômica devolve 'expired'; a perdedora devolve
+      // o snapshot que já tinha lido ANTES de perder (ainda 'pending' —
+      // comportamento documentado do `if (!expired) return payment` em
+      // paymentTransitions.ts, não relê o Mongo depois de perder). O que
+      // importa é o estado final no banco, checado abaixo.
+      const statuses = [(first as PaymentDocument).status, (second as PaymentDocument).status].sort();
+      expect(statuses).toEqual(['expired', 'pending']);
+
+      const reloadedPayment = await Payment.findById(payment._id).lean();
+      expect(reloadedPayment?.status).toBe('expired');
+      const reloadedProduct = await Product.findById(product._id).lean();
+      // 3 + 2 liberado UMA vez só, mesmo com as duas chamadas em paralelo —
+      // é exatamente este invariante que o filtro atômico protege.
+      expect(reloadedProduct?.stock).toBe(5);
+      const reloadedOrder = await Order.findById(order._id).lean();
+      expect(reloadedOrder?.status).toBe('payment_expired');
+    });
+
     it('returns {error} for a non-existent paymentId', async () => {
       const Tenant = new mongoose.Types.ObjectId();
       const result = await expireOrderPayment(Tenant.toString(), new mongoose.Types.ObjectId().toString());
