@@ -707,10 +707,10 @@ edição com `updateProductSchema`.
 - Skill: NONE
 
 **Done when**:
-- [ ] `ordersQuery` server-driven, filtro por `status` via parâmetro
-- [ ] Mutations invalidam `ordersQuery` (e, quando aplicável, a query do card do Inbox de
+- [x] `ordersQuery` server-driven, filtro por `status` via parâmetro
+- [x] Mutations invalidam `ordersQuery` (e, quando aplicável, a query do card do Inbox de
       T24) no sucesso
-- [ ] Gate check passa: `pnpm vitest run --project unit`
+- [x] Gate check passa: `pnpm vitest run --project unit`
 
 **Tests**: unit
 **Gate**: quick
@@ -732,10 +732,10 @@ edição com `updateProductSchema`.
 - Skill: NONE
 
 **Done when**:
-- [ ] Filtro por `status` (default `pending_approval`, também mostra `confirmed`/
+- [x] Filtro por `status` (default `pending_approval`, também mostra `confirmed`/
       `rejected` como histórico)
-- [ ] Botões Aprovar/Rejeitar visíveis só em linhas `pending_approval`
-- [ ] Gate check passa: `pnpm vitest run --project unit`
+- [x] Botões Aprovar/Rejeitar visíveis só em linhas `pending_approval`
+- [x] Gate check passa: `pnpm vitest run --project unit`
 
 **Tests**: unit
 **Gate**: quick
