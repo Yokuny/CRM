@@ -40,6 +40,8 @@ export type { TenantDocument, TenantStatus } from './models/tenant.model.js';
 export { Tenant, transitionTenantStatus } from './models/tenant.model.js';
 export type { UserDocument } from './models/user.model.js';
 export { User } from './models/user.model.js';
+export type { OrderItemInput, OrderTransitionResult } from './orderTransitions.js';
+export { rejectOrder, setCustomerConfirmed, setOperatorApproved, tryConfirmOrder } from './orderTransitions.js';
 export { tenantScoped } from './tenantScoped.js';
 
 import { AiSession } from './models/aiSession.model.js';
