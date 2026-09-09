@@ -4,8 +4,8 @@ import { runTurn } from '@crm/ai-kit';
 import {
   Channel,
   Conversation,
-  connect,
   Customer,
+  connect,
   disconnect,
   FieldTemplate,
   Message,
@@ -63,7 +63,12 @@ const seedChannel = async (tenant: string, phoneNumberId: string) =>
     status: 'active',
   });
 
-const createOrderToolUse = (id: string, input: unknown): FakeContent => ({ type: 'tool_use', id, name: 'create_order', input });
+const createOrderToolUse = (id: string, input: unknown): FakeContent => ({
+  type: 'tool_use',
+  id,
+  name: 'create_order',
+  input,
+});
 
 describe('golden set — create_order + guard de preço (spec.md P1 "guard.output", AD-009)', () => {
   beforeAll(async () => {
@@ -97,7 +102,12 @@ describe('golden set — create_order + guard de preço (spec.md P1 "guard.outpu
 
     // 1ª chamada (Anel B, sem customerConfirmed): cria o Order pending_approval.
     const firstCallClient = createFakeClient([
-      { content: [createOrderToolUse('t1', { items: [{ productId: product._id.toString(), quantity: 1 }], idempotencyKey })], stop_reason: 'tool_use' },
+      {
+        content: [
+          createOrderToolUse('t1', { items: [{ productId: product._id.toString(), quantity: 1 }], idempotencyKey }),
+        ],
+        stop_reason: 'tool_use',
+      },
       endTurn('Perfeito! Seu pedido de R$50,00 ficou pendente de aprovação. Posso confirmar?'),
     ]);
     const firstResult = await runTurn(firstCallClient, {
@@ -153,7 +163,7 @@ describe('golden set — create_order + guard de preço (spec.md P1 "guard.outpu
     expect(await Order.countDocuments({ idempotencyKey })).toBe(1);
   });
 
-  it("never lets the customer-facing reply cite a money value that isn't backed by this turn's tool results, even when create_order ran in the same turn (spec.md P1 \"guard.output\"/AC1/AC2, CAT-25/26/27)", async () => {
+  it('never lets the customer-facing reply cite a money value that isn\'t backed by this turn\'s tool results, even when create_order ran in the same turn (spec.md P1 "guard.output"/AC1/AC2, CAT-25/26/27)', async () => {
     const tenant = randomId();
     const phoneNumberId = randomId();
     const from = randomPhone();
@@ -166,7 +176,12 @@ describe('golden set — create_order + guard de preço (spec.md P1 "guard.outpu
     // FABRICADO sem lastro nenhum (R$15,00 de "taxa extra") — exatamente o
     // cenário que guard.output precisa distinguir.
     const client = createFakeClient([
-      { content: [createOrderToolUse('t1', { items: [{ productId: product._id.toString(), quantity: 1 }], idempotencyKey })], stop_reason: 'tool_use' },
+      {
+        content: [
+          createOrderToolUse('t1', { items: [{ productId: product._id.toString(), quantity: 1 }], idempotencyKey }),
+        ],
+        stop_reason: 'tool_use',
+      },
       endTurn('Seu pedido de R$50,00 foi registrado, mas cobra uma taxa extra de R$15,00 no ato.'),
     ]);
 
