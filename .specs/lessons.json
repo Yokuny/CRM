@@ -461,17 +461,19 @@
       "text": "When a task's What description names a specific function mirroring an existing pattern (e.g. a by-id query), verify during Tasks that a corresponding backend endpoint is actually planned before assigning the task, so implementers don't discover the mismatch mid-Execute.",
       "signal": "spec_deviation",
       "scope": "tasks",
-      "status": "candidate",
+      "status": "confirmed",
       "features": [
-        "inbox-realtime"
+        "inbox-realtime",
+        "catalog-orders"
       ],
-      "recurrence": 1,
+      "recurrence": 2,
       "harmful": 0,
       "evidence": [
-        "apps/web/src/query/conversation.ts:31 (tasks)"
+        "apps/web/src/query/conversation.ts:31 (tasks)",
+        "apps/web/src/routes/_private/products/details.tsx:24 (SPEC_DEVIATION: no GET /products/:id endpoint) (tasks)"
       ],
       "created": "2026-09-08T22:22:40Z",
-      "last_seen": "2026-09-08T22:22:40Z"
+      "last_seen": "2026-09-09T16:52:33Z"
     }
   ]
 }
