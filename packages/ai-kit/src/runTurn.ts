@@ -124,7 +124,10 @@ export const runTurn = async (
     isFallback = true;
   }
 
-  const guardedReply = guardOutput(reply);
+  // catalog-orders T15: guardOutput agora exige os tool_results deste turno
+  // (regra de preço, CAT-25/26/27) — `[]` é o placeholder seguro até T16 fiar
+  // a extração real de `rawTurn` (redige TODO preço até lá, fail-secure).
+  const guardedReply = guardOutput(reply, []);
   const turnMessages: Anthropic.MessageParam[] = [{ role: 'user', content: guardResult.text }, ...rawTurn];
   const outMessage = await persist(client, persistConversation, aiSession, turnMessages, guardedReply);
   await dispatch(outMessage);
