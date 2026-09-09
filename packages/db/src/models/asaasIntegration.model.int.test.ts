@@ -9,7 +9,7 @@ const KEY = Buffer.alloc(32, 7).toString('base64');
 const baseIntegration = (Tenant: mongoose.Types.ObjectId, overrides: Partial<Record<string, unknown>> = {}) => ({
   Tenant,
   apiKeyEnc: encrypt('$aact_hmlg_chave-de-teste', KEY),
-  environment: 'sandbox',
+  environment: 'sandbox' as const,
   webhookToken: `token_${new mongoose.Types.ObjectId().toString()}`,
   webhookAuthTokenHash: 'a'.repeat(64),
   ...overrides,

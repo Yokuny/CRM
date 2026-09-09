@@ -12,7 +12,7 @@ const basePayment = (
   order,
   asaasChargeId: `pay_${new mongoose.Types.ObjectId().toString()}`,
   asaasCustomerId: 'cus_000000000001',
-  billingType: 'PIX',
+  billingType: 'PIX' as const,
   value: 10000,
   asaasStatus: 'PENDING',
   ...overrides,
