@@ -758,9 +758,9 @@ Aprovar/Rejeitar — mesmo padrão visual de `takeover-badge.tsx`.
 - Skill: NONE
 
 **Done when**:
-- [ ] Usa `ordersQuery({conversation, status:'pending_approval'})` (T22)
-- [ ] Nenhum `Order` pendente → componente não renderiza nada (sem estado vazio ruidoso)
-- [ ] Gate check passa: `pnpm vitest run --project unit`
+- [x] Usa `ordersQuery({conversation, status:'pending_approval'})` (T22)
+- [x] Nenhum `Order` pendente → componente não renderiza nada (sem estado vazio ruidoso)
+- [x] Gate check passa: `pnpm vitest run --project unit`
 
 **Tests**: unit
 **Gate**: quick
