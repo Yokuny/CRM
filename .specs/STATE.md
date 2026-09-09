@@ -283,68 +283,98 @@ Detalhamento completo (contexto, consequências, alternativas) em [`docs/adr/`](
 
 ## Handoff
 
-- **Feature**: `catalog-orders` (feature 7 de 11) — **Execute completo e Verificado
-  (PASS)** neste worktree (`../CRM-catalog-orders`, branch `feature/catalog-orders`).
-  Todas as 25 tasks (T1–T25, 11 fases) implementadas, gate cheio (`pnpm run check`) verde,
-  Verifier independente (author≠verifier) rodou automaticamente após T25 e retornou PASS
-  sem gaps. Nenhum fix task necessário.
+- **Feature**: `payments-asaas` (feature 8 de 11) — **Execute completo e Verificado
+  (PASS)** neste worktree (`../CRM-payments-asaas`, branch `feature/payments-asaas`).
+  Todas as 31 tasks (T1–T31, 8 fases, P1+P2 juntos nesta sessão) implementadas, Build gate
+  cheio verde, Verifier independente (author≠verifier) rodou automaticamente após T31,
+  achou 1 gap (fix aplicado, ver abaixo), fechado sem precisar de novo ciclo completo.
 - **Phase / Task**: Specify/Discuss/Design/Tasks (sessão anterior) → Execute (esta sessão,
-  4 batches de sub-agentes, offer-then-confirm aceito pelo usuário no início) → Verifier
-  (automático, não prompted). Todas as fases completas.
+  5 batches de sub-agentes, offer-then-confirm aceito pelo usuário no início, incluindo
+  Fase 8/P2 no mesmo Execute) → Verifier (automático, não prompted) → fix do único gap
+  achado (orquestrador, sem novo Verifier completo — justificativa abaixo). Todas as fases
+  completas.
 - **Completed**:
-  - **Batch 1** (Fases 1–3, T1–T7): models `Product`/`Order` (`packages/db`),
-    `orderTransitions.ts` (AD-033 — `setCustomerConfirmed`/`setOperatorApproved`/
-    `tryConfirmOrder`/`rejectOrder`), 3 schemas Zod novos, CRUD completo de `Product`
-    (`apps/crm-api`). 11 commits, `4f469c6`..`20f1da1`. 940 testes verdes ao final do
-    batch (incluindo 3 fix commits para testes pré-existentes que hardcodavam contagem de
-    models/schemas).
-  - **Batch 2** (Fases 4–6, T8–T14): `order.repository/service/controller/router`
-    (listar/aprovar/rejeitar, `apps/crm-api`), tools Anel A `search_products`/
-    `get_order_status`, tool Anel B `create_order` (fluxo de duas chamadas), registro
-    completo das 3 tools em `TOOL_DEFINITIONS`/`executeTool`/teste estrutural. 11 commits,
-    `883ebab`..`2a69696`. 994 testes verdes (incluindo fix no golden set —
-    `happyPath`/`promptInjection` tinham a superfície antiga de 4 tools hardcoded).
-  - **Batch 3** (Fases 7–9, T15–T21): `guard.output` com regra de preço (AD-009 — preço só
-    de tool result deste turno), fiação de `rawTurn` em `runTurn.ts`, caso de golden set
-    (`createOrderGuardrails.int.test.ts`), telas de catálogo `apps/web`
-    (`query/product.ts`, listagem, criação, edição). 9 commits, `5e33f7d`..`fc3ca6d`. 1031
-    testes verdes. **SPEC_DEVIATION registrado**: `products/details.tsx` não tem
-    `GET /products/:id` no backend — resolve por fetch limitado (500) + filtro
-    client-side, mesmo padrão já usado por `processes/details.tsx`.
-  - **Batch 4** (Fases 10–11, T22–T25 — última): `query/order.ts` (invalidação cross-
-    surface), tela "Pedidos" (fila+histórico), `order-card.tsx` (card inline no Inbox),
-    montagem em `thread.tsx`. 7 commits, `c5ebfd8`..`9623964`. 1058 testes verdes,
-    build de `apps/web` verificado.
-  - **Verifier** (após T25): PASS — 27/27 ACs (`CAT-01..27`) spec-anchored com evidência
-    `file:line`, 0 spec-precision gaps, gate 1058/1058 verde, sensor de discriminação 3/3
-    mutações mortas (checagem atômica de estoque, `itemsMatch` de `orderTransitions`,
-    redação de preço do `guard.output`). Relatório completo:
-    `.specs/features/catalog-orders/validation.md`. Traceability de `spec.md` atualizada
-    (`Implementing` → `Verified`, todas as 27 linhas). Lição candidata `L-026`
-    (confirmar existência de endpoint by-id antes de atribuir task que depende dele — já
-    vista em `inbox-realtime`) **promovida a `confirmed`** por corroboração nesta feature
-    (mesmo padrão do `products/details.tsx` acima). Commit do relatório: `048256c`.
-  - **Notas não-bloqueantes do Verifier** (não geraram fix task): `orderTransitions.ts`
-    tem um helper interno `itemsMatch` não exportado, duplicado localmente em
-    `createOrder.ts` em vez de importado — julgado decisão de fronteira razoável, mas
-    fica registrado como sugestão de limpeza futura (exportar o helper). UAT interativo
-    foi pulado (sessão em background, sem usuário disponível) — recomendado como
-    follow-up dada a superfície `apps/web` nova e substancial.
-- **In-progress**: nenhum. Feature completa e verificada.
+  - **Batch 1** (Fase 1, T1–T6): models `Payment`/`AsaasIntegration`/`AsaasEvent`
+    (`packages/db`), campo aditivo `Customer.asaasCustomerId`, status aditivo
+    `Order.status:'payment_expired'`, `paymentTransitions.ts` (AD-034 — precedente
+    AD-033 — `applyAsaasPaymentStatus`/`expireOrderPayment`, rank-guard). 8 commits,
+    `27eb20d`..`daaf5fa`. 1108 testes verdes ao final do batch.
+  - **Batch 2** (Fase 2, T7–T12): CRUD completo de `asaasIntegration` em `apps/crm-api`
+    (env vars, `providers/asaasClient.ts`, schema Zod, repository/service/controller/router,
+    montado em `/asaas-integrations`) — valida chave ao vivo, criptografa, auto-detecta
+    ambiente, auto-registra webhook, mascara na leitura (mesmo padrão de `channel.*`).
+    6 commits, `c1fcd7d`..`2864079`. 1154 testes verdes.
+  - **Batch 3** (Fases 3–4, T13–T20): `AsaasClient` real em `apps/ai-gateway`
+    (conversão centavos↔reais na fronteira HTTP, retry/backoff), `ToolContext.asaasClient`,
+    `RunTurnOptions.asaasClient`, tool `issue_payment_link` (Anel B, gate estrutural
+    `confirmed`, idempotência, `Customer.asaasCustomerId` sob demanda), `get_order_status`
+    estendido, registro como 8ª tool + teste estrutural atualizado. 9 commits,
+    `32ab56d`..`a8c447a`. 1183 testes (1181 verdes / 2 falhas conhecidas e antecipadas —
+    ver Batch 4).
+  - **Batch 4** (Fases 5–7, T21–T28): `asaasWebhookAuth.middleware.ts` + `asaasWebhook.
+    router.ts` (dedup por `AsaasEvent`, rank-guard delegado, sempre 200), wiring no
+    `app.ts`/`webhook.router.ts` (Meta), worker `asaasReconcile.ts` (retry de eventos
+    falhos + poll de todo Payment pending per spec.md AC6 — decisão explícita de seguir a
+    AC, não a leitura mais restrita do design.md, documentada em código), start em
+    `server.ts`, golden set novo (`issuePaymentLinkGuardrails.int.test.ts`) + fix dos 2
+    golden sets antigos com superfície de tools hardcoded (`promptInjection`/`happyPath` —
+    o 2º achado pelo worker mesmo depois desta mesma sessão ter previsto erroneamente que
+    seria no-op, corrigido com investigação própria antes de confiar na briefing). 9
+    commits, `09d8671`..`508e7e0`. 1200 testes verdes — P1 (MVP) completo aqui.
+  - **Batch 5** (Fase 8/P2, T29–T31): `order.router.ts` já tinha o enum `payment_expired`
+    (achado do Batch 1/T5, sem mudança de schema, só teste e2e novo); `order.repository.ts`
+    enriquece leitura com `paymentStatus` (batch-lookup, nunca populate/N+1, AD-034: nunca
+    escreve `Payment`); `apps/web` mostra badge de pagamento na tela de Pedidos (3 estados +
+    ausente) e corrige o mirror `payment_expired` que ficava fora de escopo desde o Batch 1.
+    **Decisão registrada**: `order-card.tsx` (card inline do Inbox) foi deliberadamente
+    NÃO alterado — sua query já é hard-filtrada a `pending_approval` (decisão 5 do
+    `catalog-orders`, já testada), e `Payment` só existe para Order `confirmed`, então o AC
+    de status de pagamento é estruturalmente inatingível para este card específico sem
+    reverter aquela decisão já validada; o badge foi implementado na tela de Pedidos, que
+    cobre todos os status. 4 commits, `8976d77`..`409b133`. 1211 testes verdes, build de
+    `apps/web` verificado — todas as 31 tasks completas.
+  - **Verifier** (após T31): 18/18 ACs (`spec.md` tem 18 ACs em 5 histórias, não 1:1 com as
+    15 `PAY-ID`s) spec-anchored com evidência `file:line`, 0 spec-precision gaps, gate
+    1211/1211 verde. Sensor de discriminação EXPANDIDO (feature P0-adjacent — pagamento):
+    5 mutações, 4 mortas, **1 sobrevivente** — o filtro atômico `status:'pending'` de
+    `expireOrderPayment` (`paymentTransitions.ts:105`) nunca era exercitado por nenhum teste
+    porque o único teste de "2ª chamada" era sequencial (barrado antes por um guard de
+    leitura anterior, não pelo filtro atômico). Relatório completo:
+    `.specs/features/payments-asaas/validation.md`.
+  - **Fix do gap único** (orquestrador, commit `a9c6af7`): 1 teste novo em
+    `paymentTransitions.int.test.ts` forçando 2 chamadas genuinamente concorrentes
+    (`Promise.all`) contra o mesmo Payment `pending` — nenhuma mudança de código de
+    produção (o guard já estava correto). Confirmado manualmente que o teste mata a mutação
+    (reaplicada e revertida à mão) e que o gate completo segue verde (1212/1212, com 1 flake
+    transitório conhecido do `MongoMemoryServer` compartilhado — já documentado em AD-031 —
+    que limpou no retry, em arquivo não relacionado a esta feature). **Sem novo ciclo
+    completo de Verifier**: o próprio relatório já recomendava isso ("Given it is a single,
+    additive test with no code change required, this does not need a full fix→re-verify
+    cycle"), e a confirmação equivalente (mutação reaplicada e morta, gate completo verde)
+    foi feita diretamente — closure documentado como seção própria em `validation.md`,
+    preservando o relatório original do Verifier intacto. Traceability de `spec.md`
+    atualizada (`Implementing` → `Verified`, todas as 15 linhas). Lição candidata `L-027`
+    registrada (guard atômico de corrida precisa de teste com `Promise.all` genuíno, não
+    chamada sequencial — um teste sequencial pode passar mesmo com a condição do filtro
+    atômico removida, porque um guard de leitura anterior absorve o caso sequencial).
+- **In-progress**: nenhum. Feature completa e verificada (todas as 15 `PAY-ID`s Verified).
 - **Next step**: revisar o diff/branch e decidir sobre push + abertura de PR para `main`
   (nenhum push feito ainda nesta sessão). Considerar UAT interativo do usuário nas telas
-  novas de `apps/web` (Produtos, Pedidos, card do Inbox) antes ou depois do merge, já que
-  o Verifier automático pulou essa camada. Após merge, feature 8 (`payments-asaas`) é a
-  próxima do roadmap e consome `Order confirmed` desta feature.
+  novas de `apps/web` (config de integração Asaas, badge de pagamento em Pedidos) antes ou
+  depois do merge, já que o Verifier automático não cobre essa camada. Após merge, feature
+  9 do roadmap é a próxima.
 - **Blockers**: nenhum.
-- **Uncommitted files**: nenhum — working tree limpo, 39 commits nesta sessão de Execute
-  (`5f91afa`..`048256c`, branch `feature/catalog-orders`), todos com testes verdes no
-  commit correspondente.
-- **Branch**: `feature/catalog-orders` (worktree `../CRM-catalog-orders`) — 39 commits à
-  frente de `origin/feature/catalog-orders`, sem push ainda.
+- **Uncommitted files**: nenhum — working tree limpo, 49 commits nesta sessão de Execute
+  (`d279789`..`e8d2642`, branch `feature/payments-asaas`, incluindo os 2 commits de docs
+  desta sessão que vieram antes do 1º task — AD-034 e spec/design/tasks — e os 3 commits de
+  fechamento pós-Verifier), todos com testes verdes no commit correspondente.
+- **Branch**: `feature/payments-asaas` (worktree `../CRM-payments-asaas`) — commits à
+  frente de `origin/feature/payments-asaas`, sem push ainda.
 - **Nota operacional — skill não registrada**: a skill `tlc-spec-driven` não aparece no
   listing de skills desta sessão (arquivos existem em `tlc-spec-driven/` na raiz do repo,
   versionados no git, mas não há `.claude/skills/` no CRM). Mesma resolução já usada nas
   sessões anteriores: leitura manual de `SKILL.md` + `references/{implement,sub-agents,
   coding-principles,validate,lessons}.md` no início desta sessão de Execute, sem registrar
-  em `.claude/skills/`.
+  em `.claude/skills/`. Nota adicional: `scripts/lessons.py` referenciado por `lessons.md`
+  na verdade vive em `tlc-spec-driven/scripts/lessons.py` (resolução relativa ao diretório
+  da skill, não à raiz do workspace) — confirmado funcionando a partir da raiz do repo.
