@@ -255,44 +255,93 @@ Detalhamento completo (contexto, consequências, alternativas) em [`docs/adr/`](
 - **Status**: active
 - **Follow-up (mesmo dia)**: `pnpm biome check .` rodava vermelho na PRIMEIRA execução do workflow — o erro de formatação pré-existente de `.specs/lessons.json` (nunca corrigido, arquivo machine-owned) tornaria a CI permanentemente vermelha, achado pelo Verifier na iteração 2 do `ai-gateway`. Corrigido com um override em `biome.json` excluindo o arquivo do linter/formatter/assist (mesmo padrão já usado para `**/*.gen.ts`), commit `4805e4b`.
 
+### AD-032
+- **Decision**: Propriedade de escrita (AD-002) é por *write-path dentro da collection*, não por collection inteira, para `customers`, `processes` e `orders` — tanto `crm-api` (CRUD acionado pelo operador) quanto `ai-gateway`/`packages/ai-kit` (escritas do loop de tools na conversa) podem escrever nessas três, cada um só na sua fatia (`crm-api`: CRUD direto; `ai-gateway`: `find_or_create_customer`, `open_process`, `set_process_fields`, e agora `create_order`). `products` continua exclusivamente `crm-api` (nenhuma tool escreve nela). `docs/architecture.md` (tabela "Propriedade de escrita por collection") é corrigido nesta mesma sessão para refletir isso.
+- **Reason**: Achado durante o Design de `catalog-orders` (varredura de código, passo 1.5) — a tabela de `docs/architecture.md` já dizia "Escreve: crm-api" só para `customers`/`processes` desde a feature 5, mas `packages/ai-kit/src/tools/findOrCreateCustomer.ts:26` (`Customer.create`) e `openProcess.ts:28` (`Process.create`) já escrevem essas collections de dentro do `ai-gateway` — a tabela já estava desatualizada antes desta feature, não é uma decisão nova reabrindo AD-002. `create_order` (Anel B) precisa do mesmo padrão para `orders`, o que tornou a lacuna importante o bastante para corrigir agora.
+- **Trade-off**: a leitura literal de AD-002 ("dono único de escrita por collection") fica mais estreita na prática — um write-path por collection, não a collection inteira. Uma feature futura que precisar desse mesmo formato (duas partes escrevendo a mesma collection) tem que fazer a mesma divisão explícita, não presumir por padrão. O núcleo de AD-002 (nenhuma chamada HTTP entre os dois serviços, coordenação só via Mongo) continua intacto.
+- **Scope**: `packages/db` (`customers`, `processes`, `orders`), `apps/crm-api`, `apps/ai-gateway`/`packages/ai-kit`, `docs/architecture.md`.
+- **Date**: 2026-09-09
+- **Status**: active
+
+### AD-033
+- **Decision**: Uma transição de negócio multi-documento e tudo-ou-nada (`Order pending_approval → confirmed`, que precisa checar-e-decrementar `Product.stock` de N itens antes de virar `status:'confirmed'`) é implementada uma única vez, em `packages/db/src/orderTransitions.ts` (`tryConfirmOrder`/`setCustomerConfirmed`/`setOperatorApproved`/`rejectOrder`), nunca duplicada por app — tanto `apps/crm-api` (aprovar) quanto `packages/ai-kit` (2ª chamada de `create_order`, confirmação do cliente) importam essa mesma função. Implementação sem transação nativa do Mongo: `findOneAndUpdate` atômico por item (condição `stock >= quantity`), com rollback compensatório (`$inc` de volta) se qualquer item falhar.
+- **Reason**: Tanto o operador (aprovar) quanto o cliente (confirmar, via IA) podem ser o lado que completa a segunda condição da transição (AD-009) — duplicar essa lógica em dois apps arrisca as duas cópias divergirem numa invariante que mexe com dinheiro/estoque. `packages/db` é o único pacote que os dois apps já importam (dono dos schemas), então é o dono natural dessa lógica compartilhada nova. Generaliza o precedente já aceito em AD-024 (`FieldValueStore.migrateValues`) — mesma causa raiz: MongoDB standalone, sem replica set (AD-002/AD-006), sem transação nativa disponível.
+- **Trade-off**: mesma janela de risco já aceita em AD-024 — um crash entre reservar o estoque de alguns itens e virar `confirmed` deixa uma inconsistência transitória até um retry (reaprovar, ou o modelo reenviar `customerConfirmed:true`) convergir sozinho; sem bookkeeping de retomada à prova de crash, julgado desproporcional para uma ação de baixa frequência frente ao volume de mensagens. `packages/db` ganha sua primeira peça de lógica de negócio compartilhada além de models + `tenantScoped` — precedente que uma feature futura com a mesma forma de escrita dos dois lados (ex.: `issue_payment_link` em `payments-asaas`, feature 8) deve seguir em vez de duplicar.
+- **Scope**: `packages/db` (`orderTransitions.ts`), `apps/crm-api` (`order.service.ts`), `packages/ai-kit` (`tools/createOrder.ts`); precedente para qualquer feature futura com o mesmo formato de escrita dos dois serviços.
+- **Date**: 2026-09-09
+- **Status**: active
+
 ---
 
 ## Handoff
 
-- **Feature**: `inbox-realtime` (feature 6 de 11) — **COMPLETA e mergeada em `main`**
-  (PR #5, merge commit `7713f41`, 2026-09-08). Discuss→Specify→Design→Tasks→Execute (4
-  lotes de sub-agentes)→Verifier (2 iterações, PASS limpo na 2ª) — todo o histórico
-  detalhado de cada fase/lote/fix fica em `git log -p -- .specs/STATE.md` (procure pelos
-  commits `docs(state)` desta feature) e em
-  `.specs/features/inbox-realtime/validation.md`. Resumo executivo em
-  [`docs/roadmap.md`](../docs/roadmap.md#6-inbox-realtime-). `docs/roadmap.md` também
-  atualizado nesta sessão: feature 6 movida pra "Entregue", feature 7 (`catalog-orders`)
-  marcada 🔜, baseline de testes atualizado pra 879.
-- **Phase / Task**: nenhuma — feature encerrada. Próxima feature do roadmap
-  (`catalog-orders`, 7/11) ainda não iniciou nenhuma fase (Discuss não começou).
-- **Completed**: 26/26 tasks + 2 fix tasks pós-Verifier (nome real do assignee,
-  resync de cache no reconnect WS) + Verifier iteração 2 com PASS limpo (24/24 ACs, 6/6
-  mutações do sensor mortas no total, 879 testes). PR #5 aberta e mergeada nesta sessão
-  (squash não usado — merge commit simples, mesmo padrão de PR #2/#3; branch
-  `feature/inbox-realtime` mantida no remoto, não deletada, a pedido do usuário — ele vai
-  abrir uma worktree numa outra sessão referenciando este trabalho).
-- **In-progress**: nenhum.
-- **Next step**: iniciar o Discuss/Specify da feature 7 (`catalog-orders`) quando o
-  usuário pedir — ver `docs/roadmap.md` para o escopo já rascunhado (models `Product`/
-  `Order`, tools `search_products`/`get_order_status`/Anel A, `create_order`/Anel B com
-  `pending_approval`, dependência da feature 6 já satisfeita — liberação do operador via
-  Inbox já existe).
-- **Blockers**: nenhum.
-- **Uncommitted files**: nenhum além desta própria atualização de `STATE.md` +
-  `docs/roadmap.md` (ambos commitados juntos logo após esta escrita). `acc.txt` na raiz
-  continua untracked (credenciais de dev local em texto puro) — não commitar.
-- **Branch**: `main` (mergeado). `feature/inbox-realtime` existe no remoto, não deletada.
-- **Nota operacional — skill não registrada** (ainda vale para a próxima feature): a
-  skill `tlc-spec-driven` não aparece no listing de skills desta sessão (arquivos existem
-  em `tlc-spec-driven/` na raiz do repo, versionados no git, mas não há `.claude/skills/`
-  no CRM). Em sessão anterior o usuário optou explicitamente por "apenas leia
-  `./tlc-spec-driven/SKILL.md`" em vez de registrar em `.claude/skills/` — mesma
-  resolução (a) já documentada numa memória de outro projeto (IOT) pra esse padrão de
-  problema. Sessões futuras devem esperar a mesma falha e ler os arquivos manualmente
-  (`SKILL.md` + `references/{implement,sub-agents,coding-principles,validate,lessons}.md`
-  no mínimo), a menos que o usuário peça o registro formal.
+- **Feature**: `catalog-orders` (feature 7 de 11), planejada neste worktree
+  (`../CRM-catalog-orders`, branch `feature/catalog-orders`, criada a partir de
+  `feature/inbox-realtime` em 2026-09-09 — ver nota de dependência abaixo).
+  **Specify/Discuss/Design/Tasks completos nesta sessão; artefatos escritos e
+  apresentados para revisão do usuário ao final da sessão — ainda NÃO confirmados como
+  aprovados por uma resposta explícita do usuário nesta conversa.** Execute **não
+  iniciado**. `inbox-realtime` (feature 6) segue seu próprio ciclo de Verifier/PR em
+  paralelo, noutra sessão/worktree — não tocado por esta sessão.
+- **Phase / Task**: Discuss (3 rodadas de perguntas via `AskUserQuestion` cobrindo shape/
+  preço/estoque de `Product`, idempotência e confirmação do cliente em `create_order`,
+  escopo do guard de preço, quem aprova e onde a UI de aprovação aparece, rejeição,
+  expiração; + 1 rodada de esclarecimento sobre a tela de Pedidos) → Specify (`spec.md`,
+  27 requisitos `CAT-01..27`) → Design (`design.md`) → Tasks (`tasks.md`, 25 tasks em 11
+  fases) — todas completas nesta sessão, sem pausar entre fases (conforme instruído),
+  parando só nas interações reais do Discuss e ao final de Tasks.
+- **Completed**:
+  - `.specs/features/catalog-orders/context.md`: 8 decisões de implementação registradas
+    — `Product` com schema fixo (não usa field-engine), preço em centavos, estoque
+    rastreado, reserva de estoque só no momento da confirmação (não no `pending_approval`
+    — decisão do usuário, não a opção recomendada), captura da confirmação do cliente em
+    duas chamadas de `create_order` (mesma `idempotencyKey`), aprovação por qualquer
+    operador do tenant (não só o `assignee` da conversa), UI de aprovação dupla (card
+    inline na thread do Inbox **e** uma tela nova simples "Pedidos" — decisão explícita do
+    usuário para dar descoberta a "qualquer operador"), rejeição no P1, sem expiração
+    automática no P1, cadastro de `Product` com telas de CRUD no P1 (sem isso a feature
+    não seria demonstrável).
+  - `.specs/features/catalog-orders/spec.md`: 5 user stories P1 (cadastro de catálogo,
+    busca/status pela conversa, montar/confirmar pedido, aprovar/rejeitar pedido, guard de
+    preço), 27 requisitos rastreáveis (`CAT-01..27`), varredura completa das 9 dimensões
+    implícitas, todas as ambiguidades resolvidas ou logadas como Assumption (unicidade de
+    `sku`, moeda, teto de quantidade por item, papel exigido nos endpoints).
+  - `.specs/features/catalog-orders/design.md`: **achado e corrigido um gap de
+    documentação pré-existente desde a feature 5** — `docs/architecture.md` (tabela
+    "Propriedade de escrita por collection") dizia `customers`/`processes` como escrita
+    exclusiva do `crm-api`, mas `packages/ai-kit/src/tools/findOrCreateCustomer.ts:26`
+    (`Customer.create`) e `openProcess.ts:28` (`Process.create`) já escrevem essas
+    collections de dentro do `ai-gateway` desde a feature 5 (confirmado lendo o código, não
+    só a doc) — a tabela já estava desatualizada antes desta feature. Registrado como
+    **AD-032** (granularidade de escrita é por write-path, não por collection inteira; agora
+    também cobre `orders`) e **AD-033** (transição `pending_approval→confirmed` centralizada
+    em `packages/db/src/orderTransitions.ts`, sem transação nativa — generaliza AD-024 pro
+    caso de reserva atômica de estoque multi-item). `docs/architecture.md` corrigido no
+    mesmo passo (tabela + parágrafo-resumo).
+  - `.specs/features/catalog-orders/tasks.md`: 25 tasks, 11 fases, Test Coverage Matrix +
+    Gate Check Commands gerados a partir de AD-017/`apps/web/CLAUDE.md`, as 3 tabelas de
+    validação obrigatórias (Granularity Check, Diagram-Definition Cross-Check, Test
+    Co-location Validation) todas ✅ — nenhuma reestruturação necessária.
+- **In-progress**: nenhum — nenhuma task de Execute foi iniciada; Execute não deve começar
+  até o usuário revisar o resumo apresentado ao final desta sessão.
+- **Next step**: usuário revisa o resumo (fases, contagem de tasks, decisões de Design
+  AD-032/AD-033) e aprova explicitamente antes de qualquer Execute. Quando
+  `feature/inbox-realtime` for mergeada em `main`, rebasear `feature/catalog-orders` em
+  cima de `main` (dependência já anotada na abertura desta sessão) antes de começar
+  Execute — este worktree partiu de `feature/inbox-realtime`, não de `main`, de propósito,
+  pra que a varredura de código do Specify (Knowledge Verification Chain) enxergasse o
+  Inbox já pronto.
+- **Blockers**: nenhum, além da dependência de merge/rebase acima (não bloqueia o
+  planejamento, só o Execute).
+- **Uncommitted files**: sim — nada commitado nesta sessão de planejamento (só
+  `.specs/`/`docs/`, conforme escopo desta sessão). `git status --short`:
+  `.specs/features/catalog-orders/` (novo, 4 arquivos), `.specs/STATE.md` (modificado —
+  Decisions + este Handoff), `docs/architecture.md` (modificado — tabela de propriedade de
+  escrita corrigida). Nenhum arquivo de código-fonte tocado.
+- **Branch**: `feature/catalog-orders` (worktree `../CRM-catalog-orders`, criada a partir
+  de `feature/inbox-realtime` em 2026-09-09) — sem commit, sem push.
+- **Nota operacional — skill não registrada**: a skill `tlc-spec-driven` não aparece no
+  listing de skills desta sessão (arquivos existem em `tlc-spec-driven/` na raiz do repo,
+  versionados no git, mas não há `.claude/skills/` no CRM). Mesma resolução já usada nas
+  sessões anteriores: leitura manual de `SKILL.md` + `references/{specify,discuss,design,
+  tasks,lessons}.md` no início desta sessão, sem registrar em `.claude/skills/`.

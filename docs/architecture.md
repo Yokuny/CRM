@@ -32,7 +32,10 @@ sequência de entrega em [`docs/roadmap.md`](roadmap.md).
 ```
 
 **Os dois serviços nunca se chamam.** Toda coordenação passa pelo Mongo, com dono único
-de escrita por collection. O front fala HTTP e WebSocket apenas com o `crm-api`.
+de escrita por *write-path* — a granularidade é a fatia de escrita, não sempre a
+collection inteira; três collections (`customers`, `processes`, `orders`) já têm os dois
+serviços escrevendo, cada um só na sua fatia (ver tabela abaixo e
+[AD-032](../.specs/STATE.md)). O front fala HTTP e WebSocket apenas com o `crm-api`.
 
 ---
 
@@ -68,10 +71,11 @@ Ninguém escreve na collection do outro.
 | `messages` (`direction: 'out'`) | `crm-api` cria como `queued`; `ai-gateway` só transiciona status | ambos |
 | `conversations` | `ai-gateway` | ambos |
 | `aiSessions` | `ai-gateway` | `ai-gateway` |
-| `customers` | `crm-api` | ambos |
-| `processes` | `crm-api` | ambos |
+| `customers` | `crm-api` (CRUD do operador) e `ai-gateway` (`find_or_create_customer`) — cada um só na sua fatia, ver [AD-032](../.specs/STATE.md) | ambos |
+| `processes` | `crm-api` (CRUD do operador) e `ai-gateway` (`open_process`, `set_process_fields`) — cada um só na sua fatia, ver [AD-032](../.specs/STATE.md) | ambos |
 | `fieldTemplates`, `fieldTemplateVersions` | `crm-api` | ambos |
-| `products`, `orders` | `crm-api` | ambos |
+| `products` | `crm-api` | ambos |
+| `orders` | `crm-api` (aprovar/rejeitar) e `ai-gateway` (`create_order`: criação e confirmação do cliente) — transição `pending_approval→confirmed` centralizada em `packages/db` (`orderTransitions.ts`), nunca duplicada por app, ver [AD-032](../.specs/STATE.md)/[AD-033](../.specs/STATE.md) | ambos |
 | `tenants`, `users`, `channels` | `crm-api` | ambos |
 | `invites` | `crm-api` | `crm-api` |
 | `sessions` | `crm-api` | `crm-api` |
