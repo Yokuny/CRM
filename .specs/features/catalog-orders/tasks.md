@@ -529,12 +529,12 @@ regex+substituição+log já existente no mesmo arquivo)
 - Skill: NONE
 
 **Done when**:
-- [ ] Valor monetário na resposta que bate com um preço presente nos `tool_result`s do
+- [x] Valor monetário na resposta que bate com um preço presente nos `tool_result`s do
       turno passa sem alteração
-- [ ] Valor monetário que não bate é redigido (mesmo padrão do placeholder de ObjectId)
-- [ ] Toda redação é logada (mesmo padrão de log já usado no harness)
-- [ ] Assinatura antiga (`guardOutput(reply)`) removida — toda chamada atualizada
-- [ ] Gate check passa: `pnpm vitest run --project unit`
+- [x] Valor monetário que não bate é redigido (mesmo padrão do placeholder de ObjectId)
+- [x] Toda redação é logada (mesmo padrão de log já usado no harness)
+- [x] Assinatura antiga (`guardOutput(reply)`) removida — toda chamada atualizada
+- [x] Gate check passa: `pnpm vitest run --project unit`
 
 **Tests**: unit
 **Gate**: quick
@@ -555,10 +555,10 @@ regex+substituição+log já existente no mesmo arquivo)
 - Skill: NONE
 
 **Done when**:
-- [ ] `guardOutput(reply, ...)` chamado com os `tool_result`s reais deste turno
-- [ ] Teste de integração cobrindo uma conversa simulada com `search_products` (preço
+- [x] `guardOutput(reply, ...)` chamado com os `tool_result`s reais deste turno
+- [x] Teste de integração cobrindo uma conversa simulada com `search_products` (preço
       real passa) e uma resposta simulada com preço fabricado (é redigida)
-- [ ] Gate check passa: `pnpm vitest run --project integration`
+- [x] Gate check passa: `pnpm vitest run --project integration`
 
 **Tests**: integration
 **Gate**: full
@@ -584,9 +584,9 @@ generalizada de `issue_payment_link` pra `create_order`.
 - Skill: NONE
 
 **Done when**:
-- [ ] Caso afirma que `create_order` não confirma sem as duas condições
-- [ ] Caso afirma que nenhum preço fora do tool result do turno aparece na resposta final
-- [ ] Gate check passa: `pnpm run evals`
+- [x] Caso afirma que `create_order` não confirma sem as duas condições
+- [x] Caso afirma que nenhum preço fora do tool result do turno aparece na resposta final
+- [x] Gate check passa: `pnpm run evals`
 
 **Tests**: integration
 **Gate**: full
@@ -609,9 +609,9 @@ generalizada de `issue_payment_link` pra `create_order`.
 - Skill: NONE
 
 **Done when**:
-- [ ] `productsQuery` server-driven (paginação/filtro via parâmetros, AD-028)
-- [ ] Mutations invalidam `productsQuery` no sucesso
-- [ ] Gate check passa: `pnpm vitest run --project unit`
+- [x] `productsQuery` server-driven (paginação/filtro via parâmetros, AD-028)
+- [x] Mutations invalidam `productsQuery` no sucesso
+- [x] Gate check passa: `pnpm vitest run --project unit`
 
 **Tests**: unit
 **Gate**: quick
@@ -633,10 +633,10 @@ em `index.tsx`, sem hub), `@/components/ui/data-table.js`, `t()`
 - Skill: NONE
 
 **Done when**:
-- [ ] `<Card asPage>` com `staticData.title`
-- [ ] `<DataTable>` `manualPagination`/`manualSorting`/`manualFiltering` (AD-028)
-- [ ] Toda string visível via `t()`
-- [ ] Gate check passa: `pnpm vitest run --project unit` (com mock de
+- [x] `<Card asPage>` com `staticData.title`
+- [x] `<DataTable>` `manualPagination`/`manualSorting`/`manualFiltering` (AD-028)
+- [x] Toda string visível via `t()`
+- [x] Gate check passa: `pnpm vitest run --project unit` (com mock de
       `@tanstack/react-router`, `apps/web/CLAUDE.md`)
 
 **Tests**: unit
@@ -659,9 +659,9 @@ em `index.tsx`, sem hub), `@/components/ui/data-table.js`, `t()`
 - Skill: NONE
 
 **Done when**:
-- [ ] Formulário valida com `createProductSchema` (`packages/contracts`)
-- [ ] Submissão bem-sucedida navega de volta pra listagem
-- [ ] Gate check passa: `pnpm vitest run --project unit`
+- [x] Formulário valida com `createProductSchema` (`packages/contracts`)
+- [x] Submissão bem-sucedida navega de volta pra listagem
+- [x] Gate check passa: `pnpm vitest run --project unit`
 
 **Tests**: unit
 **Gate**: quick
@@ -683,8 +683,8 @@ edição com `updateProductSchema`.
 - Skill: NONE
 
 **Done when**:
-- [ ] Carrega `Product` por `search.id`, edita `stock`/`active`/demais campos
-- [ ] Gate check passa: `pnpm vitest run --project unit`
+- [x] Carrega `Product` por `search.id`, edita `stock`/`active`/demais campos
+- [x] Gate check passa: `pnpm vitest run --project unit`
 
 **Tests**: unit
 **Gate**: quick

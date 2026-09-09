@@ -288,7 +288,7 @@ não contém esse valor.
 | CAT-03 | P1: Cadastro de catálogo | In Tasks | Implementing |
 | CAT-04 | P1: Cadastro de catálogo | In Tasks | Implementing |
 | CAT-05 | P1: Cadastro de catálogo | In Tasks | Implementing |
-| CAT-06 | P1: Cadastro de catálogo | In Tasks | Pending |
+| CAT-06 | P1: Cadastro de catálogo | In Tasks | Implementing |
 | CAT-07 | P1: Busca/status pela conversa | In Tasks | Implementing |
 | CAT-08 | P1: Busca/status pela conversa | In Tasks | Implementing |
 | CAT-09 | P1: Busca/status pela conversa | In Tasks | Implementing |
@@ -307,9 +307,9 @@ não contém esse valor.
 | CAT-22 | P1: Aprovar/rejeitar pedido | In Tasks | Implementing |
 | CAT-23 | P1: Aprovar/rejeitar pedido | In Tasks | Implementing |
 | CAT-24 | P1: Aprovar/rejeitar pedido | In Tasks | Implementing |
-| CAT-25 | P1: Guard de preço | In Tasks | Pending |
-| CAT-26 | P1: Guard de preço | In Tasks | Pending |
-| CAT-27 | P1: Guard de preço | In Tasks | Pending |
+| CAT-25 | P1: Guard de preço | In Tasks | Implementing |
+| CAT-26 | P1: Guard de preço | In Tasks | Implementing |
+| CAT-27 | P1: Guard de preço | In Tasks | Implementing |
 
 **ID format:** `CAT-[NUMBER]`
 
