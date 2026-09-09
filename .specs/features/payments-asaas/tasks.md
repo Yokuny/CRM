@@ -727,12 +727,14 @@ T29 → T30 → T31
 **Tools**: MCP: NONE / Skill: NONE
 
 **Done when**:
-- [ ] `GET /orders?status=payment_expired` returns only that status's Orders
-- [ ] Existing default (`pending_approval`) and other status filters unaffected
-- [ ] Gate check passes: `pnpm vitest run --project e2e`
+- [x] `GET /orders?status=payment_expired` returns only that status's Orders
+- [x] Existing default (`pending_approval`) and other status filters unaffected
+- [x] Gate check passes: `pnpm vitest run --project e2e`
 
 **Tests**: e2e
 **Gate**: full
+
+**Commit**: `test(crm-api): verify GET /orders?status=payment_expired filters correctly (T29)` — schema change was already done by an earlier batch's T5; this task's remaining work was the missing e2e coverage.
 
 ---
 
@@ -747,12 +749,14 @@ T29 → T30 → T31
 **Tools**: MCP: NONE / Skill: NONE
 
 **Done when**:
-- [ ] Order with a Payment → response includes `paymentStatus`; without one → field absent, no error
-- [ ] No write ever issued to `Payment` from this code path (structural expectation, asserted by absence of any `Payment.updateOne`/`create` call in this module)
-- [ ] Gate check passes: `pnpm vitest run --project integration`, `pnpm vitest run --project unit`
+- [x] Order with a Payment → response includes `paymentStatus`; without one → field absent, no error
+- [x] No write ever issued to `Payment` from this code path (structural expectation, asserted by absence of any `Payment.updateOne`/`create` call in this module)
+- [x] Gate check passes: `pnpm vitest run --project integration`, `pnpm vitest run --project unit`
 
 **Tests**: integration (repository), unit (service)
 **Gate**: full
+
+**Commit**: `feat(crm-api): enrich Order read responses with Payment status (P2, read-only)` — `order.service.ts` needed no code change (confirmed by reading it: `listOrders` already forwards the repository result untouched), so no new service unit tests were added.
 
 ---
 
@@ -767,14 +771,16 @@ T29 → T30 → T31
 **Tools**: MCP: NONE / Skill: NONE
 
 **Done when**:
-- [ ] Badge renders `pending`/`paid`/`expired` distinctly; absent `paymentStatus` renders nothing (no empty badge)
-- [ ] No new operator action wired (P1/P2 scope: read-only, per context.md)
-- [ ] Gate check passes: `pnpm vitest run --project unit`; `apps/web` build verified (same manual check already done at the end of catalog-orders' Batch 4)
+- [x] Badge renders `pending`/`paid`/`expired` distinctly; absent `paymentStatus` renders nothing (no empty badge)
+- [x] No new operator action wired (P1/P2 scope: read-only, per context.md)
+- [x] Gate check passes: `pnpm vitest run --project unit`; `apps/web` build verified (same manual check already done at the end of catalog-orders' Batch 4)
 
 **Tests**: unit
 **Gate**: quick
 
 **Commit**: `feat(web): show payment status on Orders and Inbox order card (P2)`
+
+**Finding**: `order-card.tsx` (Inbox inline card) intentionally left untouched — its query is hard-filtered to `status:'pending_approval'` (design.md decisão 5, catalog-orders); a `Payment` only ever exists for a `confirmed` Order (PAY-02), so this card structurally never has a Payment to display. Widening its query would reverse an established, already-tested UX decision and is out of scope. The badge is implemented on the Orders list screen instead (spans all statuses including `confirmed`).
 
 ---
 
