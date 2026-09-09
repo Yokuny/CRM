@@ -72,4 +72,17 @@ describe('Customer model', () => {
     expect(created.createdAt).toBeInstanceOf(Date);
     expect(created.updatedAt).toBeInstanceOf(Date);
   });
+
+  // payments-asaas (design.md, additive field): populado sob demanda na 1ª
+  // cobrança, ausente para todo Customer pré-existente sem migração.
+  it('persists and reloads an optional asaasCustomerId, and leaves it absent when not provided', async () => {
+    const Tenant = new mongoose.Types.ObjectId();
+    const withAsaasId = await Customer.create(baseCustomer(Tenant, { asaasCustomerId: 'cus_000000000001' }));
+    const withoutAsaasId = await Customer.create(baseCustomer(Tenant, { name: 'Sem Asaas' }));
+
+    const reloaded = await Customer.findById(withAsaasId._id).lean();
+
+    expect(reloaded?.asaasCustomerId).toBe('cus_000000000001');
+    expect(withoutAsaasId.asaasCustomerId).toBeUndefined();
+  });
 });

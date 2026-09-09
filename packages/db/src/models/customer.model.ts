@@ -9,6 +9,7 @@ export interface CustomerDocument {
   template: mongoose.Types.ObjectId;
   templateVersion: number;
   values: Record<string, unknown>;
+  asaasCustomerId?: string; // populado sob demanda na 1ª cobrança (payments-asaas), reutilizado depois — sem índice, nunca consultado por este campo
   createdAt: Date;
   updatedAt: Date;
 }
@@ -27,6 +28,7 @@ const customerSchema = new Schema<CustomerDocument>(
     template: { type: Schema.Types.ObjectId, ref: 'FieldTemplate', required: true },
     templateVersion: { type: Number, required: true, min: 1 },
     values: { type: Schema.Types.Mixed, required: true, default: {} },
+    asaasCustomerId: { type: String, required: false, trim: true },
   },
   { timestamps: true, collection: 'customers' },
 );
