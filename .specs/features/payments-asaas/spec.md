@@ -257,7 +257,7 @@ status badge matches.
 | PAY-09 | P1: Webhook + rede de segurança (200 sempre, log de falha) | Tasks | In Tasks | T22 |
 | PAY-10 | P1: Webhook + rede de segurança (job de reconciliação) | Tasks | In Tasks | T24, T25 |
 | PAY-11 | P1: Cobrança expira e libera estoque | Tasks | In Tasks | T6, T24 |
-| PAY-12 | P1: Cobrança expira e libera estoque (novo status de Order) | Tasks | In Tasks | T5, T6 |
+| PAY-12 | P1: Cobrança expira e libera estoque (novo status de Order) | Tasks | Implementing | T5, T6 |
 | PAY-13 | P1: Tenant configura chave Asaas (validação + criptografia + webhook) | Tasks | In Tasks | T7, T8, T9, T10, T11, T12 |
 | PAY-14 | P1: Tenant configura chave Asaas (mascaramento na leitura) | Tasks | In Tasks | T10, T11, T12 |
 | PAY-15 | P2: Status de pagamento visível no CRM | Tasks | In Tasks | T29, T30, T31 |
