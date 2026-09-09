@@ -1,6 +1,16 @@
 import crypto from 'node:crypto';
 import type Anthropic from '@anthropic-ai/sdk';
-import { connect, disconnect, FieldTemplate, FieldTemplateVersion } from '@crm/db';
+import {
+  Channel,
+  Conversation,
+  Customer,
+  connect,
+  disconnect,
+  FieldTemplate,
+  FieldTemplateVersion,
+  Order,
+  Product,
+} from '@crm/db';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { runLoop } from './loop.js';
 import type { AnthropicClient, AnthropicMessage } from './providers/anthropicClient.js';
@@ -81,6 +91,11 @@ describe('runLoop (AIG-14/20)', () => {
   afterEach(async () => {
     await FieldTemplate.deleteMany({});
     await FieldTemplateVersion.deleteMany({});
+    await Product.deleteMany({});
+    await Order.deleteMany({});
+    await Conversation.deleteMany({});
+    await Customer.deleteMany({});
+    await Channel.deleteMany({});
   });
 
   afterAll(async () => {
@@ -197,5 +212,102 @@ describe('runLoop (AIG-14/20)', () => {
     await expect(runLoop(client, baseCtx(randomId()), 'system', [{ role: 'user', content: 'oi' }])).rejects.toThrow(
       'Anthropic indisponível',
     );
+  });
+
+  // catalog-orders/T14: os 3 case novos do switch de executeTool (loop.ts)
+  // despacham pro handler certo — cada teste usa um efeito/dado só possível
+  // se o roteamento estiver correto (ex.: create_order de fato cria um
+  // Order; um swap acidental de case produziria um {error} genérico e
+  // falharia a asserção específica, não só "não é {error}").
+  it("dispatches 'search_products' to searchProducts (catalog-orders/T14)", async () => {
+    const tenant = randomId();
+    await Product.create({ Tenant: tenant, name: 'Tenis Preto', price: 1000, stock: 5, active: true });
+    const client = createFakeClient([
+      {
+        content: [{ type: 'tool_use', id: 't1', name: 'search_products', input: { query: 'tenis' } }],
+        stop_reason: 'tool_use',
+      },
+      { content: [{ type: 'text', text: 'ok' }], stop_reason: 'end_turn' },
+    ]);
+
+    await runLoop(client, baseCtx(tenant), 'system', [{ role: 'user', content: 'quais produtos vocês têm' }]);
+
+    const payload = JSON.parse(lastToolResultContent(client.calls[1]).content as string);
+    expect(payload).toEqual({ products: [expect.objectContaining({ name: 'Tenis Preto' })] });
+  });
+
+  it("dispatches 'get_order_status' to getOrderStatus, scoped to the ctx conversation (catalog-orders/T14)", async () => {
+    const tenant = randomId();
+    const conversationId = randomId();
+    const order = await Order.create({
+      Tenant: tenant,
+      conversation: conversationId,
+      customer: randomId(),
+      items: [{ product: randomId(), name: 'Produto', unitPrice: 1000, quantity: 1 }],
+      totalPrice: 1000,
+      idempotencyKey: randomId(),
+    });
+    const client = createFakeClient([
+      { content: [{ type: 'tool_use', id: 't1', name: 'get_order_status', input: {} }], stop_reason: 'tool_use' },
+      { content: [{ type: 'text', text: 'ok' }], stop_reason: 'end_turn' },
+    ]);
+
+    await runLoop(client, { tenantId: tenant, channelId: randomId(), conversationId }, 'system', [
+      { role: 'user', content: 'qual o status do meu pedido' },
+    ]);
+
+    const payload = JSON.parse(lastToolResultContent(client.calls[1]).content as string);
+    expect(payload).toEqual(expect.objectContaining({ orderId: order._id.toString(), status: 'pending_approval' }));
+  });
+
+  it("dispatches 'create_order' to createOrder, actually creating the Order (catalog-orders/T14)", async () => {
+    const tenant = randomId();
+    const product = await Product.create({ Tenant: tenant, name: 'Produto', price: 1000, stock: 5, active: true });
+    const channel = await Channel.create({
+      Tenant: tenant,
+      phoneNumberId: randomId(),
+      accessTokenEnc: { ciphertext: 'c', iv: 'i', authTag: 'a' },
+      status: 'active',
+    });
+    const customer = await Customer.create({
+      Tenant: tenant,
+      name: 'Cliente Teste',
+      phone: '11900000000',
+      template: randomId(),
+      templateVersion: 1,
+      values: {},
+    });
+    const conversation = await Conversation.create({
+      Tenant: tenant,
+      Channel: channel._id,
+      Customer: customer._id,
+      mode: 'bot',
+      lastActivityAt: new Date(),
+    });
+    const client = createFakeClient([
+      {
+        content: [
+          {
+            type: 'tool_use',
+            id: 't1',
+            name: 'create_order',
+            input: { items: [{ productId: product._id.toString(), quantity: 1 }], idempotencyKey: 'loop-dispatch-key' },
+          },
+        ],
+        stop_reason: 'tool_use',
+      },
+      { content: [{ type: 'text', text: 'ok' }], stop_reason: 'end_turn' },
+    ]);
+
+    await runLoop(
+      client,
+      { tenantId: tenant, channelId: channel._id.toString(), conversationId: conversation._id.toString() },
+      'system',
+      [{ role: 'user', content: 'quero 1 produto' }],
+    );
+
+    const payload = JSON.parse(lastToolResultContent(client.calls[1]).content as string);
+    expect(payload).toEqual(expect.objectContaining({ status: 'pending_approval', customerConfirmed: false }));
+    expect(await Order.countDocuments({ idempotencyKey: 'loop-dispatch-key' })).toBe(1);
   });
 });

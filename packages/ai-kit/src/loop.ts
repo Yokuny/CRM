@@ -1,8 +1,11 @@
 import type Anthropic from '@anthropic-ai/sdk';
 import type { AnthropicClient } from './providers/anthropicClient.js';
+import { createOrder } from './tools/createOrder.js';
 import { findOrCreateCustomer } from './tools/findOrCreateCustomer.js';
+import { getOrderStatus } from './tools/getOrderStatus.js';
 import { getProcessTemplate } from './tools/getProcessTemplate.js';
 import { openProcess } from './tools/openProcess.js';
+import { searchProducts } from './tools/searchProducts.js';
 import { setProcessFields } from './tools/setProcessFields.js';
 import type { ToolContext } from './tools/toolContext.js';
 import { TOOL_DEFINITIONS } from './tools/toolDefinitions.js';
@@ -23,10 +26,12 @@ const extractText = (content: Anthropic.ContentBlock[]): string =>
     .trim();
 
 // Despacha tool_use para o executor certo (AD-010: ctx sempre do servidor,
-// nunca do input do modelo). Superfície fixa — só as 4 tools do Anel A
-// (T14-T17) existem; um nome fora dessas nunca deveria chegar aqui, já que
-// `tools: TOOL_DEFINITIONS` só oferece essas 4 ao modelo, mas o fallback
-// devolve `{error}` em vez de lançar, mesma convenção dos executores.
+// nunca do input do modelo). Superfície fixa — as 4 tools originais do Anel A
+// (T14-T17) mais search_products/get_order_status (Anel A) e create_order
+// (1ª tool do Anel B, AD-009, catalog-orders/T14); um nome fora dessas nunca
+// deveria chegar aqui, já que `tools: TOOL_DEFINITIONS` só oferece essas 7 ao
+// modelo, mas o fallback devolve `{error}` em vez de lançar, mesma convenção
+// dos executores.
 const executeTool = async (name: string, input: unknown, ctx: ToolContext): Promise<unknown> => {
   switch (name) {
     case 'get_process_template':
@@ -37,6 +42,12 @@ const executeTool = async (name: string, input: unknown, ctx: ToolContext): Prom
       return openProcess(input as Parameters<typeof openProcess>[0], ctx);
     case 'set_process_fields':
       return setProcessFields(input as Parameters<typeof setProcessFields>[0], ctx);
+    case 'search_products':
+      return searchProducts(input as Parameters<typeof searchProducts>[0], ctx);
+    case 'get_order_status':
+      return getOrderStatus(input as Parameters<typeof getOrderStatus>[0], ctx);
+    case 'create_order':
+      return createOrder(input as Parameters<typeof createOrder>[0], ctx);
     default:
       return { error: `Tool desconhecida: ${name}` };
   }
