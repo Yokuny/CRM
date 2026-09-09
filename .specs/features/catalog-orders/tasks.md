@@ -781,9 +781,9 @@ pedido pendente.
 - Skill: NONE
 
 **Done when**:
-- [ ] `order-card.tsx` aparece na thread quando há `Order pending_approval` daquela
+- [x] `order-card.tsx` aparece na thread quando há `Order pending_approval` daquela
       `conversation`
-- [ ] Gate check passa: `pnpm vitest run --project unit`
+- [x] Gate check passa: `pnpm vitest run --project unit`
 
 **Tests**: unit
 **Gate**: quick

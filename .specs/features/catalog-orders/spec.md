@@ -302,7 +302,7 @@ não contém esse valor.
 | CAT-17 | P1: Montar/confirmar pedido | In Tasks | Implementing |
 | CAT-18 | P1: Aprovar/rejeitar pedido | In Tasks | Implementing |
 | CAT-19 | P1: Aprovar/rejeitar pedido | In Tasks | Implementing |
-| CAT-20 | P1: Aprovar/rejeitar pedido | In Tasks | Pending |
+| CAT-20 | P1: Aprovar/rejeitar pedido | In Tasks | Implementing |
 | CAT-21 | P1: Aprovar/rejeitar pedido | In Tasks | Implementing |
 | CAT-22 | P1: Aprovar/rejeitar pedido | In Tasks | Implementing |
 | CAT-23 | P1: Aprovar/rejeitar pedido | In Tasks | Implementing |
