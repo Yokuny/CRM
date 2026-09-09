@@ -6,6 +6,7 @@ import { createCustomerSchema } from './schemas/createCustomer.schema.js';
 import { createFieldTemplateSchema } from './schemas/createFieldTemplate.schema.js';
 import { createInviteSchema } from './schemas/createInvite.schema.js';
 import { createProcessSchema } from './schemas/createProcess.schema.js';
+import { createProductSchema } from './schemas/createProduct.schema.js';
 import { fieldDefSchema } from './schemas/fieldDef.schema.js';
 import { findOrCreateCustomerInputSchema } from './schemas/findOrCreateCustomerInput.schema.js';
 import { getProcessTemplateInputSchema } from './schemas/getProcessTemplateInput.schema.js';
@@ -14,12 +15,14 @@ import { inviteTokenParamSchema } from './schemas/inviteToken.schema.js';
 import { migrationActionSchema } from './schemas/migrationAction.schema.js';
 import { openProcessInputSchema } from './schemas/openProcessInput.schema.js';
 import { provisionTenantSchema } from './schemas/provisionTenant.schema.js';
+import { rejectOrderSchema } from './schemas/rejectOrder.schema.js';
 import { sendMessageSchema } from './schemas/sendMessage.schema.js';
 import { setProcessFieldsInputSchema } from './schemas/setProcessFieldsInput.schema.js';
 import { signinSchema } from './schemas/signin.schema.js';
 import { updateCustomerSchema } from './schemas/updateCustomer.schema.js';
 import { updateProcessStageSchema } from './schemas/updateProcessStage.schema.js';
 import { updateProcessValuesSchema } from './schemas/updateProcessValues.schema.js';
+import { updateProductSchema } from './schemas/updateProduct.schema.js';
 
 export const TENANT_FORBIDDEN_KEYS = [
   'tenant',
@@ -51,6 +54,9 @@ export const schemaRegistry: ReadonlyArray<{ name: string; schema: ZodType }> = 
   { name: 'createCustomerSchema', schema: createCustomerSchema },
   { name: 'updateCustomerSchema', schema: updateCustomerSchema },
   { name: 'createProcessSchema', schema: createProcessSchema },
+  { name: 'createProductSchema', schema: createProductSchema },
+  { name: 'updateProductSchema', schema: updateProductSchema },
+  { name: 'rejectOrderSchema', schema: rejectOrderSchema },
   { name: 'sendMessageSchema', schema: sendMessageSchema },
   { name: 'updateProcessValuesSchema', schema: updateProcessValuesSchema },
   { name: 'updateProcessStageSchema', schema: updateProcessStageSchema },
