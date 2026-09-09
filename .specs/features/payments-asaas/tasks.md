@@ -383,9 +383,9 @@ T29 → T30 → T31
 **Tools**: MCP: NONE / Skill: NONE
 
 **Done when**:
-- [ ] Var required, named error message on absence
-- [ ] `.env.example` updated
-- [ ] Gate check passes: build gate
+- [x] Var required, named error message on absence
+- [x] `.env.example` updated
+- [x] Gate check passes: build gate
 
 **Tests**: none
 **Gate**: build
@@ -403,9 +403,9 @@ T29 → T30 → T31
 **Tools**: MCP: NONE / Skill: NONE
 
 **Done when**:
-- [ ] Interface matches design.md Components exactly
-- [ ] Exported from `packages/ai-kit/src/index.ts`
-- [ ] Gate check passes: build gate (type-only file, no runtime logic to unit-test)
+- [x] Interface matches design.md Components exactly
+- [x] Exported from `packages/ai-kit/src/index.ts`
+- [x] Gate check passes: build gate (type-only file, no runtime logic to unit-test)
 
 **Tests**: none
 **Gate**: build
@@ -423,12 +423,12 @@ T29 → T30 → T31
 **Tools**: MCP: NONE / Skill: NONE
 
 **Done when**:
-- [ ] `createPixCharge` calls `POST /v3/payments` (`billingType:'PIX'`) then best-effort `GET /v3/payments/{id}/pixQrCode` (failure here doesn't fail the whole call — design.md Edge Cases)
-- [ ] `getCharge` calls `GET /v3/payments/{id}`
-- [ ] Decryption of the integration's key happens per-call, never cached beyond the call
-- [ ] Retry/backoff on transient errors only, matching T8's policy
-- [ ] Gate check passes: `pnpm vitest run --project unit`
-- [ ] Test count: N new tests pass
+- [x] `createPixCharge` calls `POST /v3/payments` (`billingType:'PIX'`) then best-effort `GET /v3/payments/{id}/pixQrCode` (failure here doesn't fail the whole call — design.md Edge Cases)
+- [x] `getCharge` calls `GET /v3/payments/{id}`
+- [x] Decryption of the integration's key happens per-call, never cached beyond the call
+- [x] Retry/backoff on transient errors only, matching T8's policy
+- [x] Gate check passes: `pnpm vitest run --project unit`
+- [x] Test count: N new tests pass
 
 **Tests**: unit
 **Gate**: quick
@@ -446,8 +446,8 @@ T29 → T30 → T31
 **Tools**: MCP: NONE / Skill: NONE
 
 **Done when**:
-- [ ] Field is optional; every existing `ToolContext` literal across the 7 existing tools' tests compiles unchanged (no forced update)
-- [ ] Gate check passes: build gate
+- [x] Field is optional; every existing `ToolContext` literal across the 7 existing tools' tests compiles unchanged (no forced update)
+- [x] Gate check passes: build gate
 
 **Tests**: none
 **Gate**: build
@@ -465,9 +465,9 @@ T29 → T30 → T31
 **Tools**: MCP: NONE / Skill: NONE
 
 **Done when**:
-- [ ] `ctx.asaasClient` is `opts.asaasClient` when provided, `undefined` otherwise — no behavior change for any existing `runTurn` caller/test that doesn't pass it
-- [ ] Existing `runTurn` test suite passes unmodified
-- [ ] Gate check passes: `pnpm vitest run` (existing `runTurn` integration tests must still be green)
+- [x] `ctx.asaasClient` is `opts.asaasClient` when provided, `undefined` otherwise — no behavior change for any existing `runTurn` caller/test that doesn't pass it
+- [x] Existing `runTurn` test suite passes unmodified
+- [x] Gate check passes: `pnpm vitest run` (existing `runTurn` integration tests must still be green)
 
 **Tests**: integration (existing suite, no new file needed — extend an existing `runTurn.int.test.ts` case only if one doesn't already implicitly cover this)
 **Gate**: full
@@ -485,14 +485,14 @@ T29 → T30 → T31
 **Tools**: MCP: NONE / Skill: NONE
 
 **Done when**:
-- [ ] Order not `confirmed` → `{error}`, zero Asaas calls, zero `Payment` created (PAY-02)
-- [ ] Order `confirmed`, no existing Payment, active integration → creates `Payment`, returns `{orderId, status:'pending', billingType:'PIX', totalPrice, pixPayload, pixEncodedImage}` (PAY-01) — field name `totalPrice` used deliberately (design.md: reuses `guardOutput.ts`'s existing allow-list, zero guard code change)
-- [ ] Order `confirmed`, existing Payment already present → returns that same Payment's current state, no second Asaas call (PAY-03)
-- [ ] No `active` `AsaasIntegration` for the tenant → `{error}`, zero Asaas calls (PAY-04)
-- [ ] `Customer.asaasCustomerId` created via `ensureCustomer` on first use, persisted for reuse
-- [ ] Asaas API failure (fake client throws) → `{error}`, no `Payment` persisted
-- [ ] Gate check passes: `pnpm vitest run --project unit`
-- [ ] Test count: N new tests pass, all branches above covered 1:1
+- [x] Order not `confirmed` → `{error}`, zero Asaas calls, zero `Payment` created (PAY-02)
+- [x] Order `confirmed`, no existing Payment, active integration → creates `Payment`, returns `{orderId, status:'pending', billingType:'PIX', totalPrice, pixPayload, pixEncodedImage}` (PAY-01) — field name `totalPrice` used deliberately (design.md: reuses `guardOutput.ts`'s existing allow-list, zero guard code change)
+- [x] Order `confirmed`, existing Payment already present → returns that same Payment's current state, no second Asaas call (PAY-03)
+- [x] No `active` `AsaasIntegration` for the tenant → `{error}`, zero Asaas calls (PAY-04)
+- [x] `Customer.asaasCustomerId` created via `ensureCustomer` on first use, persisted for reuse
+- [x] Asaas API failure (fake client throws) → `{error}`, no `Payment` persisted
+- [x] Gate check passes: `pnpm vitest run --project unit`
+- [x] Test count: N new tests pass, all branches above covered 1:1
 
 **Tests**: unit
 **Gate**: quick
@@ -512,10 +512,10 @@ T29 → T30 → T31
 **Tools**: MCP: NONE / Skill: NONE
 
 **Done when**:
-- [ ] Order with no Payment → `payment` field absent (no behavior change for `catalog-orders`' existing assertions)
-- [ ] Order with a Payment → `payment.status`/`pixPayload` populated
-- [ ] Existing `getOrderStatus.unit.test.ts` cases pass unmodified
-- [ ] Gate check passes: `pnpm vitest run --project unit`
+- [x] Order with no Payment → `payment` field absent (no behavior change for `catalog-orders`' existing assertions)
+- [x] Order with a Payment → `payment.status`/`pixPayload` populated
+- [x] Existing `getOrderStatus.unit.test.ts` cases pass unmodified
+- [x] Gate check passes: `pnpm vitest run --project unit`
 
 **Tests**: unit
 **Gate**: quick
@@ -533,10 +533,10 @@ T29 → T30 → T31
 **Tools**: MCP: NONE / Skill: NONE
 
 **Done when**:
-- [ ] `TOOL_DEFINITIONS` has 8 entries; `input_schema` for `issue_payment_link` requires `orderId` only (AD-010: no tenant/channel/conversation field)
-- [ ] `executeTool`'s `default` fallback still returns `{error}` for any unrecognized name (never throws)
-- [ ] Structural test's fixed-count/name-list assertion updated to 8 tools
-- [ ] Gate check passes: `pnpm vitest run --project structural`
+- [x] `TOOL_DEFINITIONS` has 8 entries; `input_schema` for `issue_payment_link` requires `orderId` only (AD-010: no tenant/channel/conversation field)
+- [x] `executeTool`'s `default` fallback still returns `{error}` for any unrecognized name (never throws)
+- [x] Structural test's fixed-count/name-list assertion updated to 8 tools
+- [x] Gate check passes: `pnpm vitest run --project structural`
 
 **Tests**: structural
 **Gate**: quick
