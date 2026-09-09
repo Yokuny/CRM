@@ -135,6 +135,15 @@ const translations: Record<string, string> = {
   'order.approve.error': 'Não foi possível aprovar o pedido.',
   'order.reject.action': 'Rejeitar',
   'order.reject.error': 'Não foi possível rejeitar o pedido.',
+  // Status de pagamento (feature payments-asaas, P2/T31) — read-only,
+  // ao lado do status do Order na tela de Pedidos (spec.md P2 AC1).
+  'order.status.payment_expired': 'Pagamento expirado',
+  'order.column.payment': 'Pagamento',
+  'order.payment.pending': 'Pagamento pendente',
+  'order.payment.paid': 'Pago',
+  'order.payment.expired': 'Cobrança expirada',
+  'order.payment.refunded': 'Reembolsado',
+  'order.payment.canceled': 'Cancelado',
 };
 
 export const t = (key: string): string => translations[key] ?? key;

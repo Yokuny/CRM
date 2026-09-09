@@ -8,7 +8,12 @@ import { get, post } from '../lib/api/client.api.js';
 // inline do Inbox (T24) consomem, mesma convenção de "espelho local" já
 // usada em query/product.ts/query/conversation.ts. Datas chegam como string
 // ISO (JSON não serializa Date).
-export type OrderStatus = 'pending_approval' | 'confirmed' | 'rejected';
+export type OrderStatus = 'pending_approval' | 'confirmed' | 'rejected' | 'payment_expired';
+
+// Espelha PaymentStatus de packages/db/src/models/payment.model.ts (via
+// apps/crm-api's OrderRecord.paymentStatus, T30/PAY-15) — leitura, apps/web
+// nunca escreve Payment (AD-034).
+export type PaymentStatus = 'pending' | 'paid' | 'expired' | 'refunded' | 'canceled';
 
 export type OrderItemRecord = { product: string; name: string; unitPrice: number; quantity: number };
 
@@ -20,6 +25,9 @@ export type OrderRecord = {
   // customer.name no back-end) — mesmo campo opcional do OrderRecord de
   // order.repository.ts.
   customerName?: string;
+  // Só preenchido quando existe um Payment para este Order (T30/PAY-15,
+  // spec.md P2 AC1) — ausente quando não há Payment, nunca `null`.
+  paymentStatus?: PaymentStatus;
   items: OrderItemRecord[];
   totalPrice: number;
   status: OrderStatus;

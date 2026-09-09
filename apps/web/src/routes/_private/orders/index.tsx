@@ -17,6 +17,7 @@ import {
   type OrderRecord,
   type OrderStatus,
   ordersQuery,
+  type PaymentStatus,
   rejectOrderMutation,
 } from '@/query/order.js';
 
@@ -29,7 +30,10 @@ import {
 // uma busca textual, e o único filtro textual que o back-end de Order de
 // fato aceita (order.router.ts) é `conversation`.
 export const ordersSearchSchema = z.object({
-  status: z.enum(['pending_approval', 'confirmed', 'rejected']).optional().default('pending_approval'),
+  status: z
+    .enum(['pending_approval', 'confirmed', 'rejected', 'payment_expired'])
+    .optional()
+    .default('pending_approval'),
   page: z.number().int().min(1).optional().default(1),
   limit: z.number().int().min(1).optional().default(20),
   conversation: z.string().optional().default(''),
@@ -40,12 +44,26 @@ const STATUS_FILTERS: { value: OrderStatus; label: string }[] = [
   { value: 'pending_approval', label: t('order.status.pending_approval') },
   { value: 'confirmed', label: t('order.status.confirmed') },
   { value: 'rejected', label: t('order.status.rejected') },
+  { value: 'payment_expired', label: t('order.status.payment_expired') },
 ];
 
 const STATUS_BADGE_VARIANT: Record<OrderStatus, 'warning' | 'success' | 'error'> = {
   pending_approval: 'warning',
   confirmed: 'success',
   rejected: 'error',
+  payment_expired: 'error',
+};
+
+// spec.md P2 AC1 (PAY-15/T31): status do Payment associado, quando existe —
+// só 3 valores têm estilo semântico próprio no texto literal da AC
+// (pending/paid/expired); refunded/canceled (Out of Scope: sem handling
+// automático, spec.md) caem num fallback neutro em vez de quebrar/sumir.
+const PAYMENT_BADGE_VARIANT: Record<PaymentStatus, 'warning' | 'success' | 'error' | 'neutral'> = {
+  pending: 'warning',
+  paid: 'success',
+  expired: 'error',
+  refunded: 'neutral',
+  canceled: 'neutral',
 };
 
 // design.md/T23: sem hub — index.tsx é a própria listagem (Pedidos só tem
@@ -136,6 +154,19 @@ export function OrdersIndexPage() {
       cell: ({ row }) => (
         <Badge variant={STATUS_BADGE_VARIANT[row.original.status]}>{t(`order.status.${row.original.status}`)}</Badge>
       ),
+    },
+    {
+      id: 'payment',
+      header: t('order.column.payment'),
+      enableSorting: false,
+      // spec.md P2 AC1: sem Payment associado, a célula não mostra nada (nem
+      // um badge vazio) — só renderiza quando paymentStatus está presente.
+      cell: ({ row }) =>
+        row.original.paymentStatus ? (
+          <Badge variant={PAYMENT_BADGE_VARIANT[row.original.paymentStatus]}>
+            {t(`order.payment.${row.original.paymentStatus}`)}
+          </Badge>
+        ) : null,
     },
     {
       id: 'actions',

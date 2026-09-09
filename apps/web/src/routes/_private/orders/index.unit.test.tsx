@@ -50,6 +50,13 @@ const PENDING_ORDER = {
 
 const CONFIRMED_ORDER = { ...PENDING_ORDER, id: 'o2', status: 'confirmed' };
 
+// spec.md P2 AC1 (PAY-15/T31) — paymentStatus é opcional em OrderRecord;
+// estes 3 Orders confirmados representam os 3 valores com estilo semântico
+// próprio no texto literal da AC (pending/paid/expired).
+const ORDER_WITH_PENDING_PAYMENT = { ...CONFIRMED_ORDER, id: 'o3', paymentStatus: 'pending' };
+const ORDER_WITH_PAID_PAYMENT = { ...CONFIRMED_ORDER, id: 'o4', paymentStatus: 'paid' };
+const ORDER_WITH_EXPIRED_PAYMENT = { ...CONFIRMED_ORDER, id: 'o5', paymentStatus: 'expired' };
+
 function renderPage() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
@@ -139,5 +146,61 @@ describe('OrdersIndexPage (T23, spec.md P1 "Operador aprova ou rejeita um pedido
 
     expect(await screen.findByText('Nenhum registro encontrado.')).toBeInTheDocument();
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
+  });
+
+  describe('payment status badge (spec.md P2 AC1, PAY-15/T31)', () => {
+    it('renders a distinct badge for a pending Payment', async () => {
+      searchMock.mockReturnValue({ ...defaultSearch, status: 'confirmed' });
+      getMock.mockResolvedValue({ success: true, data: { items: [ORDER_WITH_PENDING_PAYMENT], total: 1 } });
+
+      renderPage();
+
+      expect(await screen.findByText('Pagamento pendente')).toBeInTheDocument();
+    });
+
+    it('renders a distinct badge for a paid Payment', async () => {
+      searchMock.mockReturnValue({ ...defaultSearch, status: 'confirmed' });
+      getMock.mockResolvedValue({ success: true, data: { items: [ORDER_WITH_PAID_PAYMENT], total: 1 } });
+
+      renderPage();
+
+      expect(await screen.findByText('Pago')).toBeInTheDocument();
+    });
+
+    it('renders a distinct badge for an expired Payment', async () => {
+      searchMock.mockReturnValue({ ...defaultSearch, status: 'confirmed' });
+      getMock.mockResolvedValue({ success: true, data: { items: [ORDER_WITH_EXPIRED_PAYMENT], total: 1 } });
+
+      renderPage();
+
+      expect(await screen.findByText('Cobrança expirada')).toBeInTheDocument();
+    });
+
+    it('renders nothing in the payment column (no empty badge) when the Order has no Payment', async () => {
+      searchMock.mockReturnValue(defaultSearch);
+      getMock.mockResolvedValue({ success: true, data: { items: [PENDING_ORDER], total: 1 } });
+
+      renderPage();
+
+      await screen.findByText('Ana');
+      expect(screen.queryByText('Pagamento pendente')).not.toBeInTheDocument();
+      expect(screen.queryByText('Pago')).not.toBeInTheDocument();
+      expect(screen.queryByText('Cobrança expirada')).not.toBeInTheDocument();
+    });
+  });
+
+  it("PAY-15/T29: the payment_expired status filter exists and navigates with status:'payment_expired' when clicked", async () => {
+    searchMock.mockReturnValue(defaultSearch);
+    getMock.mockResolvedValue({ success: true, data: { items: [PENDING_ORDER], total: 1 } });
+    const user = userEvent.setup();
+
+    renderPage();
+    await screen.findByText('Ana');
+
+    await user.click(screen.getByRole('button', { name: 'Pagamento expirado' }));
+
+    await waitFor(() => expect(navigateMock).toHaveBeenCalled());
+    const searchUpdater = navigateMock.mock.calls[0][0].search;
+    expect(searchUpdater(defaultSearch)).toEqual({ ...defaultSearch, status: 'payment_expired', page: 1 });
   });
 });
