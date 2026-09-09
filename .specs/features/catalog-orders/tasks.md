@@ -144,10 +144,10 @@ T24 → T25
 - Skill: NONE
 
 **Done when**:
-- [ ] `ProductDocument`/`Product` exportados
-- [ ] `Tenant` obrigatório (`ObjectId`, `ref:'Tenant'`), `timestamps:true`
-- [ ] `active` com `default:true`
-- [ ] Gate check passa: `pnpm -r exec tsc --noEmit && pnpm biome check .`
+- [x] `ProductDocument`/`Product` exportados
+- [x] `Tenant` obrigatório (`ObjectId`, `ref:'Tenant'`), `timestamps:true`
+- [x] `active` com `default:true`
+- [x] Gate check passa: `pnpm -r exec tsc --noEmit && pnpm biome check .`
 
 **Tests**: none
 **Gate**: build
@@ -170,9 +170,9 @@ T24 → T25
 - Skill: NONE
 
 **Done when**:
-- [ ] `OrderDocument`/`Order`/`OrderStatus`/`OrderItem` exportados, conforme `design.md`
-- [ ] Índice único de `idempotencyKey` por `(Tenant, conversation)` criado
-- [ ] Gate check passa: `pnpm -r exec tsc --noEmit && pnpm biome check .`
+- [x] `OrderDocument`/`Order`/`OrderStatus`/`OrderItem` exportados, conforme `design.md`
+- [x] Índice único de `idempotencyKey` por `(Tenant, conversation)` criado
+- [x] Gate check passa: `pnpm -r exec tsc --noEmit && pnpm biome check .`
 
 **Tests**: none
 **Gate**: build
@@ -193,21 +193,21 @@ T24 → T25
 - Skill: NONE
 
 **Done when**:
-- [ ] `setCustomerConfirmed`: valida `items` idêntico ao gravado, marca
+- [x] `setCustomerConfirmed`: valida `items` idêntico ao gravado, marca
       `customerConfirmed:true`, chama `tryConfirmOrder` se `operatorApproved` já é `true`
-- [ ] `setOperatorApproved`: marca `operatorApproved:true`/`approvedBy`/`approvedAt`,
+- [x] `setOperatorApproved`: marca `operatorApproved:true`/`approvedBy`/`approvedAt`,
       chama `tryConfirmOrder` se `customerConfirmed` já é `true`
-- [ ] `tryConfirmOrder`: reserva atomicamente estoque por item (`findOneAndUpdate`
+- [x] `tryConfirmOrder`: reserva atomicamente estoque por item (`findOneAndUpdate`
       condicional `stock >= quantity`); em falha de qualquer item, desfaz (`$inc` positivo)
       os já reservados nesta tentativa, grava `confirmFailureReason`, mantém
       `pending_approval`; em sucesso total, `status:'confirmed'`
-- [ ] `rejectOrder`: `status:'rejected'` terminal, sem tocar estoque
-- [ ] Toda função em `Order`/`Product` já terminal ou inexistente retorna `{error}` sem
+- [x] `rejectOrder`: `status:'rejected'` terminal, sem tocar estoque
+- [x] Toda função em `Order`/`Product` já terminal ou inexistente retorna `{error}` sem
       mutar nada
-- [ ] Gate check passa: `pnpm vitest run --project integration`
-- [ ] Contagem de testes: pelo menos 8 (confirmação dupla condição em qualquer ordem,
+- [x] Gate check passa: `pnpm vitest run --project integration`
+- [x] Contagem de testes: pelo menos 8 (confirmação dupla condição em qualquer ordem,
       falha de estoque com rollback, `items` divergente, key sem `Order` prévio, chamada
-      sobre terminal, rejeição)
+      sobre terminal, rejeição) — 14 testes escritos
 
 **Tests**: integration
 **Gate**: full
@@ -227,12 +227,12 @@ T24 → T25
 - Skill: NONE
 
 **Done when**:
-- [ ] `createProductSchema`: `name` obrigatório, `price`/`stock` inteiros `>=0`, `sku`/
+- [x] `createProductSchema`: `name` obrigatório, `price`/`stock` inteiros `>=0`, `sku`/
       `description` opcionais, `active` opcional
-- [ ] `updateProductSchema`: mesmos campos, todos opcionais
-- [ ] `rejectOrderSchema`: `reason` opcional (string)
-- [ ] Tipos inferidos exportados (`CreateProduct`, `UpdateProduct`, `RejectOrder`)
-- [ ] Gate check passa: `pnpm vitest run --project unit`
+- [x] `updateProductSchema`: mesmos campos, todos opcionais
+- [x] `rejectOrderSchema`: `reason` opcional (string)
+- [x] Tipos inferidos exportados (`CreateProduct`, `UpdateProduct`, `RejectOrder`)
+- [x] Gate check passa: `pnpm vitest run --project unit`
 
 **Tests**: unit
 **Gate**: quick
@@ -254,10 +254,10 @@ T24 → T25
 - Skill: NONE
 
 **Done when**:
-- [ ] Toda query envolvida em `tenantScoped({Tenant: tenantId, ...})`
-- [ ] Toda chamada envolvida em `withDbTiming('product.<método>', ...)`
-- [ ] `listProducts` suporta filtro por `name` (regex case-insensitive) e `active`
-- [ ] Gate check passa: `pnpm vitest run --project integration`
+- [x] Toda query envolvida em `tenantScoped({Tenant: tenantId, ...})`
+- [x] Toda chamada envolvida em `withDbTiming('product.<método>', ...)`
+- [x] `listProducts` suporta filtro por `name` (regex case-insensitive) e `active`
+- [x] Gate check passa: `pnpm vitest run --project integration`
 
 **Tests**: integration
 **Gate**: full
@@ -278,10 +278,10 @@ T24 → T25
 - Skill: NONE
 
 **Done when**:
-- [ ] `price < 0` ou `stock < 0` ou `name` vazio → `ProductValidationError`, sem chamar o
+- [x] `price < 0` ou `stock < 0` ou `name` vazio → `ProductValidationError`, sem chamar o
       repository
-- [ ] `Product` inexistente/outro tenant → `ProductNotFoundError`
-- [ ] Gate check passa: `pnpm vitest run --project unit`
+- [x] `Product` inexistente/outro tenant → `ProductNotFoundError`
+- [x] Gate check passa: `pnpm vitest run --project unit`
 
 **Tests**: unit
 **Gate**: quick
@@ -304,11 +304,11 @@ mesmo workaround de `req.query` do Express 5), `respObj`/`badRespObj`
 - Skill: NONE
 
 **Done when**:
-- [ ] `ProductValidationError`→400, `ProductNotFoundError`→404, sem `canOperate`→403
-- [ ] `app.use('/products', createProductRouter({validToken}))` montado
-- [ ] Gate check passa: `pnpm vitest run --project e2e`
-- [ ] Contagem de testes: pelo menos 6 (create feliz, create inválido, list, patch feliz,
-      patch inválido, sem permissão)
+- [x] `ProductValidationError`→400, `ProductNotFoundError`→404, sem `canOperate`→403
+- [x] `app.use('/products', createProductRouter({validToken}))` montado
+- [x] Gate check passa: `pnpm vitest run --project e2e`
+- [x] Contagem de testes: pelo menos 6 (create feliz, create inválido, list, patch feliz,
+      patch inválido, sem permissão) — 9 testes escritos
 
 **Tests**: e2e
 **Gate**: full
