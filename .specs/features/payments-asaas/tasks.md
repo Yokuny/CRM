@@ -554,10 +554,10 @@ T29 → T30 → T31
 **Tools**: MCP: NONE / Skill: NONE
 
 **Done when**:
-- [ ] Unknown `webhookToken` → 401, no data touched
-- [ ] Known token, missing/invalid header → 401
-- [ ] Known token, matching header hash → `next()`, integration attached to `req`
-- [ ] Gate check passes: `pnpm vitest run --project unit`
+- [x] Unknown `webhookToken` → 401, no data touched
+- [x] Known token, missing/invalid header → 401
+- [x] Known token, matching header hash → `next()`, integration attached to `req`
+- [x] Gate check passes: `pnpm vitest run --project unit`
 
 **Tests**: unit
 **Gate**: quick
@@ -575,12 +575,12 @@ T29 → T30 → T31
 **Tools**: MCP: NONE / Skill: NONE
 
 **Done when**:
-- [ ] Valid webhook (new event, known token, matching header) → `200`, `Payment.status` updated, `AsaasEvent` recorded `processed`
-- [ ] Same `asaasEventId` delivered twice → second call is a no-op, still `200`
-- [ ] Invalid token/header → `401` (via T21), nothing else touched
-- [ ] A stale lower-rank status delivered after a higher-rank one → status unchanged, still `200`
-- [ ] Internal processing throws → still `200`, `AsaasEvent` recorded `failed` with the error, nothing else crashes
-- [ ] Gate check passes: `pnpm vitest run --project e2e`
+- [x] Valid webhook (new event, known token, matching header) → `200`, `Payment.status` updated, `AsaasEvent` recorded `processed`
+- [x] Same `asaasEventId` delivered twice → second call is a no-op, still `200`
+- [x] Invalid token/header → `401` (via T21), nothing else touched
+- [x] A stale lower-rank status delivered after a higher-rank one → status unchanged, still `200`
+- [x] Internal processing throws → still `200`, `AsaasEvent` recorded `failed` with the error, nothing else crashes
+- [x] Gate check passes: `pnpm vitest run --project e2e`
 
 **Tests**: e2e
 **Gate**: full
@@ -598,10 +598,10 @@ T29 → T30 → T31
 **Tools**: MCP: NONE / Skill: NONE
 
 **Done when**:
-- [ ] `buildApp()` mounts both webhook routers (Meta + Asaas) without collision
-- [ ] The Meta webhook router's `deps` gains `asaasClient`, passed through to `runTurn`
-- [ ] Existing `webhook.router.e2e.test.ts` passes unmodified (additive dep, optional)
-- [ ] Gate check passes: `pnpm vitest run`
+- [x] `buildApp()` mounts both webhook routers (Meta + Asaas) without collision
+- [x] The Meta webhook router's `deps` gains `asaasClient`, passed through to `runTurn`
+- [x] Existing `webhook.router.e2e.test.ts` passes unmodified (additive dep, optional)
+- [x] Gate check passes: `pnpm vitest run`
 
 **Tests**: e2e (existing suite extended, no new file required beyond what T22 already added)
 **Gate**: full
@@ -621,11 +621,11 @@ T29 → T30 → T31
 **Tools**: MCP: NONE / Skill: NONE
 
 **Done when**:
-- [ ] A `pending` Payment older than 24h, still unpaid per a fake `getCharge` response → `expireOrderPayment` called, stock released, `Order.status = 'payment_expired'`
-- [ ] A `pending` Payment where the fake `getCharge` now reports paid → `applyAsaasPaymentStatus` called, `Order` untouched otherwise
-- [ ] A failed `AsaasEvent` is retried; success marks it `processed`, renewed failure keeps it `failed` with an updated `attempts`/`error`
-- [ ] One tenant's Asaas-call failure doesn't stop the tick from processing the next tenant
-- [ ] Gate check passes: `pnpm vitest run --project integration`
+- [x] A `pending` Payment older than 24h, still unpaid per a fake `getCharge` response → `expireOrderPayment` called, stock released, `Order.status = 'payment_expired'`
+- [x] A `pending` Payment where the fake `getCharge` now reports paid → `applyAsaasPaymentStatus` called, `Order` untouched otherwise
+- [x] A failed `AsaasEvent` is retried; success marks it `processed`, renewed failure keeps it `failed` with an updated `attempts`/`error`
+- [x] One tenant's Asaas-call failure doesn't stop the tick from processing the next tenant
+- [x] Gate check passes: `pnpm vitest run --project integration`
 
 **Tests**: integration
 **Gate**: full
@@ -643,9 +643,9 @@ T29 → T30 → T31
 **Tools**: MCP: NONE / Skill: NONE
 
 **Done when**:
-- [ ] Worker starts on `start()`, stoppable via `stopWorkers()`
-- [ ] `opts.asaasReconcileIntervalMs` allows a short test interval, defaulting to 300000ms in production
-- [ ] Gate check passes: build gate (no new test file — this is composition-root wiring covered by T24's injected-interval tests)
+- [x] Worker starts on `start()`, stoppable via `stopWorkers()`
+- [x] `opts.asaasReconcileIntervalMs` allows a short test interval, defaulting to 300000ms in production
+- [x] Gate check passes: build gate (no new test file — this is composition-root wiring covered by T24's injected-interval tests)
 
 **Tests**: none
 **Gate**: build
@@ -663,9 +663,9 @@ T29 → T30 → T31
 **Tools**: MCP: NONE / Skill: NONE
 
 **Done when**:
-- [ ] Case 1: `pending_approval` Order + fabricated `issue_payment_link` tool_use → `Payment.countDocuments` stays 0, the fake `AsaasClient`'s `createPixCharge` mock is never invoked
-- [ ] Case 2: `confirmed` Order → `Payment` created, reply contains the real `totalPrice`-backed amount, un-redacted
-- [ ] Gate check passes: `pnpm vitest run --project integration`
+- [x] Case 1: `pending_approval` Order + fabricated `issue_payment_link` tool_use → `Payment.countDocuments` stays 0, the fake `AsaasClient`'s `createPixCharge` mock is never invoked
+- [x] Case 2: `confirmed` Order → `Payment` created, reply contains the real `totalPrice`-backed amount, un-redacted
+- [x] Gate check passes: `pnpm vitest run --project integration`
 
 **Tests**: integration
 **Gate**: full
@@ -685,10 +685,10 @@ T29 → T30 → T31
 **Tools**: MCP: NONE / Skill: NONE
 
 **Done when**:
-- [ ] The renamed fabricated tool_use still proves the original intent: an unrecognized name is never dispatched, Anel B is never confirmed by prompt alone
-- [ ] `collectOfferedToolNames` assertion lists all 8 real tools including `issue_payment_link`
-- [ ] Existing case 1 (forged customerId) untouched, still passes
-- [ ] Gate check passes: `pnpm vitest run --project integration`
+- [x] The renamed fabricated tool_use still proves the original intent: an unrecognized name is never dispatched, Anel B is never confirmed by prompt alone
+- [x] `collectOfferedToolNames` assertion lists all 8 real tools including `issue_payment_link`
+- [x] Existing case 1 (forged customerId) untouched, still passes
+- [x] Gate check passes: `pnpm vitest run --project integration`
 
 **Tests**: integration
 **Gate**: full
@@ -706,8 +706,8 @@ T29 → T30 → T31
 **Tools**: MCP: NONE / Skill: NONE
 
 **Done when**:
-- [ ] File inspected; any hardcoded tool-count/list assertion found is updated to 8; if none exists, task closes with that explicit finding noted in the commit message
-- [ ] Gate check passes: `pnpm vitest run --project integration`
+- [x] File inspected; any hardcoded tool-count/list assertion found is updated to 8; if none exists, task closes with that explicit finding noted in the commit message
+- [x] Gate check passes: `pnpm vitest run --project integration`
 
 **Tests**: integration
 **Gate**: full
