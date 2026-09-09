@@ -5,7 +5,7 @@ export type GetOrderStatusInput = { orderId?: string };
 
 export type OrderSummary = {
   orderId: string;
-  status: 'pending_approval' | 'confirmed' | 'rejected';
+  status: 'pending_approval' | 'confirmed' | 'rejected' | 'payment_expired';
   items: Array<{ productId: string; name: string; unitPrice: number; quantity: number }>;
   totalPrice: number;
   customerConfirmed: boolean;

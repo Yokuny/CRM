@@ -20,7 +20,7 @@ const orderIdParamSchema = z.object({ id: idSchema }).strict();
 // diretamente).
 const listOrdersQuerySchema = z
   .object({
-    status: z.enum(['pending_approval', 'confirmed', 'rejected']).default('pending_approval'),
+    status: z.enum(['pending_approval', 'confirmed', 'rejected', 'payment_expired']).default('pending_approval'),
     conversation: z.string().trim().optional(),
     page: z.coerce.number().optional(),
     limit: z.coerce.number().optional(),
