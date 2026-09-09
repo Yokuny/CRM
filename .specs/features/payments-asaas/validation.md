@@ -241,3 +241,28 @@ is present and correct) but should be closed with one added concurrency test.
 **Next steps**: Add the concurrency test described in Fix 1. Given it is a single, additive test
 with no code change required, this does not need a full fix→re-verify cycle — a human/implementer
 can add the test and this validation.md can be marked closed without re-running the full Verifier.
+
+---
+
+## Closure (orchestrator, commit `a9c6af7`)
+
+Fix 1 applied exactly as prescribed: one test added to `packages/db/src/paymentTransitions.int.test.ts`
+issuing two genuinely concurrent (`Promise.all`) calls to `expireOrderPayment` against the same
+`pending` Payment. No production code change — `paymentTransitions.ts`'s atomic guard was already
+correct.
+
+**Fix confirmed effective** (equivalent assurance to a re-verify, scoped to this one gap, per this
+report's own "Next steps" guidance above):
+- New test passes against the real (unmutated) code.
+- Manually re-applied the exact mutation from Sensor #5 (removed `status: 'pending' as const` from
+  the `findOneAndUpdate` filter, `paymentTransitions.ts:105`) — the new test failed
+  (`['expired','expired']` instead of `['expired','pending']`), confirming it now kills the mutant.
+  Mutation reverted immediately after (`git checkout --`), working tree confirmed clean.
+- Full Build gate re-run: `tsc --noEmit` clean, `biome check .` exit 0, `pnpm vitest run` — 1212/1212
+  passing (one transient failure on the first attempt, `platform.router.e2e.test.ts`, confirmed to be
+  the pre-existing shared-`MongoMemoryServer` flake documented in AD-031's follow-up note, not related
+  to this change — cleared on immediate retry, unrelated file, no changes near it in this diff).
+
+**Sensor result, updated**: 5/5 mutations killed (was 4/5).
+**Overall, updated**: ✅ **PASS** — no open gaps. `spec.md`'s Requirement Traceability updated to
+✅ Verified for all 15 requirements (PAY-01..15).
