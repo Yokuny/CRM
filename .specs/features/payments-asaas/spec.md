@@ -249,8 +249,8 @@ status badge matches.
 | PAY-01 | P1: Cliente paga via PIX | Tasks | In Tasks | T18, T20, T26 |
 | PAY-02 | P1: Cliente paga via PIX (gate estrutural) | Tasks | In Tasks | T18, T26, T27, T28 |
 | PAY-03 | P1: Cliente paga via PIX (idempotência) | Tasks | In Tasks | T18, T26 |
-| PAY-04 | P1: Cliente paga via PIX (sem integração ativa) | Tasks | In Tasks | T18 |
-| PAY-05 | P1: Cliente paga via PIX (leitura via get_order_status) | Tasks | In Tasks | T19 |
+| PAY-04 | P1: Cliente paga via PIX (sem integração ativa) | Tasks | Implementing | T18 |
+| PAY-05 | P1: Cliente paga via PIX (leitura via get_order_status) | Tasks | Implementing | T19 |
 | PAY-06 | P1: Webhook + rede de segurança (auth/tenant resolution) | Tasks | In Tasks | T21, T22, T23 |
 | PAY-07 | P1: Webhook + rede de segurança (dedup) | Tasks | In Tasks | T22 |
 | PAY-08 | P1: Webhook + rede de segurança (rank guard) | Tasks | In Tasks | T6, T22 |
