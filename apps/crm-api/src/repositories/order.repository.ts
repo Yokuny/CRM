@@ -1,5 +1,5 @@
-import type { OrderDocument, OrderItem, OrderStatus } from '@crm/db';
-import { Customer, Order, tenantScoped } from '@crm/db';
+import type { OrderDocument, OrderItem, OrderStatus, PaymentStatus } from '@crm/db';
+import { Customer, Order, Payment, tenantScoped } from '@crm/db';
 import { withDbTiming } from '../metrics/db.metric.js';
 
 export type OrderItemRecord = { product: string; name: string; unitPrice: number; quantity: number };
@@ -12,6 +12,10 @@ export type OrderRecord = {
   // "Pedidos" screen e o card inline do Inbox (T22/T24, fase posterior)
   // precisam do nome sem uma segunda consulta.
   customerName?: string;
+  // Só preenchido quando existe um Payment para este Order (design.md P2,
+  // AD-034: crm-api só LÊ Payment, nunca escreve) — ausente, nunca `null`,
+  // quando não há Payment.
+  paymentStatus?: PaymentStatus;
   items: OrderItemRecord[];
   totalPrice: number;
   status: OrderStatus;
@@ -41,11 +45,17 @@ const toItemRecord = (item: OrderItem): OrderItemRecord => ({
 // — findById nunca popula (ObjectId puro), listOrders sempre popula (vira
 // {_id,name}). Manter a extração no call site evita este toRecord precisar
 // adivinhar qual dos dois formatos recebeu.
-const toRecord = (doc: OrderDocument, customerId: string, customerName?: string): OrderRecord => ({
+const toRecord = (
+  doc: OrderDocument,
+  customerId: string,
+  customerName?: string,
+  paymentStatus?: PaymentStatus,
+): OrderRecord => ({
   id: doc._id.toString(),
   conversation: doc.conversation.toString(),
   customer: customerId,
   customerName,
+  paymentStatus,
   items: doc.items.map(toItemRecord),
   totalPrice: doc.totalPrice,
   status: doc.status,
@@ -68,7 +78,13 @@ const toRecord = (doc: OrderDocument, customerId: string, customerName?: string)
 export const findById = async (tenantId: string, id: string): Promise<OrderRecord | null> =>
   withDbTiming('order.findById', async () => {
     const doc = await Order.findOne(tenantScoped({ Tenant: tenantId, _id: id })).lean();
-    return doc ? toRecord(doc, doc.customer.toString()) : null;
+    if (!doc) return null;
+    // Leitura única, best-effort (design.md P2 AC1) — nunca escreve em
+    // Payment aqui (AD-034).
+    const payment = await Payment.findOne(tenantScoped({ Tenant: tenantId, order: doc._id }))
+      .select('status')
+      .lean();
+    return toRecord(doc, doc.customer.toString(), undefined, payment?.status);
   });
 
 export type ListOrdersInput = { page: number; limit: number; status?: OrderStatus; conversation?: string };
@@ -97,13 +113,32 @@ export const listOrders = async (tenantId: string, query: ListOrdersInput): Prom
     ]);
 
     const customerIds = [...new Set(docs.map((doc) => doc.customer.toString()))];
-    const customers = customerIds.length
-      ? await Customer.find(tenantScoped({ Tenant: tenantId, _id: { $in: customerIds } }))
-          .select('name')
-          .lean()
-      : [];
+    const orderIds = docs.map((doc) => doc._id);
+    const [customers, payments] = await Promise.all([
+      customerIds.length
+        ? Customer.find(tenantScoped({ Tenant: tenantId, _id: { $in: customerIds } }))
+            .select('name')
+            .lean()
+        : [],
+      // Mesmo padrão em lote de nameById logo abaixo — NUNCA populate()
+      // (perderia o order id de um Payment órfão) nem N+1 (design.md P2
+      // AD-034: crm-api só LÊ Payment aqui).
+      orderIds.length
+        ? Payment.find(tenantScoped({ Tenant: tenantId, order: { $in: orderIds } }))
+            .select('order status')
+            .lean()
+        : [],
+    ]);
     const nameById = new Map(customers.map((customer) => [customer._id.toString(), customer.name]));
+    const paymentStatusById = new Map(payments.map((payment) => [payment.order.toString(), payment.status]));
 
-    const items = docs.map((doc) => toRecord(doc, doc.customer.toString(), nameById.get(doc.customer.toString())));
+    const items = docs.map((doc) =>
+      toRecord(
+        doc,
+        doc.customer.toString(),
+        nameById.get(doc.customer.toString()),
+        paymentStatusById.get(doc._id.toString()),
+      ),
+    );
     return { items, total };
   });

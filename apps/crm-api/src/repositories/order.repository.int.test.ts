@@ -1,5 +1,8 @@
 import crypto from 'node:crypto';
-import { Customer, connect, disconnect, Order } from '@crm/db';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { Customer, connect, disconnect, Order, Payment } from '@crm/db';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import * as orderRepository from './order.repository.js';
 
@@ -18,13 +21,26 @@ const seedOrder = async (tenantId: string, overrides: Partial<Record<string, unk
     ...overrides,
   });
 
+const seedPayment = async (tenantId: string, orderId: string, overrides: Partial<Record<string, unknown>> = {}) =>
+  Payment.create({
+    Tenant: tenantId,
+    order: orderId,
+    asaasChargeId: `pay_${randomId()}`,
+    asaasCustomerId: 'cus_000000000001',
+    billingType: 'PIX',
+    value: 1000,
+    asaasStatus: 'PENDING',
+    status: 'pending',
+    ...overrides,
+  });
+
 describe('order.repository', () => {
   beforeAll(async () => {
     await connect(process.env.MONGODB_URI as string);
   });
 
   afterEach(async () => {
-    await Promise.all([Order.deleteMany({}), Customer.deleteMany({})]);
+    await Promise.all([Order.deleteMany({}), Customer.deleteMany({}), Payment.deleteMany({})]);
   });
 
   afterAll(async () => {
@@ -51,6 +67,26 @@ describe('order.repository', () => {
       const result = await orderRepository.findById(intruder, created._id.toString());
 
       expect(result).toBeNull();
+    });
+
+    it('includes paymentStatus matching the Payment record when one exists (spec.md P2 AC1, PAY-15/T30)', async () => {
+      const tenantId = randomId();
+      const created = await seedOrder(tenantId, { status: 'confirmed' });
+      await seedPayment(tenantId, created._id.toString(), { status: 'paid', asaasStatus: 'CONFIRMED' });
+
+      const result = await orderRepository.findById(tenantId, created._id.toString());
+
+      expect(result?.paymentStatus).toBe('paid');
+    });
+
+    it('leaves paymentStatus absent (undefined) when the Order has no Payment, without erroring', async () => {
+      const tenantId = randomId();
+      const created = await seedOrder(tenantId);
+
+      const result = await orderRepository.findById(tenantId, created._id.toString());
+
+      expect(result).not.toBeNull();
+      expect(result?.paymentStatus).toBeUndefined();
     });
   });
 
@@ -131,6 +167,32 @@ describe('order.repository', () => {
       const result = await orderRepository.listOrders(tenantId, { page: 1, limit: 20 });
 
       expect(result.items.map((item) => item.id)).toEqual([newer._id.toString(), older._id.toString()]);
+    });
+
+    it('attaches paymentStatus per Order via a batch lookup — matching Payment for one Order, absent for another (spec.md P2 AC1, PAY-15/T30)', async () => {
+      const tenantId = randomId();
+      const withPayment = await seedOrder(tenantId, { status: 'confirmed' });
+      const withoutPayment = await seedOrder(tenantId, { status: 'pending_approval' });
+      await seedPayment(tenantId, withPayment._id.toString(), { status: 'expired', asaasStatus: 'OVERDUE' });
+
+      const result = await orderRepository.listOrders(tenantId, { page: 1, limit: 20 });
+
+      const byId = new Map(result.items.map((item) => [item.id, item]));
+      expect(byId.get(withPayment._id.toString())?.paymentStatus).toBe('expired');
+      expect(byId.get(withoutPayment._id.toString())?.paymentStatus).toBeUndefined();
+    });
+  });
+
+  // design.md AD-034: apps/crm-api só LÊ Payment — a rota de Order nunca
+  // escreve nesta collection. Verificação estrutural (busca por texto no
+  // fonte) em vez de spy, per T30 Done-when ("grep-based assertion is
+  // acceptable").
+  describe('AD-034: this module never writes to Payment', () => {
+    it('source contains no Payment.updateOne/create/findOneAndUpdate/deleteOne/deleteMany call', () => {
+      const here = path.dirname(fileURLToPath(import.meta.url));
+      const source = fs.readFileSync(path.join(here, 'order.repository.ts'), 'utf-8');
+
+      expect(source).not.toMatch(/Payment\.(updateOne|updateMany|create|findOneAndUpdate|deleteOne|deleteMany)\(/);
     });
   });
 });
