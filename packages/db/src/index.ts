@@ -9,6 +9,8 @@ export type {
   AsaasIntegrationStatus,
 } from './models/asaasIntegration.model.js';
 export { AsaasIntegration } from './models/asaasIntegration.model.js';
+export type { AsaasEventDocument, AsaasEventStatus } from './models/asaasEvent.model.js';
+export { AsaasEvent } from './models/asaasEvent.model.js';
 export type { ChannelDocument } from './models/channel.model.js';
 export { Channel } from './models/channel.model.js';
 export type { ConversationDocument, ConversationMode, TurnLock } from './models/conversation.model.js';
@@ -53,6 +55,7 @@ export { rejectOrder, setCustomerConfirmed, setOperatorApproved, tryConfirmOrder
 export { tenantScoped } from './tenantScoped.js';
 
 import { AiSession } from './models/aiSession.model.js';
+import { AsaasEvent } from './models/asaasEvent.model.js';
 import { AsaasIntegration } from './models/asaasIntegration.model.js';
 import { Channel } from './models/channel.model.js';
 import { Conversation } from './models/conversation.model.js';
@@ -83,6 +86,7 @@ export const syncIndexes = async (): Promise<void> => {
     Order.createIndexes(),
     Payment.createIndexes(),
     AsaasIntegration.createIndexes(),
+    AsaasEvent.createIndexes(),
     Channel.createIndexes(),
     Conversation.createIndexes(),
     Message.createIndexes(),
