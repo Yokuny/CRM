@@ -3,6 +3,8 @@ import { pathToFileURL } from 'node:url';
 import { connect } from '@crm/db';
 import { buildApp } from './app.js';
 import { env } from './config/env.config.js';
+import { createAsaasClient } from './providers/asaasClient.js';
+import { startAsaasReconcile } from './workers/asaasReconcile.js';
 import { startIdleTakeoverSweep } from './workers/idleTakeoverSweep.js';
 import { startOutboxConsumer } from './workers/outboxConsumer.js';
 import { startReaper } from './workers/reaper.js';
@@ -18,6 +20,9 @@ export type StartOptions = {
   reaperStaleAfterMs?: number;
   idleIntervalMs?: number;
   idleAfterMs?: number;
+  // payments-asaas T25: mesmo motivo dos demais — deixa o e2e injetar um
+  // intervalo curto, defaultando a 300000ms (5min, design.md) em produção.
+  asaasReconcileIntervalMs?: number;
 };
 
 export type StartHandle = {
@@ -42,6 +47,11 @@ export const start = async (opts: StartOptions = {}): Promise<StartHandle | unde
     const outbox = startOutboxConsumer({ encKey: env.CHANNEL_ENC_KEY }, opts.outboxIntervalMs);
     const reaper = startReaper(opts.reaperIntervalMs, opts.reaperStaleAfterMs);
     const idle = startIdleTakeoverSweep(opts.idleIntervalMs, opts.idleAfterMs);
+    // payments-asaas T25: ponto de composição SEPARADO do de app.ts (T23) —
+    // mesmo precedente de env.CHANNEL_ENC_KEY, injetado independentemente em
+    // createAudioDownloader (app.ts) e startOutboxConsumer (aqui).
+    const asaasClient = createAsaasClient(env.ASAAS_ENC_KEY);
+    const asaasReconcile = startAsaasReconcile({ asaasClient }, opts.asaasReconcileIntervalMs);
 
     return {
       httpServer,
@@ -49,6 +59,7 @@ export const start = async (opts: StartOptions = {}): Promise<StartHandle | unde
         outbox.stop();
         reaper.stop();
         idle.stop();
+        asaasReconcile.stop();
       },
     };
   } catch (e) {
