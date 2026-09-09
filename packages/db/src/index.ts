@@ -3,6 +3,12 @@ export type { EncryptedSecret } from './crypto.helper.js';
 export { decrypt, encrypt, maskSecret, sha256 } from './crypto.helper.js';
 export type { AiSessionDocument } from './models/aiSession.model.js';
 export { AiSession } from './models/aiSession.model.js';
+export type {
+  AsaasEnvironment,
+  AsaasIntegrationDocument,
+  AsaasIntegrationStatus,
+} from './models/asaasIntegration.model.js';
+export { AsaasIntegration } from './models/asaasIntegration.model.js';
 export type { ChannelDocument } from './models/channel.model.js';
 export { Channel } from './models/channel.model.js';
 export type { ConversationDocument, ConversationMode, TurnLock } from './models/conversation.model.js';
@@ -47,6 +53,7 @@ export { rejectOrder, setCustomerConfirmed, setOperatorApproved, tryConfirmOrder
 export { tenantScoped } from './tenantScoped.js';
 
 import { AiSession } from './models/aiSession.model.js';
+import { AsaasIntegration } from './models/asaasIntegration.model.js';
 import { Channel } from './models/channel.model.js';
 import { Conversation } from './models/conversation.model.js';
 import { Customer } from './models/customer.model.js';
@@ -75,6 +82,7 @@ export const syncIndexes = async (): Promise<void> => {
     Product.createIndexes(),
     Order.createIndexes(),
     Payment.createIndexes(),
+    AsaasIntegration.createIndexes(),
     Channel.createIndexes(),
     Conversation.createIndexes(),
     Message.createIndexes(),

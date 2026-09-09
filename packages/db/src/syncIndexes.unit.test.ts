@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { syncIndexes } from './index.js';
 import { AiSession } from './models/aiSession.model.js';
+import { AsaasIntegration } from './models/asaasIntegration.model.js';
 import { Channel } from './models/channel.model.js';
 import { Conversation } from './models/conversation.model.js';
 import { Customer } from './models/customer.model.js';
@@ -17,7 +18,7 @@ import { Tenant } from './models/tenant.model.js';
 import { User } from './models/user.model.js';
 
 describe('syncIndexes', () => {
-  it('calls createIndexes on the 15 models', async () => {
+  it('calls createIndexes on the 16 models', async () => {
     const spies = [
       Tenant,
       User,
@@ -30,6 +31,7 @@ describe('syncIndexes', () => {
       Product,
       Order,
       Payment,
+      AsaasIntegration,
       Channel,
       Conversation,
       Message,
