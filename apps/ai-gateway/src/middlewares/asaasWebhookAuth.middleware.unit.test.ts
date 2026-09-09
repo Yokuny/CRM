@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import type { NextFunction, Response } from 'express';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createAsaasWebhookAuthMiddleware, type AsaasWebhookRequest } from './asaasWebhookAuth.middleware.js';
+import { type AsaasWebhookRequest, createAsaasWebhookAuthMiddleware } from './asaasWebhookAuth.middleware.js';
 
 // Mesmo idioma de issuePaymentLink.unit.test.ts: mock completo de @crm/db
 // (não MongoMemoryServer — este é o project "unit", sem globalSetup de

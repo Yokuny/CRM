@@ -1,5 +1,5 @@
-import { AsaasEvent, applyAsaasPaymentStatus, Payment, tenantScoped } from '@crm/db';
 import { respObj } from '@crm/contracts';
+import { AsaasEvent, applyAsaasPaymentStatus, Payment, tenantScoped } from '@crm/db';
 import express, { type Response, Router } from 'express';
 import {
   type AsaasWebhookRequest,
@@ -82,7 +82,7 @@ const handleIncoming = () => {
       if (!chargeId) throw new Error('Webhook sem payment.id');
 
       const payment = await Payment.findOne(
-        tenantScoped({ Tenant: integration.Tenant, asaasChargeId: chargeId }),
+        tenantScoped({ Tenant: integration.Tenant.toString(), asaasChargeId: chargeId }),
       ).lean();
       if (!payment) throw new Error('Payment não encontrado para este asaasChargeId');
 
