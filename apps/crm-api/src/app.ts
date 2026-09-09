@@ -19,8 +19,10 @@ import { createConversationRouter } from './routers/conversation.router.js';
 import { createCustomerRouter } from './routers/customer.router.js';
 import { createFieldTemplateRouter } from './routers/fieldTemplate.router.js';
 import { inviteRouter } from './routers/invite.router.js';
+import { createOrderRouter } from './routers/order.router.js';
 import { createPlatformRouter } from './routers/platform.router.js';
 import { createProcessRouter } from './routers/process.router.js';
+import { createProductRouter } from './routers/product.router.js';
 import type { FieldValueStores } from './services/fieldTemplate.service.js';
 
 const buildMailProvider = (): MailProvider => {
@@ -67,6 +69,8 @@ export const buildApp = (): Express => {
   app.use('/field-templates', createFieldTemplateRouter({ validToken, fieldValueStores }));
   app.use('/customers', createCustomerRouter({ validToken }));
   app.use('/processes', createProcessRouter({ validToken }));
+  app.use('/products', createProductRouter({ validToken }));
+  app.use('/orders', createOrderRouter({ validToken }));
   app.use('/channels', createChannelRouter({ validToken }));
   app.use('/conversations', createConversationRouter({ validToken }));
 

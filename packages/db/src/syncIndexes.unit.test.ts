@@ -8,13 +8,15 @@ import { FieldTemplate } from './models/fieldTemplate.model.js';
 import { FieldTemplateVersion } from './models/fieldTemplateVersion.model.js';
 import { Invite } from './models/invite.model.js';
 import { Message } from './models/message.model.js';
+import { Order } from './models/order.model.js';
 import { Process } from './models/process.model.js';
+import { Product } from './models/product.model.js';
 import { Session } from './models/session.model.js';
 import { Tenant } from './models/tenant.model.js';
 import { User } from './models/user.model.js';
 
 describe('syncIndexes', () => {
-  it('calls createIndexes on the 12 models', async () => {
+  it('calls createIndexes on the 14 models', async () => {
     const spies = [
       Tenant,
       User,
@@ -24,6 +26,8 @@ describe('syncIndexes', () => {
       FieldTemplateVersion,
       Customer,
       Process,
+      Product,
+      Order,
       Channel,
       Conversation,
       Message,

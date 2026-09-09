@@ -283,33 +283,33 @@ não contém esse valor.
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| CAT-01 | P1: Cadastro de catálogo | In Tasks | Pending |
-| CAT-02 | P1: Cadastro de catálogo | In Tasks | Pending |
-| CAT-03 | P1: Cadastro de catálogo | In Tasks | Pending |
-| CAT-04 | P1: Cadastro de catálogo | In Tasks | Pending |
-| CAT-05 | P1: Cadastro de catálogo | In Tasks | Pending |
-| CAT-06 | P1: Cadastro de catálogo | In Tasks | Pending |
-| CAT-07 | P1: Busca/status pela conversa | In Tasks | Pending |
-| CAT-08 | P1: Busca/status pela conversa | In Tasks | Pending |
-| CAT-09 | P1: Busca/status pela conversa | In Tasks | Pending |
-| CAT-10 | P1: Busca/status pela conversa | In Tasks | Pending |
-| CAT-11 | P1: Busca/status pela conversa | In Tasks | Pending |
-| CAT-12 | P1: Montar/confirmar pedido | In Tasks | Pending |
-| CAT-13 | P1: Montar/confirmar pedido | In Tasks | Pending |
-| CAT-14 | P1: Montar/confirmar pedido | In Tasks | Pending |
-| CAT-15 | P1: Montar/confirmar pedido | In Tasks | Pending |
-| CAT-16 | P1: Montar/confirmar pedido | In Tasks | Pending |
-| CAT-17 | P1: Montar/confirmar pedido | In Tasks | Pending |
-| CAT-18 | P1: Aprovar/rejeitar pedido | In Tasks | Pending |
-| CAT-19 | P1: Aprovar/rejeitar pedido | In Tasks | Pending |
-| CAT-20 | P1: Aprovar/rejeitar pedido | In Tasks | Pending |
-| CAT-21 | P1: Aprovar/rejeitar pedido | In Tasks | Pending |
-| CAT-22 | P1: Aprovar/rejeitar pedido | In Tasks | Pending |
-| CAT-23 | P1: Aprovar/rejeitar pedido | In Tasks | Pending |
-| CAT-24 | P1: Aprovar/rejeitar pedido | In Tasks | Pending |
-| CAT-25 | P1: Guard de preço | In Tasks | Pending |
-| CAT-26 | P1: Guard de preço | In Tasks | Pending |
-| CAT-27 | P1: Guard de preço | In Tasks | Pending |
+| CAT-01 | P1: Cadastro de catálogo | In Tasks | Verified |
+| CAT-02 | P1: Cadastro de catálogo | In Tasks | Verified |
+| CAT-03 | P1: Cadastro de catálogo | In Tasks | Verified |
+| CAT-04 | P1: Cadastro de catálogo | In Tasks | Verified |
+| CAT-05 | P1: Cadastro de catálogo | In Tasks | Verified |
+| CAT-06 | P1: Cadastro de catálogo | In Tasks | Verified |
+| CAT-07 | P1: Busca/status pela conversa | In Tasks | Verified |
+| CAT-08 | P1: Busca/status pela conversa | In Tasks | Verified |
+| CAT-09 | P1: Busca/status pela conversa | In Tasks | Verified |
+| CAT-10 | P1: Busca/status pela conversa | In Tasks | Verified |
+| CAT-11 | P1: Busca/status pela conversa | In Tasks | Verified |
+| CAT-12 | P1: Montar/confirmar pedido | In Tasks | Verified |
+| CAT-13 | P1: Montar/confirmar pedido | In Tasks | Verified |
+| CAT-14 | P1: Montar/confirmar pedido | In Tasks | Verified |
+| CAT-15 | P1: Montar/confirmar pedido | In Tasks | Verified |
+| CAT-16 | P1: Montar/confirmar pedido | In Tasks | Verified |
+| CAT-17 | P1: Montar/confirmar pedido | In Tasks | Verified |
+| CAT-18 | P1: Aprovar/rejeitar pedido | In Tasks | Verified |
+| CAT-19 | P1: Aprovar/rejeitar pedido | In Tasks | Verified |
+| CAT-20 | P1: Aprovar/rejeitar pedido | In Tasks | Verified |
+| CAT-21 | P1: Aprovar/rejeitar pedido | In Tasks | Verified |
+| CAT-22 | P1: Aprovar/rejeitar pedido | In Tasks | Verified |
+| CAT-23 | P1: Aprovar/rejeitar pedido | In Tasks | Verified |
+| CAT-24 | P1: Aprovar/rejeitar pedido | In Tasks | Verified |
+| CAT-25 | P1: Guard de preço | In Tasks | Verified |
+| CAT-26 | P1: Guard de preço | In Tasks | Verified |
+| CAT-27 | P1: Guard de preço | In Tasks | Verified |
 
 **ID format:** `CAT-[NUMBER]`
 

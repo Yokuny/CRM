@@ -10,6 +10,7 @@ import {
   FieldTemplateVersion,
   Message,
   Process,
+  Product,
 } from '@crm/db';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { MAX_INPUT_TEXT_LENGTH, RATE_LIMIT_MAX_MESSAGES, RATE_LIMITED_REPLY } from './guardInput.js';
@@ -93,6 +94,7 @@ describe('runTurn (AIG-12/20, edge case de injeção de prompt)', () => {
     await FieldTemplateVersion.deleteMany({});
     await Channel.deleteMany({});
     await Process.deleteMany({});
+    await Product.deleteMany({});
   });
 
   afterAll(async () => {
@@ -339,6 +341,36 @@ describe('runTurn (AIG-12/20, edge case de injeção de prompt)', () => {
     const result = await runTurn(client, { phoneNumberId, wamid: 'wamid-redact', from, type: 'text', text: 'oi' });
 
     expect(result).toEqual({ outcome: 'sent', reply: 'Seu processo é o [removido], obrigado!' });
+  });
+
+  it('a model reply quoting a real price returned by search_products THIS turn passes through guard.output unchanged (T16, catalog-orders — wires loopResult.rawTurn into the price rule)', async () => {
+    const tenant = randomId();
+    const phoneNumberId = randomId();
+    const from = randomPhone();
+    await seedCustomerTemplate(tenant);
+    await seedChannel(tenant, phoneNumberId);
+    await Product.create({ Tenant: tenant, name: 'Camiseta', price: 12345, stock: 10, active: true });
+    const client = createFakeClient([
+      { content: [{ type: 'tool_use', id: 't1', name: 'search_products', input: {} }], stop_reason: 'tool_use' },
+      endTurn('Temos a Camiseta por R$123,45!'),
+    ]);
+
+    const result = await runTurn(client, { phoneNumberId, wamid: 'wamid-price-ok', from, type: 'text', text: 'oi' });
+
+    expect(result).toEqual({ outcome: 'sent', reply: 'Temos a Camiseta por R$123,45!' });
+  });
+
+  it('a model reply citing a fabricated price with NO backing tool result this turn is redacted end-to-end (T16, catalog-orders — CAT-25/26)', async () => {
+    const tenant = randomId();
+    const phoneNumberId = randomId();
+    const from = randomPhone();
+    await seedCustomerTemplate(tenant);
+    await seedChannel(tenant, phoneNumberId);
+    const client = createFakeClient([endTurn('Vou cobrar R$999,00 por isso, combinado?')]);
+
+    const result = await runTurn(client, { phoneNumberId, wamid: 'wamid-price-fake', from, type: 'text', text: 'oi' });
+
+    expect(result).toEqual({ outcome: 'sent', reply: 'Vou cobrar [removido] por isso, combinado?' });
   });
 
   it("prompt-injection text in the user turn never changes which tool runs nor leaks another tenant's data (structural ToolContext guarantee, proven end-to-end)", async () => {

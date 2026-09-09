@@ -15,7 +15,15 @@ const findForbiddenKeys = (properties: Record<string, unknown>): string[] => {
   );
 };
 
-const EXPECTED_TOOL_NAMES = ['get_process_template', 'find_or_create_customer', 'open_process', 'set_process_fields'];
+const EXPECTED_TOOL_NAMES = [
+  'get_process_template',
+  'find_or_create_customer',
+  'open_process',
+  'set_process_fields',
+  'search_products',
+  'get_order_status',
+  'create_order',
+];
 
 describe('Anel A tool input_schema structural guard (AD-010, AIG-14/40)', () => {
   it('self-check: the sweep flags a synthetic input_schema containing a tenant field', () => {
@@ -30,8 +38,8 @@ describe('Anel A tool input_schema structural guard (AD-010, AIG-14/40)', () => 
     expect(offending.sort()).toEqual(['channelid', 'conversationid']);
   });
 
-  it('TOOL_DEFINITIONS has exactly 4 entries with the fixed Anel A names', () => {
-    expect(TOOL_DEFINITIONS).toHaveLength(4);
+  it('TOOL_DEFINITIONS has exactly 7 entries with the fixed tool names (Anel A + Anel B)', () => {
+    expect(TOOL_DEFINITIONS).toHaveLength(7);
     expect(TOOL_DEFINITIONS.map((tool) => tool.name)).toEqual(EXPECTED_TOOL_NAMES);
   });
 

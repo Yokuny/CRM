@@ -107,6 +107,34 @@ const translations: Record<string, string> = {
   'inbox.takeover.error': 'Não foi possível assumir esta conversa.',
   'inbox.release.action': 'Liberar',
   'inbox.release.error': 'Não foi possível liberar esta conversa.',
+  // Catálogo de produtos (feature catalog-orders, Fase 9) — chaves novas
+  // usadas por routes/_private/products/** (T19).
+  'product.list.title': 'Catálogo',
+  'product.price': 'Preço',
+  'product.stock': 'Estoque',
+  'product.status.active': 'Ativo',
+  'product.status.inactive': 'Inativo',
+  // T20 — products/add/index.tsx.
+  'product.create.title': 'Novo produto',
+  'product.create.error': 'Não foi possível criar o produto.',
+  'product.sku': 'SKU',
+  'product.description': 'Descrição',
+  // T21 — products/details.tsx.
+  'product.details.title': 'Detalhe do produto',
+  // Fila/histórico de Pedidos (feature catalog-orders, Fase 10) — chaves
+  // novas usadas por routes/_private/orders/index.tsx (T23) e pelo card
+  // inline do Inbox (order-card.tsx, T24).
+  'order.list.title': 'Pedidos',
+  'order.column.customer': 'Cliente',
+  'order.column.items': 'Itens',
+  'order.column.total': 'Total',
+  'order.status.pending_approval': 'Pendente',
+  'order.status.confirmed': 'Confirmado',
+  'order.status.rejected': 'Rejeitado',
+  'order.approve.action': 'Aprovar',
+  'order.approve.error': 'Não foi possível aprovar o pedido.',
+  'order.reject.action': 'Rejeitar',
+  'order.reject.error': 'Não foi possível rejeitar o pedido.',
 };
 
 export const t = (key: string): string => translations[key] ?? key;

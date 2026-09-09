@@ -8,7 +8,11 @@
 
 Corroborated across multiple features. Safe to apply as guidance.
 
-_none_
+### L-026 — When a task's What description names a specific function mirroring an existing pattern (e.g. a by-id query), verify during Tasks that a corresponding backend endpoint is actually planned before assigning the task, so implementers don't discover the mismatch mid-Execute.
+- signal: `spec_deviation` · recurrence: 2 feature(s) · scope: `tasks` · harmful: 0
+- features: inbox-realtime, catalog-orders
+- evidence: apps/web/src/query/conversation.ts:31 (tasks) (+1 more)
+- last seen: 2026-09-09T16:52:33Z
 
 ## Candidates (under observation — do NOT load as guidance yet)
 
@@ -163,12 +167,6 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - features: inbox-realtime
 - evidence: spec.md Edge Cases (WS disconnect) — apps/web/src/hooks/useInboxSocket.ts:111-116 (apps/web)
 - last seen: 2026-09-08T22:22:35Z
-
-### L-026 — When a task's What description names a specific function mirroring an existing pattern (e.g. a by-id query), verify during Tasks that a corresponding backend endpoint is actually planned before assigning the task, so implementers don't discover the mismatch mid-Execute.
-- signal: `spec_deviation` · recurrence: 1 feature(s) · scope: `tasks` · harmful: 0
-- features: inbox-realtime
-- evidence: apps/web/src/query/conversation.ts:31 (tasks)
-- last seen: 2026-09-08T22:22:40Z
 
 ## Quarantined (failed when applied — ignore)
 

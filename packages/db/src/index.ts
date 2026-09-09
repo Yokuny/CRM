@@ -28,14 +28,20 @@ export type {
   MessageType,
 } from './models/message.model.js';
 export { Message } from './models/message.model.js';
+export type { OrderDocument, OrderItem, OrderStatus } from './models/order.model.js';
+export { Order } from './models/order.model.js';
 export type { ProcessDocument } from './models/process.model.js';
 export { Process } from './models/process.model.js';
+export type { ProductDocument } from './models/product.model.js';
+export { Product } from './models/product.model.js';
 export type { SessionDocument } from './models/session.model.js';
 export { Session } from './models/session.model.js';
 export type { TenantDocument, TenantStatus } from './models/tenant.model.js';
 export { Tenant, transitionTenantStatus } from './models/tenant.model.js';
 export type { UserDocument } from './models/user.model.js';
 export { User } from './models/user.model.js';
+export type { OrderItemInput, OrderTransitionResult } from './orderTransitions.js';
+export { rejectOrder, setCustomerConfirmed, setOperatorApproved, tryConfirmOrder } from './orderTransitions.js';
 export { tenantScoped } from './tenantScoped.js';
 
 import { AiSession } from './models/aiSession.model.js';
@@ -46,7 +52,9 @@ import { FieldTemplate } from './models/fieldTemplate.model.js';
 import { FieldTemplateVersion } from './models/fieldTemplateVersion.model.js';
 import { Invite } from './models/invite.model.js';
 import { Message } from './models/message.model.js';
+import { Order } from './models/order.model.js';
 import { Process } from './models/process.model.js';
+import { Product } from './models/product.model.js';
 import { Session } from './models/session.model.js';
 import { Tenant } from './models/tenant.model.js';
 import { User } from './models/user.model.js';
@@ -61,6 +69,8 @@ export const syncIndexes = async (): Promise<void> => {
     FieldTemplateVersion.createIndexes(),
     Customer.createIndexes(),
     Process.createIndexes(),
+    Product.createIndexes(),
+    Order.createIndexes(),
     Channel.createIndexes(),
     Conversation.createIndexes(),
     Message.createIndexes(),

@@ -24,6 +24,32 @@ export type RunTurnOutcome =
 
 export type RunTurnOptions = { ingestOptions?: IngestOptions };
 
+// catalog-orders T16 (design.md "guard.output — extensão de escopo de
+// preço"): extrai os tool_results que este turno realmente produziu, já
+// parseados de JSON, pra alimentar a regra de preço de guardOutput.ts — um
+// segundo consumidor de `rawTurn`, independente de persist() (loop.ts
+// intercala mensagens assistant/tool_result; cada bloco tool_result.content
+// é a STRING `JSON.stringify(result)` que executeTool produziu).
+const extractToolResultsThisTurn = (rawTurn: Anthropic.MessageParam[]): unknown[] => {
+  const results: unknown[] = [];
+  for (const message of rawTurn) {
+    if (!Array.isArray(message.content)) continue;
+    for (const block of message.content) {
+      if (typeof block !== 'object' || block === null || !('type' in block) || block.type !== 'tool_result') continue;
+      const toolResult = block as Anthropic.ToolResultBlockParam;
+      if (typeof toolResult.content !== 'string') continue;
+      try {
+        results.push(JSON.parse(toolResult.content));
+      } catch {
+        // tool_result malformado (nunca deveria acontecer — executeTool
+        // sempre serializa via JSON.stringify): ignora, guardOutput
+        // simplesmente não enxerga esse resultado específico.
+      }
+    }
+  }
+  return results;
+};
+
 // Mesmo idioma de findOrCreateConversation (ingest.ts) — upsert atômico por
 // Conversation, único (schema: {Conversation:1} unique).
 const findOrCreateAiSession = async (tenantId: string, conversationId: string): Promise<AiSessionDocument> => {
@@ -124,7 +150,11 @@ export const runTurn = async (
     isFallback = true;
   }
 
-  const guardedReply = guardOutput(reply);
+  // catalog-orders T16: guardOutput recebe os tool_results REAIS deste turno
+  // (regra de preço, CAT-25/26/27) — extraídos de `rawTurn`, a mesma fonte
+  // que persist() já usa pra montar o histórico salvo (design.md: "Só tool
+  // results deste turno").
+  const guardedReply = guardOutput(reply, extractToolResultsThisTurn(rawTurn));
   const turnMessages: Anthropic.MessageParam[] = [{ role: 'user', content: guardResult.text }, ...rawTurn];
   const outMessage = await persist(client, persistConversation, aiSession, turnMessages, guardedReply);
   await dispatch(outMessage);

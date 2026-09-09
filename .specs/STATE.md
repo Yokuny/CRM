@@ -275,73 +275,68 @@ Detalhamento completo (contexto, consequências, alternativas) em [`docs/adr/`](
 
 ## Handoff
 
-- **Feature**: `catalog-orders` (feature 7 de 11), planejada neste worktree
-  (`../CRM-catalog-orders`, branch `feature/catalog-orders`, criada a partir de
-  `feature/inbox-realtime` em 2026-09-09 — ver nota de dependência abaixo).
-  **Specify/Discuss/Design/Tasks completos nesta sessão; artefatos escritos e
-  apresentados para revisão do usuário ao final da sessão — ainda NÃO confirmados como
-  aprovados por uma resposta explícita do usuário nesta conversa.** Execute **não
-  iniciado**. `inbox-realtime` (feature 6) segue seu próprio ciclo de Verifier/PR em
-  paralelo, noutra sessão/worktree — não tocado por esta sessão.
-- **Phase / Task**: Discuss (3 rodadas de perguntas via `AskUserQuestion` cobrindo shape/
-  preço/estoque de `Product`, idempotência e confirmação do cliente em `create_order`,
-  escopo do guard de preço, quem aprova e onde a UI de aprovação aparece, rejeição,
-  expiração; + 1 rodada de esclarecimento sobre a tela de Pedidos) → Specify (`spec.md`,
-  27 requisitos `CAT-01..27`) → Design (`design.md`) → Tasks (`tasks.md`, 25 tasks em 11
-  fases) — todas completas nesta sessão, sem pausar entre fases (conforme instruído),
-  parando só nas interações reais do Discuss e ao final de Tasks.
+- **Feature**: `catalog-orders` (feature 7 de 11) — **Execute completo e Verificado
+  (PASS)** neste worktree (`../CRM-catalog-orders`, branch `feature/catalog-orders`).
+  Todas as 25 tasks (T1–T25, 11 fases) implementadas, gate cheio (`pnpm run check`) verde,
+  Verifier independente (author≠verifier) rodou automaticamente após T25 e retornou PASS
+  sem gaps. Nenhum fix task necessário.
+- **Phase / Task**: Specify/Discuss/Design/Tasks (sessão anterior) → Execute (esta sessão,
+  4 batches de sub-agentes, offer-then-confirm aceito pelo usuário no início) → Verifier
+  (automático, não prompted). Todas as fases completas.
 - **Completed**:
-  - `.specs/features/catalog-orders/context.md`: 8 decisões de implementação registradas
-    — `Product` com schema fixo (não usa field-engine), preço em centavos, estoque
-    rastreado, reserva de estoque só no momento da confirmação (não no `pending_approval`
-    — decisão do usuário, não a opção recomendada), captura da confirmação do cliente em
-    duas chamadas de `create_order` (mesma `idempotencyKey`), aprovação por qualquer
-    operador do tenant (não só o `assignee` da conversa), UI de aprovação dupla (card
-    inline na thread do Inbox **e** uma tela nova simples "Pedidos" — decisão explícita do
-    usuário para dar descoberta a "qualquer operador"), rejeição no P1, sem expiração
-    automática no P1, cadastro de `Product` com telas de CRUD no P1 (sem isso a feature
-    não seria demonstrável).
-  - `.specs/features/catalog-orders/spec.md`: 5 user stories P1 (cadastro de catálogo,
-    busca/status pela conversa, montar/confirmar pedido, aprovar/rejeitar pedido, guard de
-    preço), 27 requisitos rastreáveis (`CAT-01..27`), varredura completa das 9 dimensões
-    implícitas, todas as ambiguidades resolvidas ou logadas como Assumption (unicidade de
-    `sku`, moeda, teto de quantidade por item, papel exigido nos endpoints).
-  - `.specs/features/catalog-orders/design.md`: **achado e corrigido um gap de
-    documentação pré-existente desde a feature 5** — `docs/architecture.md` (tabela
-    "Propriedade de escrita por collection") dizia `customers`/`processes` como escrita
-    exclusiva do `crm-api`, mas `packages/ai-kit/src/tools/findOrCreateCustomer.ts:26`
-    (`Customer.create`) e `openProcess.ts:28` (`Process.create`) já escrevem essas
-    collections de dentro do `ai-gateway` desde a feature 5 (confirmado lendo o código, não
-    só a doc) — a tabela já estava desatualizada antes desta feature. Registrado como
-    **AD-032** (granularidade de escrita é por write-path, não por collection inteira; agora
-    também cobre `orders`) e **AD-033** (transição `pending_approval→confirmed` centralizada
-    em `packages/db/src/orderTransitions.ts`, sem transação nativa — generaliza AD-024 pro
-    caso de reserva atômica de estoque multi-item). `docs/architecture.md` corrigido no
-    mesmo passo (tabela + parágrafo-resumo).
-  - `.specs/features/catalog-orders/tasks.md`: 25 tasks, 11 fases, Test Coverage Matrix +
-    Gate Check Commands gerados a partir de AD-017/`apps/web/CLAUDE.md`, as 3 tabelas de
-    validação obrigatórias (Granularity Check, Diagram-Definition Cross-Check, Test
-    Co-location Validation) todas ✅ — nenhuma reestruturação necessária.
-- **In-progress**: nenhum — nenhuma task de Execute foi iniciada; Execute não deve começar
-  até o usuário revisar o resumo apresentado ao final desta sessão.
-- **Next step**: usuário revisa o resumo (fases, contagem de tasks, decisões de Design
-  AD-032/AD-033) e aprova explicitamente antes de qualquer Execute. Quando
-  `feature/inbox-realtime` for mergeada em `main`, rebasear `feature/catalog-orders` em
-  cima de `main` (dependência já anotada na abertura desta sessão) antes de começar
-  Execute — este worktree partiu de `feature/inbox-realtime`, não de `main`, de propósito,
-  pra que a varredura de código do Specify (Knowledge Verification Chain) enxergasse o
-  Inbox já pronto.
-- **Blockers**: nenhum, além da dependência de merge/rebase acima (não bloqueia o
-  planejamento, só o Execute).
-- **Uncommitted files**: sim — nada commitado nesta sessão de planejamento (só
-  `.specs/`/`docs/`, conforme escopo desta sessão). `git status --short`:
-  `.specs/features/catalog-orders/` (novo, 4 arquivos), `.specs/STATE.md` (modificado —
-  Decisions + este Handoff), `docs/architecture.md` (modificado — tabela de propriedade de
-  escrita corrigida). Nenhum arquivo de código-fonte tocado.
-- **Branch**: `feature/catalog-orders` (worktree `../CRM-catalog-orders`, criada a partir
-  de `feature/inbox-realtime` em 2026-09-09) — sem commit, sem push.
+  - **Batch 1** (Fases 1–3, T1–T7): models `Product`/`Order` (`packages/db`),
+    `orderTransitions.ts` (AD-033 — `setCustomerConfirmed`/`setOperatorApproved`/
+    `tryConfirmOrder`/`rejectOrder`), 3 schemas Zod novos, CRUD completo de `Product`
+    (`apps/crm-api`). 11 commits, `4f469c6`..`20f1da1`. 940 testes verdes ao final do
+    batch (incluindo 3 fix commits para testes pré-existentes que hardcodavam contagem de
+    models/schemas).
+  - **Batch 2** (Fases 4–6, T8–T14): `order.repository/service/controller/router`
+    (listar/aprovar/rejeitar, `apps/crm-api`), tools Anel A `search_products`/
+    `get_order_status`, tool Anel B `create_order` (fluxo de duas chamadas), registro
+    completo das 3 tools em `TOOL_DEFINITIONS`/`executeTool`/teste estrutural. 11 commits,
+    `883ebab`..`2a69696`. 994 testes verdes (incluindo fix no golden set —
+    `happyPath`/`promptInjection` tinham a superfície antiga de 4 tools hardcoded).
+  - **Batch 3** (Fases 7–9, T15–T21): `guard.output` com regra de preço (AD-009 — preço só
+    de tool result deste turno), fiação de `rawTurn` em `runTurn.ts`, caso de golden set
+    (`createOrderGuardrails.int.test.ts`), telas de catálogo `apps/web`
+    (`query/product.ts`, listagem, criação, edição). 9 commits, `5e33f7d`..`fc3ca6d`. 1031
+    testes verdes. **SPEC_DEVIATION registrado**: `products/details.tsx` não tem
+    `GET /products/:id` no backend — resolve por fetch limitado (500) + filtro
+    client-side, mesmo padrão já usado por `processes/details.tsx`.
+  - **Batch 4** (Fases 10–11, T22–T25 — última): `query/order.ts` (invalidação cross-
+    surface), tela "Pedidos" (fila+histórico), `order-card.tsx` (card inline no Inbox),
+    montagem em `thread.tsx`. 7 commits, `c5ebfd8`..`9623964`. 1058 testes verdes,
+    build de `apps/web` verificado.
+  - **Verifier** (após T25): PASS — 27/27 ACs (`CAT-01..27`) spec-anchored com evidência
+    `file:line`, 0 spec-precision gaps, gate 1058/1058 verde, sensor de discriminação 3/3
+    mutações mortas (checagem atômica de estoque, `itemsMatch` de `orderTransitions`,
+    redação de preço do `guard.output`). Relatório completo:
+    `.specs/features/catalog-orders/validation.md`. Traceability de `spec.md` atualizada
+    (`Implementing` → `Verified`, todas as 27 linhas). Lição candidata `L-026`
+    (confirmar existência de endpoint by-id antes de atribuir task que depende dele — já
+    vista em `inbox-realtime`) **promovida a `confirmed`** por corroboração nesta feature
+    (mesmo padrão do `products/details.tsx` acima). Commit do relatório: `048256c`.
+  - **Notas não-bloqueantes do Verifier** (não geraram fix task): `orderTransitions.ts`
+    tem um helper interno `itemsMatch` não exportado, duplicado localmente em
+    `createOrder.ts` em vez de importado — julgado decisão de fronteira razoável, mas
+    fica registrado como sugestão de limpeza futura (exportar o helper). UAT interativo
+    foi pulado (sessão em background, sem usuário disponível) — recomendado como
+    follow-up dada a superfície `apps/web` nova e substancial.
+- **In-progress**: nenhum. Feature completa e verificada.
+- **Next step**: revisar o diff/branch e decidir sobre push + abertura de PR para `main`
+  (nenhum push feito ainda nesta sessão). Considerar UAT interativo do usuário nas telas
+  novas de `apps/web` (Produtos, Pedidos, card do Inbox) antes ou depois do merge, já que
+  o Verifier automático pulou essa camada. Após merge, feature 8 (`payments-asaas`) é a
+  próxima do roadmap e consome `Order confirmed` desta feature.
+- **Blockers**: nenhum.
+- **Uncommitted files**: nenhum — working tree limpo, 39 commits nesta sessão de Execute
+  (`5f91afa`..`048256c`, branch `feature/catalog-orders`), todos com testes verdes no
+  commit correspondente.
+- **Branch**: `feature/catalog-orders` (worktree `../CRM-catalog-orders`) — 39 commits à
+  frente de `origin/feature/catalog-orders`, sem push ainda.
 - **Nota operacional — skill não registrada**: a skill `tlc-spec-driven` não aparece no
   listing de skills desta sessão (arquivos existem em `tlc-spec-driven/` na raiz do repo,
   versionados no git, mas não há `.claude/skills/` no CRM). Mesma resolução já usada nas
-  sessões anteriores: leitura manual de `SKILL.md` + `references/{specify,discuss,design,
-  tasks,lessons}.md` no início desta sessão, sem registrar em `.claude/skills/`.
+  sessões anteriores: leitura manual de `SKILL.md` + `references/{implement,sub-agents,
+  coding-principles,validate,lessons}.md` no início desta sessão de Execute, sem registrar
+  em `.claude/skills/`.
