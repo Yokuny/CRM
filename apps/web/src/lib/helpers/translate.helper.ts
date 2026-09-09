@@ -121,6 +121,20 @@ const translations: Record<string, string> = {
   'product.description': 'Descrição',
   // T21 — products/details.tsx.
   'product.details.title': 'Detalhe do produto',
+  // Fila/histórico de Pedidos (feature catalog-orders, Fase 10) — chaves
+  // novas usadas por routes/_private/orders/index.tsx (T23) e pelo card
+  // inline do Inbox (order-card.tsx, T24).
+  'order.list.title': 'Pedidos',
+  'order.column.customer': 'Cliente',
+  'order.column.items': 'Itens',
+  'order.column.total': 'Total',
+  'order.status.pending_approval': 'Pendente',
+  'order.status.confirmed': 'Confirmado',
+  'order.status.rejected': 'Rejeitado',
+  'order.approve.action': 'Aprovar',
+  'order.approve.error': 'Não foi possível aprovar o pedido.',
+  'order.reject.action': 'Rejeitar',
+  'order.reject.error': 'Não foi possível rejeitar o pedido.',
 };
 
 export const t = (key: string): string => translations[key] ?? key;
