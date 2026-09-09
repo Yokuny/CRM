@@ -256,9 +256,9 @@ T29 → T30 → T31
 **Tools**: MCP: NONE / Skill: NONE
 
 **Done when**:
-- [ ] Both vars required, named error message on absence (matches `CHANNEL_ENC_KEY`'s message shape)
-- [ ] `.env.example` updated with both (placeholder values)
-- [ ] Gate check passes: build gate
+- [x] Both vars required, named error message on absence (matches `CHANNEL_ENC_KEY`'s message shape)
+- [x] `.env.example` updated with both (placeholder values)
+- [x] Gate check passes: build gate
 
 **Tests**: none
 **Gate**: build
@@ -276,11 +276,11 @@ T29 → T30 → T31
 **Tools**: MCP: NONE / Skill: NONE
 
 **Done when**:
-- [ ] `validateApiKey` returns `false` on 401, `true` on 200 — fake `fetch` injected, never real network
-- [ ] `registerWebhook` posts the expected payload shape, returns `{asaasWebhookId}`
-- [ ] Transient errors (5xx/429/timeout) retried with backoff; other 4xx fail immediately (mirrors DentalEase reference's `call()`/`isTransient` policy, design.md citation)
-- [ ] Gate check passes: `pnpm vitest run --project unit`
-- [ ] Test count: N new tests pass
+- [x] `validateApiKey` returns `false` on 401, `true` on 200 — fake `fetch` injected, never real network
+- [x] `registerWebhook` posts the expected payload shape, returns `{asaasWebhookId}`
+- [x] Transient errors (5xx/429/timeout) retried with backoff; other 4xx fail immediately (mirrors DentalEase reference's `call()`/`isTransient` policy, design.md citation)
+- [x] Gate check passes: `pnpm vitest run --project unit`
+- [x] Test count: N new tests pass
 
 **Tests**: unit
 **Gate**: quick
@@ -298,9 +298,9 @@ T29 → T30 → T31
 **Tools**: MCP: NONE / Skill: NONE
 
 **Done when**:
-- [ ] Rejects empty/malformed key, accepts a well-formed one
-- [ ] Exported from `packages/contracts/src/index.ts`
-- [ ] Gate check passes: `pnpm vitest run --project unit`
+- [x] Rejects empty/malformed key, accepts a well-formed one
+- [x] Exported from `packages/contracts/src/index.ts`
+- [x] Gate check passes: `pnpm vitest run --project unit`
 
 **Tests**: unit
 **Gate**: quick
@@ -318,8 +318,8 @@ T29 → T30 → T31
 **Tools**: MCP: NONE / Skill: NONE
 
 **Done when**:
-- [ ] All 3 functions tenant-scoped (AD-010), covered by integration tests against `MongoMemoryServer`
-- [ ] Gate check passes: `pnpm vitest run --project integration`
+- [x] All 3 functions tenant-scoped (AD-010), covered by integration tests against `MongoMemoryServer`
+- [x] Gate check passes: `pnpm vitest run --project integration`
 
 **Tests**: integration
 **Gate**: full
@@ -337,11 +337,11 @@ T29 → T30 → T31
 **Tools**: MCP: NONE / Skill: NONE
 
 **Done when**:
-- [ ] Rejects an invalid key (fake client returns `false`) without persisting anything
-- [ ] On success: environment auto-detected from prefix (`$aact_prod_`⇒production, else sandbox), `apiKeyEnc` never plaintext, `webhookAuthTokenHash` is `sha256` of the generated `authToken` (never the raw token stored)
-- [ ] `getCurrentIntegration` never returns the plaintext key — only `maskSecret(decrypt(...))`
-- [ ] Gate check passes: `pnpm vitest run --project unit`
-- [ ] Test count: N new tests pass
+- [x] Rejects an invalid key (fake client returns `false`) without persisting anything
+- [x] On success: environment auto-detected from prefix (`$aact_prod_`⇒production, else sandbox), `apiKeyEnc` never plaintext, `webhookAuthTokenHash` is `sha256` of the generated `authToken` (never the raw token stored)
+- [x] `getCurrentIntegration` never returns the plaintext key — only `maskSecret(decrypt(...))`
+- [x] Gate check passes: `pnpm vitest run --project unit`
+- [x] Test count: N new tests pass
 
 **Tests**: unit
 **Gate**: quick
@@ -359,11 +359,11 @@ T29 → T30 → T31
 **Tools**: MCP: NONE / Skill: NONE
 
 **Done when**:
-- [ ] Both routes `isAdmin`-gated before any body validation/DB access (matches `channel.router.ts`'s ordering)
-- [ ] `POST /` validates body via T9's schema, returns 4xx on an Asaas-rejected key
-- [ ] e2e test covers: happy path, non-admin 403, invalid key 4xx
-- [ ] Gate check passes: `pnpm vitest run --project e2e`
-- [ ] Test count: N new tests pass
+- [x] Both routes `isAdmin`-gated before any body validation/DB access (matches `channel.router.ts`'s ordering)
+- [x] `POST /` validates body via T9's schema, returns 4xx on an Asaas-rejected key
+- [x] e2e test covers: happy path, non-admin 403, invalid key 4xx
+- [x] Gate check passes: `pnpm vitest run --project e2e`
+- [x] Test count: N new tests pass
 
 **Tests**: e2e
 **Gate**: full
