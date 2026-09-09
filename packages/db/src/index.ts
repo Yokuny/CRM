@@ -52,6 +52,8 @@ export type { UserDocument } from './models/user.model.js';
 export { User } from './models/user.model.js';
 export type { OrderItemInput, OrderTransitionResult } from './orderTransitions.js';
 export { rejectOrder, setCustomerConfirmed, setOperatorApproved, tryConfirmOrder } from './orderTransitions.js';
+export type { PaymentTransitionResult } from './paymentTransitions.js';
+export { applyAsaasPaymentStatus, expireOrderPayment } from './paymentTransitions.js';
 export { tenantScoped } from './tenantScoped.js';
 
 import { AiSession } from './models/aiSession.model.js';
