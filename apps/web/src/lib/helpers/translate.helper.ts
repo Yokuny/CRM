@@ -114,6 +114,11 @@ const translations: Record<string, string> = {
   'product.stock': 'Estoque',
   'product.status.active': 'Ativo',
   'product.status.inactive': 'Inativo',
+  // T20 — products/add/index.tsx.
+  'product.create.title': 'Novo produto',
+  'product.create.error': 'Não foi possível criar o produto.',
+  'product.sku': 'SKU',
+  'product.description': 'Descrição',
 };
 
 export const t = (key: string): string => translations[key] ?? key;
