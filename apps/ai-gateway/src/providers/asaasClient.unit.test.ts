@@ -48,11 +48,13 @@ describe('createAsaasClient (ai-gateway) — design.md Components "AsaasClient (
     // directly on the parsed body, not merely that a call happened.
     it('converts cents to reais at the exact HTTP boundary (1050 cents -> body.value === 10.5)', async () => {
       const fetchMock = fetch as unknown as ReturnType<typeof vi.fn>;
-      fetchMock
-        .mockResolvedValueOnce(jsonResponse(200, { id: 'pay_123', status: 'PENDING' }))
-        .mockResolvedValueOnce(
-          jsonResponse(200, { encodedImage: 'base64img', payload: '00020126...', expirationDate: '2026-09-10 12:00:00' }),
-        );
+      fetchMock.mockResolvedValueOnce(jsonResponse(200, { id: 'pay_123', status: 'PENDING' })).mockResolvedValueOnce(
+        jsonResponse(200, {
+          encodedImage: 'base64img',
+          payload: '00020126...',
+          expirationDate: '2026-09-10 12:00:00',
+        }),
+      );
       const client = createAsaasClient(ENC_KEY);
 
       await client.createPixCharge(integration, {
@@ -71,11 +73,13 @@ describe('createAsaasClient (ai-gateway) — design.md Components "AsaasClient (
 
     it('calls POST /v3/payments (billingType PIX) then GET /v3/payments/{id}/pixQrCode, returning both charge + PIX fields', async () => {
       const fetchMock = fetch as unknown as ReturnType<typeof vi.fn>;
-      fetchMock
-        .mockResolvedValueOnce(jsonResponse(200, { id: 'pay_123', status: 'PENDING' }))
-        .mockResolvedValueOnce(
-          jsonResponse(200, { encodedImage: 'base64img', payload: '00020126...', expirationDate: '2026-09-10 12:00:00' }),
-        );
+      fetchMock.mockResolvedValueOnce(jsonResponse(200, { id: 'pay_123', status: 'PENDING' })).mockResolvedValueOnce(
+        jsonResponse(200, {
+          encodedImage: 'base64img',
+          payload: '00020126...',
+          expirationDate: '2026-09-10 12:00:00',
+        }),
+      );
       const client = createAsaasClient(ENC_KEY);
 
       const result = await client.createPixCharge(integration, {
@@ -92,6 +96,7 @@ describe('createAsaasClient (ai-gateway) — design.md Components "AsaasClient (
         pixExpirationDate: new Date('2026-09-10 12:00:00'),
       });
       const [chargeUrl, chargeInit] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(chargeUrl).toBe('https://api-sandbox.asaas.com/v3/payments');
       const chargeBody = JSON.parse(chargeInit.body as string);
       expect(chargeBody).toEqual({
         customer: 'cus_123',
