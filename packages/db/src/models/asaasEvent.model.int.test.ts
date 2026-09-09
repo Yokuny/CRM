@@ -62,9 +62,7 @@ describe('AsaasEvent model', () => {
 
   // design.md: `status: 'received' | 'processed' | 'failed'` — enum fechado.
   it('rejects a status outside received|processed|failed', async () => {
-    await expect(
-      AsaasEvent.create(baseEvent(new mongoose.Types.ObjectId(), { status: 'pending' })),
-    ).rejects.toThrow();
+    await expect(AsaasEvent.create(baseEvent(new mongoose.Types.ObjectId(), { status: 'pending' }))).rejects.toThrow();
   });
 
   it('persists optional error/processedAt when provided, and omits them when absent', async () => {

@@ -23,9 +23,7 @@ describe('AsaasIntegration model', () => {
     const Tenant = new mongoose.Types.ObjectId();
     await AsaasIntegration.create(baseIntegration(Tenant));
 
-    await expect(
-      AsaasIntegration.create(baseIntegration(Tenant, { webhookToken: 'another-token' })),
-    ).rejects.toThrow();
+    await expect(AsaasIntegration.create(baseIntegration(Tenant, { webhookToken: 'another-token' }))).rejects.toThrow();
   });
 
   it('rejects a second AsaasIntegration with the same webhookToken (unique index)', async () => {

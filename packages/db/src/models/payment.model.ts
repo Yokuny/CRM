@@ -26,7 +26,12 @@ const paymentSchema = new Schema<PaymentDocument>(
     asaasChargeId: { type: String, required: true, unique: true, trim: true },
     asaasCustomerId: { type: String, required: true, trim: true },
     billingType: { type: String, enum: ['PIX'], required: true },
-    value: { type: Number, required: true, min: 0, validate: { validator: Number.isInteger, message: 'value deve ser um inteiro (centavos)' } },
+    value: {
+      type: Number,
+      required: true,
+      min: 0,
+      validate: { validator: Number.isInteger, message: 'value deve ser um inteiro (centavos)' },
+    },
     status: {
       type: String,
       enum: ['pending', 'paid', 'expired', 'refunded', 'canceled'],

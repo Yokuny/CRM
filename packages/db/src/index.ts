@@ -3,14 +3,14 @@ export type { EncryptedSecret } from './crypto.helper.js';
 export { decrypt, encrypt, maskSecret, sha256 } from './crypto.helper.js';
 export type { AiSessionDocument } from './models/aiSession.model.js';
 export { AiSession } from './models/aiSession.model.js';
+export type { AsaasEventDocument, AsaasEventStatus } from './models/asaasEvent.model.js';
+export { AsaasEvent } from './models/asaasEvent.model.js';
 export type {
   AsaasEnvironment,
   AsaasIntegrationDocument,
   AsaasIntegrationStatus,
 } from './models/asaasIntegration.model.js';
 export { AsaasIntegration } from './models/asaasIntegration.model.js';
-export type { AsaasEventDocument, AsaasEventStatus } from './models/asaasEvent.model.js';
-export { AsaasEvent } from './models/asaasEvent.model.js';
 export type { ChannelDocument } from './models/channel.model.js';
 export { Channel } from './models/channel.model.js';
 export type { ConversationDocument, ConversationMode, TurnLock } from './models/conversation.model.js';
