@@ -7,6 +7,7 @@ import { t } from '@/lib/helpers/translate.helper.js';
 import { cn } from '@/lib/utils.js';
 import { type MessageRecord, messagesQuery } from '@/query/message.js';
 import { MediaCard } from './media-card.js';
+import { OrderCard } from './order-card.js';
 
 // Limite único, sem "carregar mais": T23's Done-when só pede histórico
 // paginado renderizado em ordem cronológica (a paginação em si já é
@@ -62,25 +63,33 @@ export function ConversationThread({ conversationId, renderFailedAction }: Threa
   if (query.isLoading) return <DefaultLoading />;
 
   const items = query.data?.items ?? [];
-  if (items.length === 0) return <p className="text-muted-foreground text-sm">{t('inbox.thread.empty')}</p>;
 
+  // T25 (spec.md P1 "Operador aprova ou rejeita"/AC3): mostra o card inline
+  // de pedido pendente desta Conversation, se houver — OrderCard (T24) já
+  // se auto-esconde (renderiza null) quando não há nenhum, então ele fica
+  // sempre montado aqui, independente de a Conversation ter mensagens.
   return (
     <div className="flex flex-col gap-2">
-      {items.map((message) => (
-        <div
-          key={message.id}
-          className={cn('max-w-[80%] rounded-md border p-2', message.direction === 'out' ? 'ml-auto' : 'mr-auto')}
-        >
-          {renderMessageBody(message, conversationId)}
-          <p className="text-muted-foreground text-xs">{formatDate(message.createdAt, 'dd/MM HH:mm')}</p>
-          {message.status === 'failed' && (
-            <div className="mt-1 flex items-center gap-2">
-              <Badge variant="error">{t('inbox.message.failed')}</Badge>
-              {renderFailedAction?.(message)}
-            </div>
-          )}
-        </div>
-      ))}
+      <OrderCard conversationId={conversationId} />
+      {items.length === 0 ? (
+        <p className="text-muted-foreground text-sm">{t('inbox.thread.empty')}</p>
+      ) : (
+        items.map((message) => (
+          <div
+            key={message.id}
+            className={cn('max-w-[80%] rounded-md border p-2', message.direction === 'out' ? 'ml-auto' : 'mr-auto')}
+          >
+            {renderMessageBody(message, conversationId)}
+            <p className="text-muted-foreground text-xs">{formatDate(message.createdAt, 'dd/MM HH:mm')}</p>
+            {message.status === 'failed' && (
+              <div className="mt-1 flex items-center gap-2">
+                <Badge variant="error">{t('inbox.message.failed')}</Badge>
+                {renderFailedAction?.(message)}
+              </div>
+            )}
+          </div>
+        ))
+      )}
     </div>
   );
 }

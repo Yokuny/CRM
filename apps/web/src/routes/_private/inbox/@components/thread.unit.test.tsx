@@ -5,7 +5,18 @@ import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const getMock = vi.fn();
-vi.mock('../../../../lib/api/client.api.js', () => ({ get: getMock }));
+// T25: ConversationThread agora monta <OrderCard> (T24), que chama
+// ordersQuery ('/orders...') independente de messagesQuery
+// ('/conversations/:id/messages...'). Chamadas de /orders são roteadas
+// direto para uma lista vazia por padrão (nenhum Order pendente) SEM passar
+// por getMock — assim getMock continua só relevante pra messagesQuery, e as
+// asserções de call-count dos testes já existentes abaixo continuam
+// válidas. mockOrdersResponse permite testes dedicados ao OrderCard
+// sobrescreverem esse default.
+let mockOrdersResponse: unknown = { success: true, data: { items: [], total: 0 } };
+vi.mock('../../../../lib/api/client.api.js', () => ({
+  get: (path: string) => (path.startsWith('/orders') ? Promise.resolve(mockOrdersResponse) : getMock(path)),
+}));
 
 const { ConversationThread } = await import('./thread.js');
 const { messageKeys } = await import('../../../../query/message.js');
@@ -23,6 +34,7 @@ function renderThread(conversationId: string, props: Record<string, unknown> = {
 describe('ConversationThread (T23 — INBOX-05/06/07/10/15)', () => {
   afterEach(() => {
     cleanup();
+    mockOrdersResponse = { success: true, data: { items: [], total: 0 } };
     getMock.mockReset();
   });
 
@@ -165,5 +177,43 @@ describe('ConversationThread (T23 — INBOX-05/06/07/10/15)', () => {
     renderThread('c1');
 
     expect(await screen.findByText('boas_vindas')).toBeInTheDocument();
+  });
+
+  it('T25 (spec.md AC3): shows the inline order-card when this Conversation has a pending Order', async () => {
+    mockOrdersResponse = {
+      success: true,
+      data: {
+        items: [
+          {
+            id: 'o1',
+            conversation: 'c1',
+            customer: 'cust1',
+            items: [{ product: 'p1', name: 'Camiseta', unitPrice: 1000, quantity: 1 }],
+            totalPrice: 1000,
+            status: 'pending_approval',
+            idempotencyKey: 'k1',
+            customerConfirmed: true,
+            operatorApproved: false,
+            createdAt: '2026-01-01T00:00:00.000Z',
+            updatedAt: '2026-01-01T00:00:00.000Z',
+          },
+        ],
+        total: 1,
+      },
+    };
+    getMock.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
+
+    renderThread('c1');
+
+    expect(await screen.findByRole('button', { name: 'Aprovar' })).toBeInTheDocument();
+  });
+
+  it('T25: shows no order-card content when this Conversation has no pending Order (default mockOrdersResponse)', async () => {
+    getMock.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
+
+    renderThread('c1');
+
+    await screen.findByText('Nenhuma mensagem ainda.');
+    expect(screen.queryByRole('button', { name: 'Aprovar' })).not.toBeInTheDocument();
   });
 });
