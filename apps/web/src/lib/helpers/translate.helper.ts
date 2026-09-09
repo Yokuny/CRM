@@ -107,6 +107,13 @@ const translations: Record<string, string> = {
   'inbox.takeover.error': 'Não foi possível assumir esta conversa.',
   'inbox.release.action': 'Liberar',
   'inbox.release.error': 'Não foi possível liberar esta conversa.',
+  // Catálogo de produtos (feature catalog-orders, Fase 9) — chaves novas
+  // usadas por routes/_private/products/** (T19).
+  'product.list.title': 'Catálogo',
+  'product.price': 'Preço',
+  'product.stock': 'Estoque',
+  'product.status.active': 'Ativo',
+  'product.status.inactive': 'Inativo',
 };
 
 export const t = (key: string): string => translations[key] ?? key;
