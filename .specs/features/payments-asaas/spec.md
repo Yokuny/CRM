@@ -246,17 +246,17 @@ status badge matches.
 
 | Requirement ID | Story | Phase | Status | Task(s) |
 | --- | --- | --- | --- | --- |
-| PAY-01 | P1: Cliente paga via PIX | Tasks | In Tasks | T18, T20, T26 |
-| PAY-02 | P1: Cliente paga via PIX (gate estrutural) | Tasks | In Tasks | T18, T26, T27, T28 |
-| PAY-03 | P1: Cliente paga via PIX (idempotência) | Tasks | In Tasks | T18, T26 |
+| PAY-01 | P1: Cliente paga via PIX | Tasks | Implementing | T18, T20, T26 |
+| PAY-02 | P1: Cliente paga via PIX (gate estrutural) | Tasks | Implementing | T18, T26, T27, T28 |
+| PAY-03 | P1: Cliente paga via PIX (idempotência) | Tasks | Implementing | T18, T26 |
 | PAY-04 | P1: Cliente paga via PIX (sem integração ativa) | Tasks | Implementing | T18 |
 | PAY-05 | P1: Cliente paga via PIX (leitura via get_order_status) | Tasks | Implementing | T19 |
-| PAY-06 | P1: Webhook + rede de segurança (auth/tenant resolution) | Tasks | In Tasks | T21, T22, T23 |
-| PAY-07 | P1: Webhook + rede de segurança (dedup) | Tasks | In Tasks | T22 |
-| PAY-08 | P1: Webhook + rede de segurança (rank guard) | Tasks | In Tasks | T6, T22 |
-| PAY-09 | P1: Webhook + rede de segurança (200 sempre, log de falha) | Tasks | In Tasks | T22 |
-| PAY-10 | P1: Webhook + rede de segurança (job de reconciliação) | Tasks | In Tasks | T24, T25 |
-| PAY-11 | P1: Cobrança expira e libera estoque | Tasks | In Tasks | T6, T24 |
+| PAY-06 | P1: Webhook + rede de segurança (auth/tenant resolution) | Tasks | Implementing | T21, T22, T23 |
+| PAY-07 | P1: Webhook + rede de segurança (dedup) | Tasks | Implementing | T22 |
+| PAY-08 | P1: Webhook + rede de segurança (rank guard) | Tasks | Implementing | T6, T22 |
+| PAY-09 | P1: Webhook + rede de segurança (200 sempre, log de falha) | Tasks | Implementing | T22 |
+| PAY-10 | P1: Webhook + rede de segurança (job de reconciliação) | Tasks | Implementing | T24, T25 |
+| PAY-11 | P1: Cobrança expira e libera estoque | Tasks | Implementing | T6, T24 |
 | PAY-12 | P1: Cobrança expira e libera estoque (novo status de Order) | Tasks | Implementing | T5, T6 |
 | PAY-13 | P1: Tenant configura chave Asaas (validação + criptografia + webhook) | Tasks | Implementing | T7, T8, T9, T10, T11, T12 |
 | PAY-14 | P1: Tenant configura chave Asaas (mascaramento na leitura) | Tasks | Implementing | T10, T11, T12 |
