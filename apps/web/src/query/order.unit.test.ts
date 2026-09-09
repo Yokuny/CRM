@@ -66,7 +66,9 @@ describe('ordersQuery (T22, spec.md P1 "Operador aprova ou rejeita um pedido pen
   });
 
   it('exposes a queryKey that varies by params — the Pedidos screen (T23) and the Inbox card (T24) cache independently', () => {
-    expect(ordersQuery({ status: 'pending_approval' }).queryKey).toEqual(orderKeys.list({ status: 'pending_approval' }));
+    expect(ordersQuery({ status: 'pending_approval' }).queryKey).toEqual(
+      orderKeys.list({ status: 'pending_approval' }),
+    );
     expect(ordersQuery({ status: 'pending_approval' }).queryKey).not.toEqual(
       ordersQuery({ conversation: 'c1', status: 'pending_approval' }).queryKey,
     );
@@ -94,12 +96,9 @@ describe('approveOrderMutation (T22, spec.md P1 "Operador aprova ou rejeita"/AC4
   it('invalidates every cached ordersQuery on success — both the Pedidos screen and the Inbox card share the orderKeys.lists() prefix', () => {
     const queryClient = fakeQueryClient();
 
-    approveOrderMutation(queryClient).onSuccess?.(
-      { ...ORDER_RECORD, status: 'confirmed' },
-      { id: 'o1' },
-      undefined,
-      { client: queryClient } as never,
-    );
+    approveOrderMutation(queryClient).onSuccess?.({ ...ORDER_RECORD, status: 'confirmed' }, { id: 'o1' }, undefined, {
+      client: queryClient,
+    } as never);
 
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: orderKeys.lists() });
   });
@@ -137,12 +136,9 @@ describe('rejectOrderMutation (T22, spec.md P1 "Operador aprova ou rejeita"/AC6)
   it('invalidates every cached ordersQuery on success — same prefix as approveOrderMutation', () => {
     const queryClient = fakeQueryClient();
 
-    rejectOrderMutation(queryClient).onSuccess?.(
-      { ...ORDER_RECORD, status: 'rejected' },
-      { id: 'o1' },
-      undefined,
-      { client: queryClient } as never,
-    );
+    rejectOrderMutation(queryClient).onSuccess?.({ ...ORDER_RECORD, status: 'rejected' }, { id: 'o1' }, undefined, {
+      client: queryClient,
+    } as never);
 
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: orderKeys.lists() });
   });
