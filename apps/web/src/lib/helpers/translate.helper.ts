@@ -119,6 +119,8 @@ const translations: Record<string, string> = {
   'product.create.error': 'Não foi possível criar o produto.',
   'product.sku': 'SKU',
   'product.description': 'Descrição',
+  // T21 — products/details.tsx.
+  'product.details.title': 'Detalhe do produto',
 };
 
 export const t = (key: string): string => translations[key] ?? key;
