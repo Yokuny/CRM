@@ -110,7 +110,7 @@ describe('ProductsIndexPage (T19, spec.md P1 "Cadastro de catálogo"/AC2/AC6)', 
     expect(searchUpdater(defaultSearch)).toEqual({ ...defaultSearch, page: 2, limit: 20 });
   });
 
-  it('clicking a row navigates to /products/details with that Product\'s id (AD-030 — search param, never a $id path segment)', async () => {
+  it("clicking a row navigates to /products/details with that Product's id (AD-030 — search param, never a $id path segment)", async () => {
     searchMock.mockReturnValue(defaultSearch);
     getMock.mockResolvedValue({
       success: true,
