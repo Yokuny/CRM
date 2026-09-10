@@ -174,14 +174,16 @@ describe('golden set — happy path do Anel A (AIG-39, AIG-43)', () => {
     expectTool(client.createMessage, 'set_process_fields', { values: { motivo: MOTIVO_VALUE } });
   });
 
-  it('never offers nor calls any tool outside the fixed tool surface (AIG-39 AC1, 4 tools ainda inexistentes)', async () => {
+  it('never offers nor calls any tool outside the fixed tool surface (AIG-39 AC1, 3 tools ainda inexistentes)', async () => {
     const { client } = await runHappyPathTurn();
 
     // catalog-orders/T14: search_products/get_order_status/create_order
     // passaram a existir de verdade (TOOL_DEFINITIONS) — não são mais um
-    // exemplo válido de "tool fora da superfície". Os 4 abaixo continuam
-    // inexistentes nesta rodada (payments-asaas, feature 8, fora de escopo).
-    expectNoTool(client.createMessage, 'issue_payment_link');
+    // exemplo válido de "tool fora da superfície". payments-asaas/T20
+    // registrou issue_payment_link como a 8ª tool real (ela agora É
+    // oferecida em toda chamada — correto, não uma regressão), então saiu
+    // desta lista de "nunca deveria ser oferecida". Os 3 abaixo continuam
+    // genuinamente inexistentes.
     expectNoTool(client.createMessage, 'cancel_order');
     expectNoTool(client.createMessage, 'apply_discount');
     expectNoTool(client.createMessage, 'schedule_callback');

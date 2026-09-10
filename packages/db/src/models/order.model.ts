@@ -1,6 +1,6 @@
 import mongoose, { Schema } from 'mongoose';
 
-export type OrderStatus = 'pending_approval' | 'confirmed' | 'rejected';
+export type OrderStatus = 'pending_approval' | 'confirmed' | 'rejected' | 'payment_expired';
 
 export interface OrderItem {
   product: mongoose.Types.ObjectId;
@@ -52,7 +52,7 @@ const orderSchema = new Schema<OrderDocument>(
     totalPrice: { type: Number, required: true, min: 0 },
     status: {
       type: String,
-      enum: ['pending_approval', 'confirmed', 'rejected'],
+      enum: ['pending_approval', 'confirmed', 'rejected', 'payment_expired'],
       default: 'pending_approval',
       required: true,
     },

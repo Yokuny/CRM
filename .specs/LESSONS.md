@@ -168,6 +168,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: spec.md Edge Cases (WS disconnect) — apps/web/src/hooks/useInboxSocket.ts:111-116 (apps/web)
 - last seen: 2026-09-08T22:22:35Z
 
+### L-027 — When a conditional-write guard exists specifically to defend an atomic read-modify-write race between concurrent callers, write at least one test that issues genuinely concurrent (Promise.all) calls against the same document — a sequential-call test can pass even after the atomic filter's guarding condition is deleted, because an earlier non-atomic read-check silently absorbs the sequential case.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `db-transitions` · harmful: 0
+- features: payments-asaas
+- evidence: packages/db/src/paymentTransitions.ts:105 (mutant #5, validation.md Discrimination Sensor) (db-transitions)
+- last seen: 2026-09-09T22:35:43Z
+
 ## Quarantined (failed when applied — ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

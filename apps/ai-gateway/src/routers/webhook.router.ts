@@ -1,4 +1,4 @@
-import type { AnthropicClient, DownloadAudio, WhisperClient } from '@crm/ai-kit';
+import type { AnthropicClient, AsaasClient, DownloadAudio, WhisperClient } from '@crm/ai-kit';
 import { runTurn } from '@crm/ai-kit';
 import { badRespObj, respObj } from '@crm/contracts';
 import type { MessageType } from '@crm/db';
@@ -15,6 +15,11 @@ export type WebhookRouterDeps = {
   // fake, nunca a rede real da Meta/OpenAI.
   downloadAudio?: DownloadAudio;
   whisperClient?: WhisperClient;
+  // payments-asaas T23: opcional, mesmo molde de downloadAudio/whisperClient
+  // acima — app.ts injeta a implementação real (providers/asaasClient.ts,
+  // T15); runTurn (T17) o repassa como sibling de ingestOptions em
+  // RunTurnOptions, lido só pela tool issue_payment_link (Ring B).
+  asaasClient?: AsaasClient;
 };
 
 // Shapes mínimas do payload da Meta necessárias para extrair 1 mensagem por
@@ -123,7 +128,10 @@ const handleIncoming = (deps: WebhookRouterDeps) => {
                 mediaId: extractMediaId(message),
                 caption: extractCaption(message),
               },
-              { ingestOptions: { downloadAudio: deps.downloadAudio, whisperClient: deps.whisperClient } },
+              {
+                ingestOptions: { downloadAudio: deps.downloadAudio, whisperClient: deps.whisperClient },
+                asaasClient: deps.asaasClient,
+              },
             );
           }
         }

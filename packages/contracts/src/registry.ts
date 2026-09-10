@@ -1,6 +1,7 @@
 import type { ZodType } from 'zod';
 import { acceptInviteSchema } from './schemas/acceptInvite.schema.js';
 import { bumpFieldTemplateSchema } from './schemas/bumpFieldTemplate.schema.js';
+import { createAsaasIntegrationSchema } from './schemas/createAsaasIntegration.schema.js';
 import { createChannelSchema } from './schemas/createChannel.schema.js';
 import { createCustomerSchema } from './schemas/createCustomer.schema.js';
 import { createFieldTemplateSchema } from './schemas/createFieldTemplate.schema.js';
@@ -50,6 +51,7 @@ export const schemaRegistry: ReadonlyArray<{ name: string; schema: ZodType }> = 
   { name: 'migrationActionSchema', schema: migrationActionSchema },
   { name: 'createFieldTemplateSchema', schema: createFieldTemplateSchema },
   { name: 'bumpFieldTemplateSchema', schema: bumpFieldTemplateSchema },
+  { name: 'createAsaasIntegrationSchema', schema: createAsaasIntegrationSchema },
   { name: 'createChannelSchema', schema: createChannelSchema },
   { name: 'createCustomerSchema', schema: createCustomerSchema },
   { name: 'updateCustomerSchema', schema: updateCustomerSchema },

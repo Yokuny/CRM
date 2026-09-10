@@ -143,6 +143,44 @@ describe('order routes', () => {
       expect(res.status).toBe(403);
       expect(res.body.data).toBeUndefined();
     });
+
+    it('filters by status=payment_expired, returning only that status (spec.md P1 "Cobrança expira"/AC3, PAY-15/T29)', async () => {
+      const { tenant, cookie } = await seedTenantUser(['operador']);
+      await seedOrder(tenant._id.toString(), { status: 'pending_approval' });
+      await seedOrder(tenant._id.toString(), { status: 'confirmed' });
+      await seedOrder(tenant._id.toString(), { status: 'rejected' });
+      await seedOrder(tenant._id.toString(), { status: 'payment_expired' });
+      const app = buildTestApp();
+
+      const res = await request(app)
+        .get('/orders?status=payment_expired')
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.total).toBe(1);
+      expect(res.body.data.items).toHaveLength(1);
+      expect(res.body.data.items[0].status).toBe('payment_expired');
+    });
+
+    it('regression: the default filter and other explicit status filters stay correct once a payment_expired Order also exists', async () => {
+      const { tenant, cookie } = await seedTenantUser(['operador']);
+      await seedOrder(tenant._id.toString(), { status: 'pending_approval' });
+      await seedOrder(tenant._id.toString(), { status: 'confirmed' });
+      await seedOrder(tenant._id.toString(), { status: 'payment_expired' });
+      const app = buildTestApp();
+
+      const defaultRes = await request(app).get('/orders').set('Cookie', cookie).set('User-Agent', DEVICE);
+      expect(defaultRes.body.data.total).toBe(1);
+      expect(defaultRes.body.data.items[0].status).toBe('pending_approval');
+
+      const confirmedRes = await request(app)
+        .get('/orders?status=confirmed')
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE);
+      expect(confirmedRes.body.data.total).toBe(1);
+      expect(confirmedRes.body.data.items[0].status).toBe('confirmed');
+    });
   });
 
   describe('POST /orders/:id/approve (spec.md AC4/AC5)', () => {

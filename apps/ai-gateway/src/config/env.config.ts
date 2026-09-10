@@ -9,6 +9,11 @@ export const envSchema = z.object({
   META_WEBHOOK_VERIFY_TOKEN: z.string().min(1, 'META_WEBHOOK_VERIFY_TOKEN é obrigatória'),
   CHANNEL_ENC_KEY: z.string().min(1, 'CHANNEL_ENC_KEY é obrigatória'),
   OPENAI_API_KEY: z.string().min(1, 'OPENAI_API_KEY é obrigatória'),
+  // AD-012/AD-034 (payments-asaas): mesma chave que apps/crm-api usa para
+  // criptografar a apiKey do tenant (asaasIntegration.service.ts) —
+  // ai-gateway a usa para decifrar ao chamar o Asaas (providers/asaasClient.ts,
+  // T15). Mesmo padrão de CHANNEL_ENC_KEY acima.
+  ASAAS_ENC_KEY: z.string().min(1, 'ASAAS_ENC_KEY é obrigatória'),
 });
 
 export type Env = z.infer<typeof envSchema>;

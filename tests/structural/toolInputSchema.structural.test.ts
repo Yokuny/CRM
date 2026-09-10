@@ -23,6 +23,7 @@ const EXPECTED_TOOL_NAMES = [
   'search_products',
   'get_order_status',
   'create_order',
+  'issue_payment_link',
 ];
 
 describe('Anel A tool input_schema structural guard (AD-010, AIG-14/40)', () => {
@@ -38,8 +39,8 @@ describe('Anel A tool input_schema structural guard (AD-010, AIG-14/40)', () => 
     expect(offending.sort()).toEqual(['channelid', 'conversationid']);
   });
 
-  it('TOOL_DEFINITIONS has exactly 7 entries with the fixed tool names (Anel A + Anel B)', () => {
-    expect(TOOL_DEFINITIONS).toHaveLength(7);
+  it('TOOL_DEFINITIONS has exactly 8 entries with the fixed tool names (Anel A + Anel B)', () => {
+    expect(TOOL_DEFINITIONS).toHaveLength(8);
     expect(TOOL_DEFINITIONS.map((tool) => tool.name)).toEqual(EXPECTED_TOOL_NAMES);
   });
 

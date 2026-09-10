@@ -5,6 +5,7 @@ export * from './ingest.js';
 export * from './loop.js';
 export * from './persist.js';
 export * from './providers/anthropicClient.js';
+export * from './providers/asaasClient.js';
 export * from './providers/whisperClient.js';
 export * from './runTurn.js';
 export * from './tools/findOrCreateCustomer.js';

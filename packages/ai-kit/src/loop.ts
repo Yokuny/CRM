@@ -4,6 +4,7 @@ import { createOrder } from './tools/createOrder.js';
 import { findOrCreateCustomer } from './tools/findOrCreateCustomer.js';
 import { getOrderStatus } from './tools/getOrderStatus.js';
 import { getProcessTemplate } from './tools/getProcessTemplate.js';
+import { issuePaymentLink } from './tools/issuePaymentLink.js';
 import { openProcess } from './tools/openProcess.js';
 import { searchProducts } from './tools/searchProducts.js';
 import { setProcessFields } from './tools/setProcessFields.js';
@@ -27,11 +28,12 @@ const extractText = (content: Anthropic.ContentBlock[]): string =>
 
 // Despacha tool_use para o executor certo (AD-010: ctx sempre do servidor,
 // nunca do input do modelo). Superfície fixa — as 4 tools originais do Anel A
-// (T14-T17) mais search_products/get_order_status (Anel A) e create_order
-// (1ª tool do Anel B, AD-009, catalog-orders/T14); um nome fora dessas nunca
-// deveria chegar aqui, já que `tools: TOOL_DEFINITIONS` só oferece essas 7 ao
-// modelo, mas o fallback devolve `{error}` em vez de lançar, mesma convenção
-// dos executores.
+// (T14-T17) mais search_products/get_order_status (Anel A), create_order (1ª
+// tool do Anel B, AD-009, catalog-orders/T14) e issue_payment_link (2ª tool
+// do Anel B, AD-009, payments-asaas/T20); um nome fora dessas nunca deveria
+// chegar aqui, já que `tools: TOOL_DEFINITIONS` só oferece essas 8 ao modelo,
+// mas o fallback devolve `{error}` em vez de lançar, mesma convenção dos
+// executores.
 const executeTool = async (name: string, input: unknown, ctx: ToolContext): Promise<unknown> => {
   switch (name) {
     case 'get_process_template':
@@ -48,6 +50,8 @@ const executeTool = async (name: string, input: unknown, ctx: ToolContext): Prom
       return getOrderStatus(input as Parameters<typeof getOrderStatus>[0], ctx);
     case 'create_order':
       return createOrder(input as Parameters<typeof createOrder>[0], ctx);
+    case 'issue_payment_link':
+      return issuePaymentLink(input as Parameters<typeof issuePaymentLink>[0], ctx);
     default:
       return { error: `Tool desconhecida: ${name}` };
   }

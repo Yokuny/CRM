@@ -23,6 +23,11 @@ const crmApiBaseEnv = {
   // 32 bytes base64 válidos (crypto.helper.ts, T1) — Buffer.alloc(32,9).toString('base64').
   CHANNEL_ENC_KEY: 'CQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQk=',
   OPENAI_API_KEY: 'sk-openai-test',
+  // apps/crm-api/src/config/env.config.ts (payments-asaas T7) — validado no
+  // import do módulo (fail-fast, FND-18), mesmo motivo das vars acima.
+  // 32 bytes base64 válidos — Buffer.alloc(32,7).toString('base64').
+  ASAAS_ENC_KEY: 'BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc=',
+  ASAAS_WEBHOOK_BASE_URL: 'http://localhost:8080',
 };
 
 // unit/e2e/structural não têm globalSetup — precisam de um MONGODB_URI

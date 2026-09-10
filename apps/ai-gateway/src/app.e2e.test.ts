@@ -51,6 +51,30 @@ describe('GET/POST /webhooks/whatsapp via buildApp()', () => {
   });
 });
 
+// payments-asaas T23: prova que os dois webhook routers (Meta + Asaas)
+// convivem em buildApp() sem colisão de rota — prefixos de path diferentes
+// (/webhooks/whatsapp vs. /webhooks/asaas), cada um respondendo pelo seu
+// próprio mecanismo de auth (HMAC-do-corpo vs. token+hash). Precisa de Mongo
+// (a auth do Asaas resolve AsaasIntegration pelo webhookToken).
+describe('POST /webhooks/asaas/:webhookToken via buildApp() (no collision with /webhooks/whatsapp)', () => {
+  beforeAll(async () => {
+    await connect(process.env.MONGODB_URI as string);
+  });
+
+  afterAll(async () => {
+    await disconnect();
+  });
+
+  it('responds 401 for an unknown webhookToken, independent of the Meta webhook mounted alongside it', async () => {
+    const res = await request(buildApp())
+      .post('/webhooks/asaas/token-desconhecido')
+      .set('asaas-access-token', 'qualquer-coisa')
+      .send({ event: 'PAYMENT_CONFIRMED' });
+
+    expect(res.status).toBe(401);
+  });
+});
+
 // T32: start() precisa conectar, escutar e subir os 3 workers de intervalo
 // sem lançar — porta efêmera (0) e intervalos curtos evitam que o teste
 // dependa dos defaults de produção (2s/30s/60s) ou abra uma porta fixa.

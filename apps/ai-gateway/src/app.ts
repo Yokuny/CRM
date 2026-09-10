@@ -2,7 +2,9 @@ import { createAnthropicClient, createWhisperClient } from '@crm/ai-kit';
 import { respObj } from '@crm/contracts';
 import express, { type Express } from 'express';
 import { env } from './config/env.config.js';
+import { createAsaasClient } from './providers/asaasClient.js';
 import { createAudioDownloader } from './providers/audioDownloader.js';
+import { createAsaasWebhookRouter } from './routers/asaasWebhook.router.js';
 import { createWebhookRouter } from './routers/webhook.router.js';
 
 // Sem .listen() — testável via supertest sem abrir porta, mesmo padrão de
@@ -30,6 +32,11 @@ export const buildApp = (): Express => {
   // criando um client por Channel (token decifrado só no escopo da chamada).
   const downloadAudio = createAudioDownloader(env.CHANNEL_ENC_KEY);
   const whisperClient = createWhisperClient(env.OPENAI_API_KEY);
+  // payments-asaas T23: único ponto de composição do AsaasClient REAL neste
+  // arquivo — injetado no webhook da Meta (chega em issue_payment_link via
+  // runTurn/ToolContext) e reusado pelo webhook do Asaas não precisa dele
+  // (só lê o banco, nunca chama a API de fora).
+  const asaasClient = createAsaasClient(env.ASAAS_ENC_KEY);
   app.use(
     '/webhooks/whatsapp',
     createWebhookRouter({
@@ -38,8 +45,13 @@ export const buildApp = (): Express => {
       appSecret: env.META_APP_SECRET,
       downloadAudio,
       whisperClient,
+      asaasClient,
     }),
   );
+  // design.md Architecture Overview: rota nova, ao lado do webhook da Meta —
+  // mesmo bounded context ("ingestão de webhook externo"), prefixo de path
+  // diferente (sem colisão de rota).
+  app.use('/webhooks/asaas', createAsaasWebhookRouter());
 
   return app;
 };

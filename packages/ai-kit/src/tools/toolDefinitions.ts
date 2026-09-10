@@ -1,8 +1,9 @@
 // Definições das tools enviadas ao modelo (JSON Schema literal, não derivado
 // de Zod — mesma forma de assistant-tools.ts, DentalEase-BackEnd). AD-004:
 // superfície fixa e idêntica entre tenants — as 4 tools originais do Anel A
-// mais search_products/get_order_status (Anel A) e create_order (1ª tool do
-// Anel B, AD-009), catalog-orders/T14. AD-010: nenhum `input_schema` carrega
+// mais search_products/get_order_status (Anel A), create_order (1ª tool do
+// Anel B, AD-009, catalog-orders/T14) e issue_payment_link (2ª tool do Anel
+// B, AD-009, payments-asaas/T20). AD-010: nenhum `input_schema` carrega
 // tenant/canal/conversa — quem chama a tool sempre recebe esses dados do
 // `ToolContext` do servidor.
 export type ToolInputSchema = {
@@ -131,6 +132,18 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
         },
       },
       required: ['items', 'idempotencyKey'],
+    },
+  },
+  {
+    name: 'issue_payment_link',
+    description:
+      'Emite uma cobrança PIX para um pedido já confirmado (status confirmed) e devolve o payload copia-e-cola/QR Code para o cliente pagar. Se o pedido já tiver uma cobrança, devolve a mesma cobrança em vez de criar outra.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        orderId: { type: 'string', description: 'ID do pedido confirmado (de create_order/get_order_status).' },
+      },
+      required: ['orderId'],
     },
   },
 ];

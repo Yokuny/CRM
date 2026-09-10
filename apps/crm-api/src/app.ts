@@ -13,6 +13,7 @@ import { createProcessFieldValueStore } from './providers/fieldValueStore/proces
 import type { MailProvider } from './providers/mail/index.js';
 import { createLogMailProvider } from './providers/mail/log.mailProvider.js';
 import { createNodemailerMailProvider } from './providers/mail/nodemailer.mailProvider.js';
+import { createAsaasIntegrationRouter } from './routers/asaasIntegration.router.js';
 import { createAuthRouter } from './routers/auth.router.js';
 import { createChannelRouter } from './routers/channel.router.js';
 import { createConversationRouter } from './routers/conversation.router.js';
@@ -73,6 +74,7 @@ export const buildApp = (): Express => {
   app.use('/orders', createOrderRouter({ validToken }));
   app.use('/channels', createChannelRouter({ validToken }));
   app.use('/conversations', createConversationRouter({ validToken }));
+  app.use('/asaas-integrations', createAsaasIntegrationRouter({ validToken }));
 
   app.use(errorHandler);
 
