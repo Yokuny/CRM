@@ -1,0 +1,16 @@
+{
+	"servers": {
+		"readme": {
+			"type": "http",
+			"url": "https://docs.readme.com/mcp"
+		},
+		"asaas": {
+			"type": "http",
+			"url": "https://docs.asaas.com/mcp",
+			"headers": {
+				"Authorization": "Bearer $"
+			}
+		}
+	},
+	"inputs": []
+}
