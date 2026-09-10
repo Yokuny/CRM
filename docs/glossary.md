@@ -121,7 +121,7 @@ Pacote isomórfico (`packages/field-engine`) que define os tipos de campo e exp�
 principal do monorepo. Ver [ADR-0001](adr/0001-monorepo-pnpm-workspaces.md).
 
 **Board / Card**
-Kanban. Ferramenta à parte, portada do DentalEase. Um Card **pode** referenciar um
+Kanban (feature 10, ainda não implementado). Ferramenta à parte, portada do DentalEase. Um Card **pode** referenciar um
 Process, mas não é um Process. Ver [ADR-0011](adr/0011-kanban-como-ferramenta-separada.md).
 
 ---
@@ -129,16 +129,40 @@ Process, mas não é um Process. Ver [ADR-0011](adr/0011-kanban-como-ferramenta-
 ## Comércio
 
 **Product**
-Item do catálogo do tenant.
+Item do catálogo do tenant. Schema fixo, fora do field-engine: `name`, `price` (inteiro em
+centavos), `stock` e `active`.
 
 **Order**
-Pedido montado na conversa. Nasce `pending_approval` e só vira `confirmed` com
-confirmação explícita do cliente **e** liberação do operador.
-Ver [ADR-0009](adr/0009-dois-aneis-de-tools.md).
+Pedido montado na conversa, com itens em snapshot (nome e preço do momento da criação —
+mudar o `Product` depois não altera o pedido). Nasce `pending_approval` e só vira `confirmed`
+com confirmação explícita do cliente **e** liberação do operador; quem completar a segunda
+condição reserva o estoque de forma atômica. `rejected` e `payment_expired` são terminais.
+Ver [ADR-0009](adr/0009-dois-aneis-de-tools.md) e [AD-033](../.specs/STATE.md#ad-033).
+
+**Payment**
+Cobrança de um Order `confirmed` no Asaas — no máximo uma por Order. `status` começa
+`pending` e vai para `paid`, `expired`, `refunded` ou `canceled`; nunca regride. Guarda também
+o status bruto do Asaas (`asaasStatus`). Ver [AD-034](../.specs/STATE.md#ad-034).
 
 **Link de pagamento**
-Cobrança gerada no Asaas (Pix, boleto ou cartão) e enviada ao cliente.
+O que a tool `issue_payment_link` devolve para o modelo enviar na conversa. Hoje só Pix
+(copia-e-cola e QR Code); boleto e cartão ficaram fora da feature 8.
 Ver [ADR-0012](adr/0012-asaas-como-gateway.md).
+
+**AsaasIntegration**
+Credencial do Asaas de um tenant (uma por tenant): chave criptografada em repouso e mascarada
+na leitura, ambiente (sandbox ou produção) detectado pelo prefixo da chave, e o token opaco
+que identifica o tenant na URL do webhook.
+
+**AsaasEvent**
+Cada evento de webhook recebido do Asaas, com índice único que impede processar o mesmo
+evento duas vezes — o mesmo papel do `wamid` para a Meta. Evento que falha ao processar
+fica `failed` e volta pela reconciliação.
+
+**Reconciliação**
+Worker do `ai-gateway` que cobre o que o webhook perdeu: retenta `AsaasEvent` `failed`,
+consulta no Asaas todo `Payment` `pending` e expira os pendentes há mais de 24h, devolvendo
+o estoque e movendo o Order para `payment_expired`.
 
 ---
 
@@ -150,8 +174,9 @@ resposta enviada: `ingest → guard.input → context.build → loop → guard.o
 persist → dispatch`. Cada etapa é função pura, testável isolada.
 
 **ToolContext**
-Contexto server-side do turno: `{ tenantId, channelId, conversationId }`. Nunca exposto
-ao modelo. É o guardrail central do sistema.
+Contexto server-side do turno: `{ tenantId, channelId, conversationId }`, mais dependências
+injetadas pelo serviço (hoje, o `asaasClient` opcional que `issue_payment_link` usa). Nunca
+exposto ao modelo. É o guardrail central do sistema.
 
 **TenantScopedRepo**
 Wrapper de repositório que **exige** `Tenant` no filtro. Chamada sem tenant é erro de
@@ -159,8 +184,9 @@ tipo, não convenção.
 
 **Anel A / Anel B**
 Divisão da superfície de tools. Anel A é autônomo (consultar, coletar, abrir processo).
-Anel B exige aprovação — são as tools que envolvem dinheiro (`create_order`,
-`issue_payment_link`). A divisão vive em código, não no prompt.
+Anel B exige aprovação — são as tools que envolvem dinheiro: `create_order` só confirma o
+pedido com o aceite do cliente e do operador, e `issue_payment_link` só cobra pedido já
+`confirmed`. A divisão vive em código, não no prompt.
 
 **Superfície de tools**
 O conjunto de tools oferecido ao modelo. É **fixo e idêntico entre tenants**; o schema
@@ -174,13 +200,14 @@ comportamento do harness no CI.
 
 **Replay**
 Reprocessamento de conversas reais anonimizadas contra um prompt novo, antes de promover.
-Mostra diff de comportamento, não placar.
+Mostra diff de comportamento, não placar. Ainda não implementado (feature 11).
 Ver [ADR-0013](adr/0013-evals-golden-set-e-replay.md).
 
 **Guardrail**
 Restrição em código, não em prompt. Prompt pode ser contornado por injeção; máquina de
 estados e assinatura de tipo não. Os três centrais: tenant fora do input do modelo,
-dinheiro sob aprovação, e preço citado só a partir de tool result desta conversa.
+dinheiro sob aprovação, e preço citado só a partir de tool result do mesmo turno (valor
+sem lastro vira `[removido]`).
 
 ---
 
@@ -189,7 +216,7 @@ dinheiro sob aprovação, e preço citado só a partir de tool result desta conv
 | Termo | Sentido A | Sentido B |
 |---|---|---|
 | **Template** | FieldTemplate (definição de campos) | Template HSM da Meta (mensagem aprovada) |
-| **Status** | Tipo de campo `status` do field-engine | `status` de card do kanban · `status` de Message |
+| **Status** | Tipo de campo `status` do field-engine | `status` de card do kanban · `status` de Message, Order e Payment |
 | **Stage** | Etapa do FieldTemplate de `process` | — (não usar para kanban; lá é coluna/`status`) |
 
 Sempre qualificar na UI e nos nomes de variável. `fieldTemplate` e `waTemplate`,

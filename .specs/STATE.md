@@ -3,7 +3,8 @@
 ## Decisions
 
 Decisões de nível de projeto. Toda feature futura conforma ou supersede.
-Detalhamento completo (contexto, consequências, alternativas) em [`docs/adr/`](../docs/adr/README.md).
+AD-001..AD-013 têm detalhamento completo (contexto, consequências, alternativas) em [`docs/adr/`](../docs/adr/README.md);
+de AD-014 em diante, a entrada abaixo é o registro completo (indexada no mesmo README).
 
 ### AD-001
 - **Decision**: Monorepo pnpm workspaces — `apps/{crm-api,ai-gateway,web}` + `packages/{contracts,db,field-engine,ai-kit}`.
