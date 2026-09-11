@@ -1,3 +1,10 @@
+export type {
+  AppointmentTransitionError,
+  AppointmentTransitionErrorCode,
+  BookAppointmentInput,
+  BookAppointmentSuccess,
+} from './appointmentTransitions.js';
+export { bookAppointment, issueConfirmationToken } from './appointmentTransitions.js';
 export { connect, disconnect } from './connection.js';
 export type { EncryptedSecret } from './crypto.helper.js';
 export { decrypt, encrypt, maskSecret, sha256 } from './crypto.helper.js';
