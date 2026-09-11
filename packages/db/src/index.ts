@@ -54,6 +54,20 @@ export type { OrderItemInput, OrderTransitionResult } from './orderTransitions.j
 export { rejectOrder, setCustomerConfirmed, setOperatorApproved, tryConfirmOrder } from './orderTransitions.js';
 export type { PaymentTransitionResult } from './paymentTransitions.js';
 export { applyAsaasPaymentStatus, expireOrderPayment } from './paymentTransitions.js';
+export type { FreeSlot, ScheduleWindow } from './scheduling.js';
+export {
+  computeFreeSlots,
+  DEFAULT_MAX_SLOTS,
+  dateInDisplayTz,
+  expandWindowsToSlots,
+  isSlotAligned,
+  MAX_HORIZON_DAYS,
+  MIN_LEAD_MINUTES,
+  overlaps,
+  timeInDisplayTz,
+  wallClockToUtc,
+  weekdayInDisplayTz,
+} from './scheduling.js';
 export { tenantScoped } from './tenantScoped.js';
 
 import { AiSession } from './models/aiSession.model.js';
