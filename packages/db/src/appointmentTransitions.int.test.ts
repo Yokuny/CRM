@@ -2,7 +2,15 @@ import mongoose from 'mongoose';
 import { describe, expect, it, vi } from 'vitest';
 import { useTestDb } from '../tests/helpers/db.helper.js';
 import type { AppointmentTransitionError, BookAppointmentSuccess } from './appointmentTransitions.js';
-import { bookAppointment, cancelByToken, confirmByToken, issueConfirmationToken } from './appointmentTransitions.js';
+import {
+  bookAppointment,
+  cancelByToken,
+  confirmByToken,
+  createBlock,
+  createManualAppointment,
+  deleteBlock,
+  issueConfirmationToken,
+} from './appointmentTransitions.js';
 import type { AppointmentDocument, AppointmentStatus } from './models/appointment.model.js';
 import { Appointment } from './models/appointment.model.js';
 import { hashToken } from './models/invite.model.js';
@@ -570,6 +578,261 @@ describe('appointmentTransitions — confirmByToken / cancelByToken (SCH-23, SCH
         expect.objectContaining({ event: 'appointment_canceled', canceledBy: 'customer' }),
       );
       logSpy.mockRestore();
+    });
+  });
+});
+
+describe('appointmentTransitions — createManualAppointment / createBlock / deleteBlock (SCH-30, SCH-33, SCH-36)', () => {
+  useTestDb();
+
+  describe('createManualAppointment (encaixe do operador)', () => {
+    it('aceito fora da grade, além de 90 dias e sem antecedência mínima; source:operator; emite token como bookAppointment', async () => {
+      const Tenant = new mongoose.Types.ObjectId();
+      // Grade só de segunda 09:00-10:00 — o horário escolhido abaixo (a
+      // menos de 60min, e possivelmente fora do grid) prova que o encaixe
+      // ignora alinhamento/antecedência/horizonte.
+      const professional = await seedProfessional(Tenant, {
+        weeklySchedule: [{ weekday: 1, start: '09:00', end: '10:00' }],
+      });
+      const start = new Date(Date.now() + 5 * 60_000); // 5min de agora — bem abaixo do lead de 60min da IA
+      const end = new Date(start.getTime() + 43 * 60_000); // duração arbitrária, fora de qualquer grid de 30/60min
+
+      const result = await createManualAppointment({
+        tenantId: Tenant.toString(),
+        professionalId: professional._id.toString(),
+        start,
+        end,
+        customerId: new mongoose.Types.ObjectId().toString(),
+      });
+
+      expect(isError(result)).toBe(false);
+      const { appointment, confirmationToken } = result as BookAppointmentSuccess;
+      expect(appointment.source).toBe('operator');
+      expect(appointment.status).toBe('pending');
+      expect(appointment.start.getTime()).toBe(start.getTime());
+      expect(appointment.end.getTime()).toBe(end.getTime());
+      expect(confirmationToken).toMatch(/^apt_[0-9A-Za-z]{32}$/);
+
+      // Além de 90 dias — outro encaixe, mesma prova de ausência de teto de horizonte.
+      const farStart = new Date(Date.now() + 200 * MINUTES_IN_DAY * 60_000);
+      const farEnd = new Date(farStart.getTime() + 30 * 60_000);
+      const farResult = await createManualAppointment({
+        tenantId: Tenant.toString(),
+        professionalId: professional._id.toString(),
+        start: farStart,
+        end: farEnd,
+        customerId: new mongoose.Types.ObjectId().toString(),
+      });
+      expect(isError(farResult)).toBe(false);
+    });
+
+    it('sobreposição com agendamento ativo do mesmo profissional rejeitada, inclusive desalinhada (09:15-09:45 vs 09:00-10:00)', async () => {
+      const Tenant = new mongoose.Types.ObjectId();
+      const professional = await seedProfessional(Tenant);
+      const baseDate = dateInDisplayTz(alignedRelativeStart(FAR_FUTURE_OFFSET));
+      const existingStart = wallClockToUtc(baseDate, '09:00');
+      const existingEnd = wallClockToUtc(baseDate, '10:00');
+
+      await createManualAppointment({
+        tenantId: Tenant.toString(),
+        professionalId: professional._id.toString(),
+        start: existingStart,
+        end: existingEnd,
+        customerId: new mongoose.Types.ObjectId().toString(),
+      });
+
+      const overlappingStart = wallClockToUtc(baseDate, '09:15');
+      const overlappingEnd = wallClockToUtc(baseDate, '09:45');
+      const result = await createManualAppointment({
+        tenantId: Tenant.toString(),
+        professionalId: professional._id.toString(),
+        start: overlappingStart,
+        end: overlappingEnd,
+        customerId: new mongoose.Types.ObjectId().toString(),
+      });
+
+      expect(result).toMatchObject({ code: 'conflict' });
+      await expect(Appointment.countDocuments({ Tenant, professional: professional._id })).resolves.toBe(1);
+    });
+
+    it('sobreposição com bloqueio do mesmo profissional rejeitada', async () => {
+      const Tenant = new mongoose.Types.ObjectId();
+      const professional = await seedProfessional(Tenant);
+      const baseDate = dateInDisplayTz(alignedRelativeStart(FAR_FUTURE_OFFSET));
+      const blockStart = wallClockToUtc(baseDate, '14:00');
+      const blockEnd = wallClockToUtc(baseDate, '15:00');
+
+      await createBlock({
+        tenantId: Tenant.toString(),
+        professionalId: professional._id.toString(),
+        start: blockStart,
+        end: blockEnd,
+        title: 'Almoço',
+      });
+
+      const result = await createManualAppointment({
+        tenantId: Tenant.toString(),
+        professionalId: professional._id.toString(),
+        start: wallClockToUtc(baseDate, '14:30'),
+        end: wallClockToUtc(baseDate, '15:30'),
+        customerId: new mongoose.Types.ObjectId().toString(),
+      });
+
+      expect(result).toMatchObject({ code: 'conflict' });
+    });
+
+    it('professional de outro tenant -> invalid, sem criar nada (AD-010)', async () => {
+      const ownerTenant = new mongoose.Types.ObjectId();
+      const intruderTenant = new mongoose.Types.ObjectId();
+      const professional = await seedProfessional(ownerTenant);
+      const start = alignedRelativeStart(FAR_FUTURE_OFFSET);
+      const end = new Date(start.getTime() + 30 * 60_000);
+
+      const result = await createManualAppointment({
+        tenantId: intruderTenant.toString(),
+        professionalId: professional._id.toString(),
+        start,
+        end,
+        customerId: new mongoose.Types.ObjectId().toString(),
+      });
+
+      expect(result).toMatchObject({ code: 'invalid' });
+      await expect(Appointment.countDocuments({})).resolves.toBe(0);
+    });
+  });
+
+  describe('createBlock', () => {
+    it('cria kind:block, status:confirmed, sem cliente', async () => {
+      const Tenant = new mongoose.Types.ObjectId();
+      const professional = await seedProfessional(Tenant);
+      const start = alignedRelativeStart(FAR_FUTURE_OFFSET);
+      const end = new Date(start.getTime() + 60 * 60_000);
+
+      const result = await createBlock({
+        tenantId: Tenant.toString(),
+        professionalId: professional._id.toString(),
+        start,
+        end,
+        title: 'Feriado',
+      });
+
+      expect(isError(result)).toBe(false);
+      const block = result as AppointmentDocument;
+      expect(block.kind).toBe('block');
+      expect(block.status).toBe('confirmed');
+      expect(block.customer).toBeUndefined();
+      expect(block.title).toBe('Feriado');
+    });
+
+    it('sobreposto a agendamento ativo -> conflict', async () => {
+      const Tenant = new mongoose.Types.ObjectId();
+      const professional = await seedProfessional(Tenant);
+      const start = alignedRelativeStart(FAR_FUTURE_OFFSET);
+      const end = new Date(start.getTime() + 30 * 60_000);
+
+      await bookAppointment({
+        tenantId: Tenant.toString(),
+        professionalId: professional._id.toString(),
+        start,
+        customerId: new mongoose.Types.ObjectId().toString(),
+        source: 'ai',
+      });
+
+      const result = await createBlock({
+        tenantId: Tenant.toString(),
+        professionalId: professional._id.toString(),
+        start,
+        end,
+        title: 'Bloqueio conflitante',
+      });
+
+      expect(result).toMatchObject({ code: 'conflict' });
+    });
+
+    it('reserva no start exato do bloqueio falha pelo índice único parcial', async () => {
+      const Tenant = new mongoose.Types.ObjectId();
+      const professional = await seedProfessional(Tenant);
+      const start = alignedRelativeStart(FAR_FUTURE_OFFSET);
+      const end = new Date(start.getTime() + 30 * 60_000);
+
+      const block = await createBlock({
+        tenantId: Tenant.toString(),
+        professionalId: professional._id.toString(),
+        start,
+        end,
+        title: 'Reunião',
+      });
+      expect(isError(block)).toBe(false);
+
+      const result = await bookAppointment({
+        tenantId: Tenant.toString(),
+        professionalId: professional._id.toString(),
+        start,
+        customerId: new mongoose.Types.ObjectId().toString(),
+        source: 'ai',
+      });
+
+      expect(result).toMatchObject({ code: 'conflict' });
+    });
+  });
+
+  describe('deleteBlock', () => {
+    it('remove só kind:block do tenant', async () => {
+      const Tenant = new mongoose.Types.ObjectId();
+      const professional = await seedProfessional(Tenant);
+      const start = alignedRelativeStart(FAR_FUTURE_OFFSET);
+      const end = new Date(start.getTime() + 30 * 60_000);
+
+      const block = (await createBlock({
+        tenantId: Tenant.toString(),
+        professionalId: professional._id.toString(),
+        start,
+        end,
+        title: 'Remover depois',
+      })) as AppointmentDocument;
+
+      const result = await deleteBlock(Tenant.toString(), block._id.toString());
+
+      expect(result).toEqual({ deleted: true });
+      await expect(Appointment.findById(block._id).lean()).resolves.toBeNull();
+    });
+
+    it('id de agendamento (kind diferente) -> not_found, nada removido', async () => {
+      const Tenant = new mongoose.Types.ObjectId();
+      const professional = await seedProfessional(Tenant);
+      const booked = (await bookAppointment({
+        tenantId: Tenant.toString(),
+        professionalId: professional._id.toString(),
+        start: alignedRelativeStart(FAR_FUTURE_OFFSET),
+        customerId: new mongoose.Types.ObjectId().toString(),
+        source: 'ai',
+      })) as BookAppointmentSuccess;
+
+      const result = await deleteBlock(Tenant.toString(), booked.appointment._id.toString());
+
+      expect(result).toMatchObject({ code: 'not_found' });
+      await expect(Appointment.findById(booked.appointment._id).lean()).resolves.not.toBeNull();
+    });
+
+    it('id de bloqueio de outro tenant -> not_found', async () => {
+      const ownerTenant = new mongoose.Types.ObjectId();
+      const intruderTenant = new mongoose.Types.ObjectId();
+      const professional = await seedProfessional(ownerTenant);
+      const start = alignedRelativeStart(FAR_FUTURE_OFFSET);
+      const end = new Date(start.getTime() + 30 * 60_000);
+
+      const block = (await createBlock({
+        tenantId: ownerTenant.toString(),
+        professionalId: professional._id.toString(),
+        start,
+        end,
+        title: 'Bloqueio do dono',
+      })) as AppointmentDocument;
+
+      const result = await deleteBlock(intruderTenant.toString(), block._id.toString());
+
+      expect(result).toMatchObject({ code: 'not_found' });
+      await expect(Appointment.findById(block._id).lean()).resolves.not.toBeNull();
     });
   });
 });

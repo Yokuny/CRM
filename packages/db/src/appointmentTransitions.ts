@@ -4,7 +4,7 @@ import { Appointment } from './models/appointment.model.js';
 import { hashToken } from './models/invite.model.js';
 import { Professional } from './models/professional.model.js';
 import { Space } from './models/space.model.js';
-import { isSlotAligned, MAX_HORIZON_DAYS, MIN_LEAD_MINUTES } from './scheduling.js';
+import { isSlotAligned, MAX_HORIZON_DAYS, MIN_LEAD_MINUTES, overlaps } from './scheduling.js';
 import { tenantScoped } from './tenantScoped.js';
 
 // Única implementação da máquina de estados de Appointment (AD-035, molde de
@@ -48,6 +48,33 @@ const generateConfirmationToken = (): string => {
 
 const isDuplicateKeyError = (err: unknown): boolean =>
   typeof err === 'object' && err !== null && 'code' in err && (err as { code?: number }).code === 11000;
+
+// Janela de checagem de sobreposição do caminho do operador (encaixe/
+// bloqueio/remarcação): check-antes-de-gravar, aceito e documentado em
+// AD-035 (baixa concorrência humana, diferente do caminho da IA que é
+// coberto pelo índice único). O filtro do Mongo só reduz candidatos por
+// `start < end` (mantém o range indexado por {Tenant,start}); a precisão do
+// "sobrepõe ou não" fica com `overlaps()` (scheduling.ts), a mesma função
+// pura usada por get_available_slots — nunca uma segunda implementação do
+// mesmo cálculo. Cobre agendamento ativo E bloqueio: os dois têm status
+// pending/confirmed (bloqueio nasce e permanece confirmed).
+const hasOverlappingActive = async (
+  tenantId: string,
+  professionalId: string,
+  interval: { start: Date; end: Date },
+  excludeId?: string,
+): Promise<boolean> => {
+  const filter: Record<string, unknown> = tenantScoped({
+    Tenant: tenantId,
+    professional: professionalId,
+    status: { $in: ACTIVE_STATUSES },
+    start: { $lt: interval.end },
+  });
+  if (excludeId) filter._id = { $ne: excludeId };
+
+  const candidates = await Appointment.find(filter).select('start end').lean();
+  return candidates.some((candidate) => overlaps(interval, candidate));
+};
 
 export interface BookAppointmentInput {
   tenantId: string;
@@ -231,4 +258,123 @@ export const cancelByToken = async (tokenHash: string): Promise<AppointmentDocum
     }),
   );
   return updated;
+};
+
+export interface CreateManualAppointmentInput {
+  tenantId: string;
+  professionalId: string;
+  start: Date;
+  end: Date;
+  customerId: string;
+  spaceId?: string;
+  notes?: string;
+}
+
+// Caminho do encaixe do operador (SCH-30): sem alinhamento/antecedência/
+// horizonte (esses tetos existem para conter a IA, não a pessoa — spec.md
+// Assumptions) — a única regra que continua valendo é não sobrepor o mesmo
+// profissional (impossível no mundo físico), verificada por
+// hasOverlappingActive contra agendamentos ativos E bloqueios.
+export const createManualAppointment = async (
+  input: CreateManualAppointmentInput,
+): Promise<BookAppointmentSuccess | AppointmentTransitionError> => {
+  const { tenantId, professionalId, start, end, customerId, spaceId, notes } = input;
+
+  // Mesma fronteira de tenant que bookAppointment (AD-010) — o encaixe
+  // dispensa grade/antecedência/horizonte, mas nunca dispensa pertencimento
+  // ao tenant: sem isso um professionalId de outro tenant criaria um
+  // Appointment com Tenant/professional inconsistentes.
+  const professional = await Professional.findOne(tenantScoped({ Tenant: tenantId, _id: professionalId })).lean();
+  if (!professional) return INVALID_ERROR;
+
+  if (spaceId) {
+    const space = await Space.findOne(tenantScoped({ Tenant: tenantId, _id: spaceId })).lean();
+    if (!space) return INVALID_ERROR;
+  }
+
+  const conflict = await hasOverlappingActive(tenantId, professionalId, { start, end });
+  if (conflict) return CONFLICT_ERROR;
+
+  const confirmationToken = generateConfirmationToken();
+  const confirmationTokenHash = hashToken(confirmationToken);
+
+  try {
+    const appointment = await Appointment.create({
+      Tenant: tenantId,
+      kind: 'appointment',
+      professional: professionalId,
+      space: spaceId,
+      customer: customerId,
+      notes,
+      start,
+      end,
+      status: 'pending',
+      source: 'operator',
+      confirmationTokenHash,
+      confirmationExpiresAt: end,
+    });
+
+    console.log(JSON.stringify({ event: 'appointment_booked', tenantId, appointmentId: appointment._id.toString() }));
+    return { appointment, confirmationToken };
+  } catch (err) {
+    if (isDuplicateKeyError(err)) return CONFLICT_ERROR;
+    throw err;
+  }
+};
+
+export interface CreateBlockInput {
+  tenantId: string;
+  professionalId: string;
+  start: Date;
+  end: Date;
+  title: string;
+}
+
+// Bloqueio nasce e permanece `status:'confirmed'` (design.md Data Models) —
+// disputa o mesmo índice único que agendamento ativo, então um agendamento
+// no `start` exato do bloqueio falha pelo próprio índice (T8 Done when),
+// além da checagem de sobreposição aqui para o caso desalinhado.
+export const createBlock = async (input: CreateBlockInput): Promise<AppointmentDocument | AppointmentTransitionError> => {
+  const { tenantId, professionalId, start, end, title } = input;
+
+  const professional = await Professional.findOne(tenantScoped({ Tenant: tenantId, _id: professionalId })).lean();
+  if (!professional) return INVALID_ERROR;
+
+  const conflict = await hasOverlappingActive(tenantId, professionalId, { start, end });
+  if (conflict) return CONFLICT_ERROR;
+
+  try {
+    const block = await Appointment.create({
+      Tenant: tenantId,
+      kind: 'block',
+      professional: professionalId,
+      title,
+      start,
+      end,
+      status: 'confirmed',
+      source: 'operator',
+    });
+
+    console.log(JSON.stringify({ event: 'appointment_block_created', tenantId, appointmentId: block._id.toString() }));
+    return block;
+  } catch (err) {
+    if (isDuplicateKeyError(err)) return CONFLICT_ERROR;
+    throw err;
+  }
+};
+
+// Remove só documentos kind='block' do tenant — um id de agendamento (kind
+// diferente) ou de outro tenant nunca é removido, apenas reportado como
+// not_found (nenhuma pista sobre qual dos dois motivos foi).
+export const deleteBlock = async (
+  tenantId: string,
+  blockId: string,
+): Promise<{ deleted: true } | AppointmentTransitionError> => {
+  const deleted = await Appointment.findOneAndDelete(
+    tenantScoped({ Tenant: tenantId, _id: blockId, kind: 'block' as const }),
+  ).lean();
+  if (!deleted) return NOT_FOUND_ERROR;
+
+  console.log(JSON.stringify({ event: 'appointment_block_deleted', tenantId, appointmentId: blockId }));
+  return { deleted: true };
 };
