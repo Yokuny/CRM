@@ -267,12 +267,13 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-30, SCH-33, SCH-36
 
 **Done when**:
-- [ ] Encaixe aceito fora da grade, além de 90 dias e sem antecedência mínima; `source:'operator'`; emite token como T6
-- [ ] Sobreposição com agendamento ativo ou bloqueio do mesmo profissional — inclusive desalinhada (09:15–09:45 contra 09:00–10:00) → `code:'conflict'`
-- [ ] Bloqueio: `kind:'block'`, `status:'confirmed'`, sem cliente; sobreposto a agendamento ativo → `conflict`; reserva no `start` do bloqueio falha pelo índice
-- [ ] `deleteBlock` remove só `kind:'block'` do tenant; id de agendamento ou de outro tenant → `not_found`
+- [x] Encaixe aceito fora da grade, além de 90 dias e sem antecedência mínima; `source:'operator'`; emite token como T6
+- [x] Sobreposição com agendamento ativo ou bloqueio do mesmo profissional — inclusive desalinhada (09:15–09:45 contra 09:00–10:00) → `code:'conflict'`
+- [x] Bloqueio: `kind:'block'`, `status:'confirmed'`, sem cliente; sobreposto a agendamento ativo → `conflict`; reserva no `start` do bloqueio falha pelo índice
+- [x] `deleteBlock` remove só `kind:'block'` do tenant; id de agendamento ou de outro tenant → `not_found`
 
 **Tests**: integration · **Gate**: full
+**Status**: ✅ Complete (commit 7acd08a) — inclui checagem extra de tenant em `professionalId`/`spaceId` (AD-010), fechada pelo orquestrador ao retomar após o worker do Batch 2 atingir o limite de sessão da conta a meio da T8 (código já escrito, faltavam testes/gate/commit)
 
 ---
 
