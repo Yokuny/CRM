@@ -1118,7 +1118,9 @@ cria.
 
 ## MCPs and Skills
 
-Proposta (a confirmar com o usuário antes do Execute):
+**Confirmado com o usuário em 2026-09-11 (fase Tasks)** — as duas skills abaixo foram aceitas;
+nenhum MCP. O tamanho de `spec.md`/`tasks.md` acima do teto da skill também foi mantido por
+decisão do usuário (o volume vem de 40 requisitos e 33 assumptions rastreáveis).
 
 - **MCP**: nenhum necessário. Os configurados em `.vscode/mcp.json` (`readme`, `asaas`) não
   tocam esta feature — ela não chama nenhuma API externa.

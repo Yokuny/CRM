@@ -322,7 +322,8 @@ de AD-014 em diante, a entrada abaixo é o registro completo (indexada no mesmo 
   não em `db`, porque o `web` não importa `db` — e a API do operador passa a receber hora de
   parede.
 - **In-progress**: nenhum.
-- **Next step**: revisar `tasks.md` (matriz de testes, gates, MCPs/skills) e iniciar o Execute
+- **Next step**: revisar `tasks.md` (matriz de testes e gates; ferramentas já confirmadas —
+  skill `run` nas tasks de tela, `security-review` na T22, nenhum MCP) e iniciar o Execute
   com a skill `tlc-spec-driven`, lendo `implement.md` inteiro antes. As 47 tasks empacotam em 8
   lotes de ~7, então a oferta de sub-agentes (offer-then-confirm) vem antes da T1.
 - **Blockers**: nenhum. Pendência herdada da feature 8 (mergeada em `main` pelo PR #8): UAT
