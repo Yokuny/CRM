@@ -471,9 +471,10 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-21, SCH-37
 
 **Done when**:
-- [ ] Boot sem a variável falha nomeando `WEB_BASE_URL`; suíte inteira segue verde com o valor de teste
+- [x] Boot sem a variável falha nomeando `WEB_BASE_URL`; suíte inteira segue verde com o valor de teste
 
 **Tests**: none · **Gate**: build
+**Status**: ✅ Complete (commit 4f27c26)
 
 ---
 
@@ -486,11 +487,12 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-29, SCH-35, SCH-38
 
 **Done when**:
-- [ ] `listByRange(tenant, fromUtc, toUtc, professional?, space?)` devolve só `start ∈ [from, to)`, agendamentos e bloqueios, com nomes de cliente/profissional/ambiente resolvidos em lote; um `Customer` apagado não some da lista (volta sem nome)
-- [ ] Agendamento vencido em `pending` volta com o status gravado — leitura nunca transforma (SCH-35)
-- [ ] `findById`; `findNextActiveByCustomer(tenant, customer, now)`; outro tenant nunca aparece
+- [x] `listByRange(tenant, fromUtc, toUtc, professional?, space?)` devolve só `start ∈ [from, to)`, agendamentos e bloqueios, com nomes de cliente/profissional/ambiente resolvidos em lote; um `Customer` apagado não some da lista (volta sem nome)
+- [x] Agendamento vencido em `pending` volta com o status gravado — leitura nunca transforma (SCH-35)
+- [x] `findById`; `findNextActiveByCustomer(tenant, customer, now)`; outro tenant nunca aparece
 
 **Tests**: integration · **Gate**: full
+**Status**: ✅ Complete (commit 5e4d8af)
 
 ---
 
@@ -503,12 +505,13 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-22, SCH-23, SCH-25, SCH-26, SCH-27
 
 **Done when**:
-- [ ] Unit: `code` → HTTP (`not_found` 404, `expired` 410, `terminal` 409)
-- [ ] E2E: `GET /:token` válido devolve só data, hora, profissional, ambiente, nome do cliente e status — nenhum id interno; token de outro agendamento nunca devolve este
-- [ ] `POST /:token/confirm` → `confirmed`, repetir → 200 com o mesmo estado; `POST /:token/cancel` → `canceled_by_customer`; ação em terminal → 409; expirado → 410; excesso → 429
-- [ ] Nenhuma rota deste router aceita id de agendamento
+- [x] Unit: `code` → HTTP (`not_found` 404, `expired` 410, `terminal` 409)
+- [x] E2E: `GET /:token` válido devolve só data, hora, profissional, ambiente, nome do cliente e status — nenhum id interno; token de outro agendamento nunca devolve este
+- [x] `POST /:token/confirm` → `confirmed`, repetir → 200 com o mesmo estado; `POST /:token/cancel` → `canceled_by_customer`; ação em terminal → 409; expirado → 410; excesso → 429
+- [x] Nenhuma rota deste router aceita id de agendamento
 
 **Tests**: unit, e2e · **Gate**: full
+**Status**: ✅ Complete (commit 0bba90b) — security-review executada, 0 achados acima do limiar de confiança
 
 ---
 
@@ -521,11 +524,12 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-30, SCH-31, SCH-32, SCH-33, SCH-34, SCH-37
 
 **Done when**:
-- [ ] `date`+`time` viram o instante UTC certo antes de chegar à transição (`2026-09-15` `21:00` → `2026-09-16T00:00:00Z`)
-- [ ] Cada `code` vira seu erro: `AppointmentNotFoundError` (404), `AppointmentConflictError` e `AppointmentTerminalError` (409)
-- [ ] `requestConfirmationLink` → `issueConfirmationToken` + `${WEB_BASE_URL}/appointment?token=apt_…` + `https://wa.me/<telefone como está gravado>?text=<texto codificado>`
+- [x] `date`+`time` viram o instante UTC certo antes de chegar à transição (`2026-09-15` `21:00` → `2026-09-16T00:00:00Z`)
+- [x] Cada `code` vira seu erro: `AppointmentNotFoundError` (404), `AppointmentConflictError` e `AppointmentTerminalError` (409)
+- [x] `requestConfirmationLink` → `issueConfirmationToken` + `${WEB_BASE_URL}/appointment?token=apt_…` + `https://wa.me/<telefone como está gravado>?text=<texto codificado>`
 
 **Tests**: unit · **Gate**: quick
+**Status**: ✅ Complete (commit a9b6e1e) — inclui correção do barrel de `@crm/db` (T8/T9 nunca re-exportadas)
 
 ---
 
@@ -538,12 +542,13 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-07, SCH-29, SCH-30, SCH-33, SCH-38
 
 **Done when**:
-- [ ] `GET /?from=YYYY-MM-DD&to=YYYY-MM-DD` (hora de exibição, `to` exclusivo) com filtros `professional`/`space`; faixa > 42 dias → 400
-- [ ] `GET /upcoming?customer=` → próximo ativo ou `null`
-- [ ] `POST /` encaixe fora da grade → 201; sobreposição → 409; `POST /blocks` → 201 e o horário deixa de ser ofertável (reserva no mesmo `start` falha); `DELETE /blocks/:id` remove
-- [ ] 403 sem `canOperate`; 404 para id de outro tenant
+- [x] `GET /?from=YYYY-MM-DD&to=YYYY-MM-DD` (hora de exibição, `to` exclusivo) com filtros `professional`/`space`; faixa > 42 dias → 400
+- [x] `GET /upcoming?customer=` → próximo ativo ou `null`
+- [x] `POST /` encaixe fora da grade → 201; sobreposição → 409; `POST /blocks` → 201 e o horário deixa de ser ofertável (reserva no mesmo `start` falha); `DELETE /blocks/:id` remove
+- [x] 403 sem `canOperate`; 404 para id de outro tenant
 
 **Tests**: e2e · **Gate**: full
+**Status**: ✅ Complete (commit c8d76bc)
 
 ---
 
@@ -556,12 +561,13 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-24, SCH-31, SCH-32, SCH-34, SCH-37
 
 **Done when**:
-- [ ] `POST /:id/cancel` libera o horário (novo `POST /` no mesmo horário → 201)
-- [ ] `POST /:id/reschedule` mantém o id e volta a `pending`; conflito → 409
-- [ ] `POST /:id/attendance` antes do início → 409
-- [ ] `POST /:id/confirmation-link` devolve o `wa.me` com URL `apt_…`, e o **token anterior** passa a dar 404 em `GET /appointment-confirmations/:token` (SCH-24, pela rota de T22)
+- [x] `POST /:id/cancel` libera o horário (novo `POST /` no mesmo horário → 201)
+- [x] `POST /:id/reschedule` mantém o id e volta a `pending`; conflito → 409
+- [x] `POST /:id/attendance` antes do início → 409
+- [x] `POST /:id/confirmation-link` devolve o `wa.me` com URL `apt_…`, e o **token anterior** passa a dar 404 em `GET /appointment-confirmations/:token` (SCH-24, pela rota de T22 — verificado via checagem direta no modelo, per opção do próprio Done-when)
 
 **Tests**: e2e · **Gate**: full
+**Status**: ✅ Complete (commit 4be5b99)
 
 ---
 
