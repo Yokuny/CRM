@@ -141,13 +141,14 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-09, SCH-11, SCH-16 · AD-036
 
 **Done when**:
-- [ ] `wallClockToUtc('2026-09-15','21:00')` → `2026-09-16T00:00:00.000Z`, e `timeInDisplayTz` do resultado → `'21:00'`; o mesmo teste com fuso ≠ SP passado explicitamente prova que não há `-03:00` cravado
-- [ ] Duas janelas no mesmo dia geram slots das duas e nenhum no intervalo; slot que não cabe inteiro na janela não é gerado
-- [ ] `computeFreeSlots` descarta início a menos de 60 min de `now`, respeita `maxSlots`, lista por slot só os profissionais livres, e um intervalo ocupado remove o slot só do profissional ocupado
-- [ ] `isSlotAligned` rejeita início fora do grid, fora da janela e em weekday sem janela
-- [ ] Nenhum import de `mongoose` em `scheduling.ts`
+- [x] `wallClockToUtc('2026-09-15','21:00')` → `2026-09-16T00:00:00.000Z`, e `timeInDisplayTz` do resultado → `'21:00'`; o mesmo teste com fuso ≠ SP passado explicitamente prova que não há `-03:00` cravado
+- [x] Duas janelas no mesmo dia geram slots das duas e nenhum no intervalo; slot que não cabe inteiro na janela não é gerado
+- [x] `computeFreeSlots` descarta início a menos de 60 min de `now`, respeita `maxSlots`, lista por slot só os profissionais livres, e um intervalo ocupado remove o slot só do profissional ocupado
+- [x] `isSlotAligned` rejeita início fora do grid, fora da janela e em weekday sem janela
+- [x] Nenhum import de `mongoose` em `scheduling.ts`
 
 **Tests**: unit · **Gate**: quick
+**Status**: ✅ Complete (commit 603c4dc)
 
 ---
 
@@ -160,10 +161,11 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-01, SCH-05
 
 **Done when**:
-- [ ] `name`/`slotDurationMinutes`/`weeklySchedule` obrigatórios; `slotDurationMinutes` fora de `5..480` e `weekday` fora de `0..6` rejeitados; `active` default `true`
-- [ ] Índice `{Tenant:1, active:1}`; exportado no barrel e em `syncIndexes`
+- [x] `name`/`slotDurationMinutes`/`weeklySchedule` obrigatórios; `slotDurationMinutes` fora de `5..480` e `weekday` fora de `0..6` rejeitados; `active` default `true`
+- [x] Índice `{Tenant:1, active:1}`; exportado no barrel e em `syncIndexes`
 
 **Tests**: integration · **Gate**: full
+**Status**: ✅ Complete (commit d5247de)
 
 ---
 
@@ -176,9 +178,10 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-04
 
 **Done when**:
-- [ ] `name` obrigatório, `active` default `true`, índice `{Tenant:1, active:1}`, barrel e `syncIndexes`
+- [x] `name` obrigatório, `active` default `true`, índice `{Tenant:1, active:1}`, barrel e `syncIndexes`
 
 **Tests**: integration · **Gate**: full
+**Status**: ✅ Complete (commit ff4ea76)
 
 ---
 
@@ -191,9 +194,10 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-06
 
 **Done when**:
-- [ ] Segundo documento do mesmo tenant → E11000; `maxSlotsPerResponse` inteiro `1..50`, default `16`
+- [x] Segundo documento do mesmo tenant → E11000; `maxSlotsPerResponse` inteiro `1..50`, default `16`
 
 **Tests**: integration · **Gate**: full
+**Status**: ✅ Complete (commit e5c3f40)
 
 ---
 
@@ -206,11 +210,12 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-20, SCH-21, SCH-33
 
 **Done when**:
-- [ ] `customer` obrigatório só com `kind:'appointment'` (bloqueio sem cliente é válido; agendamento sem cliente é rejeitado); `status` com os 6 valores; `source` `ai|operator`
-- [ ] Índice único parcial `{Tenant, professional, start}` com `status ∈ {pending, confirmed}`: 2ª inserção ativa no mesmo slot → E11000; após `canceled_by_customer`, nova inserção no slot é aceita; dois cancelados coexistem
-- [ ] `{Tenant:1,start:1}`, `{Tenant:1,customer:1,start:1}` e `confirmationTokenHash` único sparse
+- [x] `customer` obrigatório só com `kind:'appointment'` (bloqueio sem cliente é válido; agendamento sem cliente é rejeitado); `status` com os 6 valores; `source` `ai|operator`
+- [x] Índice único parcial `{Tenant, professional, start}` com `status ∈ {pending, confirmed}`: 2ª inserção ativa no mesmo slot → E11000; após `canceled_by_customer`, nova inserção no slot é aceita; dois cancelados coexistem
+- [x] `{Tenant:1,start:1}`, `{Tenant:1,customer:1,start:1}` e `confirmationTokenHash` único sparse
 
 **Tests**: integration · **Gate**: full
+**Status**: ✅ Complete (commit bff51c4)
 
 ---
 
