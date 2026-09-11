@@ -14,12 +14,13 @@ import { Order } from './models/order.model.js';
 import { Payment } from './models/payment.model.js';
 import { Process } from './models/process.model.js';
 import { Product } from './models/product.model.js';
+import { Professional } from './models/professional.model.js';
 import { Session } from './models/session.model.js';
 import { Tenant } from './models/tenant.model.js';
 import { User } from './models/user.model.js';
 
 describe('syncIndexes', () => {
-  it('calls createIndexes on the 17 models', async () => {
+  it('calls createIndexes on the 18 models', async () => {
     const spies = [
       Tenant,
       User,
@@ -30,6 +31,7 @@ describe('syncIndexes', () => {
       Customer,
       Process,
       Product,
+      Professional,
       Order,
       Payment,
       AsaasIntegration,
