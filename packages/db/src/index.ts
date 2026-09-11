@@ -48,6 +48,8 @@ export type { ProfessionalDocument } from './models/professional.model.js';
 export { Professional } from './models/professional.model.js';
 export type { SessionDocument } from './models/session.model.js';
 export { Session } from './models/session.model.js';
+export type { SpaceDocument } from './models/space.model.js';
+export { Space } from './models/space.model.js';
 export type { TenantDocument, TenantStatus } from './models/tenant.model.js';
 export { Tenant, transitionTenantStatus } from './models/tenant.model.js';
 export type { UserDocument } from './models/user.model.js';
@@ -88,6 +90,7 @@ import { Process } from './models/process.model.js';
 import { Product } from './models/product.model.js';
 import { Professional } from './models/professional.model.js';
 import { Session } from './models/session.model.js';
+import { Space } from './models/space.model.js';
 import { Tenant } from './models/tenant.model.js';
 import { User } from './models/user.model.js';
 
@@ -103,6 +106,7 @@ export const syncIndexes = async (): Promise<void> => {
     Process.createIndexes(),
     Product.createIndexes(),
     Professional.createIndexes(),
+    Space.createIndexes(),
     Order.createIndexes(),
     Payment.createIndexes(),
     AsaasIntegration.createIndexes(),
