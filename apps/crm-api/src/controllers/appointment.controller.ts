@@ -94,3 +94,63 @@ export const deleteBlock = async (req: Request, res: Response, next: NextFunctio
     handleServiceError(e, next);
   }
 };
+
+// SCH-32: cancelamento pelo operador, motivo opcional já validado por
+// cancelAppointmentSchema (router). `userId` vem sempre de
+// req.tenantUser.user, nunca do corpo (AD-010).
+export const cancelAppointment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const result = await appointmentService.cancelAppointment(
+      req.tenantUser.tenant as string,
+      req.params.id as string,
+      req.tenantUser.user as string,
+      (req.body as { reason?: string }).reason,
+    );
+    res.json(respObj({ data: result }));
+  } catch (e) {
+    handleServiceError(e, next);
+  }
+};
+
+// SCH-31: remarcação — mesmo Appointment, novo horário (hora de parede).
+export const rescheduleAppointment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const result = await appointmentService.rescheduleAppointment(
+      req.tenantUser.tenant as string,
+      req.params.id as string,
+      req.body,
+    );
+    res.json(respObj({ data: result }));
+  } catch (e) {
+    handleServiceError(e, next);
+  }
+};
+
+// SCH-34: comparecimento — `status` já validado por markAttendanceSchema
+// (router, só completed|no_show).
+export const markAttendance = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const result = await appointmentService.markAttendance(
+      req.tenantUser.tenant as string,
+      req.params.id as string,
+      req.tenantUser.user as string,
+      (req.body as { status: 'completed' | 'no_show' }).status,
+    );
+    res.json(respObj({ data: result }));
+  } catch (e) {
+    handleServiceError(e, next);
+  }
+};
+
+// SCH-37: "Pedir confirmação" — devolve o link wa.me com um token apt_… novo.
+export const requestConfirmationLink = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const result = await appointmentService.requestConfirmationLink(
+      req.tenantUser.tenant as string,
+      req.params.id as string,
+    );
+    res.json(respObj({ data: result }));
+  } catch (e) {
+    handleServiceError(e, next);
+  }
+};

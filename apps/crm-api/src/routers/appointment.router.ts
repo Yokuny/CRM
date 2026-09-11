@@ -1,4 +1,11 @@
-import { createAppointmentSchema, createBlockSchema, idSchema } from '@crm/contracts';
+import {
+  cancelAppointmentSchema,
+  createAppointmentSchema,
+  createBlockSchema,
+  idSchema,
+  markAttendanceSchema,
+  rescheduleAppointmentSchema,
+} from '@crm/contracts';
 import type { RequestHandler } from 'express';
 import { Router } from 'express';
 import { z } from 'zod';
@@ -14,6 +21,7 @@ const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 const MAX_RANGE_DAYS = 42;
 
 const blockIdParamSchema = z.object({ id: idSchema }).strict();
+const appointmentIdParamSchema = z.object({ id: idSchema }).strict();
 
 // SCH-29: `from`/`to` em hora de exibição (`to` EXCLUSIVO, design.md);
 // `professional`/`space` opcionais. Faixa > 42 dias -> 400 aqui mesmo, antes
@@ -107,6 +115,45 @@ export const createAppointmentRouter = (deps: AppointmentRouterDeps): Router => 
     canOperate,
     validParams(blockIdParamSchema),
     appointmentController.deleteBlock,
+  );
+
+  router.post(
+    '/:id/cancel',
+    deps.validToken,
+    tenantAssignmentCheck,
+    canOperate,
+    validParams(appointmentIdParamSchema),
+    validBody(cancelAppointmentSchema),
+    appointmentController.cancelAppointment,
+  );
+
+  router.post(
+    '/:id/reschedule',
+    deps.validToken,
+    tenantAssignmentCheck,
+    canOperate,
+    validParams(appointmentIdParamSchema),
+    validBody(rescheduleAppointmentSchema),
+    appointmentController.rescheduleAppointment,
+  );
+
+  router.post(
+    '/:id/attendance',
+    deps.validToken,
+    tenantAssignmentCheck,
+    canOperate,
+    validParams(appointmentIdParamSchema),
+    validBody(markAttendanceSchema),
+    appointmentController.markAttendance,
+  );
+
+  router.post(
+    '/:id/confirmation-link',
+    deps.validToken,
+    tenantAssignmentCheck,
+    canOperate,
+    validParams(appointmentIdParamSchema),
+    appointmentController.requestConfirmationLink,
   );
 
   return router;
