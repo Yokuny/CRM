@@ -9,33 +9,41 @@ sequência de entrega em [`docs/roadmap.md`](roadmap.md).
 ## Visão geral
 
 ```
-        WhatsApp (Meta Cloud API)
-                 │  webhook
-                 ▼
-        ┌──────────────────┐            ┌──────────────────┐
-        │   ai-gateway     │            │     crm-api      │
-        │ ────────────────  │            │ ──────────────── │
-        │ webhook + idemp. │            │ auth + tenancy   │
-        │ harness Claude   │            │ processos/campos │
-        │ guardrails       │            │ catálogo/pedidos │
-        │ consumidor outbox│            │ WS inbox + poller│
-        └────────┬─────────┘            └────────┬─────────┘
-                 │        mesma connection string │
-                 └───────────────┬────────────────┘
-                                 ▼
-                          MongoDB (único)
-                                 ▲
-                                 │ HTTP + WS
-                          ┌──────┴──────┐
-                          │     web     │
-                          └─────────────┘
+      WhatsApp (Meta Cloud API) Asaas (Pix)
+                 │ webhook         │ webhook
+                 ▼                 ▼
+        ┌──────────────────────────────┐      ┌──────────────────────┐
+        │          ai-gateway          │      │       crm-api        │
+        │ ──────────────────────────── │      │ ──────────────────── │
+        │ webhooks Meta/Asaas + idemp. │      │ auth + tenancy       │
+        │ harness Claude + guardrails  │      │ processos/campos     │
+        │ outbox, reaper, idle sweep   │      │ catálogo/pedidos     │
+        │ reconciliação Asaas          │      │ config Asaas         │
+        └──────────────┬───────────────┘      │ WS inbox + poller    │
+                       │                      └──────────┬───────────┘
+                       │  mesma connection string        │
+                       └────────────────┬────────────────┘
+                                        ▼
+                                 MongoDB (único)
+                                        ▲
+                                        │ HTTP + WS
+                                 ┌──────┴──────┐
+                                 │     web     │
+                                 └─────────────┘
 ```
 
 **Os dois serviços nunca se chamam.** Toda coordenação passa pelo Mongo, com dono único
 de escrita por *write-path* — a granularidade é a fatia de escrita, não sempre a
-collection inteira; três collections (`customers`, `processes`, `orders`) já têm os dois
-serviços escrevendo, cada um só na sua fatia (ver tabela abaixo e
-[AD-032](../.specs/STATE.md)). O front fala HTTP e WebSocket apenas com o `crm-api`.
+collection inteira. Três collections (`customers`, `processes`, `orders`) já têm os dois
+serviços escrevendo, cada um só na sua fatia, e o `stock` de `products` muda pelas
+transições compartilhadas de `packages/db` que os dois chamam (ver tabela abaixo,
+[AD-032](../.specs/STATE.md#ad-032) e [AD-033](../.specs/STATE.md#ad-033)). O front fala
+HTTP e WebSocket apenas com o `crm-api`.
+
+Chamadas para fora: o `ai-gateway` envia mensagens pela Meta Cloud API e cria e consulta
+cobranças no Asaas. O `crm-api` só fala com o Asaas quando o admin salva a chave do tenant
+(validação e registro do webhook), com um client próprio e pequeno
+([AD-034](../.specs/STATE.md#ad-034)).
 
 ---
 
@@ -44,26 +52,29 @@ serviços escrevendo, cada um só na sua fatia (ver tabela abaixo e
 ```
 CRM/
 ├── apps/
-│   ├── crm-api/          Express + Mongoose — CRM, tenancy, auth, catálogo, inbox (WS)
-│   ├── ai-gateway/       Express + Mongoose — webhook Meta, harness, fila de envio
+│   ├── crm-api/          Express + Mongoose — CRM, tenancy, auth, catálogo/pedidos, config Asaas, inbox (WS)
+│   ├── ai-gateway/       Express + Mongoose — webhooks Meta/Asaas, harness, fila de envio, reconciliação
 │   └── web/              Vite + React 19 + TanStack Router/Query + ShadCN + Tailwind 4
 ├── packages/
 │   ├── contracts/        Schemas Zod + tipos de domínio (fonte da verdade única)
-│   ├── db/               Models Mongoose + conexão + índices (dono único dos schemas)
+│   ├── db/               Models Mongoose + conexão + índices + transições compartilhadas
 │   ├── field-engine/     Motor de campos dinâmicos — isomórfico
 │   └── ai-kit/           Cliente Anthropic, loop de tools, guardrails, montagem de prompt
-├── evals/                Golden set + runner + replay anonimizado
+├── evals/                Golden set determinístico + runner (replay: feature 11)
 └── docs/
 ```
 
-Nenhum app declara model Mongoose próprio — todos vêm de `packages/db`.
+Nenhum app declara model Mongoose próprio — todos vêm de `packages/db`. O mesmo vale para
+transição de negócio multi-documento que os dois serviços disparam
+(`orderTransitions.ts`, `paymentTransitions.ts`): mora uma vez só em `packages/db`
+([AD-033](../.specs/STATE.md#ad-033)).
 
 ---
 
 ## Propriedade de escrita por collection
 
-Invariante do projeto ([ADR-0002](adr/0002-dois-servicos-um-mongo-sem-chamada-entre-eles.md)).
-Ninguém escreve na collection do outro.
+Invariante do projeto ([ADR-0002](adr/0002-dois-servicos-um-mongo-sem-chamada-entre-eles.md)),
+refinado por [AD-032](../.specs/STATE.md#ad-032): ninguém escreve na fatia do outro.
 
 | Collection | Escreve | Lê |
 |---|---|---|
@@ -74,12 +85,15 @@ Ninguém escreve na collection do outro.
 | `customers` | `crm-api` (CRUD do operador) e `ai-gateway` (`find_or_create_customer`) — cada um só na sua fatia, ver [AD-032](../.specs/STATE.md) | ambos |
 | `processes` | `crm-api` (CRUD do operador) e `ai-gateway` (`open_process`, `set_process_fields`) — cada um só na sua fatia, ver [AD-032](../.specs/STATE.md) | ambos |
 | `fieldTemplates`, `fieldTemplateVersions` | `crm-api` | ambos |
-| `products` | `crm-api` | ambos |
-| `orders` | `crm-api` (aprovar/rejeitar) e `ai-gateway` (`create_order`: criação e confirmação do cliente) — transição `pending_approval→confirmed` centralizada em `packages/db` (`orderTransitions.ts`), nunca duplicada por app, ver [AD-032](../.specs/STATE.md)/[AD-033](../.specs/STATE.md) | ambos |
+| `products` | `crm-api` (CRUD do catálogo). O `stock` também muda pelas transições compartilhadas de `packages/db`: reserva na confirmação do pedido (`orderTransitions.ts`, chamada pelos dois serviços) e devolução na expiração do pagamento (`paymentTransitions.ts`, só o `ai-gateway`) | ambos |
+| `orders` | `crm-api` (aprovar/rejeitar) e `ai-gateway` (`create_order`: criação e confirmação do cliente; `payment_expired` pelo worker de reconciliação) — transições centralizadas em `packages/db` (`orderTransitions.ts`, `paymentTransitions.ts`), nunca duplicadas por app, ver [AD-032](../.specs/STATE.md#ad-032)/[AD-033](../.specs/STATE.md#ad-033) | ambos |
+| `payments` | `ai-gateway` (`issue_payment_link`, webhook do Asaas, worker de reconciliação), ver [AD-034](../.specs/STATE.md#ad-034) | ambos (`crm-api` só lê, para o badge em Pedidos) |
+| `asaasEvents` | `ai-gateway` (webhook do Asaas e worker de reconciliação) | `ai-gateway` |
+| `asaasIntegrations` | `crm-api` (configuração da chave pelo admin do tenant) | ambos |
 | `tenants`, `users`, `channels` | `crm-api` | ambos |
 | `invites` | `crm-api` | `crm-api` |
 | `sessions` | `crm-api` | `crm-api` |
-| `boards` (kanban) | `crm-api` | `crm-api` |
+| `boards` (kanban, feature 10 — ainda não existe) | `crm-api` | `crm-api` |
 
 ---
 
@@ -116,6 +130,24 @@ reaper: 'sending' há mais de N segundos → volta a 'queued'
 crm-api: poller ~2s sobre messages, updatedAt > lastTick,
          SÓ para tenants com socket conectado
   → fan-out em salas WS tenant:conversation
+```
+
+### Pedido e pagamento
+
+```
+cliente pede na conversa
+  → create_order (1ª chamada) → Order pending_approval
+  → cliente confirma → create_order (2ª chamada) → customerConfirmed   ┐ em qualquer
+  → operador aprova no crm-api → operatorApproved                     ┘ ordem
+  → quem completar a 2ª condição: reserva atômica de estoque → confirmed
+      falta estoque → segue pending_approval com confirmFailureReason
+  → operador rejeita → rejected (terminal, estoque intocado)
+
+Order confirmed
+  → issue_payment_link → cobrança Pix no Asaas → Payment pending
+  → webhook Asaas → dedup por AsaasEvent → status aplicado sem regredir → paid
+reconciliação (ai-gateway): retenta AsaasEvent failed; consulta todo Payment pending;
+  pending há mais de 24h → expired, devolve estoque, Order → payment_expired
 ```
 
 ---
@@ -205,7 +237,7 @@ Pipeline de etapas puras em `packages/ai-kit`:
 | `guard.input` | Rate limit por contato, tamanho e tipo de mídia, injeção de prompt, blocklist |
 | `context.build` | System **congelado** + bloco dinâmico no turno de usuário + janela de histórico com sumário rolante |
 | `loop` | Tool runner com `ToolContext` server-side, teto de iterações, `TenantScopedRepo` |
-| `guard.output` | Vazamento entre contatos, preço só de tool result desta conversa, tamanho, IDs internos |
+| `guard.output` | Vazamento entre contatos, preço só de tool result do mesmo turno (senão `[removido]`), tamanho, IDs internos |
 | `persist` | Mensagens, sessão, escritas no CRM |
 | `dispatch` | Insere na outbox |
 
@@ -215,8 +247,12 @@ Pipeline de etapas puras em `packages/ai-kit`:
 `find_or_create_customer`, `open_process`, `set_process_fields`, `get_order_status`,
 `get_available_slots`, `book_appointment`.
 
-**Anel B (exige aprovação):** `create_order`, `issue_payment_link` — gravam
-`pending_approval` e exigem confirmação explícita do cliente **e** liberação do operador.
+**Anel B (exige aprovação):** `create_order` grava `pending_approval` e só vira `confirmed`
+com confirmação explícita do cliente **e** liberação do operador; `issue_payment_link` só
+emite cobrança para pedido já `confirmed`. Os dois gates vivem em código, não no prompt.
+
+8 das 10 tools estão implementadas; `get_available_slots` e `book_appointment` chegam com a
+feature 9 (`scheduling`).
 
 A superfície é fixa e idêntica entre tenants. O schema dinâmico chega por tool *result*
 ([ADR-0004](adr/0004-superficie-de-tools-fixa.md)).
@@ -265,8 +301,19 @@ Do [`DentalEase` front](../../DentalEase/DentalEase/CLAUDE.md):
 | Isolamento de tenant | Dois tenants espelhados, nenhuma rota/tool/query cruza dado; teste estrutural varre `input_schema` por campo de tenant |
 | Canal | Mesmo webhook duas vezes → uma `Message`; dois consumidores na mesma outbox → um envio; fora da janela de 24h → erro legível na UI |
 | Inbox | Dois operadores recebem pelo WS; takeover silencia o bot; ociosidade devolve a `bot` |
-| Dinheiro | `issue_payment_link` não é chamada antes da confirmação; pedido nasce `pending_approval` |
+| Dinheiro | `issue_payment_link` não cobra pedido que não esteja `confirmed`; pedido nasce `pending_approval`; webhook repetido do Asaas processa uma vez; status de pagamento não regride; `Payment` pendente há mais de 24h expira e devolve o estoque |
 | Caching | Dois requests idênticos; `skip` explícito enquanto o prefixo estiver abaixo do mínimo do Haiku 4.5 |
 
-Comandos: `pnpm run check` (typecheck) · `pnpm run format` (Biome) · `pnpm test` ·
-`pnpm run evals` · `docker compose up` sobe Mongo e os dois serviços.
+Comandos (na raiz):
+
+- `pnpm run check` — Build gate completo (`tsc --noEmit` + `biome check .` + `vitest run`), o mesmo da CI
+- `pnpm vitest run --project unit --project structural` — Quick gate
+- `pnpm run evals` — golden set
+- `pnpm run format` — Biome
+
+Dev local: `pnpm --filter <crm-api|ai-gateway|web> run dev`, com um MongoDB rodando à parte
+(não há `docker-compose` no repo). Todos usam o `.env` único da raiz
+([AD-018](../.specs/STATE.md#ad-018)): o `web` lê via `envDir`, mas os backends não carregam
+arquivo nenhum sozinhos — as variáveis precisam estar no ambiente (ex.:
+`tsx watch --env-file=<raiz>/.env src/server.ts`). Primeiro admin de plataforma:
+`pnpm --filter crm-api run seed:platform-admin`.
