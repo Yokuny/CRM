@@ -82,6 +82,9 @@ defaults do agente, cada um com justificativa.
 | Limites da IA valem para o operador? | Não — o operador pode encaixar fora da grade, sem horizonte, sem antecedência mínima e com mais de um agendamento por cliente; a única regra que continua valendo é não sobrepor o mesmo profissional | Encaixe é operação real de balcão; os tetos existem para conter a IA, não a pessoa. Sobreposição do mesmo profissional continua barrada porque é impossível no mundo físico | n |
 | Papel exigido nas rotas novas do CRM | Mesmo `canOperate` (`admin`\|`gestor`\|`operador`) já usado em `product.router.ts`/`order.router.ts` | Reuso direto da convenção ativa | n |
 | Validade do token de confirmação | Expira no fim do agendamento; pedir de novo invalida o anterior | Um token que sobrevive ao atendimento não serve para nada e só aumenta a superfície. Reemissão substituir o anterior é o comportamento da referência (`postPasskey` apaga o anterior) | n |
+| Status depois de remarcação pelo operador | Volta para `pending`, limpa `confirmedAt` e a validade do token acompanha o novo `end` | A confirmação do cliente valia para o horário antigo; manter `confirmed` num horário que ele nunca confirmou seria informação falsa para o operador. Achado na fase Tasks ao detalhar SCH-31 | n |
+| Duração ao remarcar | Preservada (`end − start` original), mesmo trocando de profissional | Mesmo princípio do Edge Case "mudar a duração do profissional não reescreve agendamento já marcado" | n |
+| Faixa de `maxSlotsPerResponse` | Inteiro `1..50` | Teto de sanidade, mesma lógica do `1..100` de quantidade em `create_order`: 50 horários já é mais do que cabe numa mensagem legível de WhatsApp | n |
 
 **Open questions:** nenhuma — tudo resolvido ou logado acima.
 
@@ -343,54 +346,54 @@ independente, do mesmo jeito que a feature 8 separou a visibilidade de pagamento
 
 ## Requirement Traceability
 
-| Requirement ID | Story | Phase | Status |
-| --- | --- | --- | --- |
-| SCH-01 | P1: Configuração de agenda | Design | Pending |
-| SCH-02 | P1: Configuração de agenda | Design | Pending |
-| SCH-03 | P1: Configuração de agenda | Design | Pending |
-| SCH-04 | P1: Configuração de agenda | Design | Pending |
-| SCH-05 | P1: Configuração de agenda | Design | Pending |
-| SCH-06 | P1: Configuração de agenda | Design | Pending |
-| SCH-07 | P1: Configuração de agenda | Design | Pending |
-| SCH-08 | P1: Configuração de agenda | Design | Pending |
-| SCH-09 | P1: Consulta e agendamento pela conversa | Design | Pending |
-| SCH-10 | P1: Consulta e agendamento pela conversa | Design | Pending |
-| SCH-11 | P1: Consulta e agendamento pela conversa | Design | Pending |
-| SCH-12 | P1: Consulta e agendamento pela conversa | Design | Pending |
-| SCH-13 | P1: Consulta e agendamento pela conversa | Design | Pending |
-| SCH-14 | P1: Consulta e agendamento pela conversa | Design | Pending |
-| SCH-15 | P1: Consulta e agendamento pela conversa | Design | Pending |
-| SCH-16 | P1: Consulta e agendamento pela conversa | Design | Pending |
-| SCH-17 | P1: Consulta e agendamento pela conversa | Design | Pending |
-| SCH-18 | P1: Consulta e agendamento pela conversa | Design | Pending |
-| SCH-19 | P1: Consulta e agendamento pela conversa | Design | Pending |
-| SCH-20 | P1: Consulta e agendamento pela conversa | Design | Pending |
-| SCH-21 | P1: Confirmação pelo cliente | Design | Pending |
-| SCH-22 | P1: Confirmação pelo cliente | Design | Pending |
-| SCH-23 | P1: Confirmação pelo cliente | Design | Pending |
-| SCH-24 | P1: Confirmação pelo cliente | Design | Pending |
-| SCH-25 | P1: Confirmação pelo cliente | Design | Pending |
-| SCH-26 | P1: Confirmação pelo cliente | Design | Pending |
-| SCH-27 | P1: Confirmação pelo cliente | Design | Pending |
-| SCH-28 | P1: Confirmação pelo cliente | Design | Pending |
-| SCH-29 | P1: Operação da agenda no CRM | Design | Pending |
-| SCH-30 | P1: Operação da agenda no CRM | Design | Pending |
-| SCH-31 | P1: Operação da agenda no CRM | Design | Pending |
-| SCH-32 | P1: Operação da agenda no CRM | Design | Pending |
-| SCH-33 | P1: Operação da agenda no CRM | Design | Pending |
-| SCH-34 | P1: Operação da agenda no CRM | Design | Pending |
-| SCH-35 | P1: Operação da agenda no CRM | Design | Pending |
-| SCH-36 | P1: Operação da agenda no CRM | Design | Pending |
-| SCH-37 | P1: Operação da agenda no CRM | Design | Pending |
-| SCH-38 | P2: Inbox e aviso automático | Design | Pending |
-| SCH-39 | P2: Inbox e aviso automático | Design | Pending |
-| SCH-40 | P2: Inbox e aviso automático | Design | Pending |
+| Requirement ID | Story | Phase | Status | Task(s) |
+| --- | --- | --- | --- | --- |
+| SCH-01 | P1: Configuração de agenda | Tasks | In Tasks | T2, T13, T14, T15 |
+| SCH-02 | P1: Configuração de agenda | Tasks | In Tasks | T10, T14, T15, T33 |
+| SCH-03 | P1: Configuração de agenda | Tasks | In Tasks | T10, T14, T15, T33 |
+| SCH-04 | P1: Configuração de agenda | Tasks | In Tasks | T3, T11, T16, T17, T35 |
+| SCH-05 | P1: Configuração de agenda | Tasks | In Tasks | T2, T13, T14, T15, T34 |
+| SCH-06 | P1: Configuração de agenda | Tasks | In Tasks | T4, T11, T18, T19, T36 |
+| SCH-07 | P1: Configuração de agenda | Tasks | In Tasks | T15, T17, T19, T24 |
+| SCH-08 | P1: Configuração de agenda | Tasks | In Tasks | T32, T33, T34, T35, T36, T43 |
+| SCH-09 | P1: Consulta e agendamento pela conversa | Tasks | In Tasks | T1, T26, T30 |
+| SCH-10 | P1: Consulta e agendamento pela conversa | Tasks | In Tasks | T26 |
+| SCH-11 | P1: Consulta e agendamento pela conversa | Tasks | In Tasks | T1, T26 |
+| SCH-12 | P1: Consulta e agendamento pela conversa | Tasks | In Tasks | T26 |
+| SCH-13 | P1: Consulta e agendamento pela conversa | Tasks | In Tasks | T26 |
+| SCH-14 | P1: Consulta e agendamento pela conversa | Tasks | In Tasks | T26 |
+| SCH-15 | P1: Consulta e agendamento pela conversa | Tasks | In Tasks | T6, T27, T29, T30, T31 |
+| SCH-16 | P1: Consulta e agendamento pela conversa | Tasks | In Tasks | T1, T6, T27, T31 |
+| SCH-17 | P1: Consulta e agendamento pela conversa | Tasks | In Tasks | T6, T27 |
+| SCH-18 | P1: Consulta e agendamento pela conversa | Tasks | In Tasks | T6, T27 |
+| SCH-19 | P1: Consulta e agendamento pela conversa | Tasks | In Tasks | T27, T28 |
+| SCH-20 | P1: Consulta e agendamento pela conversa | Tasks | In Tasks | T5, T6, T31 |
+| SCH-21 | P1: Confirmação pelo cliente | Tasks | In Tasks | T5, T6, T20 |
+| SCH-22 | P1: Confirmação pelo cliente | Tasks | In Tasks | T22, T42 |
+| SCH-23 | P1: Confirmação pelo cliente | Tasks | In Tasks | T7, T22, T42 |
+| SCH-24 | P1: Confirmação pelo cliente | Tasks | In Tasks | T6, T25 |
+| SCH-25 | P1: Confirmação pelo cliente | Tasks | In Tasks | T7, T22, T42 |
+| SCH-26 | P1: Confirmação pelo cliente | Tasks | In Tasks | T7, T22, T42 |
+| SCH-27 | P1: Confirmação pelo cliente | Tasks | In Tasks | T7, T22 |
+| SCH-28 | P1: Confirmação pelo cliente | Tasks | In Tasks | T42 |
+| SCH-29 | P1: Operação da agenda no CRM | Tasks | In Tasks | T21, T24, T37, T38, T39, T43 |
+| SCH-30 | P1: Operação da agenda no CRM | Tasks | In Tasks | T8, T12, T23, T24, T40 |
+| SCH-31 | P1: Operação da agenda no CRM | Tasks | In Tasks | T9, T12, T23, T25, T40 |
+| SCH-32 | P1: Operação da agenda no CRM | Tasks | In Tasks | T9, T12, T23, T25, T40 |
+| SCH-33 | P1: Operação da agenda no CRM | Tasks | In Tasks | T5, T8, T12, T23, T24, T41 |
+| SCH-34 | P1: Operação da agenda no CRM | Tasks | In Tasks | T9, T12, T23, T25, T40 |
+| SCH-35 | P1: Operação da agenda no CRM | Tasks | In Tasks | T21, T38 |
+| SCH-36 | P1: Operação da agenda no CRM | Tasks | In Tasks | T6, T7, T8, T9 |
+| SCH-37 | P1: Operação da agenda no CRM | Tasks | In Tasks | T20, T23, T25, T40 |
+| SCH-38 | P2: Inbox e aviso automático | Tasks | In Tasks | T21, T24, T37, T46 |
+| SCH-39 | P2: Inbox e aviso automático | Tasks | In Tasks | T44 |
+| SCH-40 | P2: Inbox e aviso automático | Tasks | In Tasks | T44, T45 |
 
 **ID format:** `SCH-[NUMBER]`
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Verified
 
-**Coverage:** 40 total, 0 mapped to tasks ⚠️ (mapeamento acontece na fase Tasks)
+**Coverage:** 40 total, 40 mapped to tasks (`.specs/features/scheduling/tasks.md`, T1–T47), 0 unmapped
 
 ---
 

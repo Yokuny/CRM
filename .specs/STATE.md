@@ -295,103 +295,47 @@ de AD-014 em diante, a entrada abaixo é o registro completo (indexada no mesmo 
 - **Scope**: todo o projeto — `packages/db` (`scheduling.ts`), `packages/ai-kit` (`contextBuild.ts`), `apps/crm-api`, `apps/web`, e qualquer feature futura que grave data/hora.
 - **Date**: 2026-09-10
 - **Status**: active
+- **Correção (fase Tasks, 2026-09-11)**: o item (2) acima dizia que `DISPLAY_TIMEZONE` é exportada por `packages/db/src/scheduling.ts`. Ao planejar as telas, o grafo de dependências mostrou que o `apps/web` depende só de `@crm/contracts`/`@crm/field-engine` e nunca de `@crm/db` — importar `packages/db` levaria Mongoose para o bundle do navegador —, e o front precisa da mesma constante para exibir horário igual ao que a IA escreve, qualquer que seja o fuso do navegador. A constante passa a ser exportada por **`packages/contracts`** (o único pacote sem dependência `@crm`, importado pelos dois backends e pelo `web`); `packages/db/src/scheduling.ts` e `contextBuild.ts` a importam de lá. Consequência de fronteira, no mesmo espírito do item (4): a API do operador recebe data e hora **em hora de parede** (`YYYY-MM-DD` + `HH:mm`) e o servidor converte para UTC com a implementação única de `packages/db`; o `apps/web` só formata UTC → exibição, nunca converte no sentido contrário.
 
 ---
 
 ## Handoff
 
-- **Feature**: `payments-asaas` (feature 8 de 11) — **Execute completo e Verificado
-  (PASS)** neste worktree (`../CRM-payments-asaas`, branch `feature/payments-asaas`).
-  Todas as 31 tasks (T1–T31, 8 fases, P1+P2 juntos nesta sessão) implementadas, Build gate
-  cheio verde, Verifier independente (author≠verifier) rodou automaticamente após T31,
-  achou 1 gap (fix aplicado, ver abaixo), fechado sem precisar de novo ciclo completo.
-- **Phase / Task**: Specify/Discuss/Design/Tasks (sessão anterior) → Execute (esta sessão,
-  5 batches de sub-agentes, offer-then-confirm aceito pelo usuário no início, incluindo
-  Fase 8/P2 no mesmo Execute) → Verifier (automático, não prompted) → fix do único gap
-  achado (orquestrador, sem novo Verifier completo — justificativa abaixo). Todas as fases
-  completas.
-- **Completed**:
-  - **Batch 1** (Fase 1, T1–T6): models `Payment`/`AsaasIntegration`/`AsaasEvent`
-    (`packages/db`), campo aditivo `Customer.asaasCustomerId`, status aditivo
-    `Order.status:'payment_expired'`, `paymentTransitions.ts` (AD-034 — precedente
-    AD-033 — `applyAsaasPaymentStatus`/`expireOrderPayment`, rank-guard). 8 commits,
-    `27eb20d`..`daaf5fa`. 1108 testes verdes ao final do batch.
-  - **Batch 2** (Fase 2, T7–T12): CRUD completo de `asaasIntegration` em `apps/crm-api`
-    (env vars, `providers/asaasClient.ts`, schema Zod, repository/service/controller/router,
-    montado em `/asaas-integrations`) — valida chave ao vivo, criptografa, auto-detecta
-    ambiente, auto-registra webhook, mascara na leitura (mesmo padrão de `channel.*`).
-    6 commits, `c1fcd7d`..`2864079`. 1154 testes verdes.
-  - **Batch 3** (Fases 3–4, T13–T20): `AsaasClient` real em `apps/ai-gateway`
-    (conversão centavos↔reais na fronteira HTTP, retry/backoff), `ToolContext.asaasClient`,
-    `RunTurnOptions.asaasClient`, tool `issue_payment_link` (Anel B, gate estrutural
-    `confirmed`, idempotência, `Customer.asaasCustomerId` sob demanda), `get_order_status`
-    estendido, registro como 8ª tool + teste estrutural atualizado. 9 commits,
-    `32ab56d`..`a8c447a`. 1183 testes (1181 verdes / 2 falhas conhecidas e antecipadas —
-    ver Batch 4).
-  - **Batch 4** (Fases 5–7, T21–T28): `asaasWebhookAuth.middleware.ts` + `asaasWebhook.
-    router.ts` (dedup por `AsaasEvent`, rank-guard delegado, sempre 200), wiring no
-    `app.ts`/`webhook.router.ts` (Meta), worker `asaasReconcile.ts` (retry de eventos
-    falhos + poll de todo Payment pending per spec.md AC6 — decisão explícita de seguir a
-    AC, não a leitura mais restrita do design.md, documentada em código), start em
-    `server.ts`, golden set novo (`issuePaymentLinkGuardrails.int.test.ts`) + fix dos 2
-    golden sets antigos com superfície de tools hardcoded (`promptInjection`/`happyPath` —
-    o 2º achado pelo worker mesmo depois desta mesma sessão ter previsto erroneamente que
-    seria no-op, corrigido com investigação própria antes de confiar na briefing). 9
-    commits, `09d8671`..`508e7e0`. 1200 testes verdes — P1 (MVP) completo aqui.
-  - **Batch 5** (Fase 8/P2, T29–T31): `order.router.ts` já tinha o enum `payment_expired`
-    (achado do Batch 1/T5, sem mudança de schema, só teste e2e novo); `order.repository.ts`
-    enriquece leitura com `paymentStatus` (batch-lookup, nunca populate/N+1, AD-034: nunca
-    escreve `Payment`); `apps/web` mostra badge de pagamento na tela de Pedidos (3 estados +
-    ausente) e corrige o mirror `payment_expired` que ficava fora de escopo desde o Batch 1.
-    **Decisão registrada**: `order-card.tsx` (card inline do Inbox) foi deliberadamente
-    NÃO alterado — sua query já é hard-filtrada a `pending_approval` (decisão 5 do
-    `catalog-orders`, já testada), e `Payment` só existe para Order `confirmed`, então o AC
-    de status de pagamento é estruturalmente inatingível para este card específico sem
-    reverter aquela decisão já validada; o badge foi implementado na tela de Pedidos, que
-    cobre todos os status. 4 commits, `8976d77`..`409b133`. 1211 testes verdes, build de
-    `apps/web` verificado — todas as 31 tasks completas.
-  - **Verifier** (após T31): 18/18 ACs (`spec.md` tem 18 ACs em 5 histórias, não 1:1 com as
-    15 `PAY-ID`s) spec-anchored com evidência `file:line`, 0 spec-precision gaps, gate
-    1211/1211 verde. Sensor de discriminação EXPANDIDO (feature P0-adjacent — pagamento):
-    5 mutações, 4 mortas, **1 sobrevivente** — o filtro atômico `status:'pending'` de
-    `expireOrderPayment` (`paymentTransitions.ts:105`) nunca era exercitado por nenhum teste
-    porque o único teste de "2ª chamada" era sequencial (barrado antes por um guard de
-    leitura anterior, não pelo filtro atômico). Relatório completo:
-    `.specs/features/payments-asaas/validation.md`.
-  - **Fix do gap único** (orquestrador, commit `a9c6af7`): 1 teste novo em
-    `paymentTransitions.int.test.ts` forçando 2 chamadas genuinamente concorrentes
-    (`Promise.all`) contra o mesmo Payment `pending` — nenhuma mudança de código de
-    produção (o guard já estava correto). Confirmado manualmente que o teste mata a mutação
-    (reaplicada e revertida à mão) e que o gate completo segue verde (1212/1212, com 1 flake
-    transitório conhecido do `MongoMemoryServer` compartilhado — já documentado em AD-031 —
-    que limpou no retry, em arquivo não relacionado a esta feature). **Sem novo ciclo
-    completo de Verifier**: o próprio relatório já recomendava isso ("Given it is a single,
-    additive test with no code change required, this does not need a full fix→re-verify
-    cycle"), e a confirmação equivalente (mutação reaplicada e morta, gate completo verde)
-    foi feita diretamente — closure documentado como seção própria em `validation.md`,
-    preservando o relatório original do Verifier intacto. Traceability de `spec.md`
-    atualizada (`Implementing` → `Verified`, todas as 15 linhas). Lição candidata `L-027`
-    registrada (guard atômico de corrida precisa de teste com `Promise.all` genuíno, não
-    chamada sequencial — um teste sequencial pode passar mesmo com a condição do filtro
-    atômico removida, porque um guard de leitura anterior absorve o caso sequencial).
-- **In-progress**: nenhum. Feature completa e verificada (todas as 15 `PAY-ID`s Verified).
-- **Next step**: revisar o diff/branch e decidir sobre push + abertura de PR para `main`
-  (nenhum push feito ainda nesta sessão). Considerar UAT interativo do usuário nas telas
-  novas de `apps/web` (config de integração Asaas, badge de pagamento em Pedidos) antes ou
-  depois do merge, já que o Verifier automático não cobre essa camada. Após merge, feature
-  9 do roadmap é a próxima.
-- **Blockers**: nenhum.
-- **Uncommitted files**: nenhum — working tree limpo, 49 commits nesta sessão de Execute
-  (`d279789`..`e8d2642`, branch `feature/payments-asaas`, incluindo os 2 commits de docs
-  desta sessão que vieram antes do 1º task — AD-034 e spec/design/tasks — e os 3 commits de
-  fechamento pós-Verifier), todos com testes verdes no commit correspondente.
-- **Branch**: `feature/payments-asaas` (worktree `../CRM-payments-asaas`) — commits à
-  frente de `origin/feature/payments-asaas`, sem push ainda.
-- **Nota operacional — skill não registrada**: a skill `tlc-spec-driven` não aparece no
-  listing de skills desta sessão (arquivos existem em `tlc-spec-driven/` na raiz do repo,
-  versionados no git, mas não há `.claude/skills/` no CRM). Mesma resolução já usada nas
-  sessões anteriores: leitura manual de `SKILL.md` + `references/{implement,sub-agents,
-  coding-principles,validate,lessons}.md` no início desta sessão de Execute, sem registrar
-  em `.claude/skills/`. Nota adicional: `scripts/lessons.py` referenciado por `lessons.md`
-  na verdade vive em `tlc-spec-driven/scripts/lessons.py` (resolução relativa ao diretório
-  da skill, não à raiz do workspace) — confirmado funcionando a partir da raiz do repo.
+- **Feature**: `scheduling` (feature 9 de 11) — **planejamento completo (Specify → Discuss →
+  Design → Tasks); Execute NÃO iniciado**, parado por instrução do usuário. Artefatos em
+  `.specs/features/scheduling/`: `context.md` (4 zonas cinzentas, todas discutidas),
+  `spec.md` (40 requisitos `SCH-01..40`, 4 histórias P1 + 1 P2, todos mapeados), `design.md`
+  (abordagem confirmada: lógica compartilhada em `packages/db`, bloqueio na mesma coleção com
+  `kind`) e `tasks.md` (47 tasks em 9 fases).
+- **Phase / Task**: Tasks concluída. Próximo: Execute a partir de T1.
+- **Completed**: planejamento. Commits de docs em `feature/scheduling`: `23921e9` (context +
+  spec), `dbe988e` (design + AD-035/AD-036) e o commit de tasks + correções desta sessão.
+- **Decisões novas**: AD-035 (os dois apps escrevem `appointments`; índice único parcial como
+  garantia de dupla reserva, em vez de checar-antes-de-gravar) e AD-036 (convenção de tempo:
+  instante UTC, grade em hora de parede, `DISPLAY_TIMEZONE` em `packages/contracts` — com
+  bullet de correção da fase Tasks).
+- **Já verificado por execução no Design (não refazer)**: hora de parede → UTC via `Intl` em
+  duas passadas; `$in` em índice parcial no mongod 8.2.6; 5 reservas concorrentes → 1 vence;
+  token `apt_`+base62 sobrevive ao `guard.output` (base64url não).
+- **Correções pegas na fase Tasks** (já refletidas no design): `ToolContext` ganha
+  `webBaseUrl?`, porque nenhum pacote lê `process.env`; `DISPLAY_TIMEZONE` fica em `contracts`,
+  não em `db`, porque o `web` não importa `db` — e a API do operador passa a receber hora de
+  parede.
+- **In-progress**: nenhum.
+- **Next step**: revisar `tasks.md` (matriz de testes, gates, MCPs/skills) e iniciar o Execute
+  com a skill `tlc-spec-driven`, lendo `implement.md` inteiro antes. As 47 tasks empacotam em 8
+  lotes de ~7, então a oferta de sub-agentes (offer-then-confirm) vem antes da T1.
+- **Blockers**: nenhum. Pendência herdada da feature 8 (mergeada em `main` pelo PR #8): UAT
+  interativo do badge de pagamento na tela de Pedidos.
+- **Uncommitted files**: `docs/architecture.md` — atualização pós-feature-8 feita fora desta
+  sessão (visão geral com Asaas, `payments`/`asaasEvents`/`asaasIntegrations` na tabela de
+  propriedade, fluxo de pedido e pagamento, comandos reais). Não pertence a esta feature e ficou
+  fora dos commits de `scheduling` de propósito. A T47 edita o mesmo arquivo: commitar ou
+  descartar essa alteração antes do Execute chegar lá.
+- **Branch**: `feature/scheduling` — contém `41b5f79` (docs pós-feature-8, já em `main` pelo
+  PR #9) + os commits de planejamento desta sessão, sem push. `main` está em `e61f417`.
+- **Nota operacional — skill não registrada**: desde `114e0cc` a skill `tlc-spec-driven` vive
+  em `.claude/tlc-spec-driven/`, fora de `.claude/skills/`, e por isso não aparece no listing —
+  ler `SKILL.md` + `references/` manualmente. Lições:
+  `python3 .claude/tlc-spec-driven/scripts/lessons.py`. Os `tasks.md` das features 1–8 citam o
+  caminho antigo; são registro histórico, não atualizar.
