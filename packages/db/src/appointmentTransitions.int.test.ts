@@ -2,8 +2,10 @@ import mongoose from 'mongoose';
 import { describe, expect, it, vi } from 'vitest';
 import { useTestDb } from '../tests/helpers/db.helper.js';
 import type { AppointmentTransitionError, BookAppointmentSuccess } from './appointmentTransitions.js';
-import { bookAppointment, issueConfirmationToken } from './appointmentTransitions.js';
+import { bookAppointment, cancelByToken, confirmByToken, issueConfirmationToken } from './appointmentTransitions.js';
+import type { AppointmentDocument, AppointmentStatus } from './models/appointment.model.js';
 import { Appointment } from './models/appointment.model.js';
+import { hashToken } from './models/invite.model.js';
 import { Professional } from './models/professional.model.js';
 import { Space } from './models/space.model.js';
 import { dateInDisplayTz, timeInDisplayTz, wallClockToUtc } from './scheduling.js';
@@ -50,6 +52,26 @@ const alignedRelativeStart = (offsetMinutes: number): Date => {
   const mm = String(minutesInDay % 60).padStart(2, '0');
   return wallClockToUtc(targetDate, `${hh}:${mm}`);
 };
+
+// Cria um Appointment diretamente (sem passar por bookAppointment) para
+// exercitar confirmByToken/cancelByToken num estado arbitrário (ex.: token
+// já expirado, status terminal) sem depender da janela de validação de
+// bookAppointment.
+const seedAppointmentDirect = (
+  Tenant: mongoose.Types.ObjectId,
+  overrides: Partial<Record<string, unknown>> = {},
+): Promise<AppointmentDocument> =>
+  Appointment.create({
+    Tenant,
+    kind: 'appointment',
+    professional: new mongoose.Types.ObjectId(),
+    customer: new mongoose.Types.ObjectId(),
+    start: alignedRelativeStart(FAR_FUTURE_OFFSET),
+    end: alignedRelativeStart(FAR_FUTURE_OFFSET + 30),
+    status: 'pending' as AppointmentStatus,
+    source: 'ai' as const,
+    ...overrides,
+  });
 
 describe('appointmentTransitions — bookAppointment (SCH-15..18, SCH-20, SCH-24, SCH-36)', () => {
   useTestDb();
@@ -376,5 +398,178 @@ describe('appointmentTransitions — issueConfirmationToken (SCH-24)', () => {
 
     const wrongTenant = await issueConfirmationToken(intruderTenant.toString(), appointment._id.toString());
     expect(wrongTenant).toMatchObject({ code: 'not_found' });
+  });
+});
+
+describe('appointmentTransitions — confirmByToken / cancelByToken (SCH-23, SCH-25, SCH-26, SCH-27, SCH-36)', () => {
+  useTestDb();
+
+  it('nenhuma das duas funções aceita id de agendamento — assinatura é (tokenHash) apenas', () => {
+    expect(confirmByToken.length).toBe(1);
+    expect(cancelByToken.length).toBe(1);
+  });
+
+  describe('confirmByToken', () => {
+    it('pending -> confirmed com confirmedAt', async () => {
+      const Tenant = new mongoose.Types.ObjectId();
+      const token = 'plain-token-1';
+      await seedAppointmentDirect(Tenant, { confirmationTokenHash: hashToken(token) });
+
+      const result = await confirmByToken(hashToken(token));
+
+      expect(isError(result)).toBe(false);
+      const confirmed = result as AppointmentDocument;
+      expect(confirmed.status).toBe('confirmed');
+      expect(confirmed.confirmedAt).toBeInstanceOf(Date);
+    });
+
+    it('repetir sobre já confirmado responde o mesmo estado sem erro (SCH-25)', async () => {
+      const Tenant = new mongoose.Types.ObjectId();
+      const token = 'plain-token-2';
+      await seedAppointmentDirect(Tenant, { confirmationTokenHash: hashToken(token) });
+
+      const first = await confirmByToken(hashToken(token));
+      const second = await confirmByToken(hashToken(token));
+
+      expect(isError(first)).toBe(false);
+      expect(isError(second)).toBe(false);
+      expect((second as AppointmentDocument).status).toBe('confirmed');
+    });
+
+    it('hash inexistente -> not_found', async () => {
+      const result = await confirmByToken(hashToken('never-issued'));
+      expect(result).toMatchObject({ code: 'not_found' });
+    });
+
+    it('token expirado -> expired', async () => {
+      const Tenant = new mongoose.Types.ObjectId();
+      const token = 'plain-token-expired';
+      await seedAppointmentDirect(Tenant, {
+        confirmationTokenHash: hashToken(token),
+        confirmationExpiresAt: new Date(Date.now() - 60_000),
+      });
+
+      const result = await confirmByToken(hashToken(token));
+      expect(result).toMatchObject({ code: 'expired' });
+    });
+
+    it('ação sobre agendamento já terminal -> terminal, documento intacto', async () => {
+      const Tenant = new mongoose.Types.ObjectId();
+      const token = 'plain-token-terminal';
+      const seeded = await seedAppointmentDirect(Tenant, {
+        confirmationTokenHash: hashToken(token),
+        status: 'canceled_by_operator' as AppointmentStatus,
+      });
+
+      const result = await confirmByToken(hashToken(token));
+
+      expect(result).toMatchObject({ code: 'terminal' });
+      const reloaded = await Appointment.findById(seeded._id).lean();
+      expect(reloaded?.status).toBe('canceled_by_operator');
+    });
+
+    it('emite {event:"appointment_confirmed"} no sucesso (SCH-36)', async () => {
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+      const Tenant = new mongoose.Types.ObjectId();
+      const token = 'plain-token-log';
+      await seedAppointmentDirect(Tenant, { confirmationTokenHash: hashToken(token) });
+
+      await confirmByToken(hashToken(token));
+
+      const loggedEvents = logSpy.mock.calls.map(([arg]) => JSON.parse(arg as string));
+      expect(loggedEvents).toContainEqual(expect.objectContaining({ event: 'appointment_confirmed' }));
+      logSpy.mockRestore();
+    });
+  });
+
+  describe('cancelByToken', () => {
+    it('cancela -> canceled_by_customer, e o horário volta a ser reservável (SCH-26)', async () => {
+      const Tenant = new mongoose.Types.ObjectId();
+      const professional = await seedProfessional(Tenant);
+      const start = alignedRelativeStart(FAR_FUTURE_OFFSET);
+      const booked = await bookAppointment({
+        tenantId: Tenant.toString(),
+        professionalId: professional._id.toString(),
+        start,
+        customerId: new mongoose.Types.ObjectId().toString(),
+        source: 'ai',
+      });
+      const { appointment, confirmationToken } = booked as BookAppointmentSuccess;
+
+      const canceled = await cancelByToken(hashToken(confirmationToken));
+      expect(isError(canceled)).toBe(false);
+      expect((canceled as AppointmentDocument).status).toBe('canceled_by_customer');
+      expect(canceled).not.toMatchObject({ _id: undefined });
+      expect((canceled as AppointmentDocument)._id.toString()).toBe(appointment._id.toString());
+
+      const rebooked = await bookAppointment({
+        tenantId: Tenant.toString(),
+        professionalId: professional._id.toString(),
+        start,
+        customerId: new mongoose.Types.ObjectId().toString(),
+        source: 'ai',
+      });
+      expect(isError(rebooked)).toBe(false);
+    });
+
+    it('repetir cancelar sobre já canceled_by_customer responde o mesmo estado sem erro', async () => {
+      const Tenant = new mongoose.Types.ObjectId();
+      const token = 'plain-token-cancel-twice';
+      await seedAppointmentDirect(Tenant, { confirmationTokenHash: hashToken(token) });
+
+      const first = await cancelByToken(hashToken(token));
+      const second = await cancelByToken(hashToken(token));
+
+      expect(isError(first)).toBe(false);
+      expect(isError(second)).toBe(false);
+      expect((second as AppointmentDocument).status).toBe('canceled_by_customer');
+    });
+
+    it('hash inexistente -> not_found', async () => {
+      const result = await cancelByToken(hashToken('never-issued-cancel'));
+      expect(result).toMatchObject({ code: 'not_found' });
+    });
+
+    it('token expirado -> expired', async () => {
+      const Tenant = new mongoose.Types.ObjectId();
+      const token = 'plain-token-cancel-expired';
+      await seedAppointmentDirect(Tenant, {
+        confirmationTokenHash: hashToken(token),
+        confirmationExpiresAt: new Date(Date.now() - 60_000),
+      });
+
+      const result = await cancelByToken(hashToken(token));
+      expect(result).toMatchObject({ code: 'expired' });
+    });
+
+    it('ação sobre agendamento já terminal -> terminal, documento intacto', async () => {
+      const Tenant = new mongoose.Types.ObjectId();
+      const token = 'plain-token-cancel-terminal';
+      const seeded = await seedAppointmentDirect(Tenant, {
+        confirmationTokenHash: hashToken(token),
+        status: 'completed' as AppointmentStatus,
+      });
+
+      const result = await cancelByToken(hashToken(token));
+
+      expect(result).toMatchObject({ code: 'terminal' });
+      const reloaded = await Appointment.findById(seeded._id).lean();
+      expect(reloaded?.status).toBe('completed');
+    });
+
+    it('emite {event:"appointment_canceled", canceledBy:"customer"} no sucesso (SCH-36)', async () => {
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+      const Tenant = new mongoose.Types.ObjectId();
+      const token = 'plain-token-cancel-log';
+      await seedAppointmentDirect(Tenant, { confirmationTokenHash: hashToken(token) });
+
+      await cancelByToken(hashToken(token));
+
+      const loggedEvents = logSpy.mock.calls.map(([arg]) => JSON.parse(arg as string));
+      expect(loggedEvents).toContainEqual(
+        expect.objectContaining({ event: 'appointment_canceled', canceledBy: 'customer' }),
+      );
+      logSpy.mockRestore();
+    });
   });
 });

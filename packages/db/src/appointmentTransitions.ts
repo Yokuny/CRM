@@ -21,6 +21,11 @@ export interface AppointmentTransitionError {
 }
 
 const NOT_FOUND_ERROR: AppointmentTransitionError = { error: 'Appointment não encontrado', code: 'not_found' };
+const EXPIRED_ERROR: AppointmentTransitionError = { error: 'Token de confirmação expirado', code: 'expired' };
+const TERMINAL_ERROR: AppointmentTransitionError = {
+  error: 'Appointment já está em estado terminal',
+  code: 'terminal',
+};
 const CONFLICT_ERROR: AppointmentTransitionError = { error: 'Horário indisponível', code: 'conflict' };
 const INVALID_ERROR: AppointmentTransitionError = { error: 'Dados de agendamento inválidos', code: 'invalid' };
 
@@ -162,4 +167,68 @@ export const issueConfirmationToken = async (
   });
 
   return { confirmationToken };
+};
+
+// Identificado EXCLUSIVAMENTE pelo hash do token (SCH-27) — nunca por id.
+// Sem `tenantId`: o próprio token é a fronteira de segurança aqui (índice
+// único sparse em confirmationTokenHash), não um filtro por tenant — quem
+// chama já hasheou o token em claro antes de invocar isto.
+export const confirmByToken = async (tokenHash: string): Promise<AppointmentDocument | AppointmentTransitionError> => {
+  const appointment = await Appointment.findOne({ confirmationTokenHash: tokenHash }).lean();
+  if (!appointment) return NOT_FOUND_ERROR;
+  if (appointment.confirmationExpiresAt && appointment.confirmationExpiresAt.getTime() < Date.now()) {
+    return EXPIRED_ERROR;
+  }
+
+  // Idempotente (SCH-25): repetir a mesma ação sobre o mesmo estado não erra.
+  if (appointment.status === 'confirmed') return appointment;
+  if (appointment.status !== 'pending') return TERMINAL_ERROR;
+
+  const updated = await Appointment.findOneAndUpdate(
+    { confirmationTokenHash: tokenHash, status: 'pending' as const },
+    { $set: { status: 'confirmed' as const, confirmedAt: new Date() } },
+    { returnDocument: 'after' },
+  ).lean();
+  if (!updated) return NOT_FOUND_ERROR;
+
+  console.log(
+    JSON.stringify({
+      event: 'appointment_confirmed',
+      tenantId: updated.Tenant.toString(),
+      appointmentId: updated._id.toString(),
+    }),
+  );
+  return updated;
+};
+
+// Idem confirmByToken: só pelo hash, nunca id (SCH-27).
+export const cancelByToken = async (tokenHash: string): Promise<AppointmentDocument | AppointmentTransitionError> => {
+  const appointment = await Appointment.findOne({ confirmationTokenHash: tokenHash }).lean();
+  if (!appointment) return NOT_FOUND_ERROR;
+  if (appointment.confirmationExpiresAt && appointment.confirmationExpiresAt.getTime() < Date.now()) {
+    return EXPIRED_ERROR;
+  }
+
+  // Idempotente na mesma ação repetida — por simetria com SCH-25 (aplicado
+  // lá a confirmar), repetir cancelar sobre já-cancelado-pelo-cliente não
+  // erra.
+  if (appointment.status === 'canceled_by_customer') return appointment;
+  if (appointment.status !== 'pending' && appointment.status !== 'confirmed') return TERMINAL_ERROR;
+
+  const updated = await Appointment.findOneAndUpdate(
+    { confirmationTokenHash: tokenHash, status: { $in: ACTIVE_STATUSES } },
+    { $set: { status: 'canceled_by_customer' as const, canceledAt: new Date() } },
+    { returnDocument: 'after' },
+  ).lean();
+  if (!updated) return NOT_FOUND_ERROR;
+
+  console.log(
+    JSON.stringify({
+      event: 'appointment_canceled',
+      tenantId: updated.Tenant.toString(),
+      appointmentId: updated._id.toString(),
+      canceledBy: 'customer',
+    }),
+  );
+  return updated;
 };
