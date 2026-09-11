@@ -13,6 +13,7 @@ import {
   scheduleWindowSchema,
   weeklyScheduleSchema,
 } from './schemas/createProfessional.schema.js';
+import { createSpaceSchema } from './schemas/createSpace.schema.js';
 import { fieldDefSchema } from './schemas/fieldDef.schema.js';
 import { findOrCreateCustomerInputSchema } from './schemas/findOrCreateCustomerInput.schema.js';
 import { getProcessTemplateInputSchema } from './schemas/getProcessTemplateInput.schema.js';
@@ -30,6 +31,8 @@ import { updateProcessStageSchema } from './schemas/updateProcessStage.schema.js
 import { updateProcessValuesSchema } from './schemas/updateProcessValues.schema.js';
 import { updateProductSchema } from './schemas/updateProduct.schema.js';
 import { updateProfessionalSchema } from './schemas/updateProfessional.schema.js';
+import { updateSchedulingSettingsSchema } from './schemas/updateSchedulingSettings.schema.js';
+import { updateSpaceSchema } from './schemas/updateSpace.schema.js';
 
 export const TENANT_FORBIDDEN_KEYS = [
   'tenant',
@@ -68,6 +71,9 @@ export const schemaRegistry: ReadonlyArray<{ name: string; schema: ZodType }> = 
   { name: 'updateProfessionalSchema', schema: updateProfessionalSchema },
   { name: 'scheduleWindowSchema', schema: scheduleWindowSchema },
   { name: 'weeklyScheduleSchema', schema: weeklyScheduleSchema },
+  { name: 'createSpaceSchema', schema: createSpaceSchema },
+  { name: 'updateSpaceSchema', schema: updateSpaceSchema },
+  { name: 'updateSchedulingSettingsSchema', schema: updateSchedulingSettingsSchema },
   { name: 'rejectOrderSchema', schema: rejectOrderSchema },
   { name: 'sendMessageSchema', schema: sendMessageSchema },
   { name: 'updateProcessValuesSchema', schema: updateProcessValuesSchema },
