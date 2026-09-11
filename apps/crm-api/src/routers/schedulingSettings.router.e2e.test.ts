@@ -139,10 +139,7 @@ describe('scheduling-settings routes', () => {
       const persisted = await SchedulingSettings.findOne({ Tenant: tenant._id }).lean();
       expect(persisted?.maxSlotsPerResponse).toBe(10);
 
-      const getRes = await request(app)
-        .get('/scheduling-settings')
-        .set('Cookie', cookie)
-        .set('User-Agent', DEVICE);
+      const getRes = await request(app).get('/scheduling-settings').set('Cookie', cookie).set('User-Agent', DEVICE);
 
       expect(getRes.status).toBe(200);
       expect(getRes.body.data.maxSlotsPerResponse).toBe(10);

@@ -44,11 +44,7 @@ export const listSpaces = async (req: Request, res: Response, next: NextFunction
 
 export const updateSpace = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const result = await spaceService.updateSpace(
-      req.tenantUser.tenant as string,
-      req.params.id as string,
-      req.body,
-    );
+    const result = await spaceService.updateSpace(req.tenantUser.tenant as string, req.params.id as string, req.body);
     res.json(respObj({ data: result }));
   } catch (e) {
     if (e instanceof SpaceNotFoundError) {

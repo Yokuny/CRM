@@ -14,10 +14,6 @@ import { createSpaceRouter } from './space.router.js';
 
 const DEVICE = 'test-agent';
 
-// Sem `mongoose` aqui (AD-010/boundary estrutural: só packages/db importa
-// mongoose) — mesmo padrão de product.router.e2e.test.ts.
-const randomId = (): string => crypto.randomBytes(12).toString('hex');
-
 const buildAuthDeps = (): AuthDeps => ({
   findSessionByHash: async (tokenHash) => {
     const session = await Session.findOne({ tokenHash }).lean();
@@ -122,11 +118,7 @@ describe('space routes', () => {
       const { cookie } = await seedTenantUser(['operador']);
       const app = buildTestApp();
 
-      const res = await request(app)
-        .post('/spaces')
-        .set('Cookie', cookie)
-        .set('User-Agent', DEVICE)
-        .send({ name: '' });
+      const res = await request(app).post('/spaces').set('Cookie', cookie).set('User-Agent', DEVICE).send({ name: '' });
 
       expect(res.status).toBe(400);
       expect(await Space.countDocuments({})).toBe(0);
@@ -180,7 +172,10 @@ describe('space routes', () => {
       const space = await Space.create({ Tenant: tenant._id, name: 'Sala 1' });
       const app = buildTestApp();
 
-      const res = await request(app).get(`/spaces/${space._id.toString()}`).set('Cookie', cookie).set('User-Agent', DEVICE);
+      const res = await request(app)
+        .get(`/spaces/${space._id.toString()}`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE);
 
       expect(res.status).toBe(200);
       expect(res.body.data.name).toBe('Sala 1');
@@ -192,7 +187,10 @@ describe('space routes', () => {
       const space = await Space.create({ Tenant: owner.tenant._id, name: 'Sala 1' });
       const app = buildTestApp();
 
-      const res = await request(app).get(`/spaces/${space._id.toString()}`).set('Cookie', cookie).set('User-Agent', DEVICE);
+      const res = await request(app)
+        .get(`/spaces/${space._id.toString()}`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE);
 
       expect(res.status).toBe(404);
     });
@@ -202,7 +200,10 @@ describe('space routes', () => {
       const space = await Space.create({ Tenant: tenant._id, name: 'Sala 1' });
       const app = buildTestApp();
 
-      const res = await request(app).get(`/spaces/${space._id.toString()}`).set('Cookie', cookie).set('User-Agent', DEVICE);
+      const res = await request(app)
+        .get(`/spaces/${space._id.toString()}`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE);
 
       expect(res.status).toBe(403);
     });

@@ -45,11 +45,7 @@ export type UpdateSpaceInput = {
 
 // Só os campos informados entram no $set — mesmo padrão de
 // product.repository.updateProduct.
-export const updateSpace = async (
-  tenantId: string,
-  id: string,
-  data: UpdateSpaceInput,
-): Promise<SpaceRecord | null> =>
+export const updateSpace = async (tenantId: string, id: string, data: UpdateSpaceInput): Promise<SpaceRecord | null> =>
   withDbTiming('space.updateSpace', async () => {
     const update: Record<string, unknown> = {};
     if (data.name !== undefined) update.name = data.name;

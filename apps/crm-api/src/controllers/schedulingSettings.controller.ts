@@ -17,10 +17,7 @@ export const getSchedulingSettings = async (req: Request, res: Response, next: N
 
 export const updateSchedulingSettings = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const result = await schedulingSettingsService.updateSchedulingSettings(
-      req.tenantUser.tenant as string,
-      req.body,
-    );
+    const result = await schedulingSettingsService.updateSchedulingSettings(req.tenantUser.tenant as string, req.body);
     res.json(respObj({ data: result }));
   } catch (e) {
     next(e);

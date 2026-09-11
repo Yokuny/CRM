@@ -1,16 +1,6 @@
 import crypto from 'node:crypto';
 import type { Role } from '@crm/contracts';
-import {
-  Appointment,
-  connect,
-  disconnect,
-  hashToken,
-  Professional,
-  Session,
-  syncIndexes,
-  Tenant,
-  User,
-} from '@crm/db';
+import { Appointment, connect, disconnect, hashToken, Professional, Session, syncIndexes, Tenant, User } from '@crm/db';
 import cookieParser from 'cookie-parser';
 import express from 'express';
 import * as jwt from 'jsonwebtoken';
@@ -23,10 +13,6 @@ import { errorHandler } from '../middlewares/errorHandler.middleware.js';
 import { createProfessionalRouter } from './professional.router.js';
 
 const DEVICE = 'test-agent';
-
-// Sem `mongoose` aqui (AD-010/boundary estrutural: só packages/db importa
-// mongoose) — mesmo padrão de product.router.e2e.test.ts.
-const randomId = (): string => crypto.randomBytes(12).toString('hex');
 
 const buildAuthDeps = (): AuthDeps => ({
   findSessionByHash: async (tokenHash) => {

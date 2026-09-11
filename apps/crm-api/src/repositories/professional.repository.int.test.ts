@@ -42,7 +42,7 @@ describe('professional.repository', () => {
   });
 
   describe('findById', () => {
-    it("returns null for a Professional that belongs to a DIFFERENT tenant (AD-010)", async () => {
+    it('returns null for a Professional that belongs to a DIFFERENT tenant (AD-010)', async () => {
       const owner = randomId();
       const intruder = randomId();
       const created = await professionalRepository.createProfessional({
