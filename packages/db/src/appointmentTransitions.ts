@@ -334,7 +334,9 @@ export interface CreateBlockInput {
 // disputa o mesmo índice único que agendamento ativo, então um agendamento
 // no `start` exato do bloqueio falha pelo próprio índice (T8 Done when),
 // além da checagem de sobreposição aqui para o caso desalinhado.
-export const createBlock = async (input: CreateBlockInput): Promise<AppointmentDocument | AppointmentTransitionError> => {
+export const createBlock = async (
+  input: CreateBlockInput,
+): Promise<AppointmentDocument | AppointmentTransitionError> => {
   const { tenantId, professionalId, start, end, title } = input;
 
   const professional = await Professional.findOne(tenantScoped({ Tenant: tenantId, _id: professionalId })).lean();
@@ -377,4 +379,114 @@ export const deleteBlock = async (
 
   console.log(JSON.stringify({ event: 'appointment_block_deleted', tenantId, appointmentId: blockId }));
   return { deleted: true };
+};
+
+// Cancelamento pelo operador (SCH-32) — símétrico a cancelByToken, mas
+// registra QUEM cancelou (canceledBy: userId) e o motivo opcional, e nunca
+// aceita token: identificado pelo id, já que quem chama é autenticado.
+export const cancelByOperator = async (
+  tenantId: string,
+  appointmentId: string,
+  userId: string,
+  reason?: string,
+): Promise<AppointmentDocument | AppointmentTransitionError> => {
+  const appointment = await Appointment.findOne(tenantScoped({ Tenant: tenantId, _id: appointmentId })).lean();
+  if (!appointment) return NOT_FOUND_ERROR;
+  if (appointment.status !== 'pending' && appointment.status !== 'confirmed') return TERMINAL_ERROR;
+
+  const updated = await Appointment.findOneAndUpdate(
+    tenantScoped({ Tenant: tenantId, _id: appointmentId, status: { $in: ACTIVE_STATUSES } }),
+    {
+      $set: {
+        status: 'canceled_by_operator' as const,
+        canceledAt: new Date(),
+        canceledBy: userId,
+        cancelReason: reason,
+      },
+    },
+    { returnDocument: 'after' },
+  ).lean();
+  if (!updated) return NOT_FOUND_ERROR;
+
+  console.log(JSON.stringify({ event: 'appointment_canceled', tenantId, appointmentId, canceledBy: 'operator' }));
+  return updated;
+};
+
+export interface RescheduleAppointmentInput {
+  start: Date;
+  professionalId?: string;
+}
+
+// Remarca o MESMO documento (nunca cria um segundo) — preserva a duração
+// ORIGINAL mesmo trocando de profissional (Edge Case do spec.md: mudar a
+// duração do profissional não pode reescrever agendamento já marcado).
+// Volta a `pending` e limpa `confirmedAt`: a confirmação do cliente valia
+// para o horário antigo (spec.md Assumptions, achado na fase Tasks de
+// SCH-31). A validade do token acompanha o novo `end` — sem reemitir o
+// token em si, só sua janela de validade.
+export const rescheduleAppointment = async (
+  tenantId: string,
+  appointmentId: string,
+  input: RescheduleAppointmentInput,
+): Promise<AppointmentDocument | AppointmentTransitionError> => {
+  const { start, professionalId } = input;
+
+  const appointment = await Appointment.findOne(tenantScoped({ Tenant: tenantId, _id: appointmentId })).lean();
+  if (!appointment) return NOT_FOUND_ERROR;
+  if (appointment.status !== 'pending' && appointment.status !== 'confirmed') return TERMINAL_ERROR;
+
+  const targetProfessionalId = professionalId ?? appointment.professional.toString();
+  const durationMs = appointment.end.getTime() - appointment.start.getTime();
+  const end = new Date(start.getTime() + durationMs);
+
+  const conflict = await hasOverlappingActive(tenantId, targetProfessionalId, { start, end }, appointmentId);
+  if (conflict) return CONFLICT_ERROR;
+
+  try {
+    const updated = await Appointment.findOneAndUpdate(
+      tenantScoped({ Tenant: tenantId, _id: appointmentId, status: { $in: ACTIVE_STATUSES } }),
+      {
+        $set: {
+          professional: targetProfessionalId,
+          start,
+          end,
+          status: 'pending' as const,
+          confirmationExpiresAt: end,
+        },
+        $unset: { confirmedAt: '' },
+      },
+      { returnDocument: 'after' },
+    ).lean();
+    if (!updated) return NOT_FOUND_ERROR;
+
+    console.log(JSON.stringify({ event: 'appointment_rescheduled', tenantId, appointmentId }));
+    return updated;
+  } catch (err) {
+    if (isDuplicateKeyError(err)) return CONFLICT_ERROR;
+    throw err;
+  }
+};
+
+// Só permitido depois do horário de início (SCH-34) e só a partir de
+// pending/confirmed — nunca fecha sozinho o que já está em outro estado.
+export const markAttendance = async (
+  tenantId: string,
+  appointmentId: string,
+  userId: string,
+  status: 'completed' | 'no_show',
+): Promise<AppointmentDocument | AppointmentTransitionError> => {
+  const appointment = await Appointment.findOne(tenantScoped({ Tenant: tenantId, _id: appointmentId })).lean();
+  if (!appointment) return NOT_FOUND_ERROR;
+  if (appointment.status !== 'pending' && appointment.status !== 'confirmed') return TERMINAL_ERROR;
+  if (appointment.start.getTime() > Date.now()) return CONFLICT_ERROR;
+
+  const updated = await Appointment.findOneAndUpdate(
+    tenantScoped({ Tenant: tenantId, _id: appointmentId, status: { $in: ACTIVE_STATUSES } }),
+    { $set: { status, attendanceMarkedAt: new Date(), attendanceMarkedBy: userId } },
+    { returnDocument: 'after' },
+  ).lean();
+  if (!updated) return NOT_FOUND_ERROR;
+
+  console.log(JSON.stringify({ event: 'appointment_attendance', tenantId, appointmentId, status }));
+  return updated;
 };

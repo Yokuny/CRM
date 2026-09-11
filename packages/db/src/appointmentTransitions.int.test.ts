@@ -4,12 +4,15 @@ import { useTestDb } from '../tests/helpers/db.helper.js';
 import type { AppointmentTransitionError, BookAppointmentSuccess } from './appointmentTransitions.js';
 import {
   bookAppointment,
+  cancelByOperator,
   cancelByToken,
   confirmByToken,
   createBlock,
   createManualAppointment,
   deleteBlock,
   issueConfirmationToken,
+  markAttendance,
+  rescheduleAppointment,
 } from './appointmentTransitions.js';
 import type { AppointmentDocument, AppointmentStatus } from './models/appointment.model.js';
 import { Appointment } from './models/appointment.model.js';
@@ -833,6 +836,289 @@ describe('appointmentTransitions — createManualAppointment / createBlock / del
 
       expect(result).toMatchObject({ code: 'not_found' });
       await expect(Appointment.findById(block._id).lean()).resolves.not.toBeNull();
+    });
+  });
+});
+
+describe('appointmentTransitions — cancelByOperator / rescheduleAppointment / markAttendance (SCH-31, SCH-32, SCH-34, SCH-36)', () => {
+  useTestDb();
+
+  describe('cancelByOperator', () => {
+    it('cancela -> canceled_by_operator com canceledBy/cancelReason; horário liberado', async () => {
+      const Tenant = new mongoose.Types.ObjectId();
+      const professional = await seedProfessional(Tenant);
+      const start = alignedRelativeStart(FAR_FUTURE_OFFSET);
+      const userId = new mongoose.Types.ObjectId().toString();
+      const booked = (await bookAppointment({
+        tenantId: Tenant.toString(),
+        professionalId: professional._id.toString(),
+        start,
+        customerId: new mongoose.Types.ObjectId().toString(),
+        source: 'ai',
+      })) as BookAppointmentSuccess;
+
+      const canceled = await cancelByOperator(
+        Tenant.toString(),
+        booked.appointment._id.toString(),
+        userId,
+        'cliente desmarcou por telefone',
+      );
+
+      expect(isError(canceled)).toBe(false);
+      const doc = canceled as AppointmentDocument;
+      expect(doc.status).toBe('canceled_by_operator');
+      expect(doc.canceledBy?.toString()).toBe(userId);
+      expect(doc.cancelReason).toBe('cliente desmarcou por telefone');
+
+      const rebooked = await bookAppointment({
+        tenantId: Tenant.toString(),
+        professionalId: professional._id.toString(),
+        start,
+        customerId: new mongoose.Types.ObjectId().toString(),
+        source: 'ai',
+      });
+      expect(isError(rebooked)).toBe(false);
+    });
+
+    it('agendamento já terminal -> terminal, documento intacto', async () => {
+      const Tenant = new mongoose.Types.ObjectId();
+      const seeded = await seedAppointmentDirect(Tenant, { status: 'completed' as AppointmentStatus });
+
+      const result = await cancelByOperator(
+        Tenant.toString(),
+        seeded._id.toString(),
+        new mongoose.Types.ObjectId().toString(),
+      );
+
+      expect(result).toMatchObject({ code: 'terminal' });
+      const reloaded = await Appointment.findById(seeded._id).lean();
+      expect(reloaded?.status).toBe('completed');
+    });
+
+    it('id de outro tenant ou inexistente -> not_found', async () => {
+      const Tenant = new mongoose.Types.ObjectId();
+      const intruderTenant = new mongoose.Types.ObjectId();
+      const seeded = await seedAppointmentDirect(Tenant);
+
+      const wrongTenant = await cancelByOperator(
+        intruderTenant.toString(),
+        seeded._id.toString(),
+        new mongoose.Types.ObjectId().toString(),
+      );
+      expect(wrongTenant).toMatchObject({ code: 'not_found' });
+
+      const nonExistent = await cancelByOperator(
+        Tenant.toString(),
+        new mongoose.Types.ObjectId().toString(),
+        new mongoose.Types.ObjectId().toString(),
+      );
+      expect(nonExistent).toMatchObject({ code: 'not_found' });
+    });
+
+    it('emite {event:"appointment_canceled", canceledBy:"operator"} no sucesso (SCH-36)', async () => {
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+      const Tenant = new mongoose.Types.ObjectId();
+      const seeded = await seedAppointmentDirect(Tenant);
+
+      await cancelByOperator(Tenant.toString(), seeded._id.toString(), new mongoose.Types.ObjectId().toString());
+
+      const loggedEvents = logSpy.mock.calls.map(([arg]) => JSON.parse(arg as string));
+      expect(loggedEvents).toContainEqual(
+        expect.objectContaining({ event: 'appointment_canceled', canceledBy: 'operator' }),
+      );
+      logSpy.mockRestore();
+    });
+  });
+
+  describe('rescheduleAppointment', () => {
+    it('mantém o mesmo _id, preserva a duração original mesmo trocando de profissional com slotDuration diferente, volta a pending, limpa confirmedAt, move a validade do token para o novo end', async () => {
+      const Tenant = new mongoose.Types.ObjectId();
+      const professionalA = await seedProfessional(Tenant, { slotDurationMinutes: 30 });
+      const professionalB = await seedProfessional(Tenant, { slotDurationMinutes: 60 });
+      const originalStart = alignedRelativeStart(FAR_FUTURE_OFFSET);
+      const originalEnd = new Date(originalStart.getTime() + 30 * 60_000);
+      const token = 'plain-token-reschedule';
+      const seeded = await seedAppointmentDirect(Tenant, {
+        professional: professionalA._id,
+        start: originalStart,
+        end: originalEnd,
+        status: 'confirmed' as AppointmentStatus,
+        confirmedAt: new Date(),
+        confirmationTokenHash: hashToken(token),
+        confirmationExpiresAt: originalEnd,
+      });
+
+      const newStart = alignedRelativeStart(FAR_FUTURE_OFFSET + 5 * MINUTES_IN_DAY);
+
+      const rescheduled = await rescheduleAppointment(Tenant.toString(), seeded._id.toString(), {
+        start: newStart,
+        professionalId: professionalB._id.toString(),
+      });
+
+      expect(isError(rescheduled)).toBe(false);
+      const doc = rescheduled as AppointmentDocument;
+      expect(doc._id.toString()).toBe(seeded._id.toString());
+      expect(doc.professional.toString()).toBe(professionalB._id.toString());
+      expect(doc.start.getTime()).toBe(newStart.getTime());
+      // Duração ORIGINAL (30min de A), não a de B (60min) — Edge Case do spec.
+      expect(doc.end.getTime() - doc.start.getTime()).toBe(30 * 60_000);
+      expect(doc.status).toBe('pending');
+      expect(doc.confirmedAt).toBeUndefined();
+      expect(doc.confirmationExpiresAt?.getTime()).toBe(doc.end.getTime());
+      // Token em si não é reemitido — só a validade muda (spec.md Assumptions).
+      expect(doc.confirmationTokenHash).toBe(hashToken(token));
+
+      await expect(Appointment.countDocuments({ Tenant })).resolves.toBe(1);
+    });
+
+    it('sobreposição no novo horário -> conflict, nada muda', async () => {
+      const Tenant = new mongoose.Types.ObjectId();
+      const professional = await seedProfessional(Tenant);
+      const baseDate = dateInDisplayTz(alignedRelativeStart(FAR_FUTURE_OFFSET));
+      const occupiedStart = wallClockToUtc(baseDate, '09:00');
+      const occupiedEnd = wallClockToUtc(baseDate, '09:30');
+      await createManualAppointment({
+        tenantId: Tenant.toString(),
+        professionalId: professional._id.toString(),
+        start: occupiedStart,
+        end: occupiedEnd,
+        customerId: new mongoose.Types.ObjectId().toString(),
+      });
+
+      const toReschedule = await seedAppointmentDirect(Tenant, {
+        professional: professional._id,
+        start: alignedRelativeStart(FAR_FUTURE_OFFSET + 10 * MINUTES_IN_DAY),
+        end: new Date(alignedRelativeStart(FAR_FUTURE_OFFSET + 10 * MINUTES_IN_DAY).getTime() + 30 * 60_000),
+      });
+
+      const result = await rescheduleAppointment(Tenant.toString(), toReschedule._id.toString(), {
+        start: occupiedStart,
+      });
+
+      expect(result).toMatchObject({ code: 'conflict' });
+      const reloaded = await Appointment.findById(toReschedule._id).lean();
+      expect(reloaded?.start.getTime()).toBe(toReschedule.start.getTime());
+    });
+
+    it('agendamento já terminal -> terminal', async () => {
+      const Tenant = new mongoose.Types.ObjectId();
+      const seeded = await seedAppointmentDirect(Tenant, { status: 'canceled_by_customer' as AppointmentStatus });
+
+      const result = await rescheduleAppointment(Tenant.toString(), seeded._id.toString(), {
+        start: alignedRelativeStart(FAR_FUTURE_OFFSET + 20 * MINUTES_IN_DAY),
+      });
+
+      expect(result).toMatchObject({ code: 'terminal' });
+    });
+
+    it('emite {event:"appointment_rescheduled"} no sucesso (SCH-36)', async () => {
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+      const Tenant = new mongoose.Types.ObjectId();
+      const seeded = await seedAppointmentDirect(Tenant);
+
+      await rescheduleAppointment(Tenant.toString(), seeded._id.toString(), {
+        start: alignedRelativeStart(FAR_FUTURE_OFFSET + 15 * MINUTES_IN_DAY),
+      });
+
+      const loggedEvents = logSpy.mock.calls.map(([arg]) => JSON.parse(arg as string));
+      expect(loggedEvents).toContainEqual(expect.objectContaining({ event: 'appointment_rescheduled' }));
+      logSpy.mockRestore();
+    });
+  });
+
+  describe('markAttendance', () => {
+    it('antes do start -> conflict, nada muda', async () => {
+      const Tenant = new mongoose.Types.ObjectId();
+      const seeded = await seedAppointmentDirect(Tenant); // start no futuro (helper padrão)
+
+      const result = await markAttendance(
+        Tenant.toString(),
+        seeded._id.toString(),
+        new mongoose.Types.ObjectId().toString(),
+        'completed',
+      );
+
+      expect(result).toMatchObject({ code: 'conflict' });
+      const reloaded = await Appointment.findById(seeded._id).lean();
+      expect(reloaded?.status).toBe('pending');
+    });
+
+    it('depois do start, a partir de pending -> completed, grava attendanceMarkedBy', async () => {
+      const Tenant = new mongoose.Types.ObjectId();
+      const pastStart = new Date(Date.now() - 60 * 60_000);
+      const userId = new mongoose.Types.ObjectId().toString();
+      const seeded = await seedAppointmentDirect(Tenant, {
+        start: pastStart,
+        end: new Date(pastStart.getTime() + 30 * 60_000),
+      });
+
+      const result = await markAttendance(Tenant.toString(), seeded._id.toString(), userId, 'completed');
+
+      expect(isError(result)).toBe(false);
+      const doc = result as AppointmentDocument;
+      expect(doc.status).toBe('completed');
+      expect(doc.attendanceMarkedBy?.toString()).toBe(userId);
+      expect(doc.attendanceMarkedAt).toBeInstanceOf(Date);
+    });
+
+    it('depois do start, a partir de confirmed -> no_show', async () => {
+      const Tenant = new mongoose.Types.ObjectId();
+      const pastStart = new Date(Date.now() - 60 * 60_000);
+      const seeded = await seedAppointmentDirect(Tenant, {
+        start: pastStart,
+        end: new Date(pastStart.getTime() + 30 * 60_000),
+        status: 'confirmed' as AppointmentStatus,
+      });
+
+      const result = await markAttendance(
+        Tenant.toString(),
+        seeded._id.toString(),
+        new mongoose.Types.ObjectId().toString(),
+        'no_show',
+      );
+
+      expect(isError(result)).toBe(false);
+      expect((result as AppointmentDocument).status).toBe('no_show');
+    });
+
+    it('a partir de estado terminal -> terminal, nada muda', async () => {
+      const Tenant = new mongoose.Types.ObjectId();
+      const pastStart = new Date(Date.now() - 60 * 60_000);
+      const seeded = await seedAppointmentDirect(Tenant, {
+        start: pastStart,
+        end: new Date(pastStart.getTime() + 30 * 60_000),
+        status: 'canceled_by_operator' as AppointmentStatus,
+      });
+
+      const result = await markAttendance(
+        Tenant.toString(),
+        seeded._id.toString(),
+        new mongoose.Types.ObjectId().toString(),
+        'completed',
+      );
+
+      expect(result).toMatchObject({ code: 'terminal' });
+    });
+
+    it('emite {event:"appointment_attendance"} no sucesso (SCH-36)', async () => {
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+      const Tenant = new mongoose.Types.ObjectId();
+      const pastStart = new Date(Date.now() - 60 * 60_000);
+      const seeded = await seedAppointmentDirect(Tenant, {
+        start: pastStart,
+        end: new Date(pastStart.getTime() + 30 * 60_000),
+      });
+
+      await markAttendance(
+        Tenant.toString(),
+        seeded._id.toString(),
+        new mongoose.Types.ObjectId().toString(),
+        'completed',
+      );
+
+      const loggedEvents = logSpy.mock.calls.map(([arg]) => JSON.parse(arg as string));
+      expect(loggedEvents).toContainEqual(expect.objectContaining({ event: 'appointment_attendance' }));
+      logSpy.mockRestore();
     });
   });
 });
