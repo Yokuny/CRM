@@ -6,7 +6,7 @@ describe('schemaRegistry', () => {
   // também são exports Zod de um *.schema.ts e precisam estar aqui — a
   // varredura de tests/structural/schema-registry.structural.test.ts falha
   // caso algum dos 10 saia da lista.
-  it('registers exactly the 32 input schemas by name', () => {
+  it('registers exactly the 37 input schemas by name', () => {
     const names = schemaRegistry.map((entry) => entry.name).sort();
     expect(names).toEqual(
       [
@@ -34,6 +34,11 @@ describe('schemaRegistry', () => {
         'createSpaceSchema',
         'updateSpaceSchema',
         'updateSchedulingSettingsSchema',
+        'createAppointmentSchema',
+        'rescheduleAppointmentSchema',
+        'cancelAppointmentSchema',
+        'markAttendanceSchema',
+        'createBlockSchema',
         'rejectOrderSchema',
         'updateProcessValuesSchema',
         'updateProcessStageSchema',
