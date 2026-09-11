@@ -357,9 +357,10 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-01, SCH-05
 
 **Done when**:
-- [ ] `createProfessional`, `listProfessionals` (paginada, filtro `active`), `findById`, `updateProfessional`; id de outro tenant → `null`
+- [x] `createProfessional`, `listProfessionals` (paginada, filtro `active`), `findById`, `updateProfessional`; id de outro tenant → `null`
 
 **Tests**: integration · **Gate**: full
+**Status**: ✅ Complete (commit 6489f26)
 
 ---
 
@@ -372,9 +373,10 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-01, SCH-02, SCH-03, SCH-05
 
 **Done when**:
-- [ ] `ProfessionalNotFoundError` em id ausente/de outro tenant; clamp de `page`/`limit`; cada ramo com teste
+- [x] `ProfessionalNotFoundError` em id ausente/de outro tenant; clamp de `page`/`limit`; cada ramo com teste
 
 **Tests**: unit · **Gate**: quick
+**Status**: ✅ Complete (commit e2c5406)
 
 ---
 
@@ -387,10 +389,11 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-01, SCH-02, SCH-03, SCH-05, SCH-07
 
 **Done when**:
-- [ ] `GET /`, `GET /:id`, `POST /`, `PATCH /:id`: 201/200 no caminho feliz; 400 para sobreposição, `end ≤ start` e duração fora da faixa; 403 sem `canOperate`; 404 para id de outro tenant
-- [ ] `PATCH active:false` deixa o `Appointment` existente do profissional intacto (mesmo status, mesmo documento)
+- [x] `GET /`, `GET /:id`, `POST /`, `PATCH /:id`: 201/200 no caminho feliz; 400 para sobreposição, `end ≤ start` e duração fora da faixa; 403 sem `canOperate`; 404 para id de outro tenant
+- [x] `PATCH active:false` deixa o `Appointment` existente do profissional intacto (mesmo status, mesmo documento)
 
 **Tests**: e2e · **Gate**: full
+**Status**: ✅ Complete (commit 02cefe2)
 
 ---
 
@@ -403,9 +406,10 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-04
 
 **Done when**:
-- [ ] create/list/findById/update escopados; id de outro tenant → `null`
+- [x] create/list/findById/update escopados; id de outro tenant → `null`
 
 **Tests**: integration · **Gate**: full
+**Status**: ✅ Complete (commit d527d3d)
 
 ---
 
@@ -418,10 +422,11 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-04, SCH-07
 
 **Done when**:
-- [ ] Unit: `SpaceNotFoundError` e clamp
-- [ ] E2E: `GET /`, `GET /:id`, `POST /`, `PATCH /:id` com feliz/400/403/404
+- [x] Unit: `SpaceNotFoundError` e clamp
+- [x] E2E: `GET /`, `GET /:id`, `POST /`, `PATCH /:id` com feliz/400/403/404
 
 **Tests**: unit, e2e · **Gate**: full
+**Status**: ✅ Complete (commit 25e483e)
 
 ---
 
@@ -434,9 +439,10 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-06
 
 **Done when**:
-- [ ] `getByTenant` → `null` sem documento; `upsert` cria e depois atualiza o mesmo documento
+- [x] `getByTenant` → `null` sem documento; `upsert` cria e depois atualiza o mesmo documento
 
 **Tests**: integration · **Gate**: full
+**Status**: ✅ Complete (commit 237bdea)
 
 ---
 
@@ -449,9 +455,10 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-06, SCH-07
 
 **Done when**:
-- [ ] `GET /` sem documento → `maxSlotsPerResponse: 16`; `PUT /` com 10 → `GET` devolve 10; 0 e 51 → 400; 403 sem `canOperate`
+- [x] `GET /` sem documento → `maxSlotsPerResponse: 16`; `PUT /` com 10 → `GET` devolve 10; 0 e 51 → 400; 403 sem `canOperate`
 
 **Tests**: unit, e2e · **Gate**: full
+**Status**: ✅ Complete (commit 43db51e)
 
 ---
 
