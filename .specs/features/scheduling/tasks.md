@@ -286,12 +286,13 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-31, SCH-32, SCH-34, SCH-36
 
 **Done when**:
-- [ ] Cancelar → `canceled_by_operator`, `canceledBy`, `cancelReason`; horário liberado
-- [ ] Remarcar mantém o **mesmo** `_id` (contagem não muda), preserva a duração original, volta a `pending`, limpa `confirmedAt` e move a validade do token para o novo `end`; sobreposição → `conflict`; terminal → `terminal`
-- [ ] `markAttendance` antes do `start` → `conflict`; só a partir de `pending`/`confirmed`; grava `attendanceMarkedBy`
-- [ ] Logs `appointment_rescheduled` / `appointment_canceled` / `appointment_attendance`
+- [x] Cancelar → `canceled_by_operator`, `canceledBy`, `cancelReason`; horário liberado
+- [x] Remarcar mantém o **mesmo** `_id` (contagem não muda), preserva a duração original, volta a `pending`, limpa `confirmedAt` e move a validade do token para o novo `end`; sobreposição → `conflict`; terminal → `terminal`
+- [x] `markAttendance` antes do `start` → `conflict`; só a partir de `pending`/`confirmed`; grava `attendanceMarkedBy`
+- [x] Logs `appointment_rescheduled` / `appointment_canceled` / `appointment_attendance`
 
 **Tests**: integration · **Gate**: full
+**Status**: ✅ Complete (commit 5eb30e2)
 
 ---
 
@@ -304,9 +305,10 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-02, SCH-03
 
 **Done when**:
-- [ ] Janela: `weekday` inteiro `0..6`; `start`/`end` em `^([01]\d|2[0-3]):[0-5]\d$`; `end > start`; janelas sobrepostas no mesmo `weekday` rejeitadas (`superRefine`), adjacentes (fim `12:00` / início `12:00`) aceitas
-- [ ] `slotDurationMinutes` inteiro `5..480`; `name` trim não vazio; `update` parcial com as mesmas regras
-- [ ] Registrados em `schemaRegistry` (teste estrutural verde)
+- [x] Janela: `weekday` inteiro `0..6`; `start`/`end` em `^([01]\d|2[0-3]):[0-5]\d$`; `end > start`; janelas sobrepostas no mesmo `weekday` rejeitadas (`superRefine`), adjacentes (fim `12:00` / início `12:00`) aceitas
+- [x] `slotDurationMinutes` inteiro `5..480`; `name` trim não vazio; `update` parcial com as mesmas regras
+- [x] Registrados em `schemaRegistry` (teste estrutural verde)
+**Status**: ✅ Complete (commit bd0b5c8) — `scheduleWindowSchema`/`weeklyScheduleSchema` também registrados (exports Zod próprios, exigido pela varredura estrutural)
 
 **Tests**: unit · **Gate**: quick
 
@@ -321,9 +323,10 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-04, SCH-06
 
 **Done when**:
-- [ ] `name` trim não vazio; `maxSlotsPerResponse` inteiro `1..50` (0 e 51 rejeitados); registrados
+- [x] `name` trim não vazio; `maxSlotsPerResponse` inteiro `1..50` (0 e 51 rejeitados); registrados
 
 **Tests**: unit · **Gate**: quick
+**Status**: ✅ Complete (commit f8cae38)
 
 ---
 
@@ -336,11 +339,12 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-30, SCH-31, SCH-32, SCH-33, SCH-34
 
 **Done when**:
-- [ ] Data e hora do operador em **hora de parede** (`date` `YYYY-MM-DD` + `time` `HH:mm`) — nenhum campo de instante ISO nas entradas do operador (AD-036)
-- [ ] `createAppointment`: `customerId`, `professionalId`, `date`, `time`, `spaceId?`, `notes?` (≤500) · `reschedule`: `date`, `time`, `professionalId?` · `cancel`: `reason?` (≤500) · `attendance`: `status ∈ {completed, no_show}` · `createBlock`: `professionalId`, `startDate`, `startTime`, `endDate`, `endTime`, `title` (1..120), fim depois do início
-- [ ] Registrados
+- [x] Data e hora do operador em **hora de parede** (`date` `YYYY-MM-DD` + `time` `HH:mm`) — nenhum campo de instante ISO nas entradas do operador (AD-036)
+- [x] `createAppointment`: `customerId`, `professionalId`, `date`, `time`, `spaceId?`, `notes?` (≤500) · `reschedule`: `date`, `time`, `professionalId?` · `cancel`: `reason?` (≤500) · `attendance`: `status ∈ {completed, no_show}` · `createBlock`: `professionalId`, `startDate`, `startTime`, `endDate`, `endTime`, `title` (1..120), fim depois do início
+- [x] Registrados
 
 **Tests**: unit · **Gate**: quick
+**Status**: ✅ Complete (commit 2189866)
 
 ---
 
