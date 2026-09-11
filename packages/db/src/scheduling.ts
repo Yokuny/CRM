@@ -81,7 +81,12 @@ export const wallClockToUtc = (date: string, time: string, timeZone: string = DI
 };
 
 export const dateInDisplayTz = (instant: Date): string =>
-  new Intl.DateTimeFormat('en-CA', { timeZone: DISPLAY_TIMEZONE, year: 'numeric', month: '2-digit', day: '2-digit' }).format(instant);
+  new Intl.DateTimeFormat('en-CA', {
+    timeZone: DISPLAY_TIMEZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(instant);
 
 export const timeInDisplayTz = (instant: Date): string =>
   new Intl.DateTimeFormat('en-GB', {
@@ -129,7 +134,13 @@ export const overlaps = (a: { start: Date; end: Date }, b: { start: Date; end: D
 // Grade por profissional, N janelas, sem sala restritiva (Space é
 // informativo — spec.md Assumptions). Ocupação (`busy`) é por profissional:
 // um intervalo ocupado de um profissional nunca remove o slot de outro.
-export const computeFreeSlots = ({ professionals, busy, date, now, maxSlots = DEFAULT_MAX_SLOTS }: ComputeFreeSlotsInput): FreeSlot[] => {
+export const computeFreeSlots = ({
+  professionals,
+  busy,
+  date,
+  now,
+  maxSlots = DEFAULT_MAX_SLOTS,
+}: ComputeFreeSlotsInput): FreeSlot[] => {
   const nowMs = now.getTime();
   const leadMs = MIN_LEAD_MINUTES * 60_000;
 

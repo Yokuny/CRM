@@ -20,4 +20,7 @@ const schedulingSettingsSchema = new Schema<SchedulingSettingsDocument>(
   { timestamps: true, collection: 'schedulingSettings' },
 );
 
-export const SchedulingSettings = mongoose.model<SchedulingSettingsDocument>('SchedulingSettings', schedulingSettingsSchema);
+export const SchedulingSettings = mongoose.model<SchedulingSettingsDocument>(
+  'SchedulingSettings',
+  schedulingSettingsSchema,
+);

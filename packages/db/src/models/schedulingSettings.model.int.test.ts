@@ -21,8 +21,12 @@ describe('SchedulingSettings model', () => {
   });
 
   it('rejects maxSlotsPerResponse outside 1..50', async () => {
-    await expect(SchedulingSettings.create({ Tenant: new mongoose.Types.ObjectId(), maxSlotsPerResponse: 0 })).rejects.toThrow();
-    await expect(SchedulingSettings.create({ Tenant: new mongoose.Types.ObjectId(), maxSlotsPerResponse: 51 })).rejects.toThrow();
+    await expect(
+      SchedulingSettings.create({ Tenant: new mongoose.Types.ObjectId(), maxSlotsPerResponse: 0 }),
+    ).rejects.toThrow();
+    await expect(
+      SchedulingSettings.create({ Tenant: new mongoose.Types.ObjectId(), maxSlotsPerResponse: 51 }),
+    ).rejects.toThrow();
   });
 
   it('accepts the boundaries of maxSlotsPerResponse (1 and 50)', async () => {

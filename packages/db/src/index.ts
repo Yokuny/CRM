@@ -3,7 +3,12 @@ export type { EncryptedSecret } from './crypto.helper.js';
 export { decrypt, encrypt, maskSecret, sha256 } from './crypto.helper.js';
 export type { AiSessionDocument } from './models/aiSession.model.js';
 export { AiSession } from './models/aiSession.model.js';
-export type { AppointmentDocument, AppointmentKind, AppointmentSource, AppointmentStatus } from './models/appointment.model.js';
+export type {
+  AppointmentDocument,
+  AppointmentKind,
+  AppointmentSource,
+  AppointmentStatus,
+} from './models/appointment.model.js';
 export { Appointment } from './models/appointment.model.js';
 export type { AsaasEventDocument, AsaasEventStatus } from './models/asaasEvent.model.js';
 export { AsaasEvent } from './models/asaasEvent.model.js';

@@ -57,7 +57,9 @@ describe('Professional model', () => {
       Professional.create(baseProfessional(Tenant, { weeklySchedule: [{ weekday: 7, start: '09:00', end: '10:00' }] })),
     ).rejects.toThrow();
     await expect(
-      Professional.create(baseProfessional(Tenant, { weeklySchedule: [{ weekday: -1, start: '09:00', end: '10:00' }] })),
+      Professional.create(
+        baseProfessional(Tenant, { weeklySchedule: [{ weekday: -1, start: '09:00', end: '10:00' }] }),
+      ),
     ).rejects.toThrow();
   });
 

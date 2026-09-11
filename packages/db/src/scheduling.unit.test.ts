@@ -166,7 +166,10 @@ describe('computeFreeSlots', () => {
 });
 
 describe('isSlotAligned', () => {
-  const professional = { weeklySchedule: [{ weekday: TUESDAY_WEEKDAY, start: '09:00', end: '10:00' }], slotDurationMinutes: 30 };
+  const professional = {
+    weeklySchedule: [{ weekday: TUESDAY_WEEKDAY, start: '09:00', end: '10:00' }],
+    slotDurationMinutes: 30,
+  };
 
   it('aceita um início exatamente no grid da janela', () => {
     expect(isSlotAligned(wallClockToUtc(TUESDAY, '09:30'), professional)).toBe(true);

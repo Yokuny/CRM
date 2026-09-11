@@ -45,11 +45,22 @@ describe('Appointment model', () => {
   describe('enums (status, source)', () => {
     it('accepts exactly the 6 documented status values', async () => {
       const Tenant = new mongoose.Types.ObjectId();
-      const statuses = ['pending', 'confirmed', 'completed', 'no_show', 'canceled_by_customer', 'canceled_by_operator'] as const;
+      const statuses = [
+        'pending',
+        'confirmed',
+        'completed',
+        'no_show',
+        'canceled_by_customer',
+        'canceled_by_operator',
+      ] as const;
 
       for (const [index, status] of statuses.entries()) {
         const created = await Appointment.create(
-          baseAppointment(Tenant, { status, start: new Date(Date.UTC(2026, 8, 15, 12 + index)), end: new Date(Date.UTC(2026, 8, 15, 13 + index)) }),
+          baseAppointment(Tenant, {
+            status,
+            start: new Date(Date.UTC(2026, 8, 15, 12 + index)),
+            end: new Date(Date.UTC(2026, 8, 15, 13 + index)),
+          }),
         );
         expect(created.status).toBe(status);
       }
@@ -66,7 +77,11 @@ describe('Appointment model', () => {
 
       const ai = await Appointment.create(baseAppointment(Tenant, { source: 'ai' }));
       const operator = await Appointment.create(
-        baseAppointment(Tenant, { source: 'operator', start: new Date('2026-09-15T13:00:00.000Z'), end: new Date('2026-09-15T13:30:00.000Z') }),
+        baseAppointment(Tenant, {
+          source: 'operator',
+          start: new Date('2026-09-15T13:00:00.000Z'),
+          end: new Date('2026-09-15T13:30:00.000Z'),
+        }),
       );
       expect(ai.source).toBe('ai');
       expect(operator.source).toBe('operator');
@@ -86,7 +101,15 @@ describe('Appointment model', () => {
       await Appointment.create(baseAppointment(Tenant, { professional, start, end, status: 'pending' }));
 
       await expect(
-        Appointment.create(baseAppointment(Tenant, { professional, start, end, status: 'confirmed', customer: new mongoose.Types.ObjectId() })),
+        Appointment.create(
+          baseAppointment(Tenant, {
+            professional,
+            start,
+            end,
+            status: 'confirmed',
+            customer: new mongoose.Types.ObjectId(),
+          }),
+        ),
       ).rejects.toMatchObject({ code: 11000 });
     });
 
@@ -101,7 +124,13 @@ describe('Appointment model', () => {
       await Appointment.updateOne({ _id: first._id }, { status: 'canceled_by_customer' });
 
       const second = await Appointment.create(
-        baseAppointment(Tenant, { professional, start, end, status: 'pending', customer: new mongoose.Types.ObjectId() }),
+        baseAppointment(Tenant, {
+          professional,
+          start,
+          end,
+          status: 'pending',
+          customer: new mongoose.Types.ObjectId(),
+        }),
       );
 
       expect(second._id).toBeDefined();
@@ -117,17 +146,27 @@ describe('Appointment model', () => {
 
       await Appointment.create(baseAppointment(Tenant, { professional, start, end, status: 'canceled_by_customer' }));
       await Appointment.create(
-        baseAppointment(Tenant, { professional, start, end, status: 'canceled_by_customer', customer: new mongoose.Types.ObjectId() }),
+        baseAppointment(Tenant, {
+          professional,
+          start,
+          end,
+          status: 'canceled_by_customer',
+          customer: new mongoose.Types.ObjectId(),
+        }),
       );
 
-      await expect(Appointment.countDocuments({ Tenant, professional, start, status: 'canceled_by_customer' })).resolves.toBe(2);
+      await expect(
+        Appointment.countDocuments({ Tenant, professional, start, status: 'canceled_by_customer' }),
+      ).resolves.toBe(2);
     });
 
     it('declares the index as unique and partial on status pending|confirmed', async () => {
       await Appointment.init();
 
       const indexes = await Appointment.collection.indexes();
-      const tripleIndex = indexes.find((index) => JSON.stringify(index.key) === JSON.stringify({ Tenant: 1, professional: 1, start: 1 }));
+      const tripleIndex = indexes.find(
+        (index) => JSON.stringify(index.key) === JSON.stringify({ Tenant: 1, professional: 1, start: 1 }),
+      );
 
       expect(tripleIndex?.unique).toBe(true);
       expect(tripleIndex?.partialFilterExpression).toEqual({ status: { $in: ['pending', 'confirmed'] } });
@@ -149,7 +188,9 @@ describe('Appointment model', () => {
       await Appointment.init();
 
       const indexes = await Appointment.collection.indexes();
-      const tokenIndex = indexes.find((index) => JSON.stringify(index.key) === JSON.stringify({ confirmationTokenHash: 1 }));
+      const tokenIndex = indexes.find(
+        (index) => JSON.stringify(index.key) === JSON.stringify({ confirmationTokenHash: 1 }),
+      );
 
       expect(tokenIndex?.unique).toBe(true);
       expect(tokenIndex?.sparse).toBe(true);
@@ -159,10 +200,16 @@ describe('Appointment model', () => {
       const Tenant = new mongoose.Types.ObjectId();
 
       const first = await Appointment.create(
-        baseAppointment(Tenant, { start: new Date('2026-09-15T12:00:00.000Z'), end: new Date('2026-09-15T12:30:00.000Z') }),
+        baseAppointment(Tenant, {
+          start: new Date('2026-09-15T12:00:00.000Z'),
+          end: new Date('2026-09-15T12:30:00.000Z'),
+        }),
       );
       const second = await Appointment.create(
-        baseAppointment(Tenant, { start: new Date('2026-09-15T13:00:00.000Z'), end: new Date('2026-09-15T13:30:00.000Z') }),
+        baseAppointment(Tenant, {
+          start: new Date('2026-09-15T13:00:00.000Z'),
+          end: new Date('2026-09-15T13:30:00.000Z'),
+        }),
       );
 
       expect(first.confirmationTokenHash).toBeUndefined();
@@ -175,12 +222,20 @@ describe('Appointment model', () => {
       const sharedHash = 'a'.repeat(64);
 
       await Appointment.create(
-        baseAppointment(Tenant, { confirmationTokenHash: sharedHash, start: new Date('2026-09-15T12:00:00.000Z'), end: new Date('2026-09-15T12:30:00.000Z') }),
+        baseAppointment(Tenant, {
+          confirmationTokenHash: sharedHash,
+          start: new Date('2026-09-15T12:00:00.000Z'),
+          end: new Date('2026-09-15T12:30:00.000Z'),
+        }),
       );
 
       await expect(
         Appointment.create(
-          baseAppointment(Tenant, { confirmationTokenHash: sharedHash, start: new Date('2026-09-15T13:00:00.000Z'), end: new Date('2026-09-15T13:30:00.000Z') }),
+          baseAppointment(Tenant, {
+            confirmationTokenHash: sharedHash,
+            start: new Date('2026-09-15T13:00:00.000Z'),
+            end: new Date('2026-09-15T13:30:00.000Z'),
+          }),
         ),
       ).rejects.toMatchObject({ code: 11000 });
     });

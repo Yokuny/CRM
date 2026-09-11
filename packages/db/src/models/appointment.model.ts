@@ -1,7 +1,13 @@
 import mongoose, { Schema } from 'mongoose';
 
 export type AppointmentKind = 'appointment' | 'block';
-export type AppointmentStatus = 'pending' | 'confirmed' | 'completed' | 'no_show' | 'canceled_by_customer' | 'canceled_by_operator';
+export type AppointmentStatus =
+  | 'pending'
+  | 'confirmed'
+  | 'completed'
+  | 'no_show'
+  | 'canceled_by_customer'
+  | 'canceled_by_operator';
 export type AppointmentSource = 'ai' | 'operator';
 
 // Discriminada por `kind` (AD-035): agendamento e bloqueio na mesma coleção,
