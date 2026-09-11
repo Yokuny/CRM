@@ -25,6 +25,7 @@ import { createPlatformRouter } from './routers/platform.router.js';
 import { createProcessRouter } from './routers/process.router.js';
 import { createProductRouter } from './routers/product.router.js';
 import { createProfessionalRouter } from './routers/professional.router.js';
+import { createSchedulingSettingsRouter } from './routers/schedulingSettings.router.js';
 import { createSpaceRouter } from './routers/space.router.js';
 import type { FieldValueStores } from './services/fieldTemplate.service.js';
 
@@ -75,6 +76,7 @@ export const buildApp = (): Express => {
   app.use('/products', createProductRouter({ validToken }));
   app.use('/professionals', createProfessionalRouter({ validToken }));
   app.use('/spaces', createSpaceRouter({ validToken }));
+  app.use('/scheduling-settings', createSchedulingSettingsRouter({ validToken }));
   app.use('/orders', createOrderRouter({ validToken }));
   app.use('/channels', createChannelRouter({ validToken }));
   app.use('/conversations', createConversationRouter({ validToken }));
