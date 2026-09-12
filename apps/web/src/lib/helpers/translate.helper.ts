@@ -144,6 +144,17 @@ const translations: Record<string, string> = {
   'order.payment.expired': 'Cobrança expirada',
   'order.payment.refunded': 'Reembolsado',
   'order.payment.canceled': 'Cancelado',
+  // Grade semanal de Professional (feature scheduling, Fase 7/T33) —
+  // weekday-editor.tsx agrupa `weeklySchedule` por dia da semana.
+  'weekday.0': 'Domingo',
+  'weekday.1': 'Segunda-feira',
+  'weekday.2': 'Terça-feira',
+  'weekday.3': 'Quarta-feira',
+  'weekday.4': 'Quinta-feira',
+  'weekday.5': 'Sexta-feira',
+  'weekday.6': 'Sábado',
+  'schedule.window.start': 'Início',
+  'schedule.window.end': 'Fim',
 };
 
 export const t = (key: string): string => translations[key] ?? key;
