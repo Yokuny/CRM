@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { Appointment, Customer, connect, disconnect, Professional, Space } from '@crm/db';
+import { Appointment, Channel, Conversation, Customer, connect, disconnect, Professional, Space } from '@crm/db';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import * as appointmentRepository from './appointment.repository.js';
 
@@ -56,6 +56,30 @@ const seedBlock = (tenantId: string, overrides: Partial<Record<string, unknown>>
     ...overrides,
   });
 
+// findLatestConversationIdByCustomer (T44): cada Conversation precisa do
+// próprio Channel — {Channel,Customer} é único no schema, então duas
+// Conversation do mesmo cliente exigem dois Channel distintos.
+const seedConversation = async (
+  tenantId: string,
+  customerId: string,
+  overrides: Partial<Record<string, unknown>> = {},
+) => {
+  const channel = await Channel.create({
+    Tenant: tenantId,
+    phoneNumberId: randomId(),
+    accessTokenEnc: { ciphertext: 'c', iv: 'i', authTag: 'a' },
+    status: 'active',
+  });
+  return Conversation.create({
+    Tenant: tenantId,
+    Channel: channel._id,
+    Customer: customerId,
+    mode: 'bot',
+    lastActivityAt: new Date('2026-01-01T00:00:00.000Z'),
+    ...overrides,
+  });
+};
+
 describe('appointment.repository', () => {
   beforeAll(async () => {
     await connect(process.env.MONGODB_URI as string);
@@ -67,6 +91,8 @@ describe('appointment.repository', () => {
       Professional.deleteMany({}),
       Space.deleteMany({}),
       Customer.deleteMany({}),
+      Conversation.deleteMany({}),
+      Channel.deleteMany({}),
     ]);
   });
 
@@ -341,6 +367,43 @@ describe('appointment.repository', () => {
         customerId,
         new Date('2026-09-15T00:00:00.000Z'),
       );
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('findLatestConversationIdByCustomer (T44, SCH-39/40)', () => {
+    it("returns the id of the customer's Conversation", async () => {
+      // {Channel,Customer} é único e Channel é único por Tenant (um único
+      // canal de WhatsApp por tenant, AD-005) — um Customer nunca tem mais
+      // de UMA Conversation sob o mesmo Tenant hoje; `sort(lastActivityAt)`
+      // é defensivo para quando isso deixar de valer, não testável como
+      // "múltiplas, escolhe a mais recente" sem violar o índice único real.
+      const tenantId = randomId();
+      const customer = await seedCustomer(tenantId);
+      const conversation = await seedConversation(tenantId, customer._id.toString());
+
+      const result = await appointmentRepository.findLatestConversationIdByCustomer(tenantId, customer._id.toString());
+
+      expect(result).toBe(conversation._id.toString());
+    });
+
+    it('returns null when the customer has no Conversation yet — a valid state, never an error', async () => {
+      const tenantId = randomId();
+      const customer = await seedCustomer(tenantId);
+
+      const result = await appointmentRepository.findLatestConversationIdByCustomer(tenantId, customer._id.toString());
+
+      expect(result).toBeNull();
+    });
+
+    it('never returns a Conversation belonging to a DIFFERENT tenant for the same customer id (AD-010)', async () => {
+      const tenantId = randomId();
+      const otherTenant = randomId();
+      const customer = await seedCustomer(tenantId);
+      await seedConversation(otherTenant, customer._id.toString());
+
+      const result = await appointmentRepository.findLatestConversationIdByCustomer(tenantId, customer._id.toString());
 
       expect(result).toBeNull();
     });

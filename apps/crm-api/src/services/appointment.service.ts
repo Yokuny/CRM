@@ -15,6 +15,8 @@ import {
 import { env } from '../config/env.config.js';
 import type { AppointmentRecord } from '../repositories/appointment.repository.js';
 import * as appointmentRepository from '../repositories/appointment.repository.js';
+import * as conversationRepository from '../repositories/conversation.repository.js';
+import { ConversationNotFoundError, OutsideWindowError } from '../repositories/conversation.repository.js';
 import * as customerRepository from '../repositories/customer.repository.js';
 import * as professionalRepository from '../repositories/professional.repository.js';
 
@@ -131,16 +133,69 @@ export const deleteBlock = async (tenantId: string, blockId: string): Promise<{ 
   return result;
 };
 
+export type AppointmentNotice = { kind: 'queued' } | { kind: 'wa_me'; url: string };
+export type AppointmentActionResult = { appointment: AppointmentRecord; notice?: AppointmentNotice };
+
+const buildCancelNoticeText = (appointment: AppointmentRecord): string =>
+  `Seu agendamento de ${dateInDisplayTz(appointment.start)} às ${timeInDisplayTz(appointment.start)} foi cancelado.`;
+
+const buildRescheduleNoticeText = (appointment: AppointmentRecord): string =>
+  `Seu agendamento foi remarcado para ${dateInDisplayTz(appointment.start)} às ${timeInDisplayTz(appointment.start)}.`;
+
+const buildWaMeNotice = async (
+  tenantId: string,
+  customerId: string,
+  text: string,
+): Promise<AppointmentNotice | undefined> => {
+  const customer = await customerRepository.findById(tenantId, customerId);
+  if (!customer) return undefined;
+  return { kind: 'wa_me', url: `https://wa.me/${customer.phone}?text=${encodeURIComponent(text)}` };
+};
+
+// SCH-39/40: aviso automático ao cancelar/remarcar. A conversa é resolvida
+// por `appointment.conversation` (agendamento criado pela IA) e, na falta
+// (encaixe do operador nunca grava esse campo), pela mais recente do
+// cliente. `createOutboundMessage` (conversation.repository.ts) já barra
+// texto livre fora da janela de 24h ANTES de inserir (AD-005) — nunca
+// reimplementado aqui, só traduzido pro fallback wa.me (design.md Error
+// Handling Strategy). Sem `customer` (bloqueio) ou sem Customer resolvido:
+// nenhum aviso possível, `notice` fica ausente.
+const notifyCustomer = async (
+  tenantId: string,
+  appointment: AppointmentRecord,
+  text: string,
+): Promise<AppointmentNotice | undefined> => {
+  if (!appointment.customer) return undefined;
+
+  const conversationId =
+    appointment.conversation ??
+    (await appointmentRepository.findLatestConversationIdByCustomer(tenantId, appointment.customer));
+
+  if (!conversationId) return buildWaMeNotice(tenantId, appointment.customer, text);
+
+  try {
+    await conversationRepository.createOutboundMessage(conversationId, tenantId, { text });
+    return { kind: 'queued' };
+  } catch (e) {
+    if (e instanceof ConversationNotFoundError || e instanceof OutsideWindowError) {
+      return buildWaMeNotice(tenantId, appointment.customer, text);
+    }
+    throw e;
+  }
+};
+
 // SCH-32: cancelamento pelo operador, com motivo opcional.
 export const cancelAppointment = async (
   tenantId: string,
   appointmentId: string,
   userId: string,
   reason?: string,
-): Promise<AppointmentRecord> => {
+): Promise<AppointmentActionResult> => {
   const result = await cancelByOperator(tenantId, appointmentId, userId, reason);
   if ('error' in result) throw translateTransitionError(result);
-  return requireAppointmentRecord(tenantId, appointmentId);
+  const appointment = await requireAppointmentRecord(tenantId, appointmentId);
+  const notice = await notifyCustomer(tenantId, appointment, buildCancelNoticeText(appointment));
+  return { appointment, notice };
 };
 
 // SCH-31: mesmo Appointment, novo horário (hora de parede) e profissional
@@ -149,14 +204,16 @@ export const rescheduleAppointment = async (
   tenantId: string,
   appointmentId: string,
   input: RescheduleAppointment,
-): Promise<AppointmentRecord> => {
+): Promise<AppointmentActionResult> => {
   const start = wallClockToUtc(input.date, input.time);
   const result = await rescheduleAppointmentTransition(tenantId, appointmentId, {
     start,
     professionalId: input.professionalId,
   });
   if ('error' in result) throw translateTransitionError(result);
-  return requireAppointmentRecord(tenantId, appointmentId);
+  const appointment = await requireAppointmentRecord(tenantId, appointmentId);
+  const notice = await notifyCustomer(tenantId, appointment, buildRescheduleNoticeText(appointment));
+  return { appointment, notice };
 };
 
 // SCH-34: comparecimento.

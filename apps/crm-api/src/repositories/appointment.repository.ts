@@ -1,5 +1,5 @@
 import type { AppointmentDocument, AppointmentKind, AppointmentSource, AppointmentStatus } from '@crm/db';
-import { Appointment, Customer, Professional, Space, tenantScoped } from '@crm/db';
+import { Appointment, Conversation, Customer, Professional, Space, tenantScoped } from '@crm/db';
 import { withDbTiming } from '../metrics/db.metric.js';
 
 const ACTIVE_STATUSES = ['pending', 'confirmed'] as const;
@@ -196,4 +196,20 @@ export const findNextActiveByCustomer = async (
     ]);
 
     return toRecord(doc, professional?.name, space?.name, customer?.name);
+  });
+
+// SCH-39/40 (T44): resolve a Conversation mais recente do cliente — usada
+// quando o Appointment não tem `conversation` própria (só book_appointment,
+// pela IA, grava esse campo; o encaixe do operador nunca grava). `null` é
+// estado válido (cliente sem nenhuma conversa ainda), nunca erro.
+export const findLatestConversationIdByCustomer = async (
+  tenantId: string,
+  customerId: string,
+): Promise<string | null> =>
+  withDbTiming('appointment.findLatestConversationIdByCustomer', async () => {
+    const doc = await Conversation.findOne(tenantScoped({ Tenant: tenantId, Customer: customerId }))
+      .sort({ lastActivityAt: -1 })
+      .select('_id')
+      .lean();
+    return doc ? doc._id.toString() : null;
   });

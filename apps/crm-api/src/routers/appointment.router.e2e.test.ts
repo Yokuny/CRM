@@ -2,11 +2,14 @@ import crypto from 'node:crypto';
 import type { Role } from '@crm/contracts';
 import {
   Appointment,
+  Channel,
+  Conversation,
   Customer,
   connect,
   dateInDisplayTz,
   disconnect,
   hashToken,
+  Message,
   Professional,
   Session,
   Space,
@@ -158,6 +161,30 @@ const wallClockParts = (instant: Date): { date: string; time: string } => ({
   time: timeInDisplayTz(instant),
 });
 
+// T44 (SCH-39/40): um Channel por Tenant só (índice único), então a
+// Conversation criada aqui é a ÚNICA do tenant — suficiente pra exercitar o
+// aviso automático sem precisar do fallback por customerId.
+const seedConversation = async (
+  tenantId: string,
+  customerId: string,
+  overrides: Partial<Record<string, unknown>> = {},
+) => {
+  const channel = await Channel.create({
+    Tenant: tenantId,
+    phoneNumberId: randomId(),
+    accessTokenEnc: { ciphertext: 'c', iv: 'i', authTag: 'a' },
+    status: 'active',
+  });
+  return Conversation.create({
+    Tenant: tenantId,
+    Channel: channel._id,
+    Customer: customerId,
+    mode: 'bot',
+    lastActivityAt: new Date(),
+    ...overrides,
+  });
+};
+
 describe('appointment routes (spec.md P1 "Operador opera a agenda no CRM")', () => {
   beforeAll(async () => {
     await connect(process.env.MONGODB_URI as string);
@@ -173,6 +200,9 @@ describe('appointment routes (spec.md P1 "Operador opera a agenda no CRM")', () 
       Session.deleteMany({}),
       User.deleteMany({}),
       Tenant.deleteMany({}),
+      Conversation.deleteMany({}),
+      Channel.deleteMany({}),
+      Message.deleteMany({}),
     ]);
   });
 
@@ -490,7 +520,7 @@ describe('appointment routes (spec.md P1 "Operador opera a agenda no CRM")', () 
         .send({ reason: 'cliente desmarcou' });
 
       expect(canceled.status).toBe(200);
-      expect(canceled.body.data.status).toBe('canceled_by_operator');
+      expect(canceled.body.data.appointment.status).toBe('canceled_by_operator');
 
       const rebooked = await request(app)
         .post('/appointments')
@@ -574,8 +604,8 @@ describe('appointment routes (spec.md P1 "Operador opera a agenda no CRM")', () 
         .send({ date: '2026-09-17', time: '10:00' });
 
       expect(rescheduled.status).toBe(200);
-      expect(rescheduled.body.data.id).toBe(created.body.data.id);
-      expect(rescheduled.body.data.status).toBe('pending');
+      expect(rescheduled.body.data.appointment.id).toBe(created.body.data.id);
+      expect(rescheduled.body.data.appointment.status).toBe('pending');
     });
 
     it('responds 409 when the new slot conflicts with another active Appointment of the same professional', async () => {
@@ -644,6 +674,92 @@ describe('appointment routes (spec.md P1 "Operador opera a agenda no CRM")', () 
         .send({ date: '2026-09-17', time: '10:00' });
 
       expect(res.status).toBe(403);
+    });
+  });
+
+  describe('Aviso automático ao cliente ao cancelar/remarcar (spec.md P2, SCH-39/40, T44)', () => {
+    it('janela de 24h aberta -> enfileira uma Message out queued e responde notice:{kind:"queued"}', async () => {
+      const { tenant, cookie } = await seedTenantUser(['operador']);
+      const customer = await seedCustomer(tenant._id.toString());
+      const appointment = await seedAppointment(tenant._id.toString(), { customer: customer._id });
+      await seedConversation(tenant._id.toString(), customer._id.toString(), {
+        windowExpiresAt: new Date(Date.now() + 60 * 60_000),
+      });
+      const app = buildTestApp();
+
+      const res = await request(app)
+        .post(`/appointments/${appointment._id.toString()}/cancel`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE)
+        .send({});
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.notice).toEqual({ kind: 'queued' });
+      const messages = await Message.find({ Customer: customer._id, direction: 'out', status: 'queued' }).lean();
+      expect(messages).toHaveLength(1);
+    });
+
+    it('janela de 24h fechada -> nenhuma Message nova, responde notice:{kind:"wa_me",url} com o telefone do cliente', async () => {
+      const { tenant, cookie } = await seedTenantUser(['operador']);
+      const customer = await seedCustomer(tenant._id.toString());
+      const appointment = await seedAppointment(tenant._id.toString(), { customer: customer._id });
+      await seedConversation(tenant._id.toString(), customer._id.toString(), {
+        windowExpiresAt: new Date(Date.now() - 60_000),
+      });
+      const app = buildTestApp();
+
+      const res = await request(app)
+        .post(`/appointments/${appointment._id.toString()}/cancel`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE)
+        .send({});
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.notice.kind).toBe('wa_me');
+      expect(res.body.data.notice.url).toContain(`https://wa.me/${customer.phone}?text=`);
+      await expect(Message.countDocuments({})).resolves.toBe(0);
+    });
+
+    it('cliente sem NENHUMA Conversation -> nenhuma Message nova, responde notice:{kind:"wa_me",url}', async () => {
+      const { tenant, cookie } = await seedTenantUser(['operador']);
+      const customer = await seedCustomer(tenant._id.toString());
+      const appointment = await seedAppointment(tenant._id.toString(), { customer: customer._id });
+      const app = buildTestApp();
+
+      const res = await request(app)
+        .post(`/appointments/${appointment._id.toString()}/cancel`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE)
+        .send({});
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.notice.kind).toBe('wa_me');
+      await expect(Message.countDocuments({})).resolves.toBe(0);
+    });
+
+    it('remarcação com a janela aberta também enfileira o aviso (mesma lógica compartilhada, notice:{kind:"queued"})', async () => {
+      const { tenant, cookie } = await seedTenantUser(['operador']);
+      const professional = await seedProfessional(tenant._id.toString());
+      const customer = await seedCustomer(tenant._id.toString());
+      const appointment = await seedAppointment(tenant._id.toString(), {
+        professional: professional._id,
+        customer: customer._id,
+      });
+      await seedConversation(tenant._id.toString(), customer._id.toString(), {
+        windowExpiresAt: new Date(Date.now() + 60 * 60_000),
+      });
+      const app = buildTestApp();
+
+      const res = await request(app)
+        .post(`/appointments/${appointment._id.toString()}/reschedule`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE)
+        .send({ date: '2026-09-17', time: '10:00' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.notice).toEqual({ kind: 'queued' });
+      const messages = await Message.find({ Customer: customer._id, direction: 'out', status: 'queued' }).lean();
+      expect(messages).toHaveLength(1);
     });
   });
 

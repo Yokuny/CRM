@@ -14,11 +14,14 @@ const cancelByOperatorMock = vi.fn();
 const rescheduleAppointmentMock = vi.fn();
 const markAttendanceMock = vi.fn();
 const issueConfirmationTokenMock = vi.fn();
+const findLatestConversationIdByCustomerMock = vi.fn();
+const createOutboundMessageMock = vi.fn();
 
 vi.mock('../repositories/appointment.repository.js', () => ({
   listByRange: (...args: unknown[]) => listByRangeMock(...args),
   findById: (...args: unknown[]) => findByIdMock(...args),
   findNextActiveByCustomer: (...args: unknown[]) => findNextActiveByCustomerMock(...args),
+  findLatestConversationIdByCustomer: (...args: unknown[]) => findLatestConversationIdByCustomerMock(...args),
 }));
 
 vi.mock('../repositories/professional.repository.js', () => ({
@@ -27,6 +30,18 @@ vi.mock('../repositories/professional.repository.js', () => ({
 
 vi.mock('../repositories/customer.repository.js', () => ({
   findById: (...args: unknown[]) => customerFindByIdMock(...args),
+}));
+
+// SCH-39/40 (T44): classes reais (não stub genérico) — o service faz
+// `instanceof ConversationNotFoundError`/`OutsideWindowError` para decidir o
+// fallback wa.me, e precisa reconhecer a MESMA classe que o teste lança.
+class MockConversationNotFoundError extends Error {}
+class MockOutsideWindowError extends Error {}
+
+vi.mock('../repositories/conversation.repository.js', () => ({
+  createOutboundMessage: (...args: unknown[]) => createOutboundMessageMock(...args),
+  ConversationNotFoundError: MockConversationNotFoundError,
+  OutsideWindowError: MockOutsideWindowError,
 }));
 
 // Mock PARCIAL de @crm/db: mantém wallClockToUtc/dateInDisplayTz/
@@ -109,6 +124,8 @@ describe('appointment.service', () => {
       const { rescheduleAppointment } = await import('./appointment.service.js');
       rescheduleAppointmentMock.mockResolvedValueOnce(sampleAppointmentRecord());
       findByIdMock.mockResolvedValueOnce(sampleAppointmentRecord());
+      findLatestConversationIdByCustomerMock.mockResolvedValueOnce(null);
+      customerFindByIdMock.mockResolvedValueOnce(null);
 
       await rescheduleAppointment(TENANT_ID, APPOINTMENT_ID, { date: '2026-09-15', time: '21:00' });
 
@@ -230,11 +247,13 @@ describe('appointment.service', () => {
       const { cancelAppointment } = await import('./appointment.service.js');
       cancelByOperatorMock.mockResolvedValueOnce(sampleAppointmentRecord({ status: 'canceled_by_operator' }));
       findByIdMock.mockResolvedValueOnce(sampleAppointmentRecord({ status: 'canceled_by_operator' }));
+      findLatestConversationIdByCustomerMock.mockResolvedValueOnce(null);
+      customerFindByIdMock.mockResolvedValueOnce(null);
 
       const result = await cancelAppointment(TENANT_ID, APPOINTMENT_ID, USER_ID, 'cliente desmarcou');
 
       expect(cancelByOperatorMock).toHaveBeenCalledWith(TENANT_ID, APPOINTMENT_ID, USER_ID, 'cliente desmarcou');
-      expect(result.status).toBe('canceled_by_operator');
+      expect(result.appointment.status).toBe('canceled_by_operator');
     });
 
     it('markAttendance passes status through and reloads the record', async () => {
@@ -311,6 +330,124 @@ describe('appointment.service', () => {
 
       await expect(requestConfirmationLink(TENANT_ID, APPOINTMENT_ID)).rejects.toBeInstanceOf(AppointmentNotFoundError);
       expect(customerFindByIdMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('aviso automático ao cancelar/remarcar (spec.md SCH-39/40, T44)', () => {
+    const CONVERSATION_ID = 'conversation-1';
+    const samplePhoneCustomer = {
+      id: CUSTOMER_ID,
+      name: 'Cliente Teste',
+      phone: '11999998888',
+      template: 'template-1',
+      templateVersion: 1,
+      values: {},
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    it('SCH-39: appointment.conversation presente -> usa direto, sem consultar a conversa mais recente do cliente', async () => {
+      const { cancelAppointment } = await import('./appointment.service.js');
+      cancelByOperatorMock.mockResolvedValueOnce(sampleAppointmentRecord({ status: 'canceled_by_operator' }));
+      findByIdMock.mockResolvedValueOnce(
+        sampleAppointmentRecord({ status: 'canceled_by_operator', conversation: CONVERSATION_ID }),
+      );
+      createOutboundMessageMock.mockResolvedValueOnce({ id: 'm1', status: 'queued' });
+
+      const result = await cancelAppointment(TENANT_ID, APPOINTMENT_ID, USER_ID);
+
+      expect(findLatestConversationIdByCustomerMock).not.toHaveBeenCalled();
+      expect(createOutboundMessageMock).toHaveBeenCalledWith(CONVERSATION_ID, TENANT_ID, { text: expect.any(String) });
+      expect(result.notice).toEqual({ kind: 'queued' });
+    });
+
+    it('SCH-39: sem appointment.conversation -> resolve pela Conversation mais recente do cliente antes de enfileirar', async () => {
+      const { cancelAppointment } = await import('./appointment.service.js');
+      cancelByOperatorMock.mockResolvedValueOnce(sampleAppointmentRecord({ status: 'canceled_by_operator' }));
+      findByIdMock.mockResolvedValueOnce(sampleAppointmentRecord({ status: 'canceled_by_operator' }));
+      findLatestConversationIdByCustomerMock.mockResolvedValueOnce(CONVERSATION_ID);
+      createOutboundMessageMock.mockResolvedValueOnce({ id: 'm1', status: 'queued' });
+
+      const result = await cancelAppointment(TENANT_ID, APPOINTMENT_ID, USER_ID);
+
+      expect(findLatestConversationIdByCustomerMock).toHaveBeenCalledWith(TENANT_ID, CUSTOMER_ID);
+      expect(createOutboundMessageMock).toHaveBeenCalledWith(CONVERSATION_ID, TENANT_ID, { text: expect.any(String) });
+      expect(result.notice).toEqual({ kind: 'queued' });
+    });
+
+    it('SCH-40: janela fechada (OutsideWindowError) -> nenhuma Message nova, notice:{kind:"wa_me",url} com o telefone do cliente', async () => {
+      const { cancelAppointment } = await import('./appointment.service.js');
+      cancelByOperatorMock.mockResolvedValueOnce(sampleAppointmentRecord({ status: 'canceled_by_operator' }));
+      findByIdMock.mockResolvedValueOnce(sampleAppointmentRecord({ status: 'canceled_by_operator' }));
+      findLatestConversationIdByCustomerMock.mockResolvedValueOnce(CONVERSATION_ID);
+      createOutboundMessageMock.mockRejectedValueOnce(new MockOutsideWindowError());
+      customerFindByIdMock.mockResolvedValueOnce(samplePhoneCustomer);
+
+      const result = await cancelAppointment(TENANT_ID, APPOINTMENT_ID, USER_ID);
+
+      expect(result.notice).toEqual({
+        kind: 'wa_me',
+        url: expect.stringMatching(/^https:\/\/wa\.me\/11999998888\?text=/),
+      });
+    });
+
+    it('SCH-40: cliente sem nenhuma Conversation -> notice:{kind:"wa_me",url}, sem tentar createOutboundMessage', async () => {
+      const { cancelAppointment } = await import('./appointment.service.js');
+      cancelByOperatorMock.mockResolvedValueOnce(sampleAppointmentRecord({ status: 'canceled_by_operator' }));
+      findByIdMock.mockResolvedValueOnce(sampleAppointmentRecord({ status: 'canceled_by_operator' }));
+      findLatestConversationIdByCustomerMock.mockResolvedValueOnce(null);
+      customerFindByIdMock.mockResolvedValueOnce(samplePhoneCustomer);
+
+      const result = await cancelAppointment(TENANT_ID, APPOINTMENT_ID, USER_ID);
+
+      expect(createOutboundMessageMock).not.toHaveBeenCalled();
+      expect(result.notice).toEqual({
+        kind: 'wa_me',
+        url: expect.stringMatching(/^https:\/\/wa\.me\/11999998888\?text=/),
+      });
+    });
+
+    it('ConversationNotFoundError também cai no fallback wa.me (conversa apontada já não existe mais)', async () => {
+      const { cancelAppointment } = await import('./appointment.service.js');
+      cancelByOperatorMock.mockResolvedValueOnce(sampleAppointmentRecord({ status: 'canceled_by_operator' }));
+      findByIdMock.mockResolvedValueOnce(
+        sampleAppointmentRecord({ status: 'canceled_by_operator', conversation: CONVERSATION_ID }),
+      );
+      createOutboundMessageMock.mockRejectedValueOnce(new MockConversationNotFoundError());
+      customerFindByIdMock.mockResolvedValueOnce(samplePhoneCustomer);
+
+      const result = await cancelAppointment(TENANT_ID, APPOINTMENT_ID, USER_ID);
+
+      expect(result.notice).toEqual({
+        kind: 'wa_me',
+        url: expect.stringMatching(/^https:\/\/wa\.me\/11999998888\?text=/),
+      });
+    });
+
+    it('SCH-39: rescheduleAppointment dispara o MESMO aviso (janela aberta -> queued)', async () => {
+      const { rescheduleAppointment } = await import('./appointment.service.js');
+      rescheduleAppointmentMock.mockResolvedValueOnce(sampleAppointmentRecord());
+      findByIdMock.mockResolvedValueOnce(sampleAppointmentRecord({ conversation: CONVERSATION_ID }));
+      createOutboundMessageMock.mockResolvedValueOnce({ id: 'm1', status: 'queued' });
+
+      const result = await rescheduleAppointment(TENANT_ID, APPOINTMENT_ID, { date: '2026-09-15', time: '21:00' });
+
+      expect(createOutboundMessageMock).toHaveBeenCalledWith(CONVERSATION_ID, TENANT_ID, { text: expect.any(String) });
+      expect(result.notice).toEqual({ kind: 'queued' });
+    });
+
+    it('sem Customer vinculado (bloqueio) -> notice ausente, sem consultar conversa ou cliente', async () => {
+      const { cancelAppointment } = await import('./appointment.service.js');
+      cancelByOperatorMock.mockResolvedValueOnce(sampleAppointmentRecord({ status: 'canceled_by_operator' }));
+      findByIdMock.mockResolvedValueOnce(
+        sampleAppointmentRecord({ status: 'canceled_by_operator', customer: undefined }),
+      );
+
+      const result = await cancelAppointment(TENANT_ID, APPOINTMENT_ID, USER_ID);
+
+      expect(findLatestConversationIdByCustomerMock).not.toHaveBeenCalled();
+      expect(createOutboundMessageMock).not.toHaveBeenCalled();
+      expect(result.notice).toBeUndefined();
     });
   });
 });
