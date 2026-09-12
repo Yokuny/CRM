@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
+import type { Control } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button.js';
 import { Card, CardContent, CardHeader } from '@/components/ui/card.js';
@@ -86,7 +87,7 @@ export function ProfessionalAddPage() {
             </div>
             <div className="grid gap-2">
               <Label>{t('professional.weekly_schedule')}</Label>
-              <WeeklyScheduleEditor control={form.control} name="weeklySchedule" />
+              <WeeklyScheduleEditor control={form.control as unknown as Control} name="weeklySchedule" />
             </div>
             {errorMessage && (
               <p role="alert" className="text-destructive text-sm">

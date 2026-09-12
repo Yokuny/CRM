@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useSearch } from '@tanstack/react-router';
 import { useState } from 'react';
+import type { Control } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { DefaultEmptyData } from '@/components/default-empty-data.js';
@@ -108,7 +109,7 @@ function ProfessionalEditForm({ professional }: ProfessionalEditFormProps) {
         </div>
         <div className="grid gap-2">
           <Label>{t('professional.weekly_schedule')}</Label>
-          <WeeklyScheduleEditor control={form.control} name="weeklySchedule" />
+          <WeeklyScheduleEditor control={form.control as unknown as Control} name="weeklySchedule" />
         </div>
         <FormField
           control={form.control}

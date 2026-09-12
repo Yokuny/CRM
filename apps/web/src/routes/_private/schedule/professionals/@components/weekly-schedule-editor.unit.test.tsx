@@ -4,6 +4,7 @@ import { weeklyScheduleSchema } from '@crm/contracts';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
+import type { Control } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
 import { afterEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';
@@ -28,7 +29,7 @@ function Wrapper({ defaultValues }: { defaultValues: Window[] }) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(() => {})}>
-        <WeeklyScheduleEditor control={form.control} name="weeklySchedule" />
+        <WeeklyScheduleEditor control={form.control as unknown as Control} name="weeklySchedule" />
         <button type="submit">Validar</button>
       </form>
     </Form>
@@ -87,7 +88,7 @@ describe('WeeklyScheduleEditor (T33, spec.md SCH-02/SCH-03/SCH-08)', () => {
     expect(within(mondayGroup).queryAllByLabelText('Início')).toHaveLength(0);
   });
 
-  it('start/end inputs are wired to the array item (editing start updates that window\'s value)', () => {
+  it("start/end inputs are wired to the array item (editing start updates that window's value)", () => {
     renderEditor([{ weekday: 1, start: '09:00', end: '12:00' }]);
 
     const mondayGroup = screen.getByTestId('weekly-schedule-weekday-1');
