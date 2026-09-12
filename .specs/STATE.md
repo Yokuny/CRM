@@ -297,46 +297,73 @@ de AD-014 em diante, a entrada abaixo é o registro completo (indexada no mesmo 
 - **Status**: active
 - **Correção (fase Tasks, 2026-09-11)**: o item (2) acima dizia que `DISPLAY_TIMEZONE` é exportada por `packages/db/src/scheduling.ts`. Ao planejar as telas, o grafo de dependências mostrou que o `apps/web` depende só de `@crm/contracts`/`@crm/field-engine` e nunca de `@crm/db` — importar `packages/db` levaria Mongoose para o bundle do navegador —, e o front precisa da mesma constante para exibir horário igual ao que a IA escreve, qualquer que seja o fuso do navegador. A constante passa a ser exportada por **`packages/contracts`** (o único pacote sem dependência `@crm`, importado pelos dois backends e pelo `web`); `packages/db/src/scheduling.ts` e `contextBuild.ts` a importam de lá. Consequência de fronteira, no mesmo espírito do item (4): a API do operador recebe data e hora **em hora de parede** (`YYYY-MM-DD` + `HH:mm`) e o servidor converte para UTC com a implementação única de `packages/db`; o `apps/web` só formata UTC → exibição, nunca converte no sentido contrário.
 
+### AD-037
+- **Decision**: `apps/web` nunca usa `Dialog` (modal Radix, overlay fixo) para ações de criar/editar/agir sobre um registro — o padrão do projeto passa a ser um **painel inline**: um `<div>` comum, renderizado em fluxo normal de documento entre o gatilho (botão/item clicado) e o conteúdo que vem depois, que portanto é empurrado pra baixo quando o painel aparece. O componente não guarda estado próprio de "aberto" (`open`/`onOpenChange`) — o pai decide montar/desmontar, e o componente só recebe `onClose: () => void` como sinal de "terminei". Primeiro par de componentes escritos assim: `appointment-panel.tsx`/`block-panel.tsx` (`scheduling`, T40/T41), renomeados de `appointment-dialog.tsx`/`block-dialog.tsx`.
+- **Reason**: Instrução explícita do usuário durante o Execute de `scheduling`, ao corrigir um gap onde a tela de calendário (T39) não tinha nenhum jeito de abrir os painéis de agendamento/bloqueio (T40/T41 existiam e tinham teste unitário, mas `WeekGrid.onSelect` era no-op e não havia botão de criar). Ao corrigir, o usuário pediu explicitamente para NUNCA usar `Dialog` neste projeto, sempre abrir um campo abaixo empurrando o resto da UI — uma preferência de UI declarada como regra geral, não só para este caso.
+- **Trade-off**: `apps/web/src/components/ui/dialog.tsx` (wrapper Radix já no projeto desde antes desta feature) fica sem nenhum consumidor — não removido (pode servir outro caso de uso genuinamente modal no futuro, ex. confirmação destrutiva "tem certeza?"), mas não é mais o padrão-fonte para telas de criar/editar. Um painel inline precisa do próprio botão de fechar explícito (Dialog dava um "X" de graça); cada painel novo repete esse pequeno cabeçalho.
+- **Scope**: `apps/web`, todo componente futuro que hoje usaria um Dialog para criar/editar/agir sobre um registro.
+- **Date**: 2026-09-12
+- **Status**: active
+
 ---
 
 ## Handoff
 
-- **Feature**: `scheduling` (feature 9 de 11) — **planejamento completo (Specify → Discuss →
-  Design → Tasks); Execute NÃO iniciado**, parado por instrução do usuário. Artefatos em
-  `.specs/features/scheduling/`: `context.md` (4 zonas cinzentas, todas discutidas),
-  `spec.md` (40 requisitos `SCH-01..40`, 4 histórias P1 + 1 P2, todos mapeados), `design.md`
-  (abordagem confirmada: lógica compartilhada em `packages/db`, bloqueio na mesma coleção com
-  `kind`) e `tasks.md` (47 tasks em 9 fases).
-- **Phase / Task**: Tasks concluída. Próximo: Execute a partir de T1.
-- **Completed**: planejamento. Commits de docs em `feature/scheduling`: `23921e9` (context +
-  spec), `dbe988e` (design + AD-035/AD-036) e o commit de tasks + correções desta sessão.
-- **Decisões novas**: AD-035 (os dois apps escrevem `appointments`; índice único parcial como
-  garantia de dupla reserva, em vez de checar-antes-de-gravar) e AD-036 (convenção de tempo:
-  instante UTC, grade em hora de parede, `DISPLAY_TIMEZONE` em `packages/contracts` — com
-  bullet de correção da fase Tasks).
-- **Já verificado por execução no Design (não refazer)**: hora de parede → UTC via `Intl` em
-  duas passadas; `$in` em índice parcial no mongod 8.2.6; 5 reservas concorrentes → 1 vence;
-  token `apt_`+base62 sobrevive ao `guard.output` (base64url não).
-- **Correções pegas na fase Tasks** (já refletidas no design): `ToolContext` ganha
-  `webBaseUrl?`, porque nenhum pacote lê `process.env`; `DISPLAY_TIMEZONE` fica em `contracts`,
-  não em `db`, porque o `web` não importa `db` — e a API do operador passa a receber hora de
-  parede.
-- **In-progress**: nenhum.
-- **Next step**: revisar `tasks.md` (matriz de testes e gates; ferramentas já confirmadas —
-  skill `run` nas tasks de tela, `security-review` na T22, nenhum MCP) e iniciar o Execute
-  com a skill `tlc-spec-driven`, lendo `implement.md` inteiro antes. As 47 tasks empacotam em 8
-  lotes de ~7, então a oferta de sub-agentes (offer-then-confirm) vem antes da T1.
+- **Feature**: `scheduling` (feature 9 de 11) — **Execute em andamento, 43/47 tasks concluídas**
+  (T1–T43, Batches 1–7 da skill `tlc-spec-driven`). Faltam **T44–T47** (Fase 9/P2: aviso
+  automático ao cliente, card no Inbox, docs finais) — Batch 8, o último.
+- **Branch**: `feature/scheduling`, HEAD em `f55d53d`, sem push. Working tree limpo (`git
+  status` vazio). `main` não avançou desde o handoff anterior.
+- **Completed**: T1–T39 sem incidentes (ver commits individuais no histórico, um por task,
+  scope `scheduling`, mensagem descreve o que foi feito). T40/T41 tiveram uma **correção
+  pós-Batch 7** (commit `b2bd3ea`, ver AD-037 abaixo) — os dois componentes existiam e
+  passavam nos próprios testes, mas nada na tela do calendário (T39) os abria: `WeekGrid.
+  onSelect` era no-op e não havia botão de criar. Corrigido nesta mesma sessão, incluindo
+  reescrever os dois componentes de `Dialog` (modal Radix) para painel inline, por pedido
+  explícito do usuário (AD-037) — arquivos renomeados `appointment-dialog.tsx`/
+  `block-dialog.tsx` → `appointment-panel.tsx`/`block-panel.tsx`.
+- **Decisões novas nesta feature**: AD-035 (índice único parcial como garantia de dupla
+  reserva), AD-036 (convenção de tempo: instante UTC, grade em hora de parede,
+  `DISPLAY_TIMEZONE` em `packages/contracts`), **AD-037 (novo, 2026-09-12): `apps/web` nunca
+  usa `Dialog` modal para criar/editar/agir sobre um registro — sempre painel inline, `<div>`
+  em fluxo normal que empurra o conteúdo abaixo dele. Regra geral do projeto daqui pra
+  frente, não só desta feature.**
+- **In-progress**: nenhum. Todas as tasks completas até T43 (+ a correção T40/T41) têm gate
+  verde, commit atômico e status marcado em `tasks.md`.
+- **Padrão de execução usado nesta feature** (pra quem retomar saber o que esperar): as 47
+  tasks foram empacotadas em 8 lotes (~7 tasks cada, fases inteiras, oferta already aceita
+  pelo usuário no início do Execute). Batches 1, 3, 4, 5 (parcial) rodaram como sub-agentes em
+  background sem incidente. Batch 2 e Batch 5 tiveram um worker que bateu no limite de sessão
+  da conta ou travou (`stream watchdog`) a meio de uma task — o orquestrador verificou o
+  estado deixado (git status/diff), completou a task manualmente quando o código já estava
+  quase pronto, e seguiu. Batch 6 e Batch 7 também tiveram um worker que travou bem no fim
+  (durante os checks finais de sanidade) — mesma recuperação: verificar o que já estava
+  commitado, terminar a checagem final manualmente. **Isso não é incomum nesta sessão** — se o
+  próximo Batch 8 (T44–T47) travar do mesmo jeito, o padrão de recuperação é: `git log`/`git
+  status`/`git diff` pra ver exatamente onde parou, rodar o gate da task afetada você mesmo,
+  terminar/commitar, seguir.
+- **Verificação visual feita nesta sessão** (screens de `apps/web`, via Playwright dirigindo
+  Chromium real contra `crm-api`+`web` reais — não só teste unitário): telas de profissionais/
+  ambientes/configuração (Batch 6), calendário/página pública de confirmação/hub (Batch 7), e
+  a correção do wiring dos painéis (após Batch 7). Sequência de bootstrap do ambiente local
+  documentada na memória de sessão `crm-monorepo-env-setup` (fora deste arquivo) e repetida no
+  briefing do Batch 7 — resumo: Mongo já roda em Docker; `crm-api` precisa de `tsx watch
+  --env-file=<repo>/.env`; `apps/web` só `pnpm run dev` (lê o mesmo `.env` via `envDir`);
+  bootstrap de tenant/usuário via `POST /auth/signin` (admin da plataforma) →
+  `POST /platform/tenants` → `POST /platform/tenants/:id/invites` → token no stdout do
+  crm-api → `POST /invites/:token/accept`. Sessão de teste `operador@verify.local` /
+  `Verifica123!` já existe no Mongo local (não recriar). **Sempre pare os dev servers ao
+  terminar** (`lsof -ti:8080/5173 -sTCP:LISTEN | xargs -r kill`).
+- **Next step**: Batch 8 — T44 (aviso automático ao cliente, backend), T45 (aviso no front),
+  T46 (card de agendamento no Inbox), T47 (docs finais: `architecture.md`/`glossary.md`).
+  T47 é a última task da feature inteira — depois dela, rodar o Verifier automático
+  (author≠verifier, `references/validate.md`) e escrever `validation.md`, então fechar este
+  Handoff como feature completa. Como sempre nesta feature: ler `SKILL.md` +
+  `references/{implement,sub-agents,coding-principles,validate,lessons}.md` (a skill não
+  aparece no listing, está fora de `.claude/skills/`) antes de tocar código.
 - **Blockers**: nenhum. Pendência herdada da feature 8 (mergeada em `main` pelo PR #8): UAT
-  interativo do badge de pagamento na tela de Pedidos.
-- **Uncommitted files**: `docs/architecture.md` — atualização pós-feature-8 feita fora desta
-  sessão (visão geral com Asaas, `payments`/`asaasEvents`/`asaasIntegrations` na tabela de
-  propriedade, fluxo de pedido e pagamento, comandos reais). Não pertence a esta feature e ficou
-  fora dos commits de `scheduling` de propósito. A T47 edita o mesmo arquivo: commitar ou
-  descartar essa alteração antes do Execute chegar lá.
-- **Branch**: `feature/scheduling` — contém `41b5f79` (docs pós-feature-8, já em `main` pelo
-  PR #9) + os commits de planejamento desta sessão, sem push. `main` está em `e61f417`.
+  interativo do badge de pagamento na tela de Pedidos — não relacionada a esta feature.
 - **Nota operacional — skill não registrada**: desde `114e0cc` a skill `tlc-spec-driven` vive
   em `.claude/tlc-spec-driven/`, fora de `.claude/skills/`, e por isso não aparece no listing —
   ler `SKILL.md` + `references/` manualmente. Lições:
-  `python3 .claude/tlc-spec-driven/scripts/lessons.py`. Os `tasks.md` das features 1–8 citam o
-  caminho antigo; são registro histórico, não atualizar.
+  `python3 .claude/tlc-spec-driven/scripts/lessons.py`.
