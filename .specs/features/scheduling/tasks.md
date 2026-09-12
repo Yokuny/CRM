@@ -887,11 +887,12 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-39, SCH-40
 
 **Done when**:
-- [ ] Janela aberta → uma `Message` `out` `queued` com o texto do aviso no banco e resposta `{appointment, notice:{kind:'queued'}}`
-- [ ] Janela fechada ou cliente sem conversa → nenhuma `Message` nova e `notice:{kind:'wa_me', url}`
-- [ ] Conversa resolvida por `appointment.conversation` e, na falta, a mais recente do cliente; nenhuma chamada à Meta
+- [x] Janela aberta → uma `Message` `out` `queued` com o texto do aviso no banco e resposta `{appointment, notice:{kind:'queued'}}`
+- [x] Janela fechada ou cliente sem conversa → nenhuma `Message` nova e `notice:{kind:'wa_me', url}`
+- [x] Conversa resolvida por `appointment.conversation` e, na falta, a mais recente do cliente; nenhuma chamada à Meta
 
 **Tests**: unit, integration, e2e · **Gate**: full
+**Status**: ✅ Complete (commit db5ee02)
 
 ---
 
@@ -904,9 +905,10 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-40
 
 **Done when**:
-- [ ] `queued` → toast de cliente avisado; `wa_me` → botão "Avisar pelo WhatsApp" abrindo a URL
+- [x] `queued` → toast de cliente avisado; `wa_me` → botão "Avisar pelo WhatsApp" abrindo a URL
 
 **Tests**: unit · **Gate**: quick
+**Status**: ✅ Complete (commit 1715d83)
 
 ---
 
@@ -919,9 +921,10 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-38
 
 **Done when**:
-- [ ] Data, hora, profissional e status do próximo ativo; sem agendamento → não renderiza nada, nem durante o loading; montado ao lado do `OrderCard`
+- [x] Data, hora, profissional e status do próximo ativo; sem agendamento → não renderiza nada, nem durante o loading; montado ao lado do `OrderCard`
 
 **Tests**: unit · **Gate**: quick
+**Status**: ✅ Complete (commit 7db15c4)
 
 ---
 
@@ -934,11 +937,12 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: AD-035, AD-036
 
 **Done when**:
-- [ ] `architecture.md`: `professionals`/`spaces`/`schedulingSettings`/`appointments` na tabela de propriedade (AD-035), superfície 10/10, fluxo de agendamento, convenção de tempo (AD-036)
-- [ ] `glossary.md`: Professional, Space, Appointment, Block, token de confirmação, hora de exibição
-- [ ] Partir da versão **commitada** do `architecture.md` — em 2026-09-11 havia uma atualização pós-feature-8 não commitada no working tree; resolver com o usuário antes
+- [x] `architecture.md`: `professionals`/`spaces`/`schedulingSettings`/`appointments` na tabela de propriedade (AD-035), superfície 10/10, fluxo de agendamento, convenção de tempo (AD-036)
+- [x] `glossary.md`: Professional, Space, Appointment, Block, token de confirmação, hora de exibição
+- [x] Partir da versão **commitada** do `architecture.md` — em 2026-09-11 havia uma atualização pós-feature-8 não commitada no working tree; resolver com o usuário antes
 
 **Tests**: none · **Gate**: build
+**Status**: ✅ Complete (commit e823ce0)
 
 ---
 
