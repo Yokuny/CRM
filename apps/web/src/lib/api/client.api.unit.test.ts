@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { del, get, patch, post, put } from './client.api.js';
+import { del, get, getWithStatus, patch, post, put } from './client.api.js';
 
 describe('client.api', () => {
   afterEach(() => {
@@ -150,6 +150,62 @@ describe('client.api', () => {
 
       expect(result.success).toBe(false);
       expect(result.message).toBe('Não foi possível conectar ao servidor. Tente novamente.');
+    });
+  });
+
+  describe('getWithStatus', () => {
+    it('returns the ApiResponse<T> shape plus the raw HTTP status on success', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        status: 200,
+        json: () => Promise.resolve({ success: true, data: { date: '2026-09-16' }, message: '' }),
+      });
+      vi.stubGlobal('fetch', fetchMock);
+
+      const result = await getWithStatus<{ date: string }>('/appointment-confirmations/tok1');
+
+      expect(result).toEqual({ success: true, data: { date: '2026-09-16' }, message: '', status: 200 });
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining('/appointment-confirmations/tok1'),
+        expect.objectContaining({ method: 'GET', credentials: 'include' }),
+      );
+    });
+
+    it('carries a 404 status through on a not-found response (never collapsed into the generic error message)', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        status: 404,
+        json: () => Promise.resolve({ success: false, message: 'Link de confirmação não encontrado' }),
+      });
+      vi.stubGlobal('fetch', fetchMock);
+
+      const result = await getWithStatus('/appointment-confirmations/bad-token');
+
+      expect(result.status).toBe(404);
+      expect(result.success).toBe(false);
+    });
+
+    it('carries a 410 status through on an expired-token response', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        status: 410,
+        json: () => Promise.resolve({ success: false, message: 'Link de confirmação expirado' }),
+      });
+      vi.stubGlobal('fetch', fetchMock);
+
+      const result = await getWithStatus('/appointment-confirmations/expired-token');
+
+      expect(result.status).toBe(410);
+      expect(result.success).toBe(false);
+    });
+
+    it('never throws on a network failure — returns success:false, status:0 and a readable message', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
+
+      const result = await getWithStatus('/appointment-confirmations/tok1');
+
+      expect(result).toEqual({
+        success: false,
+        message: 'Não foi possível conectar ao servidor. Tente novamente.',
+        status: 0,
+      });
     });
   });
 });

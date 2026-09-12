@@ -40,3 +40,22 @@ export const put = <T>(path: string, body?: unknown): Promise<ApiResponse<T>> =>
 // `get`. `delete` é palavra reservada, não pode nomear um binding
 // (`export const delete = ...`), daí `del`.
 export const del = <T>(path: string): Promise<ApiResponse<T>> => request<T>(path, 'DELETE');
+
+// T42 (scheduling): a página pública de confirmação (`_public/appointment`)
+// precisa distinguir 404 (link inválido) de 410 (expirado) — o único caso do
+// app que depende do STATUS HTTP em si, não só do corpo `{success,message}`
+// (errorHandler.middleware.ts sempre devolve o mesmo formato de corpo pra
+// qualquer status 4xx/5xx). Função própria, não uma mudança em `request`/
+// `get`: alterar o retorno de `get` quebraria os testes existentes que fazem
+// `toEqual` estrito no shape de `ApiResponse` (client.api.unit.test.ts).
+export type ApiResponseWithStatus<T> = ApiResponse<T> & { status: number };
+
+export const getWithStatus = async <T>(path: string): Promise<ApiResponseWithStatus<T>> => {
+  try {
+    const res = await fetch(`${BASE_URL}${path}`, { method: 'GET', credentials: 'include' });
+    const body = (await res.json()) as ApiResponse<T>;
+    return { ...body, status: res.status };
+  } catch {
+    return { success: false, message: CONNECTION_ERROR_MESSAGE, status: 0 };
+  }
+};

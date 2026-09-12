@@ -14,6 +14,7 @@ import { Route as PrivateRouteImport } from './routes/_private';
 import { Route as PrivateIndexRouteImport } from './routes/_private/index';
 import { Route as PublicInviteIndexRouteImport } from './routes/_public/invite/index';
 import { Route as PublicAuthIndexRouteImport } from './routes/_public/auth/index';
+import { Route as PublicAppointmentIndexRouteImport } from './routes/_public/appointment/index';
 import { Route as PrivateProductsIndexRouteImport } from './routes/_private/products/index';
 import { Route as PrivateProcessesIndexRouteImport } from './routes/_private/processes/index';
 import { Route as PrivateOrdersIndexRouteImport } from './routes/_private/orders/index';
@@ -57,6 +58,11 @@ const PublicInviteIndexRoute = PublicInviteIndexRouteImport.update({
 const PublicAuthIndexRoute = PublicAuthIndexRouteImport.update({
   id: '/auth/',
   path: '/auth/',
+  getParentRoute: () => PublicRoute,
+} as any);
+const PublicAppointmentIndexRoute = PublicAppointmentIndexRouteImport.update({
+  id: '/appointment/',
+  path: '/appointment/',
   getParentRoute: () => PublicRoute,
 } as any);
 const PrivateProductsIndexRoute = PrivateProductsIndexRouteImport.update({
@@ -187,6 +193,7 @@ export interface FileRoutesByFullPath {
   '/orders/': typeof PrivateOrdersIndexRoute;
   '/processes/': typeof PrivateProcessesIndexRoute;
   '/products/': typeof PrivateProductsIndexRoute;
+  '/appointment/': typeof PublicAppointmentIndexRoute;
   '/auth/': typeof PublicAuthIndexRoute;
   '/invite/': typeof PublicInviteIndexRoute;
   '/schedule/professionals/details': typeof PrivateScheduleProfessionalsDetailsRoute;
@@ -213,6 +220,7 @@ export interface FileRoutesByTo {
   '/orders': typeof PrivateOrdersIndexRoute;
   '/processes': typeof PrivateProcessesIndexRoute;
   '/products': typeof PrivateProductsIndexRoute;
+  '/appointment': typeof PublicAppointmentIndexRoute;
   '/auth': typeof PublicAuthIndexRoute;
   '/invite': typeof PublicInviteIndexRoute;
   '/schedule/professionals/details': typeof PrivateScheduleProfessionalsDetailsRoute;
@@ -242,6 +250,7 @@ export interface FileRoutesById {
   '/_private/orders/': typeof PrivateOrdersIndexRoute;
   '/_private/processes/': typeof PrivateProcessesIndexRoute;
   '/_private/products/': typeof PrivateProductsIndexRoute;
+  '/_public/appointment/': typeof PublicAppointmentIndexRoute;
   '/_public/auth/': typeof PublicAuthIndexRoute;
   '/_public/invite/': typeof PublicInviteIndexRoute;
   '/_private/schedule/professionals/details': typeof PrivateScheduleProfessionalsDetailsRoute;
@@ -270,6 +279,7 @@ export interface FileRouteTypes {
     | '/orders/'
     | '/processes/'
     | '/products/'
+    | '/appointment/'
     | '/auth/'
     | '/invite/'
     | '/schedule/professionals/details'
@@ -296,6 +306,7 @@ export interface FileRouteTypes {
     | '/orders'
     | '/processes'
     | '/products'
+    | '/appointment'
     | '/auth'
     | '/invite'
     | '/schedule/professionals/details'
@@ -324,6 +335,7 @@ export interface FileRouteTypes {
     | '/_private/orders/'
     | '/_private/processes/'
     | '/_private/products/'
+    | '/_public/appointment/'
     | '/_public/auth/'
     | '/_public/invite/'
     | '/_private/schedule/professionals/details'
@@ -381,6 +393,13 @@ declare module '@tanstack/react-router' {
       path: '/auth';
       fullPath: '/auth/';
       preLoaderRoute: typeof PublicAuthIndexRouteImport;
+      parentRoute: typeof PublicRoute;
+    };
+    '/_public/appointment/': {
+      id: '/_public/appointment/';
+      path: '/appointment';
+      fullPath: '/appointment/';
+      preLoaderRoute: typeof PublicAppointmentIndexRouteImport;
       parentRoute: typeof PublicRoute;
     };
     '/_private/products/': {
@@ -590,11 +609,13 @@ const PrivateRouteWithChildren =
   PrivateRoute._addFileChildren(PrivateRouteChildren);
 
 interface PublicRouteChildren {
+  PublicAppointmentIndexRoute: typeof PublicAppointmentIndexRoute;
   PublicAuthIndexRoute: typeof PublicAuthIndexRoute;
   PublicInviteIndexRoute: typeof PublicInviteIndexRoute;
 }
 
 const PublicRouteChildren: PublicRouteChildren = {
+  PublicAppointmentIndexRoute: PublicAppointmentIndexRoute,
   PublicAuthIndexRoute: PublicAuthIndexRoute,
   PublicInviteIndexRoute: PublicInviteIndexRoute,
 };

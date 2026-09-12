@@ -219,6 +219,17 @@ const translations: Record<string, string> = {
   'block.field.end_date': 'Data de fim',
   'block.field.end_time': 'Hora de fim',
   'block.action.remove': 'Remover bloqueio',
+  // Página pública de confirmação (feature scheduling, Fase 8/T42) —
+  // routes/_public/appointment/**, sem sessão, anônima (SCH-28).
+  'appointment_confirmation.title': 'Confirmação de agendamento',
+  'appointment_confirmation.description': 'Revise os detalhes do seu agendamento e confirme sua presença.',
+  'appointment_confirmation.missing_token': 'Link de confirmação inválido.',
+  'appointment_confirmation.not_found': 'Link de confirmação não encontrado.',
+  'appointment_confirmation.expired': 'Link de confirmação expirado.',
+  'appointment_confirmation.error': 'Não foi possível carregar seu agendamento.',
+  'appointment_confirmation.confirm_action': 'Confirmar presença',
+  'appointment_confirmation.cancel_action': 'Não vou comparecer',
+  'appointment_confirmation.footer_note': 'Em caso de dúvidas, entre em contato com o estabelecimento.',
 };
 
 export const t = (key: string): string => translations[key] ?? key;
