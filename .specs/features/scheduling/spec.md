@@ -348,46 +348,46 @@ independente, do mesmo jeito que a feature 8 separou a visibilidade de pagamento
 
 | Requirement ID | Story | Phase | Status | Task(s) |
 | --- | --- | --- | --- | --- |
-| SCH-01 | P1: Configuração de agenda | Tasks | In Tasks | T2, T13, T14, T15 |
-| SCH-02 | P1: Configuração de agenda | Tasks | In Tasks | T10, T14, T15, T33 |
-| SCH-03 | P1: Configuração de agenda | Tasks | In Tasks | T10, T14, T15, T33 |
-| SCH-04 | P1: Configuração de agenda | Tasks | In Tasks | T3, T11, T16, T17, T35 |
-| SCH-05 | P1: Configuração de agenda | Tasks | In Tasks | T2, T13, T14, T15, T34 |
-| SCH-06 | P1: Configuração de agenda | Tasks | In Tasks | T4, T11, T18, T19, T36 |
-| SCH-07 | P1: Configuração de agenda | Tasks | In Tasks | T15, T17, T19, T24 |
-| SCH-08 | P1: Configuração de agenda | Tasks | In Tasks | T32, T33, T34, T35, T36, T43 |
-| SCH-09 | P1: Consulta e agendamento pela conversa | Tasks | In Tasks | T1, T26, T30 |
-| SCH-10 | P1: Consulta e agendamento pela conversa | Tasks | In Tasks | T26 |
-| SCH-11 | P1: Consulta e agendamento pela conversa | Tasks | In Tasks | T1, T26 |
-| SCH-12 | P1: Consulta e agendamento pela conversa | Tasks | In Tasks | T26 |
-| SCH-13 | P1: Consulta e agendamento pela conversa | Tasks | In Tasks | T26 |
-| SCH-14 | P1: Consulta e agendamento pela conversa | Tasks | In Tasks | T26 |
-| SCH-15 | P1: Consulta e agendamento pela conversa | Tasks | In Tasks | T6, T27, T29, T30, T31 |
-| SCH-16 | P1: Consulta e agendamento pela conversa | Tasks | In Tasks | T1, T6, T27, T31 |
-| SCH-17 | P1: Consulta e agendamento pela conversa | Tasks | In Tasks | T6, T27 |
-| SCH-18 | P1: Consulta e agendamento pela conversa | Tasks | In Tasks | T6, T27 |
-| SCH-19 | P1: Consulta e agendamento pela conversa | Tasks | In Tasks | T27, T28 |
-| SCH-20 | P1: Consulta e agendamento pela conversa | Tasks | In Tasks | T5, T6, T31 |
-| SCH-21 | P1: Confirmação pelo cliente | Tasks | In Tasks | T5, T6, T20 |
-| SCH-22 | P1: Confirmação pelo cliente | Tasks | In Tasks | T22, T42 |
-| SCH-23 | P1: Confirmação pelo cliente | Tasks | In Tasks | T7, T22, T42 |
-| SCH-24 | P1: Confirmação pelo cliente | Tasks | In Tasks | T6, T25 |
-| SCH-25 | P1: Confirmação pelo cliente | Tasks | In Tasks | T7, T22, T42 |
-| SCH-26 | P1: Confirmação pelo cliente | Tasks | In Tasks | T7, T22, T42 |
-| SCH-27 | P1: Confirmação pelo cliente | Tasks | In Tasks | T7, T22 |
-| SCH-28 | P1: Confirmação pelo cliente | Tasks | In Tasks | T42 |
-| SCH-29 | P1: Operação da agenda no CRM | Tasks | In Tasks | T21, T24, T37, T38, T39, T43 |
-| SCH-30 | P1: Operação da agenda no CRM | Tasks | In Tasks | T8, T12, T23, T24, T40 |
-| SCH-31 | P1: Operação da agenda no CRM | Tasks | In Tasks | T9, T12, T23, T25, T40 |
-| SCH-32 | P1: Operação da agenda no CRM | Tasks | In Tasks | T9, T12, T23, T25, T40 |
-| SCH-33 | P1: Operação da agenda no CRM | Tasks | In Tasks | T5, T8, T12, T23, T24, T41 |
-| SCH-34 | P1: Operação da agenda no CRM | Tasks | In Tasks | T9, T12, T23, T25, T40 |
-| SCH-35 | P1: Operação da agenda no CRM | Tasks | In Tasks | T21, T38 |
-| SCH-36 | P1: Operação da agenda no CRM | Tasks | In Tasks | T6, T7, T8, T9 |
-| SCH-37 | P1: Operação da agenda no CRM | Tasks | In Tasks | T20, T23, T25, T40 |
-| SCH-38 | P2: Inbox e aviso automático | Tasks | In Tasks | T21, T24, T37, T46 |
-| SCH-39 | P2: Inbox e aviso automático | Tasks | In Tasks | T44 |
-| SCH-40 | P2: Inbox e aviso automático | Tasks | In Tasks | T44, T45 |
+| SCH-01 | P1: Configuração de agenda | Tasks | ✅ Verified | T2, T13, T14, T15 |
+| SCH-02 | P1: Configuração de agenda | Tasks | ✅ Verified | T10, T14, T15, T33 |
+| SCH-03 | P1: Configuração de agenda | Tasks | ✅ Verified | T10, T14, T15, T33 |
+| SCH-04 | P1: Configuração de agenda | Tasks | ✅ Verified | T3, T11, T16, T17, T35 |
+| SCH-05 | P1: Configuração de agenda | Tasks | ✅ Verified | T2, T13, T14, T15, T34 |
+| SCH-06 | P1: Configuração de agenda | Tasks | ✅ Verified | T4, T11, T18, T19, T36 |
+| SCH-07 | P1: Configuração de agenda | Tasks | ✅ Verified | T15, T17, T19, T24 |
+| SCH-08 | P1: Configuração de agenda | Tasks | ✅ Verified | T32, T33, T34, T35, T36, T43 |
+| SCH-09 | P1: Consulta e agendamento pela conversa | Tasks | ✅ Verified | T1, T26, T30 |
+| SCH-10 | P1: Consulta e agendamento pela conversa | Tasks | ✅ Verified | T26 |
+| SCH-11 | P1: Consulta e agendamento pela conversa | Tasks | ✅ Verified | T1, T26 |
+| SCH-12 | P1: Consulta e agendamento pela conversa | Tasks | ✅ Verified | T26 |
+| SCH-13 | P1: Consulta e agendamento pela conversa | Tasks | ✅ Verified | T26 |
+| SCH-14 | P1: Consulta e agendamento pela conversa | Tasks | ✅ Verified | T26 |
+| SCH-15 | P1: Consulta e agendamento pela conversa | Tasks | ✅ Verified | T6, T27, T29, T30, T31 |
+| SCH-16 | P1: Consulta e agendamento pela conversa | Tasks | ✅ Verified | T1, T6, T27, T31 |
+| SCH-17 | P1: Consulta e agendamento pela conversa | Tasks | ⚠️ Verified (evidência indireta, validation.md Gap 3) | T6, T27 |
+| SCH-18 | P1: Consulta e agendamento pela conversa | Tasks | ✅ Verified | T6, T27 |
+| SCH-19 | P1: Consulta e agendamento pela conversa | Tasks | ✅ Verified | T27, T28 |
+| SCH-20 | P1: Consulta e agendamento pela conversa | Tasks | ✅ Verified | T5, T6, T31 |
+| SCH-21 | P1: Confirmação pelo cliente | Tasks | ✅ Verified | T5, T6, T20 |
+| SCH-22 | P1: Confirmação pelo cliente | Tasks | ✅ Verified | T22, T42 |
+| SCH-23 | P1: Confirmação pelo cliente | Tasks | ✅ Verified | T7, T22, T42 |
+| SCH-24 | P1: Confirmação pelo cliente | Tasks | ✅ Verified | T6, T25 |
+| SCH-25 | P1: Confirmação pelo cliente | Tasks | ✅ Verified | T7, T22, T42 |
+| SCH-26 | P1: Confirmação pelo cliente | Tasks | ✅ Verified | T7, T22, T42 |
+| SCH-27 | P1: Confirmação pelo cliente | Tasks | ✅ Verified | T7, T22 |
+| SCH-28 | P1: Confirmação pelo cliente | Tasks | ✅ Verified | T42 |
+| SCH-29 | P1: Operação da agenda no CRM | Tasks | ✅ Verified | T21, T24, T37, T38, T39, T43 |
+| SCH-30 | P1: Operação da agenda no CRM | Tasks | ✅ Verified | T8, T12, T23, T24, T40 |
+| SCH-31 | P1: Operação da agenda no CRM | Tasks | ✅ Verified | T9, T12, T23, T25, T40 |
+| SCH-32 | P1: Operação da agenda no CRM | Tasks | ✅ Verified | T9, T12, T23, T25, T40 |
+| SCH-33 | P1: Operação da agenda no CRM | Tasks | ✅ Verified | T5, T8, T12, T23, T24, T41 |
+| SCH-34 | P1: Operação da agenda no CRM | Tasks | ✅ Verified | T9, T12, T23, T25, T40 |
+| SCH-35 | P1: Operação da agenda no CRM | Tasks | ✅ Verified | T21, T38 |
+| SCH-36 | P1: Operação da agenda no CRM | Tasks | ✅ Verified | T6, T7, T8, T9 |
+| SCH-37 | P1: Operação da agenda no CRM | Tasks | ✅ Verified | T20, T23, T25, T40 |
+| SCH-38 | P2: Inbox e aviso automático | Tasks | ✅ Verified | T21, T24, T37, T46 |
+| SCH-39 | P2: Inbox e aviso automático | Tasks | ✅ Verified | T44 |
+| SCH-40 | P2: Inbox e aviso automático | Tasks | ✅ Verified | T44, T45 |
 
 **ID format:** `SCH-[NUMBER]`
 
