@@ -309,58 +309,74 @@ de AD-014 em diante, a entrada abaixo é o registro completo (indexada no mesmo 
 
 ## Handoff
 
-- **Feature**: `scheduling` (feature 9 de 11) — **Execute em andamento, 43/47 tasks concluídas**
-  (T1–T43, Batches 1–7 da skill `tlc-spec-driven`). Faltam **T44–T47** (Fase 9/P2: aviso
-  automático ao cliente, card no Inbox, docs finais) — Batch 8, o último.
-- **Branch**: `feature/scheduling`, HEAD em `f55d53d`, sem push. Working tree limpo (`git
-  status` vazio). `main` não avançou desde o handoff anterior.
-- **Completed**: T1–T39 sem incidentes (ver commits individuais no histórico, um por task,
-  scope `scheduling`, mensagem descreve o que foi feito). T40/T41 tiveram uma **correção
-  pós-Batch 7** (commit `b2bd3ea`, ver AD-037 abaixo) — os dois componentes existiam e
-  passavam nos próprios testes, mas nada na tela do calendário (T39) os abria: `WeekGrid.
-  onSelect` era no-op e não havia botão de criar. Corrigido nesta mesma sessão, incluindo
-  reescrever os dois componentes de `Dialog` (modal Radix) para painel inline, por pedido
-  explícito do usuário (AD-037) — arquivos renomeados `appointment-dialog.tsx`/
-  `block-dialog.tsx` → `appointment-panel.tsx`/`block-panel.tsx`.
-- **Decisões novas nesta feature**: AD-035 (índice único parcial como garantia de dupla
-  reserva), AD-036 (convenção de tempo: instante UTC, grade em hora de parede,
-  `DISPLAY_TIMEZONE` em `packages/contracts`), **AD-037 (novo, 2026-09-12): `apps/web` nunca
-  usa `Dialog` modal para criar/editar/agir sobre um registro — sempre painel inline, `<div>`
-  em fluxo normal que empurra o conteúdo abaixo dele. Regra geral do projeto daqui pra
-  frente, não só desta feature.**
-- **In-progress**: nenhum. Todas as tasks completas até T43 (+ a correção T40/T41) têm gate
-  verde, commit atômico e status marcado em `tasks.md`.
-- **Padrão de execução usado nesta feature** (pra quem retomar saber o que esperar): as 47
-  tasks foram empacotadas em 8 lotes (~7 tasks cada, fases inteiras, oferta already aceita
-  pelo usuário no início do Execute). Batches 1, 3, 4, 5 (parcial) rodaram como sub-agentes em
-  background sem incidente. Batch 2 e Batch 5 tiveram um worker que bateu no limite de sessão
-  da conta ou travou (`stream watchdog`) a meio de uma task — o orquestrador verificou o
-  estado deixado (git status/diff), completou a task manualmente quando o código já estava
-  quase pronto, e seguiu. Batch 6 e Batch 7 também tiveram um worker que travou bem no fim
-  (durante os checks finais de sanidade) — mesma recuperação: verificar o que já estava
-  commitado, terminar a checagem final manualmente. **Isso não é incomum nesta sessão** — se o
-  próximo Batch 8 (T44–T47) travar do mesmo jeito, o padrão de recuperação é: `git log`/`git
-  status`/`git diff` pra ver exatamente onde parou, rodar o gate da task afetada você mesmo,
-  terminar/commitar, seguir.
-- **Verificação visual feita nesta sessão** (screens de `apps/web`, via Playwright dirigindo
-  Chromium real contra `crm-api`+`web` reais — não só teste unitário): telas de profissionais/
-  ambientes/configuração (Batch 6), calendário/página pública de confirmação/hub (Batch 7), e
-  a correção do wiring dos painéis (após Batch 7). Sequência de bootstrap do ambiente local
-  documentada na memória de sessão `crm-monorepo-env-setup` (fora deste arquivo) e repetida no
-  briefing do Batch 7 — resumo: Mongo já roda em Docker; `crm-api` precisa de `tsx watch
-  --env-file=<repo>/.env`; `apps/web` só `pnpm run dev` (lê o mesmo `.env` via `envDir`);
-  bootstrap de tenant/usuário via `POST /auth/signin` (admin da plataforma) →
-  `POST /platform/tenants` → `POST /platform/tenants/:id/invites` → token no stdout do
-  crm-api → `POST /invites/:token/accept`. Sessão de teste `operador@verify.local` /
-  `Verifica123!` já existe no Mongo local (não recriar). **Sempre pare os dev servers ao
-  terminar** (`lsof -ti:8080/5173 -sTCP:LISTEN | xargs -r kill`).
-- **Next step**: Batch 8 — T44 (aviso automático ao cliente, backend), T45 (aviso no front),
-  T46 (card de agendamento no Inbox), T47 (docs finais: `architecture.md`/`glossary.md`).
-  T47 é a última task da feature inteira — depois dela, rodar o Verifier automático
-  (author≠verifier, `references/validate.md`) e escrever `validation.md`, então fechar este
-  Handoff como feature completa. Como sempre nesta feature: ler `SKILL.md` +
-  `references/{implement,sub-agents,coding-principles,validate,lessons}.md` (a skill não
-  aparece no listing, está fora de `.claude/skills/`) antes de tocar código.
+- **Feature**: `scheduling` (feature 9 de 11) — **Execute completo e Verificado (PASS)**,
+  branch `feature/scheduling`. Todas as 47 tasks (T1–T47, 9 fases, 8 batches) implementadas,
+  Build gate cheio verde, Verifier independente (author≠verifier) rodou automaticamente após
+  T47 e retornou **PASS** com 2 gaps menores não-bloqueantes (ver abaixo). Nenhum fix task
+  obrigatório.
+- **Branch**: `feature/scheduling`, HEAD em `80ba107`, 70 commits à frente de
+  `origin/feature/scheduling` (sem push nesta feature ainda). Working tree limpo.
+- **Completed — Batches 1–7 (T1–T43)**: sem incidentes de código (ver commits individuais no
+  histórico, um por task, scope `scheduling`). T40/T41 tiveram uma correção pós-Batch 7
+  (commit `b2bd3ea`) — os dois componentes existiam e passavam nos próprios testes, mas nada
+  na tela do calendário (T39) os abria (`WeekGrid.onSelect` era no-op, sem botão de criar);
+  corrigidos na mesma sessão, incluindo reescrever `Dialog` (modal Radix) para painel inline
+  por pedido explícito do usuário (AD-037) — `appointment-dialog.tsx`/`block-dialog.tsx` →
+  `appointment-panel.tsx`/`block-panel.tsx`.
+- **Completed — Batch 8 (T44–T47, sessão final, execução inline sem sub-agente — só 4 tasks,
+  abaixo do teto de ~8)**:
+  - **T44** (`db5ee02`): `appointment.service.ts` ganha `notifyCustomer` — cancelar/remarcar
+    resolvem a `Conversation` (`appointment.conversation` ou, na falta,
+    `appointmentRepository.findLatestConversationIdByCustomer`, nova função) e reusam
+    `createOutboundMessage` (já barra fora da janela de 24h antes de inserir); janela aberta →
+    `notice:{kind:'queued'}`; fechada ou sem conversa → `notice:{kind:'wa_me', url}`. Resposta
+    de `/appointments/:id/{cancel,reschedule}` passa a ser `{appointment, notice}` (mudança de
+    contrato — testes e2e/unit existentes desses dois endpoints atualizados para o novo
+    formato). Testes unit+integration+e2e, gate full verde.
+  - **T45** (`1715d83`): `appointment-panel.tsx` (`AppointmentDetail`) lê `result.notice`:
+    `queued` → toast + fecha o painel (comportamento antigo preservado); `wa_me` → painel
+    fica aberto com um link "Avisar pelo WhatsApp" (`target="_blank"`), mesmo idioma do botão
+    de "Pedir confirmação" já existente. `query/appointment.ts` tipa o novo
+    `AppointmentActionResult`.
+  - **T46** (`7db15c4`): `appointment-card.tsx` novo (Inbox) — espelha `order-card.tsx`:
+    próximo agendamento ativo do cliente (data/hora/profissional/status), nada quando não há
+    ou durante o loading. `ConversationThread` ganha prop `customerId` (o endpoint é por
+    `customer`, não `conversation`) threaded a partir de `InboxPage`.
+  - **T47** (`e823ce0`): `docs/architecture.md` (tabela de propriedade +
+    `professionals`/`spaces`/`schedulingSettings`/`appointments`, superfície de tools 10/10,
+    fluxo "Agendamento" em Fluxos principais, seção nova "Convenção de tempo" com AD-036) e
+    `docs/glossary.md` (seção nova "Agenda": Professional, Space, Appointment, Block, token de
+    confirmação, hora de exibição). Partiu da versão commitada (confirmado limpo antes de
+    editar — a pendência de 2026-09-11 não existia mais).
+- **Verifier** (após T47, `80ba107`): **PASS** — 39/40 ACs (`SCH-01..40`) com evidência
+  `file:line` batendo o outcome exato do spec; `SCH-17` só com evidência indireta (via o
+  teste de corrida do SCH-20, que passa pelo mesmo caminho de `Appointment.create()`) — gap
+  cosmético, não funcional. Gate 1762/1763 verde (1 falha pré-existente e não relacionada,
+  `media-card.unit.test.tsx`/INBOX-17, confirmada fora do diff desta feature; 1 timeout de
+  conexão Mongo visto uma vez em corrida cheia, não reproduziu numa segunda rodada — mesmo
+  flake já documentado em AD-031). Sensor de discriminação: 3 mutações, 3 mortas
+  (`isDuplicateKeyError` do índice único parcial, expiração de `confirmByToken`, o guard
+  `instanceof` do fallback de `notifyCustomer`). Relatório completo:
+  `.specs/features/scheduling/validation.md` (commit `80ba107`). Traceability de `spec.md`
+  atualizada (`In Tasks` → `Verified`, 39 linhas; `SCH-17` → `⚠️ Verified (evidência
+  indireta)`). Duas lições candidatas registradas: `L-028` (PATCH de config de agenda/duração
+  precisa de teste que cria um registro dependente antes e confere que ele não mudou) e
+  `L-029` (uma AC que alega garantia estrutural ainda merece um teste com o próprio id da AC
+  no título, mesmo se um teste vizinho já cobre o mesmo caminho de código).
+- **Gaps do Verifier (não-bloqueantes, não corrigidos nesta sessão — decisão: aceitar como
+  estão, per o próprio relatório)**: (1) Edge Case "grade editada não afeta agendamento
+  existente" sem teste dedicado para `weeklySchedule` (só `active:false` é testado); (2) Edge
+  Case "duração do slot não recalcula agendamento existente" sem teste dedicado; (3) SCH-17
+  sem teste nomeado (só evidência indireta). Ver `validation.md` seção "Fix Plans" para as
+  tasks de teste sugeridas, caso alguém queira fechá-las depois.
+- **In-progress**: nenhum. Feature completa, verificada, todos os commits com gate verde.
+- **Next step**: revisar o diff/branch e decidir sobre push + abertura de PR para `main`
+  (nenhum push feito). Considerar UAT interativo do usuário nas telas novas de P2 (aviso no
+  painel de agendamento, card no Inbox) e no fluxo de agendamento pela conversa/calendário em
+  geral, já que o Verifier automático não cobre essa camada — a sessão anterior já fez
+  verificação visual via Playwright de Batches 6–7 (profissionais/ambientes/configuração/
+  calendário/página pública), mas T44–T47 (aviso automático, card) não foram verificados
+  visualmente nesta sessão. Após merge, feature 10 (`kanban-tool`) é a próxima do roadmap.
 - **Blockers**: nenhum. Pendência herdada da feature 8 (mergeada em `main` pelo PR #8): UAT
   interativo do badge de pagamento na tela de Pedidos — não relacionada a esta feature.
 - **Nota operacional — skill não registrada**: desde `114e0cc` a skill `tlc-spec-driven` vive
