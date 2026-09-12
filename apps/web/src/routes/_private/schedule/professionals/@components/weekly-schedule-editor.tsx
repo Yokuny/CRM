@@ -74,7 +74,12 @@ export function WeeklyScheduleEditor({ control, name }: WeeklyScheduleEditorProp
                     <FormItem className="flex-1">
                       <FormLabel>{t('schedule.window.start')}</FormLabel>
                       <FormControl>
-                        <Input type="time" {...field} />
+                        {/* `value={field.value ?? ''}` (não só `{...field}`): um item
+                            recém-adicionado via `append` pode renderizar uma primeira
+                            passada com `field.value` ainda `undefined` antes do
+                            react-hook-form assentar o array — sem a guarda, o React
+                            avisa "uncontrolled to controlled" nessa transição. */}
+                        <Input type="time" {...field} value={field.value ?? ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -87,7 +92,7 @@ export function WeeklyScheduleEditor({ control, name }: WeeklyScheduleEditorProp
                     <FormItem className="flex-1">
                       <FormLabel>{t('schedule.window.end')}</FormLabel>
                       <FormControl>
-                        <Input type="time" {...field} />
+                        <Input type="time" {...field} value={field.value ?? ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
