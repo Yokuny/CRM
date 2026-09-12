@@ -23,6 +23,7 @@ import { Route as PrivateProductsDetailsRouteImport } from './routes/_private/pr
 import { Route as PrivateProcessesDetailsRouteImport } from './routes/_private/processes/details';
 import { Route as PrivateCustomersDetailsRouteImport } from './routes/_private/customers/details';
 import { Route as PrivateScheduleSpacesIndexRouteImport } from './routes/_private/schedule/spaces/index';
+import { Route as PrivateScheduleSettingsIndexRouteImport } from './routes/_private/schedule/settings/index';
 import { Route as PrivateScheduleProfessionalsIndexRouteImport } from './routes/_private/schedule/professionals/index';
 import { Route as PrivateProductsAddIndexRouteImport } from './routes/_private/products/add/index';
 import { Route as PrivateProcessesAddIndexRouteImport } from './routes/_private/processes/add/index';
@@ -101,6 +102,12 @@ const PrivateScheduleSpacesIndexRoute =
   PrivateScheduleSpacesIndexRouteImport.update({
     id: '/schedule/spaces/',
     path: '/schedule/spaces/',
+    getParentRoute: () => PrivateRoute,
+  } as any);
+const PrivateScheduleSettingsIndexRoute =
+  PrivateScheduleSettingsIndexRouteImport.update({
+    id: '/schedule/settings/',
+    path: '/schedule/settings/',
     getParentRoute: () => PrivateRoute,
   } as any);
 const PrivateScheduleProfessionalsIndexRoute =
@@ -183,6 +190,7 @@ export interface FileRoutesByFullPath {
   '/processes/add/': typeof PrivateProcessesAddIndexRoute;
   '/products/add/': typeof PrivateProductsAddIndexRoute;
   '/schedule/professionals/': typeof PrivateScheduleProfessionalsIndexRoute;
+  '/schedule/settings/': typeof PrivateScheduleSettingsIndexRoute;
   '/schedule/spaces/': typeof PrivateScheduleSpacesIndexRoute;
   '/schedule/professionals/add/': typeof PrivateScheduleProfessionalsAddIndexRoute;
   '/schedule/spaces/add/': typeof PrivateScheduleSpacesAddIndexRoute;
@@ -207,6 +215,7 @@ export interface FileRoutesByTo {
   '/processes/add': typeof PrivateProcessesAddIndexRoute;
   '/products/add': typeof PrivateProductsAddIndexRoute;
   '/schedule/professionals': typeof PrivateScheduleProfessionalsIndexRoute;
+  '/schedule/settings': typeof PrivateScheduleSettingsIndexRoute;
   '/schedule/spaces': typeof PrivateScheduleSpacesIndexRoute;
   '/schedule/professionals/add': typeof PrivateScheduleProfessionalsAddIndexRoute;
   '/schedule/spaces/add': typeof PrivateScheduleSpacesAddIndexRoute;
@@ -234,6 +243,7 @@ export interface FileRoutesById {
   '/_private/processes/add/': typeof PrivateProcessesAddIndexRoute;
   '/_private/products/add/': typeof PrivateProductsAddIndexRoute;
   '/_private/schedule/professionals/': typeof PrivateScheduleProfessionalsIndexRoute;
+  '/_private/schedule/settings/': typeof PrivateScheduleSettingsIndexRoute;
   '/_private/schedule/spaces/': typeof PrivateScheduleSpacesIndexRoute;
   '/_private/schedule/professionals/add/': typeof PrivateScheduleProfessionalsAddIndexRoute;
   '/_private/schedule/spaces/add/': typeof PrivateScheduleSpacesAddIndexRoute;
@@ -260,6 +270,7 @@ export interface FileRouteTypes {
     | '/processes/add/'
     | '/products/add/'
     | '/schedule/professionals/'
+    | '/schedule/settings/'
     | '/schedule/spaces/'
     | '/schedule/professionals/add/'
     | '/schedule/spaces/add/';
@@ -284,6 +295,7 @@ export interface FileRouteTypes {
     | '/processes/add'
     | '/products/add'
     | '/schedule/professionals'
+    | '/schedule/settings'
     | '/schedule/spaces'
     | '/schedule/professionals/add'
     | '/schedule/spaces/add';
@@ -310,6 +322,7 @@ export interface FileRouteTypes {
     | '/_private/processes/add/'
     | '/_private/products/add/'
     | '/_private/schedule/professionals/'
+    | '/_private/schedule/settings/'
     | '/_private/schedule/spaces/'
     | '/_private/schedule/professionals/add/'
     | '/_private/schedule/spaces/add/';
@@ -420,6 +433,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivateScheduleSpacesIndexRouteImport;
       parentRoute: typeof PrivateRoute;
     };
+    '/_private/schedule/settings/': {
+      id: '/_private/schedule/settings/';
+      path: '/schedule/settings';
+      fullPath: '/schedule/settings/';
+      preLoaderRoute: typeof PrivateScheduleSettingsIndexRouteImport;
+      parentRoute: typeof PrivateRoute;
+    };
     '/_private/schedule/professionals/': {
       id: '/_private/schedule/professionals/';
       path: '/schedule/professionals';
@@ -511,6 +531,7 @@ interface PrivateRouteChildren {
   PrivateProcessesAddIndexRoute: typeof PrivateProcessesAddIndexRoute;
   PrivateProductsAddIndexRoute: typeof PrivateProductsAddIndexRoute;
   PrivateScheduleProfessionalsIndexRoute: typeof PrivateScheduleProfessionalsIndexRoute;
+  PrivateScheduleSettingsIndexRoute: typeof PrivateScheduleSettingsIndexRoute;
   PrivateScheduleSpacesIndexRoute: typeof PrivateScheduleSpacesIndexRoute;
   PrivateScheduleProfessionalsAddIndexRoute: typeof PrivateScheduleProfessionalsAddIndexRoute;
   PrivateScheduleSpacesAddIndexRoute: typeof PrivateScheduleSpacesAddIndexRoute;
@@ -536,6 +557,7 @@ const PrivateRouteChildren: PrivateRouteChildren = {
   PrivateProductsAddIndexRoute: PrivateProductsAddIndexRoute,
   PrivateScheduleProfessionalsIndexRoute:
     PrivateScheduleProfessionalsIndexRoute,
+  PrivateScheduleSettingsIndexRoute: PrivateScheduleSettingsIndexRoute,
   PrivateScheduleSpacesIndexRoute: PrivateScheduleSpacesIndexRoute,
   PrivateScheduleProfessionalsAddIndexRoute:
     PrivateScheduleProfessionalsAddIndexRoute,

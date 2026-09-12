@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { get, patch, post } from './client.api.js';
+import { get, patch, post, put } from './client.api.js';
 
 describe('client.api', () => {
   afterEach(() => {
@@ -90,6 +90,37 @@ describe('client.api', () => {
       vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
 
       const result = await patch('/customers/c1', { status: 'won' });
+
+      expect(result.success).toBe(false);
+      expect(result.message).toBe('Não foi possível conectar ao servidor. Tente novamente.');
+    });
+  });
+
+  describe('put', () => {
+    it('sends a JSON body with Content-Type, credentials:"include" and method:"PUT", returning the ApiResponse<T> shape on success', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        json: () => Promise.resolve({ success: true, data: { maxSlotsPerResponse: 10 }, message: '' }),
+      });
+      vi.stubGlobal('fetch', fetchMock);
+
+      const result = await put<{ maxSlotsPerResponse: number }>('/scheduling-settings', { maxSlotsPerResponse: 10 });
+
+      expect(result).toEqual({ success: true, data: { maxSlotsPerResponse: 10 }, message: '' });
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining('/scheduling-settings'),
+        expect.objectContaining({
+          method: 'PUT',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ maxSlotsPerResponse: 10 }),
+        }),
+      );
+    });
+
+    it('never throws on a network failure — returns an ApiResponse with success:false and a readable message', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
+
+      const result = await put('/scheduling-settings', { maxSlotsPerResponse: 10 });
 
       expect(result.success).toBe(false);
       expect(result.message).toBe('Não foi possível conectar ao servidor. Tente novamente.');

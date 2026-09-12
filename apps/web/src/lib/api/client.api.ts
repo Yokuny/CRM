@@ -6,7 +6,7 @@ import type { ApiResponse } from '@crm/contracts';
 // `authorization` header (não existe access token aqui).
 const BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
 
-type Method = 'GET' | 'POST' | 'PATCH';
+type Method = 'GET' | 'POST' | 'PATCH' | 'PUT';
 
 const CONNECTION_ERROR_MESSAGE = 'Não foi possível conectar ao servidor. Tente novamente.';
 
@@ -29,3 +29,9 @@ export const request = async <T>(path: string, method: Method, body?: unknown): 
 export const get = <T>(path: string): Promise<ApiResponse<T>> => request<T>(path, 'GET');
 export const post = <T>(path: string, body?: unknown): Promise<ApiResponse<T>> => request<T>(path, 'POST', body);
 export const patch = <T>(path: string, body?: unknown): Promise<ApiResponse<T>> => request<T>(path, 'PATCH', body);
+// T36 (scheduling): PUT /scheduling-settings (schedulingSettings.router.ts) é
+// o primeiro endpoint deste app a usar PUT — os demais recursos usam
+// PATCH (edição parcial) porque têm um id (`/professionals/:id`); scheduling
+// settings é um único documento por tenant, sem id, então o back-end usa PUT
+// (substituição do único recurso), não PATCH.
+export const put = <T>(path: string, body?: unknown): Promise<ApiResponse<T>> => request<T>(path, 'PUT', body);

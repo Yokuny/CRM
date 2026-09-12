@@ -173,6 +173,10 @@ const translations: Record<string, string> = {
   'space.status.active': 'Ativo',
   'space.status.inactive': 'Inativo',
   'space.filter.show_inactive': 'Mostrar inativos',
+  // Configuração da agenda (feature scheduling, Fase 7/T36) — routes/
+  // _private/schedule/settings/index.tsx.
+  'scheduling_settings.title': 'Configuração da agenda',
+  'scheduling_settings.max_slots': 'Máximo de horários por resposta',
 };
 
 export const t = (key: string): string => translations[key] ?? key;
