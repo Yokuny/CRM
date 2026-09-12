@@ -209,6 +209,16 @@ const translations: Record<string, string> = {
   'appointment.attendance.completed': 'Compareceu',
   'appointment.attendance.no_show': 'Não compareceu',
   'appointment.action.request_confirmation': 'Pedir confirmação',
+  // Diálogo de bloqueio (feature scheduling, Fase 8/T41) — routes/_private/
+  // schedule/calendar/@components/block-dialog.tsx.
+  'block.create.title': 'Novo bloqueio',
+  'block.detail.title': 'Bloqueio',
+  'block.field.title': 'Título',
+  'block.field.start_date': 'Data de início',
+  'block.field.start_time': 'Hora de início',
+  'block.field.end_date': 'Data de fim',
+  'block.field.end_time': 'Hora de fim',
+  'block.action.remove': 'Remover bloqueio',
 };
 
 export const t = (key: string): string => translations[key] ?? key;
