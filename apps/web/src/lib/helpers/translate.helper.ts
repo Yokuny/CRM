@@ -177,6 +177,15 @@ const translations: Record<string, string> = {
   // _private/schedule/settings/index.tsx.
   'scheduling_settings.title': 'Configuração da agenda',
   'scheduling_settings.max_slots': 'Máximo de horários por resposta',
+  // Calendário da agenda (feature scheduling, Fase 8/T39) — routes/_private/
+  // schedule/calendar/index.tsx.
+  'calendar.title': 'Calendário',
+  'calendar.previous_week': 'Semana anterior',
+  'calendar.next_week': 'Próxima semana',
+  'calendar.filter.professional': 'Profissional',
+  'calendar.filter.all_professionals': 'Todos os profissionais',
+  'calendar.filter.space': 'Ambiente',
+  'calendar.filter.all_spaces': 'Todos os ambientes',
 };
 
 export const t = (key: string): string => translations[key] ?? key;
