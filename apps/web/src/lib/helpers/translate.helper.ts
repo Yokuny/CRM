@@ -186,6 +186,29 @@ const translations: Record<string, string> = {
   'calendar.filter.all_professionals': 'Todos os profissionais',
   'calendar.filter.space': 'Ambiente',
   'calendar.filter.all_spaces': 'Todos os ambientes',
+  // Diálogo de agendamento (feature scheduling, Fase 8/T40) — routes/_private/
+  // schedule/calendar/@components/appointment-dialog.tsx.
+  'appointment.create.title': 'Novo agendamento',
+  'appointment.detail.title': 'Agendamento',
+  'appointment.field.customer': 'Cliente',
+  'appointment.field.professional': 'Profissional',
+  'appointment.field.date': 'Data',
+  'appointment.field.time': 'Hora',
+  'appointment.field.space': 'Ambiente',
+  'appointment.field.space_none': 'Sem ambiente',
+  'appointment.field.notes': 'Observações',
+  'appointment.status.pending': 'Pendente',
+  'appointment.status.confirmed': 'Confirmado',
+  'appointment.status.completed': 'Concluído',
+  'appointment.status.no_show': 'Não compareceu',
+  'appointment.status.canceled_by_customer': 'Cancelado pelo cliente',
+  'appointment.status.canceled_by_operator': 'Cancelado pelo operador',
+  'appointment.action.cancel': 'Cancelar agendamento',
+  'appointment.cancel.reason_placeholder': 'Motivo (opcional)',
+  'appointment.action.reschedule': 'Remarcar',
+  'appointment.attendance.completed': 'Compareceu',
+  'appointment.attendance.no_show': 'Não compareceu',
+  'appointment.action.request_confirmation': 'Pedir confirmação',
 };
 
 export const t = (key: string): string => translations[key] ?? key;
