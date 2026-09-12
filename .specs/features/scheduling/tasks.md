@@ -814,9 +814,9 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 ### T40: Diálogo de agendamento
 
 **What**: Criar encaixe e agir sobre um agendamento existente.
-**Where**: `apps/web/src/routes/_private/schedule/calendar/@components/appointment-dialog.tsx` (+ unit test)
+**Where**: `apps/web/src/routes/_private/schedule/calendar/@components/appointment-panel.tsx` (+ unit test) — renomeado de `appointment-dialog.tsx`, ver correção abaixo
 **Depends on**: T39, T12
-**Reuses**: `customersQuery` (`GET /customers`, feature 3) para o seletor de cliente; `Dialog`/`Form`
+**Reuses**: `customersQuery` (`GET /customers`, feature 3) para o seletor de cliente; `Form`
 **Requirement**: SCH-30, SCH-31, SCH-32, SCH-34, SCH-37
 
 **Done when**:
@@ -824,14 +824,14 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 - [x] Detalhe: cancelar (motivo), remarcar, comparecimento só depois do início, "Pedir confirmação" abre o `wa.me` em nova aba; 409 vira toast
 
 **Tests**: unit · **Gate**: quick
-**Status**: ✅ Complete (commit 82f9dcf)
+**Status**: ✅ Complete (commit 82f9dcf) — **correção pós-Batch 7 (commit b2bd3ea)**: nem esta task nem T41/T39 previam ligar o painel à tela do calendário (`WeekGrid.onSelect` ficou no-op, sem botão "Novo agendamento"), quebrando a história P1 na prática apesar de cada peça estar pronta. Além disso, por decisão explícita do usuário, `Dialog` (modal Radix) nunca deve ser usado neste projeto para este tipo de ação — o componente foi renomeado pra `appointment-panel.tsx` e reescrito como painel INLINE (`<div>` em fluxo normal, `onClose` em vez de `open`/`onOpenChange`), e `calendar/index.tsx` ganhou o estado `panel` + os botões "Novo agendamento"/"Novo bloqueio" + o roteamento de `onSelect` por `kind`. Ver AD-037 em STATE.md.
 
 ---
 
 ### T41: Diálogo de bloqueio
 
 **What**: Criar e remover bloqueio.
-**Where**: `apps/web/src/routes/_private/schedule/calendar/@components/block-dialog.tsx` (+ unit test)
+**Where**: `apps/web/src/routes/_private/schedule/calendar/@components/block-panel.tsx` (+ unit test) — renomeado de `block-dialog.tsx`, ver correção abaixo
 **Depends on**: T39, T12
 **Reuses**: T40
 **Requirement**: SCH-33
@@ -840,7 +840,7 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 - [x] Cria (profissional, início, fim, título) com `zodResolver(createBlockSchema)` e remove
 
 **Tests**: unit · **Gate**: quick
-**Status**: ✅ Complete (commit 96263ca)
+**Status**: ✅ Complete (commit 96263ca) — **correção pós-Batch 7 (commit b2bd3ea)**: mesma correção de T40 (painel nunca ligado ao calendário; `Dialog` substituído por painel inline `block-panel.tsx`). Ver AD-037 em STATE.md.
 
 ---
 
