@@ -51,10 +51,19 @@ const seedSpace = (Tenant: mongoose.Types.ObjectId, overrides: Partial<Record<st
 // mockar o relógio do sistema, já que a suíte roda contra um Mongo real e
 // bookAppointment usa `new Date()` internamente. offsetMinutes não múltiplo
 // de 30 produz deliberadamente um horário DESALINHADO ao grid de teste.
+// Um grid 00:00-23:30 nunca tem slot iniciando às 23:30 (terminaria à
+// meia-noite, fora da janela — Edge Case do spec.md): se "agora" arredondar
+// exatamente pra esse instante do dia, empurra mais um slot pra não cair no
+// único horário que o próprio grid exclui por construção. Só se aplica a
+// offsets em dias inteiros (preservam a hora-do-dia — usados pelos testes
+// que só precisam de "genuinamente alinhado, em outro dia"): os offsets
+// pequenos (30/90min) testam a fronteira de antecedência EM RELAÇÃO a agora
+// e não podem ser deslocados, sob pena de mudar o que o teste prova.
 const alignedRelativeStart = (offsetMinutes: number): Date => {
   const now = new Date();
   const [hours, minutes] = timeInDisplayTz(now).split(':').map(Number) as [number, number];
-  const roundedUp = Math.ceil((hours * 60 + minutes) / 30) * 30;
+  let roundedUp = Math.ceil((hours * 60 + minutes) / 30) * 30;
+  if (offsetMinutes % MINUTES_IN_DAY === 0 && roundedUp % MINUTES_IN_DAY === MINUTES_IN_DAY - 30) roundedUp += 30;
   const targetMinutes = roundedUp + offsetMinutes;
   const dayShift = Math.floor(targetMinutes / MINUTES_IN_DAY);
   const minutesInDay = ((targetMinutes % MINUTES_IN_DAY) + MINUTES_IN_DAY) % MINUTES_IN_DAY;

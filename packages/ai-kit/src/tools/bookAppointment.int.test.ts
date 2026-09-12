@@ -5,6 +5,7 @@ import {
   Conversation,
   Customer,
   connect,
+  dateInDisplayTz,
   disconnect,
   Professional,
   timeInDisplayTz,
@@ -56,15 +57,20 @@ const seedProfessional = (tenantId: string) =>
 
 // Horário alinhado ao grid de 30 em 30 minutos, bem à frente de agora (evita
 // qualquer interferência do lead de 60min/horizonte de 90d) — sem mockar o
-// relógio, mesma técnica de appointmentTransitions.int.test.ts.
+// relógio, mesma técnica de appointmentTransitions.int.test.ts. Um grid
+// 00:00-23:30 nunca tem slot iniciando às 23:30 (terminaria à meia-noite,
+// fora da janela — Edge Case do spec.md): se "agora" arredondar exatamente
+// pra esse instante do dia, empurra mais um slot pra não cair no único
+// horário que o próprio grid exclui por construção.
 const farFutureAlignedStart = (): Date => {
   const now = new Date();
   const [hours, minutes] = timeInDisplayTz(now).split(':').map(Number) as [number, number];
-  const roundedUp = Math.ceil((hours * 60 + minutes) / 30) * 30;
+  let roundedUp = Math.ceil((hours * 60 + minutes) / 30) * 30;
+  if (roundedUp % MINUTES_IN_DAY === MINUTES_IN_DAY - 30) roundedUp += 30;
   const targetMinutes = roundedUp + 3 * MINUTES_IN_DAY;
   const dayShift = Math.floor(targetMinutes / MINUTES_IN_DAY);
   const minutesInDay = targetMinutes % MINUTES_IN_DAY;
-  const date = new Date(now.getTime() + dayShift * 24 * 60 * 60_000).toISOString().slice(0, 10);
+  const date = dateInDisplayTz(new Date(now.getTime() + dayShift * 24 * 60 * 60_000));
   const hh = String(Math.floor(minutesInDay / 60)).padStart(2, '0');
   const mm = String(minutesInDay % 60).padStart(2, '0');
   return wallClockToUtc(date, `${hh}:${mm}`);

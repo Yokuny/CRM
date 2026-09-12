@@ -14,6 +14,12 @@ export const envSchema = z.object({
   // ai-gateway a usa para decifrar ao chamar o Asaas (providers/asaasClient.ts,
   // T15). Mesmo padrão de CHANNEL_ENC_KEY acima.
   ASAAS_ENC_KEY: z.string().min(1, 'ASAAS_ENC_KEY é obrigatória'),
+  // scheduling T20/T29: MESMA variável que apps/crm-api já valida — a mesma
+  // origem pública do apps/web nos dois apps evita dois links de confirmação
+  // diferentes por misconfig (design.md Tech Decisions). Chega até
+  // book_appointment pelo seam webhook.router.ts -> runTurn -> ToolContext,
+  // no mesmo formato do ASAAS_ENC_KEY/asaasClient acima.
+  WEB_BASE_URL: z.string().min(1, 'WEB_BASE_URL é obrigatória'),
 });
 
 export type Env = z.infer<typeof envSchema>;
