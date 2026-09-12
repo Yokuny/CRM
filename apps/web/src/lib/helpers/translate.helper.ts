@@ -155,6 +155,16 @@ const translations: Record<string, string> = {
   'weekday.6': 'Sábado',
   'schedule.window.start': 'Início',
   'schedule.window.end': 'Fim',
+  // Telas de Profissional (feature scheduling, Fase 7/T34) — routes/_private/
+  // schedule/professionals/**.
+  'professional.list.title': 'Profissionais',
+  'professional.create.title': 'Novo profissional',
+  'professional.details.title': 'Detalhe do profissional',
+  'professional.slot_duration': 'Duração do horário (min)',
+  'professional.weekly_schedule': 'Grade semanal',
+  'professional.status.active': 'Ativo',
+  'professional.status.inactive': 'Inativo',
+  'professional.filter.show_inactive': 'Mostrar inativos',
 };
 
 export const t = (key: string): string => translations[key] ?? key;
