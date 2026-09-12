@@ -55,9 +55,12 @@ describe('appointmentConfirmationQuery (T42, spec.md SCH-22/SCH-23)', () => {
       status: 410,
     });
 
-    const error = await appointmentConfirmationQuery('expired')
-      .queryFn?.({} as never)
-      .catch((e: unknown) => e);
+    let error: unknown;
+    try {
+      await appointmentConfirmationQuery('expired').queryFn?.({} as never);
+    } catch (e) {
+      error = e;
+    }
 
     expect(error).toBeInstanceOf(AppointmentConfirmationError);
     expect((error as InstanceType<typeof AppointmentConfirmationError>).status).toBe(410);

@@ -49,8 +49,7 @@ export function WeekGrid({ weekStart, items, onSelect }: WeekGridProps) {
             <div className="flex flex-col gap-1.5">
               {dayItems.map((item) => {
                 const isBlock = item.kind === 'block';
-                const isOverdue =
-                  !isBlock && ACTIVE_STATUSES.includes(item.status) && isPastInstant(item.start);
+                const isOverdue = !isBlock && ACTIVE_STATUSES.includes(item.status) && isPastInstant(item.start);
 
                 return (
                   <button

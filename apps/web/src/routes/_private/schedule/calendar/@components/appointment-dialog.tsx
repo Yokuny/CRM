@@ -358,7 +358,10 @@ function AppointmentDetail({ appointment, onOpenChange }: AppointmentDetailProps
             render={({ field }) => (
               <FormItem>
                 <FormLabel>{t('appointment.field.professional')}</FormLabel>
-                <Select value={field.value ?? UNSET_VALUE} onValueChange={(value) => field.onChange(value === UNSET_VALUE ? undefined : value)}>
+                <Select
+                  value={field.value ?? UNSET_VALUE}
+                  onValueChange={(value) => field.onChange(value === UNSET_VALUE ? undefined : value)}
+                >
                   <FormControl>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder={appointment.professionalName ?? t('appointment.field.professional')} />

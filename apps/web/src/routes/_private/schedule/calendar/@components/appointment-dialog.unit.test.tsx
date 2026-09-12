@@ -38,7 +38,10 @@ const PROFESSIONAL_ID = '507f1f77bcf86cd799439012';
 const SPACE_ID = '507f1f77bcf86cd799439013';
 
 const CUSTOMERS = { items: [{ id: CUSTOMER_ID, name: 'João da Silva' }], total: 1 };
-const PROFESSIONALS = { items: [{ id: PROFESSIONAL_ID, name: 'Dra. Ana', slotDurationMinutes: 60, active: true }], total: 1 };
+const PROFESSIONALS = {
+  items: [{ id: PROFESSIONAL_ID, name: 'Dra. Ana', slotDurationMinutes: 60, active: true }],
+  total: 1,
+};
 const SPACES = { items: [{ id: SPACE_ID, name: 'Sala 1', active: true }], total: 1 };
 
 const mockLookups = () => {
@@ -50,7 +53,11 @@ const mockLookups = () => {
   });
 };
 
-function renderDialog(props: { appointment?: AppointmentRecord; open?: boolean; onOpenChange?: (open: boolean) => void }) {
+function renderDialog(props: {
+  appointment?: AppointmentRecord;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}) {
   const queryClient = new QueryClient();
   const onOpenChange = props.onOpenChange ?? vi.fn();
   const utils = render(
@@ -240,16 +247,17 @@ describe('AppointmentDialog — detail/action mode (T40, spec.md SCH-31/32/34/37
 
     await user.click(completedButton);
 
-    await waitFor(() =>
-      expect(postMock).toHaveBeenCalledWith('/appointments/a2/attendance', { status: 'completed' }),
-    );
+    await waitFor(() => expect(postMock).toHaveBeenCalledWith('/appointments/a2/attendance', { status: 'completed' }));
   });
 
   it('requests a confirmation link and opens the returned wa.me URL in a new tab (SCH-37)', async () => {
     mockLookups();
     postMock.mockResolvedValue({
       success: true,
-      data: { confirmationUrl: 'https://app.example.com/appointment?token=abc', waMeUrl: 'https://wa.me/5511999999999?text=oi' },
+      data: {
+        confirmationUrl: 'https://app.example.com/appointment?token=abc',
+        waMeUrl: 'https://wa.me/5511999999999?text=oi',
+      },
     });
     const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
     const user = userEvent.setup();

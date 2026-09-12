@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { cleanup, render, screen, within } from '@testing-library/react';
-import { fireEvent } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { AppointmentRecord } from '@/query/appointment.js';
 import { WeekGrid } from './week-grid.js';
@@ -27,7 +26,15 @@ describe('WeekGrid (T38, spec.md SCH-29/SCH-35)', () => {
   it('renders 7 day columns starting from weekStart', () => {
     render(<WeekGrid weekStart="2026-09-14" items={[]} onSelect={vi.fn()} />);
 
-    const expectedDays = ['2026-09-14', '2026-09-15', '2026-09-16', '2026-09-17', '2026-09-18', '2026-09-19', '2026-09-20'];
+    const expectedDays = [
+      '2026-09-14',
+      '2026-09-15',
+      '2026-09-16',
+      '2026-09-17',
+      '2026-09-18',
+      '2026-09-19',
+      '2026-09-20',
+    ];
     for (const day of expectedDays) {
       expect(screen.getByTestId(`week-grid-day-${day}`)).toBeInTheDocument();
     }
@@ -41,7 +48,9 @@ describe('WeekGrid (T38, spec.md SCH-29/SCH-35)', () => {
 
     const septemberFifteenColumn = screen.getByTestId('week-grid-day-2026-09-15');
     expect(within(septemberFifteenColumn).getByText(/21:00/)).toBeInTheDocument();
-    expect(within(screen.getByTestId('week-grid-day-2026-09-16')).queryByTestId('week-grid-item-a1')).not.toBeInTheDocument();
+    expect(
+      within(screen.getByTestId('week-grid-day-2026-09-16')).queryByTestId('week-grid-item-a1'),
+    ).not.toBeInTheDocument();
   });
 
   it('renders a block (kind:"block") with a visually distinct style from a real appointment', () => {

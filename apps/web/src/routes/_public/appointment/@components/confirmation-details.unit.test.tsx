@@ -18,7 +18,15 @@ const baseRecord: AppointmentConfirmationRecord = {
 
 describe('ConfirmationDetails (T42, spec.md SCH-22/SCH-28)', () => {
   it('renders date (with weekday, calendar-only math — never re-interpreting the wall-clock date as a UTC instant), time, professional, space, customer and status', () => {
-    render(<ConfirmationDetails record={baseRecord} onConfirm={vi.fn()} onCancel={vi.fn()} isConfirming={false} isCanceling={false} />);
+    render(
+      <ConfirmationDetails
+        record={baseRecord}
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+        isConfirming={false}
+        isCanceling={false}
+      />,
+    );
 
     // 2026-09-15 é uma terça-feira — provado independentemente em
     // displayTime.helper.unit.test.ts (weekdayIndexOfDisplayDate).
@@ -47,7 +55,15 @@ describe('ConfirmationDetails (T42, spec.md SCH-22/SCH-28)', () => {
   it('calls onConfirm/onCancel when the respective button is clicked', () => {
     const onConfirm = vi.fn();
     const onCancel = vi.fn();
-    render(<ConfirmationDetails record={baseRecord} onConfirm={onConfirm} onCancel={onCancel} isConfirming={false} isCanceling={false} />);
+    render(
+      <ConfirmationDetails
+        record={baseRecord}
+        onConfirm={onConfirm}
+        onCancel={onCancel}
+        isConfirming={false}
+        isCanceling={false}
+      />,
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar presença' }));
     fireEvent.click(screen.getByRole('button', { name: 'Não vou comparecer' }));
@@ -57,7 +73,15 @@ describe('ConfirmationDetails (T42, spec.md SCH-22/SCH-28)', () => {
   });
 
   it('disables both action buttons while a confirm or cancel mutation is pending', () => {
-    render(<ConfirmationDetails record={baseRecord} onConfirm={vi.fn()} onCancel={vi.fn()} isConfirming isCanceling={false} />);
+    render(
+      <ConfirmationDetails
+        record={baseRecord}
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+        isConfirming
+        isCanceling={false}
+      />,
+    );
 
     expect(screen.getByRole('button', { name: 'Confirmar presença' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Não vou comparecer' })).toBeDisabled();

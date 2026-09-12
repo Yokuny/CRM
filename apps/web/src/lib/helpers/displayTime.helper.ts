@@ -64,4 +64,5 @@ export const currentDisplayWeekStart = (now: Date = new Date()): string => {
 // (timestamp), não de fuso: independe de `DISPLAY_TIMEZONE` por construção,
 // mas mora aqui porque todo consumidor (week-grid.tsx) já formata o mesmo
 // instante com as funções acima.
-export const isPastInstant = (value: Date | string, now: Date = new Date()): boolean => toDate(value).getTime() < now.getTime();
+export const isPastInstant = (value: Date | string, now: Date = new Date()): boolean =>
+  toDate(value).getTime() < now.getTime();

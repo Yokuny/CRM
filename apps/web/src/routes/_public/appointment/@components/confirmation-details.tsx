@@ -37,7 +37,13 @@ function Row({ label, value }: { label: string; value: string }) {
 // `formatDisplayDate`/`formatDisplayTime` (T38), que esperam um INSTANTE UTC;
 // aqui só o dia-da-semana é derivado (`weekdayIndexOfDisplayDate`, cálculo de
 // calendário puro, seguro sobre uma data de parede já pronta).
-export function ConfirmationDetails({ record, onConfirm, onCancel, isConfirming, isCanceling }: ConfirmationDetailsProps) {
+export function ConfirmationDetails({
+  record,
+  onConfirm,
+  onCancel,
+  isConfirming,
+  isCanceling,
+}: ConfirmationDetailsProps) {
   const isActionable = ACTIONABLE_STATUSES.includes(record.status);
   const weekday = t(`weekday.${weekdayIndexOfDisplayDate(record.date)}`);
 

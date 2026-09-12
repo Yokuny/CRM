@@ -1,4 +1,10 @@
-import type { CancelAppointment, CreateAppointment, CreateBlock, MarkAttendance, RescheduleAppointment } from '@crm/contracts';
+import type {
+  CancelAppointment,
+  CreateAppointment,
+  CreateBlock,
+  MarkAttendance,
+  RescheduleAppointment,
+} from '@crm/contracts';
 import type { QueryClient, UseMutationOptions } from '@tanstack/react-query';
 import { queryOptions } from '@tanstack/react-query';
 import { del, get, post } from '../lib/api/client.api.js';
@@ -93,7 +99,9 @@ export const upcomingAppointmentQuery = (customerId: string) =>
   queryOptions({
     queryKey: appointmentKeys.upcoming(customerId),
     queryFn: async (): Promise<AppointmentRecord | null> => {
-      const res = await get<AppointmentRecord | null>(`/appointments/upcoming?customer=${encodeURIComponent(customerId)}`);
+      const res = await get<AppointmentRecord | null>(
+        `/appointments/upcoming?customer=${encodeURIComponent(customerId)}`,
+      );
       if (!res.success) throw new Error(res.message ?? 'Não foi possível carregar o próximo agendamento.');
       return res.data ?? null;
     },

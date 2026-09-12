@@ -34,7 +34,10 @@ const { BlockDialog } = await import('./block-dialog.js');
 // appointment-dialog.unit.test.tsx (T40): um id curto tipo 'p1' falharia a
 // validação real do createBlockSchema.
 const PROFESSIONAL_ID = '507f1f77bcf86cd799439012';
-const PROFESSIONALS = { items: [{ id: PROFESSIONAL_ID, name: 'Dra. Ana', slotDurationMinutes: 60, active: true }], total: 1 };
+const PROFESSIONALS = {
+  items: [{ id: PROFESSIONAL_ID, name: 'Dra. Ana', slotDurationMinutes: 60, active: true }],
+  total: 1,
+};
 
 const mockLookups = () => {
   getMock.mockImplementation((path: string) => {

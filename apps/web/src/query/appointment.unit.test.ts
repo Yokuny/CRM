@@ -72,9 +72,9 @@ describe('appointmentsQuery (T37, spec.md SCH-29)', () => {
   it('throws with the backend message when success:false', async () => {
     getMock.mockResolvedValueOnce({ success: false, message: 'faixa de datas maior que 42 dias' });
 
-    await expect(
-      appointmentsQuery({ from: '2026-09-14', to: '2026-11-21' }).queryFn?.({} as never),
-    ).rejects.toThrow('faixa de datas maior que 42 dias');
+    await expect(appointmentsQuery({ from: '2026-09-14', to: '2026-11-21' }).queryFn?.({} as never)).rejects.toThrow(
+      'faixa de datas maior que 42 dias',
+    );
   });
 
   it('exposes a queryKey that varies by params (so distinct ranges/filters cache independently)', () => {
@@ -132,7 +132,9 @@ describe('createAppointmentMutation (T37, spec.md SCH-30)', () => {
   it('invalidates appointmentKeys.lists() on success', () => {
     const queryClient = fakeQueryClient();
 
-    createAppointmentMutation(queryClient).onSuccess?.(appointmentFixture, input, undefined, { client: queryClient } as never);
+    createAppointmentMutation(queryClient).onSuccess?.(appointmentFixture, input, undefined, {
+      client: queryClient,
+    } as never);
 
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: appointmentKeys.lists() });
   });
@@ -147,7 +149,13 @@ describe('createBlockMutation (T37, spec.md SCH-33)', () => {
     endTime: '13:00',
     title: 'Almoço',
   };
-  const blockFixture = { ...appointmentFixture, id: 'b1', kind: 'block' as const, customer: undefined, title: 'Almoço' };
+  const blockFixture = {
+    ...appointmentFixture,
+    id: 'b1',
+    kind: 'block' as const,
+    customer: undefined,
+    title: 'Almoço',
+  };
 
   it('calls POST /appointments/blocks with the given input and resolves with the created block', async () => {
     postMock.mockResolvedValueOnce({ success: true, data: blockFixture });
@@ -180,7 +188,9 @@ describe('deleteBlockMutation (T37, spec.md SCH-33)', () => {
   it('invalidates appointmentKeys.lists() on success', () => {
     const queryClient = fakeQueryClient();
 
-    deleteBlockMutation(queryClient).onSuccess?.({ deleted: true }, { id: 'b1' }, undefined, { client: queryClient } as never);
+    deleteBlockMutation(queryClient).onSuccess?.({ deleted: true }, { id: 'b1' }, undefined, {
+      client: queryClient,
+    } as never);
 
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: appointmentKeys.lists() });
   });
@@ -202,7 +212,9 @@ describe('cancelAppointmentMutation (T37, spec.md SCH-32)', () => {
   it('invalidates appointmentKeys.lists() AND appointmentKeys.upcoming(customer) on success when the record has a customer', () => {
     const queryClient = fakeQueryClient();
 
-    cancelAppointmentMutation(queryClient).onSuccess?.(canceled, variables, undefined, { client: queryClient } as never);
+    cancelAppointmentMutation(queryClient).onSuccess?.(canceled, variables, undefined, {
+      client: queryClient,
+    } as never);
 
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: appointmentKeys.lists() });
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: appointmentKeys.upcoming('c1') });
@@ -269,12 +281,18 @@ describe('markAttendanceMutation (T37, spec.md SCH-34)', () => {
 });
 
 describe('requestConfirmationLinkMutation (T37, spec.md SCH-37)', () => {
-  const link = { confirmationUrl: 'https://app.example.com/appointment?token=abc', waMeUrl: 'https://wa.me/5511999999999?text=oi' };
+  const link = {
+    confirmationUrl: 'https://app.example.com/appointment?token=abc',
+    waMeUrl: 'https://wa.me/5511999999999?text=oi',
+  };
 
   it('calls POST /appointments/:id/confirmation-link with no body and resolves with the confirmation/wa.me URLs', async () => {
     postMock.mockResolvedValueOnce({ success: true, data: link });
 
-    const result = await requestConfirmationLinkMutation(fakeQueryClient()).mutationFn?.({ id: 'a1' }, fakeMutationContext);
+    const result = await requestConfirmationLinkMutation(fakeQueryClient()).mutationFn?.(
+      { id: 'a1' },
+      fakeMutationContext,
+    );
 
     expect(postMock).toHaveBeenCalledWith('/appointments/a1/confirmation-link');
     expect(result).toEqual(link);
@@ -291,7 +309,9 @@ describe('requestConfirmationLinkMutation (T37, spec.md SCH-37)', () => {
   it('invalidates appointmentKeys.lists() on success', () => {
     const queryClient = fakeQueryClient();
 
-    requestConfirmationLinkMutation(queryClient).onSuccess?.(link, { id: 'a1' }, undefined, { client: queryClient } as never);
+    requestConfirmationLinkMutation(queryClient).onSuccess?.(link, { id: 'a1' }, undefined, {
+      client: queryClient,
+    } as never);
 
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: appointmentKeys.lists() });
   });

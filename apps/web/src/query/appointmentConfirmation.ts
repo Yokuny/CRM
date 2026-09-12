@@ -55,7 +55,9 @@ export const appointmentConfirmationQuery = (token: string) =>
 // devolve 200 com o mesmo estado, nunca erro, ao repetir com o mesmo token).
 export const confirmAppointmentMutation = (): UseMutationOptions<AppointmentConfirmationRecord, Error, string> => ({
   mutationFn: async (token) => {
-    const res = await post<AppointmentConfirmationRecord>(`/appointment-confirmations/${encodeURIComponent(token)}/confirm`);
+    const res = await post<AppointmentConfirmationRecord>(
+      `/appointment-confirmations/${encodeURIComponent(token)}/confirm`,
+    );
     if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível confirmar sua presença.');
     return res.data;
   },
@@ -67,7 +69,9 @@ export const confirmAppointmentMutation = (): UseMutationOptions<AppointmentConf
 // mesmo assim (indicado explicitamente pela task).
 export const confirmationCancelMutation = (): UseMutationOptions<AppointmentConfirmationRecord, Error, string> => ({
   mutationFn: async (token) => {
-    const res = await post<AppointmentConfirmationRecord>(`/appointment-confirmations/${encodeURIComponent(token)}/cancel`);
+    const res = await post<AppointmentConfirmationRecord>(
+      `/appointment-confirmations/${encodeURIComponent(token)}/cancel`,
+    );
     if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível cancelar seu agendamento.');
     return res.data;
   },

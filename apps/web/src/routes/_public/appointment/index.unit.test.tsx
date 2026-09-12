@@ -113,7 +113,11 @@ describe('AppointmentConfirmationPage (T42, spec.md SCH-22/SCH-23/SCH-24/SCH-25/
     searchMock.mockReturnValue({ token: 'tok1' });
     getWithStatusMock.mockResolvedValueOnce({ success: true, data: publicView, status: 200 });
     postMock.mockResolvedValue({ success: true, data: { ...publicView, status: 'confirmed' } });
-    getWithStatusMock.mockResolvedValueOnce({ success: true, data: { ...publicView, status: 'confirmed' }, status: 200 });
+    getWithStatusMock.mockResolvedValueOnce({
+      success: true,
+      data: { ...publicView, status: 'confirmed' },
+      status: 200,
+    });
     const user = userEvent.setup();
 
     renderPage();
