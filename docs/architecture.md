@@ -93,6 +93,8 @@ refinado por [AD-032](../.specs/STATE.md#ad-032): ninguém escreve na fatia do o
 | `tenants`, `users`, `channels` | `crm-api` | ambos |
 | `invites` | `crm-api` | `crm-api` |
 | `sessions` | `crm-api` | `crm-api` |
+| `professionals`, `spaces`, `schedulingSettings` | `crm-api` | ambos |
+| `appointments` | `crm-api` (CRUD do operador: criar manual, cancelar, remarcar, bloquear; e a rota **pública** de confirmação) e `ai-gateway` (`book_appointment`) — cada um só na sua fatia; a garantia contra dupla reserva é um índice único parcial no banco, não checagem prévia em código, ver [AD-035](../.specs/STATE.md#ad-035) | ambos |
 | `boards` (kanban, feature 10 — ainda não existe) | `crm-api` | `crm-api` |
 
 ---
@@ -148,6 +150,30 @@ Order confirmed
   → webhook Asaas → dedup por AsaasEvent → status aplicado sem regredir → paid
 reconciliação (ai-gateway): retenta AsaasEvent failed; consulta todo Payment pending;
   pending há mais de 24h → expired, devolve estoque, Order → payment_expired
+```
+
+### Agendamento
+
+```
+cliente pede horário na conversa
+  → get_available_slots(date, professionalId?)
+      grade semanal de cada Professional ativo, menos Appointment
+      pending/confirmed e Block do intervalo → slots livres + agendamentos
+      futuros do próprio cliente
+  → cliente escolhe → book_appointment(professionalId, start, spaceId?)
+      índice único parcial {Tenant,professional,start} elege 1 vencedor
+      entre reservas concorrentes (E11000 pro perdedor) → Appointment
+      pending + token de confirmação; IA devolve o link na mesma resposta
+
+cliente confirma/cancela pelo link público (?token=, sem sessão, por hash)
+  → GET/POST /appointment-confirmations/:token
+  → confirm: pending → confirmed (idempotente)
+  → cancel: → canceled_by_customer, horário liberado
+
+operador na tela de Agenda (crm-api)
+  → cria manual (encaixe fora da grade permitido), cancela, remarca, bloqueia
+  → cancelar/remarcar com a janela de 24h aberta → aviso automático na
+    outbox; fechada → botão wa.me, nenhuma chamada direta à Meta
 ```
 
 ---
@@ -251,8 +277,8 @@ Pipeline de etapas puras em `packages/ai-kit`:
 com confirmação explícita do cliente **e** liberação do operador; `issue_payment_link` só
 emite cobrança para pedido já `confirmed`. Os dois gates vivem em código, não no prompt.
 
-8 das 10 tools estão implementadas; `get_available_slots` e `book_appointment` chegam com a
-feature 9 (`scheduling`).
+10/10 tools implementadas — `scheduling` (feature 9) fechou a superfície prevista no
+[ADR-0004](adr/0004-superficie-de-tools-fixa.md) com `get_available_slots`/`book_appointment`.
 
 A superfície é fixa e idêntica entre tenants. O schema dinâmico chega por tool *result*
 ([ADR-0004](adr/0004-superficie-de-tools-fixa.md)).
@@ -267,6 +293,25 @@ A superfície é fixa e idêntica entre tenants. O schema dinâmico chega por to
 - Sem `role: "system"` no meio da conversa — o contexto dinâmico vai no turno de usuário,
   **nunca** interpolado no system prompt.
 - Thinking desligado no loop de WhatsApp.
+
+---
+
+## Convenção de tempo
+
+Regra do projeto inteiro, nascida em `scheduling` (feature 9,
+[AD-036](../.specs/STATE.md#ad-036)) e válida para toda feature futura que grave data/hora:
+
+- **Instante** (ex.: `Appointment.start`/`end`) é sempre gravado em UTC, sem exceção.
+- **Regra recorrente** (ex.: a grade semanal de um `Professional`) não é um instante — vive
+  em hora de parede (`HH:mm`) e é interpretada só na constante de exibição,
+  `DISPLAY_TIMEZONE` (`packages/contracts`, hoje `'America/Sao_Paulo'`).
+- A conversão hora de parede ↔ instante resolve o offset via `Intl.DateTimeFormat` na data
+  alvo, nunca por offset fixo em string — sobrevive a uma eventual volta do horário de
+  verão brasileiro.
+- A conversão pra hora local só acontece na borda de apresentação (tela do `web`, texto que
+  a IA manda) — nenhuma outra camada faz essa conta. A API do operador recebe data/hora em
+  hora de parede e converte no service; o `web` só formata UTC → exibição, nunca no sentido
+  contrário (não importa `packages/db`, só `packages/contracts`).
 
 ---
 

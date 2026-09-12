@@ -166,6 +166,49 @@ o estoque e movendo o Order para `payment_expired`.
 
 ---
 
+## Agenda
+
+**Professional**
+Quem presta o atendimento. Dono da grade semanal (`weeklySchedule`: janelas
+`{weekday, start, end}` em hora de parede, 0..N por dia) e da duração fixa do slot
+(`slotDurationMinutes`). Sem vínculo com `User` — é cadastro de agenda, não conta de
+acesso ao sistema.
+
+**Space**
+Ambiente onde o atendimento acontece (sala, cadeira, mesa, quadra — nome genérico de
+propósito). Puramente informativo: aparece no agendamento e filtra a tela da Agenda, mas
+não restringe quantos atendimentos acontecem nele ao mesmo tempo.
+
+**Appointment**
+Um horário reservado, discriminado do `Block` pelo campo `kind` na mesma collection — os
+dois disputam o mesmo índice único parcial `{Tenant, professional, start}` (só
+`pending`/`confirmed` contam), a garantia de dupla reserva do sistema: o banco elege um
+vencedor, nunca uma checagem prévia em código. Ciclo de vida: `pending` → `confirmed` (o
+cliente confirmou pelo link) → `completed` | `no_show`; ou `canceled_by_customer` |
+`canceled_by_operator` a qualquer momento antes disso. Criado pela IA (`book_appointment`)
+ou pelo operador (encaixe, inclusive fora da grade). Ver [AD-035](../.specs/STATE.md#ad-035).
+
+**Block**
+Um `Appointment` com `kind: 'block'`, sem `customer` — folga, feriado, almoço pontual,
+reunião. Nasce e permanece `confirmed` (ocupa o horário, disputa o mesmo índice que um
+agendamento real) e é removido por deleção, nunca cancelado: um bloqueio não tem ciclo de
+vida de atendimento.
+
+**Token de confirmação**
+Identificador opaco (`apt_` + 32 caracteres) que a página pública de confirmação usa para
+ler e mutar um Appointment — nunca o id do documento, ao contrário da referência que este
+projeto desviou deliberadamente. Gravado só como hash (mesmo padrão de
+`Invite.tokenHash`/`hashToken`); pedir um novo invalida o anterior, e todo token expira, no
+máximo, no fim do agendamento a que pertence.
+
+**Hora de exibição**
+Fuso único do projeto para apresentação, `DISPLAY_TIMEZONE` (`packages/contracts`, hoje
+`'America/Sao_Paulo'`) — usado tanto para interpretar toda regra recorrente (a grade
+semanal) quanto para formatar todo instante UTC na tela e no texto que a IA manda. Ver
+Convenção de tempo em [`docs/architecture.md`](architecture.md).
+
+---
+
 ## Harness de IA
 
 **Harness**
