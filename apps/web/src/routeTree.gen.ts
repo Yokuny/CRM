@@ -15,6 +15,7 @@ import { Route as PrivateIndexRouteImport } from './routes/_private/index';
 import { Route as PublicInviteIndexRouteImport } from './routes/_public/invite/index';
 import { Route as PublicAuthIndexRouteImport } from './routes/_public/auth/index';
 import { Route as PublicAppointmentIndexRouteImport } from './routes/_public/appointment/index';
+import { Route as PrivateScheduleIndexRouteImport } from './routes/_private/schedule/index';
 import { Route as PrivateProductsIndexRouteImport } from './routes/_private/products/index';
 import { Route as PrivateProcessesIndexRouteImport } from './routes/_private/processes/index';
 import { Route as PrivateOrdersIndexRouteImport } from './routes/_private/orders/index';
@@ -64,6 +65,11 @@ const PublicAppointmentIndexRoute = PublicAppointmentIndexRouteImport.update({
   id: '/appointment/',
   path: '/appointment/',
   getParentRoute: () => PublicRoute,
+} as any);
+const PrivateScheduleIndexRoute = PrivateScheduleIndexRouteImport.update({
+  id: '/schedule/',
+  path: '/schedule/',
+  getParentRoute: () => PrivateRoute,
 } as any);
 const PrivateProductsIndexRoute = PrivateProductsIndexRouteImport.update({
   id: '/products/',
@@ -193,6 +199,7 @@ export interface FileRoutesByFullPath {
   '/orders/': typeof PrivateOrdersIndexRoute;
   '/processes/': typeof PrivateProcessesIndexRoute;
   '/products/': typeof PrivateProductsIndexRoute;
+  '/schedule/': typeof PrivateScheduleIndexRoute;
   '/appointment/': typeof PublicAppointmentIndexRoute;
   '/auth/': typeof PublicAuthIndexRoute;
   '/invite/': typeof PublicInviteIndexRoute;
@@ -220,6 +227,7 @@ export interface FileRoutesByTo {
   '/orders': typeof PrivateOrdersIndexRoute;
   '/processes': typeof PrivateProcessesIndexRoute;
   '/products': typeof PrivateProductsIndexRoute;
+  '/schedule': typeof PrivateScheduleIndexRoute;
   '/appointment': typeof PublicAppointmentIndexRoute;
   '/auth': typeof PublicAuthIndexRoute;
   '/invite': typeof PublicInviteIndexRoute;
@@ -250,6 +258,7 @@ export interface FileRoutesById {
   '/_private/orders/': typeof PrivateOrdersIndexRoute;
   '/_private/processes/': typeof PrivateProcessesIndexRoute;
   '/_private/products/': typeof PrivateProductsIndexRoute;
+  '/_private/schedule/': typeof PrivateScheduleIndexRoute;
   '/_public/appointment/': typeof PublicAppointmentIndexRoute;
   '/_public/auth/': typeof PublicAuthIndexRoute;
   '/_public/invite/': typeof PublicInviteIndexRoute;
@@ -279,6 +288,7 @@ export interface FileRouteTypes {
     | '/orders/'
     | '/processes/'
     | '/products/'
+    | '/schedule/'
     | '/appointment/'
     | '/auth/'
     | '/invite/'
@@ -306,6 +316,7 @@ export interface FileRouteTypes {
     | '/orders'
     | '/processes'
     | '/products'
+    | '/schedule'
     | '/appointment'
     | '/auth'
     | '/invite'
@@ -335,6 +346,7 @@ export interface FileRouteTypes {
     | '/_private/orders/'
     | '/_private/processes/'
     | '/_private/products/'
+    | '/_private/schedule/'
     | '/_public/appointment/'
     | '/_public/auth/'
     | '/_public/invite/'
@@ -401,6 +413,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/appointment/';
       preLoaderRoute: typeof PublicAppointmentIndexRouteImport;
       parentRoute: typeof PublicRoute;
+    };
+    '/_private/schedule/': {
+      id: '/_private/schedule/';
+      path: '/schedule';
+      fullPath: '/schedule/';
+      preLoaderRoute: typeof PrivateScheduleIndexRouteImport;
+      parentRoute: typeof PrivateRoute;
     };
     '/_private/products/': {
       id: '/_private/products/';
@@ -562,6 +581,7 @@ interface PrivateRouteChildren {
   PrivateOrdersIndexRoute: typeof PrivateOrdersIndexRoute;
   PrivateProcessesIndexRoute: typeof PrivateProcessesIndexRoute;
   PrivateProductsIndexRoute: typeof PrivateProductsIndexRoute;
+  PrivateScheduleIndexRoute: typeof PrivateScheduleIndexRoute;
   PrivateScheduleProfessionalsDetailsRoute: typeof PrivateScheduleProfessionalsDetailsRoute;
   PrivateScheduleSpacesDetailsRoute: typeof PrivateScheduleSpacesDetailsRoute;
   PrivateCustomersAddIndexRoute: typeof PrivateCustomersAddIndexRoute;
@@ -587,6 +607,7 @@ const PrivateRouteChildren: PrivateRouteChildren = {
   PrivateOrdersIndexRoute: PrivateOrdersIndexRoute,
   PrivateProcessesIndexRoute: PrivateProcessesIndexRoute,
   PrivateProductsIndexRoute: PrivateProductsIndexRoute,
+  PrivateScheduleIndexRoute: PrivateScheduleIndexRoute,
   PrivateScheduleProfessionalsDetailsRoute:
     PrivateScheduleProfessionalsDetailsRoute,
   PrivateScheduleSpacesDetailsRoute: PrivateScheduleSpacesDetailsRoute,

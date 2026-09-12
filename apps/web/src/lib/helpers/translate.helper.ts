@@ -230,6 +230,9 @@ const translations: Record<string, string> = {
   'appointment_confirmation.confirm_action': 'Confirmar presença',
   'appointment_confirmation.cancel_action': 'Não vou comparecer',
   'appointment_confirmation.footer_note': 'Em caso de dúvidas, entre em contato com o estabelecimento.',
+  // Hub da agenda (feature scheduling, Fase 8/T43) — routes/_private/
+  // schedule/index.tsx + card "Agenda" na home (routes/_private/index.tsx).
+  schedule: 'Agenda',
 };
 
 export const t = (key: string): string => translations[key] ?? key;
