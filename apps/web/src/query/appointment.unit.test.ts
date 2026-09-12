@@ -196,23 +196,24 @@ describe('deleteBlockMutation (T37, spec.md SCH-33)', () => {
   });
 });
 
-describe('cancelAppointmentMutation (T37, spec.md SCH-32)', () => {
+describe('cancelAppointmentMutation (T37, spec.md SCH-32; T44/T45 notice)', () => {
   const variables = { id: 'a1', data: { reason: 'Cliente desmarcou' } };
   const canceled = { ...appointmentFixture, status: 'canceled_by_operator' as const };
+  const canceledResult = { appointment: canceled, notice: { kind: 'queued' as const } };
 
-  it('calls POST /appointments/:id/cancel with the optional reason and resolves with the updated record', async () => {
-    postMock.mockResolvedValueOnce({ success: true, data: canceled });
+  it('calls POST /appointments/:id/cancel with the optional reason and resolves with {appointment, notice}', async () => {
+    postMock.mockResolvedValueOnce({ success: true, data: canceledResult });
 
     const result = await cancelAppointmentMutation(fakeQueryClient()).mutationFn?.(variables, fakeMutationContext);
 
     expect(postMock).toHaveBeenCalledWith('/appointments/a1/cancel', { reason: 'Cliente desmarcou' });
-    expect(result).toEqual(canceled);
+    expect(result).toEqual(canceledResult);
   });
 
   it('invalidates appointmentKeys.lists() AND appointmentKeys.upcoming(customer) on success when the record has a customer', () => {
     const queryClient = fakeQueryClient();
 
-    cancelAppointmentMutation(queryClient).onSuccess?.(canceled, variables, undefined, {
+    cancelAppointmentMutation(queryClient).onSuccess?.(canceledResult, variables, undefined, {
       client: queryClient,
     } as never);
 
@@ -222,7 +223,7 @@ describe('cancelAppointmentMutation (T37, spec.md SCH-32)', () => {
 
   it('does not invalidate an upcoming() key when the updated record has no customer (e.g. a block)', () => {
     const queryClient = fakeQueryClient();
-    const withoutCustomer = { ...canceled, customer: undefined };
+    const withoutCustomer = { appointment: { ...canceled, customer: undefined }, notice: undefined };
 
     cancelAppointmentMutation(queryClient).onSuccess?.(withoutCustomer, variables, undefined, {
       client: queryClient,
@@ -233,22 +234,23 @@ describe('cancelAppointmentMutation (T37, spec.md SCH-32)', () => {
   });
 });
 
-describe('rescheduleAppointmentMutation (T37, spec.md SCH-31)', () => {
+describe('rescheduleAppointmentMutation (T37, spec.md SCH-31; T44/T45 notice)', () => {
   const variables = { id: 'a1', data: { date: '2026-09-17', time: '11:00' } };
+  const rescheduledResult = { appointment: appointmentFixture, notice: { kind: 'queued' as const } };
 
-  it('calls POST /appointments/:id/reschedule with the new wall-clock date/time and resolves with the updated record', async () => {
-    postMock.mockResolvedValueOnce({ success: true, data: appointmentFixture });
+  it('calls POST /appointments/:id/reschedule with the new wall-clock date/time and resolves with {appointment, notice}', async () => {
+    postMock.mockResolvedValueOnce({ success: true, data: rescheduledResult });
 
     const result = await rescheduleAppointmentMutation(fakeQueryClient()).mutationFn?.(variables, fakeMutationContext);
 
     expect(postMock).toHaveBeenCalledWith('/appointments/a1/reschedule', { date: '2026-09-17', time: '11:00' });
-    expect(result).toEqual(appointmentFixture);
+    expect(result).toEqual(rescheduledResult);
   });
 
   it('invalidates appointmentKeys.lists() AND appointmentKeys.upcoming(customer) on success', () => {
     const queryClient = fakeQueryClient();
 
-    rescheduleAppointmentMutation(queryClient).onSuccess?.(appointmentFixture, variables, undefined, {
+    rescheduleAppointmentMutation(queryClient).onSuccess?.(rescheduledResult, variables, undefined, {
       client: queryClient,
     } as never);
 

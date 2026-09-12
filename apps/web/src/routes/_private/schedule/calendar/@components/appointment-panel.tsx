@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { formatDisplayDate, formatDisplayTime, isPastInstant } from '@/lib/helpers/displayTime.helper.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 import {
+  type AppointmentNotice,
   type AppointmentRecord,
   cancelAppointmentMutation,
   createAppointmentMutation,
@@ -259,6 +260,19 @@ function AppointmentDetail({ appointment, onClose }: AppointmentDetailProps) {
   const queryClient = useQueryClient();
   const professionalsQueryResult = useQuery(professionalsQuery({ limit: QUERY_LIMIT }));
   const [reason, setReason] = useState('');
+  // SCH-40/T45: `wa_me` mantém o painel aberto (o operador ainda precisa
+  // clicar pra realmente avisar) — `queued` já foi enfileirado sozinho, só
+  // um toast + fecha, mesmo idioma de antes do aviso automático existir.
+  const [waMeNotice, setWaMeNotice] = useState<Extract<AppointmentNotice, { kind: 'wa_me' }> | null>(null);
+
+  const handleActionNotice = (notice: AppointmentNotice | undefined) => {
+    if (notice?.kind === 'wa_me') {
+      setWaMeNotice(notice);
+      return;
+    }
+    if (notice?.kind === 'queued') toast.success(t('appointment.notice.queued'));
+    onClose();
+  };
 
   const cancelMutation = useMutation(cancelAppointmentMutation(queryClient));
   const attendanceMutation = useMutation(markAttendanceMutation(queryClient));
@@ -283,7 +297,10 @@ function AppointmentDetail({ appointment, onClose }: AppointmentDetailProps) {
     if (cancelMutation.isPending) return;
     cancelMutation.mutate(
       { id: appointment.id, data: { reason: reason.trim() ? reason.trim() : undefined } },
-      { onSuccess: () => onClose(), onError: (error: Error) => toast.error(error.message) },
+      {
+        onSuccess: (result) => handleActionNotice(result.notice),
+        onError: (error: Error) => toast.error(error.message),
+      },
     );
   };
 
@@ -291,7 +308,10 @@ function AppointmentDetail({ appointment, onClose }: AppointmentDetailProps) {
     if (rescheduleMutation.isPending) return;
     rescheduleMutation.mutate(
       { id: appointment.id, data },
-      { onSuccess: () => onClose(), onError: (error: Error) => toast.error(error.message) },
+      {
+        onSuccess: (result) => handleActionNotice(result.notice),
+        onError: (error: Error) => toast.error(error.message),
+      },
     );
   };
 
@@ -324,6 +344,13 @@ function AppointmentDetail({ appointment, onClose }: AppointmentDetailProps) {
         title={appointment.customerName ?? appointment.title ?? t('appointment.detail.title')}
         onClose={onClose}
       />
+      {waMeNotice && (
+        <Button type="button" variant="basic" asChild>
+          <a href={waMeNotice.url} target="_blank" rel="noreferrer">
+            {t('appointment.notice.wa_me_button')}
+          </a>
+        </Button>
+      )}
       <div className="grid gap-1" data-testid="appointment-detail-info">
         <ItemDescription>
           {formatDisplayDate(appointment.start)} · {formatDisplayTime(appointment.start)}–

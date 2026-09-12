@@ -155,38 +155,49 @@ export const deleteBlockMutation = (
   },
 });
 
+// SCH-39/40 (T44): espelha AppointmentNotice de appointment.service.ts —
+// `queued` quando a janela de 24h está aberta (Message enfileirada na
+// outbox), `wa_me` quando não (nenhuma Message criada, link pronto).
+export type AppointmentNotice = { kind: 'queued' } | { kind: 'wa_me'; url: string };
+export type AppointmentActionResult = { appointment: AppointmentRecord; notice?: AppointmentNotice };
+
 // SCH-32: cancelamento pelo operador (POST /appointments/:id/cancel),
 // `reason` opcional (cancelAppointmentSchema). Invalida a lista E, quando o
 // registro atualizado tem `customer`, a upcomingAppointmentQuery daquele
-// cliente (o card do Inbox, SCH-38, depende do mesmo cache).
+// cliente (o card do Inbox, SCH-38, depende do mesmo cache). A resposta
+// também carrega `notice` (T44/T45) — o componente decide o que mostrar.
 export const cancelAppointmentMutation = (
   queryClient: QueryClient,
-): UseMutationOptions<AppointmentRecord, Error, { id: string; data: CancelAppointment }> => ({
+): UseMutationOptions<AppointmentActionResult, Error, { id: string; data: CancelAppointment }> => ({
   mutationFn: async ({ id, data }) => {
-    const res = await post<AppointmentRecord>(`/appointments/${encodeURIComponent(id)}/cancel`, data);
+    const res = await post<AppointmentActionResult>(`/appointments/${encodeURIComponent(id)}/cancel`, data);
     if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível cancelar o agendamento.');
     return res.data;
   },
-  onSuccess: (updated) => {
+  onSuccess: (result) => {
     queryClient.invalidateQueries({ queryKey: appointmentKeys.lists() });
-    if (updated.customer) queryClient.invalidateQueries({ queryKey: appointmentKeys.upcoming(updated.customer) });
+    if (result.appointment.customer) {
+      queryClient.invalidateQueries({ queryKey: appointmentKeys.upcoming(result.appointment.customer) });
+    }
   },
 });
 
 // SCH-31: remarcação — mesmo Appointment, novo horário (hora de parede,
-// rescheduleAppointmentSchema) e profissional opcional. Mesma invalidação de
-// cancelAppointmentMutation.
+// rescheduleAppointmentSchema) e profissional opcional. Mesma invalidação e
+// mesmo `notice` de cancelAppointmentMutation.
 export const rescheduleAppointmentMutation = (
   queryClient: QueryClient,
-): UseMutationOptions<AppointmentRecord, Error, { id: string; data: RescheduleAppointment }> => ({
+): UseMutationOptions<AppointmentActionResult, Error, { id: string; data: RescheduleAppointment }> => ({
   mutationFn: async ({ id, data }) => {
-    const res = await post<AppointmentRecord>(`/appointments/${encodeURIComponent(id)}/reschedule`, data);
+    const res = await post<AppointmentActionResult>(`/appointments/${encodeURIComponent(id)}/reschedule`, data);
     if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível remarcar o agendamento.');
     return res.data;
   },
-  onSuccess: (updated) => {
+  onSuccess: (result) => {
     queryClient.invalidateQueries({ queryKey: appointmentKeys.lists() });
-    if (updated.customer) queryClient.invalidateQueries({ queryKey: appointmentKeys.upcoming(updated.customer) });
+    if (result.appointment.customer) {
+      queryClient.invalidateQueries({ queryKey: appointmentKeys.upcoming(result.appointment.customer) });
+    }
   },
 });
 

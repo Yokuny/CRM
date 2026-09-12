@@ -21,7 +21,7 @@ beforeAll(() => {
   };
 });
 
-vi.mock('sonner', () => ({ toast: { error: vi.fn() } }));
+vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 
 const getMock = vi.fn();
 const postMock = vi.fn();
@@ -187,6 +187,7 @@ describe('AppointmentPanel — detail/action mode (T40, spec.md SCH-31/32/34/37)
     getMock.mockReset();
     postMock.mockReset();
     vi.mocked(toast.error).mockReset();
+    vi.mocked(toast.success).mockReset();
   });
 
   it('shows the appointment info: customer, professional, date/time (DISPLAY_TIMEZONE) and status', async () => {
@@ -209,7 +210,10 @@ describe('AppointmentPanel — detail/action mode (T40, spec.md SCH-31/32/34/37)
 
   it('cancels the appointment with the optional reason via cancelAppointmentMutation (POST /appointments/:id/cancel)', async () => {
     mockLookups();
-    postMock.mockResolvedValue({ success: true, data: { ...futureAppointment, status: 'canceled_by_operator' } });
+    postMock.mockResolvedValue({
+      success: true,
+      data: { appointment: { ...futureAppointment, status: 'canceled_by_operator' }, notice: { kind: 'queued' } },
+    });
     const onClose = vi.fn();
     const user = userEvent.setup();
 
@@ -224,9 +228,48 @@ describe('AppointmentPanel — detail/action mode (T40, spec.md SCH-31/32/34/37)
     await waitFor(() => expect(onClose).toHaveBeenCalled());
   });
 
+  it('shows a toast and closes the panel when the cancel notice is queued (SCH-39/40, T45)', async () => {
+    mockLookups();
+    postMock.mockResolvedValue({
+      success: true,
+      data: { appointment: { ...futureAppointment, status: 'canceled_by_operator' }, notice: { kind: 'queued' } },
+    });
+    const onClose = vi.fn();
+    const user = userEvent.setup();
+
+    renderPanel({ appointment: futureAppointment, onClose });
+
+    await user.click(screen.getByRole('button', { name: 'Cancelar agendamento' }));
+
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Cliente avisado.'));
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it('shows a "Avisar pelo WhatsApp" button instead of closing when the cancel notice is wa_me (SCH-40, T45)', async () => {
+    mockLookups();
+    postMock.mockResolvedValue({
+      success: true,
+      data: {
+        appointment: { ...futureAppointment, status: 'canceled_by_operator' },
+        notice: { kind: 'wa_me', url: 'https://wa.me/11999998888?text=oi' },
+      },
+    });
+    const onClose = vi.fn();
+    const user = userEvent.setup();
+
+    renderPanel({ appointment: futureAppointment, onClose });
+
+    await user.click(screen.getByRole('button', { name: 'Cancelar agendamento' }));
+
+    const link = await screen.findByRole('link', { name: 'Avisar pelo WhatsApp' });
+    expect(link).toHaveAttribute('href', 'https://wa.me/11999998888?text=oi');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
   it('reschedules the appointment via rescheduleAppointmentMutation (POST /appointments/:id/reschedule), zodResolver(rescheduleAppointmentSchema)', async () => {
     mockLookups();
-    postMock.mockResolvedValue({ success: true, data: futureAppointment });
+    postMock.mockResolvedValue({ success: true, data: { appointment: futureAppointment, notice: { kind: 'queued' } } });
     const user = userEvent.setup();
 
     renderPanel({ appointment: futureAppointment });

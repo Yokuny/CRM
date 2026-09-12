@@ -212,6 +212,8 @@ const translations: Record<string, string> = {
   'appointment.attendance.completed': 'Compareceu',
   'appointment.attendance.no_show': 'Não compareceu',
   'appointment.action.request_confirmation': 'Pedir confirmação',
+  'appointment.notice.queued': 'Cliente avisado.',
+  'appointment.notice.wa_me_button': 'Avisar pelo WhatsApp',
   // Diálogo de bloqueio (feature scheduling, Fase 8/T41) — routes/_private/
   // schedule/calendar/@components/block-dialog.tsx.
   'block.create.title': 'Novo bloqueio',
