@@ -165,6 +165,14 @@ const translations: Record<string, string> = {
   'professional.status.active': 'Ativo',
   'professional.status.inactive': 'Inativo',
   'professional.filter.show_inactive': 'Mostrar inativos',
+  // Telas de Ambiente (feature scheduling, Fase 7/T35) — routes/_private/
+  // schedule/spaces/**.
+  'space.list.title': 'Ambientes',
+  'space.create.title': 'Novo ambiente',
+  'space.details.title': 'Detalhe do ambiente',
+  'space.status.active': 'Ativo',
+  'space.status.inactive': 'Inativo',
+  'space.filter.show_inactive': 'Mostrar inativos',
 };
 
 export const t = (key: string): string => translations[key] ?? key;

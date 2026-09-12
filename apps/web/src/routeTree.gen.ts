@@ -22,13 +22,16 @@ import { Route as PrivateCustomersIndexRouteImport } from './routes/_private/cus
 import { Route as PrivateProductsDetailsRouteImport } from './routes/_private/products/details';
 import { Route as PrivateProcessesDetailsRouteImport } from './routes/_private/processes/details';
 import { Route as PrivateCustomersDetailsRouteImport } from './routes/_private/customers/details';
+import { Route as PrivateScheduleSpacesIndexRouteImport } from './routes/_private/schedule/spaces/index';
 import { Route as PrivateScheduleProfessionalsIndexRouteImport } from './routes/_private/schedule/professionals/index';
 import { Route as PrivateProductsAddIndexRouteImport } from './routes/_private/products/add/index';
 import { Route as PrivateProcessesAddIndexRouteImport } from './routes/_private/processes/add/index';
 import { Route as PrivateCustomersListIndexRouteImport } from './routes/_private/customers/list/index';
 import { Route as PrivateCustomersKanbanIndexRouteImport } from './routes/_private/customers/kanban/index';
 import { Route as PrivateCustomersAddIndexRouteImport } from './routes/_private/customers/add/index';
+import { Route as PrivateScheduleSpacesDetailsRouteImport } from './routes/_private/schedule/spaces/details';
 import { Route as PrivateScheduleProfessionalsDetailsRouteImport } from './routes/_private/schedule/professionals/details';
+import { Route as PrivateScheduleSpacesAddIndexRouteImport } from './routes/_private/schedule/spaces/add/index';
 import { Route as PrivateScheduleProfessionalsAddIndexRouteImport } from './routes/_private/schedule/professionals/add/index';
 
 const PublicRoute = PublicRouteImport.update({
@@ -94,6 +97,12 @@ const PrivateCustomersDetailsRoute = PrivateCustomersDetailsRouteImport.update({
   path: '/customers/details',
   getParentRoute: () => PrivateRoute,
 } as any);
+const PrivateScheduleSpacesIndexRoute =
+  PrivateScheduleSpacesIndexRouteImport.update({
+    id: '/schedule/spaces/',
+    path: '/schedule/spaces/',
+    getParentRoute: () => PrivateRoute,
+  } as any);
 const PrivateScheduleProfessionalsIndexRoute =
   PrivateScheduleProfessionalsIndexRouteImport.update({
     id: '/schedule/professionals/',
@@ -129,10 +138,22 @@ const PrivateCustomersAddIndexRoute =
     path: '/customers/add/',
     getParentRoute: () => PrivateRoute,
   } as any);
+const PrivateScheduleSpacesDetailsRoute =
+  PrivateScheduleSpacesDetailsRouteImport.update({
+    id: '/schedule/spaces/details',
+    path: '/schedule/spaces/details',
+    getParentRoute: () => PrivateRoute,
+  } as any);
 const PrivateScheduleProfessionalsDetailsRoute =
   PrivateScheduleProfessionalsDetailsRouteImport.update({
     id: '/schedule/professionals/details',
     path: '/schedule/professionals/details',
+    getParentRoute: () => PrivateRoute,
+  } as any);
+const PrivateScheduleSpacesAddIndexRoute =
+  PrivateScheduleSpacesAddIndexRouteImport.update({
+    id: '/schedule/spaces/add/',
+    path: '/schedule/spaces/add/',
     getParentRoute: () => PrivateRoute,
   } as any);
 const PrivateScheduleProfessionalsAddIndexRoute =
@@ -155,13 +176,16 @@ export interface FileRoutesByFullPath {
   '/auth/': typeof PublicAuthIndexRoute;
   '/invite/': typeof PublicInviteIndexRoute;
   '/schedule/professionals/details': typeof PrivateScheduleProfessionalsDetailsRoute;
+  '/schedule/spaces/details': typeof PrivateScheduleSpacesDetailsRoute;
   '/customers/add/': typeof PrivateCustomersAddIndexRoute;
   '/customers/kanban/': typeof PrivateCustomersKanbanIndexRoute;
   '/customers/list/': typeof PrivateCustomersListIndexRoute;
   '/processes/add/': typeof PrivateProcessesAddIndexRoute;
   '/products/add/': typeof PrivateProductsAddIndexRoute;
   '/schedule/professionals/': typeof PrivateScheduleProfessionalsIndexRoute;
+  '/schedule/spaces/': typeof PrivateScheduleSpacesIndexRoute;
   '/schedule/professionals/add/': typeof PrivateScheduleProfessionalsAddIndexRoute;
+  '/schedule/spaces/add/': typeof PrivateScheduleSpacesAddIndexRoute;
 }
 export interface FileRoutesByTo {
   '/': typeof PrivateIndexRoute;
@@ -176,13 +200,16 @@ export interface FileRoutesByTo {
   '/auth': typeof PublicAuthIndexRoute;
   '/invite': typeof PublicInviteIndexRoute;
   '/schedule/professionals/details': typeof PrivateScheduleProfessionalsDetailsRoute;
+  '/schedule/spaces/details': typeof PrivateScheduleSpacesDetailsRoute;
   '/customers/add': typeof PrivateCustomersAddIndexRoute;
   '/customers/kanban': typeof PrivateCustomersKanbanIndexRoute;
   '/customers/list': typeof PrivateCustomersListIndexRoute;
   '/processes/add': typeof PrivateProcessesAddIndexRoute;
   '/products/add': typeof PrivateProductsAddIndexRoute;
   '/schedule/professionals': typeof PrivateScheduleProfessionalsIndexRoute;
+  '/schedule/spaces': typeof PrivateScheduleSpacesIndexRoute;
   '/schedule/professionals/add': typeof PrivateScheduleProfessionalsAddIndexRoute;
+  '/schedule/spaces/add': typeof PrivateScheduleSpacesAddIndexRoute;
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport;
@@ -200,13 +227,16 @@ export interface FileRoutesById {
   '/_public/auth/': typeof PublicAuthIndexRoute;
   '/_public/invite/': typeof PublicInviteIndexRoute;
   '/_private/schedule/professionals/details': typeof PrivateScheduleProfessionalsDetailsRoute;
+  '/_private/schedule/spaces/details': typeof PrivateScheduleSpacesDetailsRoute;
   '/_private/customers/add/': typeof PrivateCustomersAddIndexRoute;
   '/_private/customers/kanban/': typeof PrivateCustomersKanbanIndexRoute;
   '/_private/customers/list/': typeof PrivateCustomersListIndexRoute;
   '/_private/processes/add/': typeof PrivateProcessesAddIndexRoute;
   '/_private/products/add/': typeof PrivateProductsAddIndexRoute;
   '/_private/schedule/professionals/': typeof PrivateScheduleProfessionalsIndexRoute;
+  '/_private/schedule/spaces/': typeof PrivateScheduleSpacesIndexRoute;
   '/_private/schedule/professionals/add/': typeof PrivateScheduleProfessionalsAddIndexRoute;
+  '/_private/schedule/spaces/add/': typeof PrivateScheduleSpacesAddIndexRoute;
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
@@ -223,13 +253,16 @@ export interface FileRouteTypes {
     | '/auth/'
     | '/invite/'
     | '/schedule/professionals/details'
+    | '/schedule/spaces/details'
     | '/customers/add/'
     | '/customers/kanban/'
     | '/customers/list/'
     | '/processes/add/'
     | '/products/add/'
     | '/schedule/professionals/'
-    | '/schedule/professionals/add/';
+    | '/schedule/spaces/'
+    | '/schedule/professionals/add/'
+    | '/schedule/spaces/add/';
   fileRoutesByTo: FileRoutesByTo;
   to:
     | '/'
@@ -244,13 +277,16 @@ export interface FileRouteTypes {
     | '/auth'
     | '/invite'
     | '/schedule/professionals/details'
+    | '/schedule/spaces/details'
     | '/customers/add'
     | '/customers/kanban'
     | '/customers/list'
     | '/processes/add'
     | '/products/add'
     | '/schedule/professionals'
-    | '/schedule/professionals/add';
+    | '/schedule/spaces'
+    | '/schedule/professionals/add'
+    | '/schedule/spaces/add';
   id:
     | '__root__'
     | '/_private'
@@ -267,13 +303,16 @@ export interface FileRouteTypes {
     | '/_public/auth/'
     | '/_public/invite/'
     | '/_private/schedule/professionals/details'
+    | '/_private/schedule/spaces/details'
     | '/_private/customers/add/'
     | '/_private/customers/kanban/'
     | '/_private/customers/list/'
     | '/_private/processes/add/'
     | '/_private/products/add/'
     | '/_private/schedule/professionals/'
-    | '/_private/schedule/professionals/add/';
+    | '/_private/schedule/spaces/'
+    | '/_private/schedule/professionals/add/'
+    | '/_private/schedule/spaces/add/';
   fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
@@ -374,6 +413,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivateCustomersDetailsRouteImport;
       parentRoute: typeof PrivateRoute;
     };
+    '/_private/schedule/spaces/': {
+      id: '/_private/schedule/spaces/';
+      path: '/schedule/spaces';
+      fullPath: '/schedule/spaces/';
+      preLoaderRoute: typeof PrivateScheduleSpacesIndexRouteImport;
+      parentRoute: typeof PrivateRoute;
+    };
     '/_private/schedule/professionals/': {
       id: '/_private/schedule/professionals/';
       path: '/schedule/professionals';
@@ -416,11 +462,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivateCustomersAddIndexRouteImport;
       parentRoute: typeof PrivateRoute;
     };
+    '/_private/schedule/spaces/details': {
+      id: '/_private/schedule/spaces/details';
+      path: '/schedule/spaces/details';
+      fullPath: '/schedule/spaces/details';
+      preLoaderRoute: typeof PrivateScheduleSpacesDetailsRouteImport;
+      parentRoute: typeof PrivateRoute;
+    };
     '/_private/schedule/professionals/details': {
       id: '/_private/schedule/professionals/details';
       path: '/schedule/professionals/details';
       fullPath: '/schedule/professionals/details';
       preLoaderRoute: typeof PrivateScheduleProfessionalsDetailsRouteImport;
+      parentRoute: typeof PrivateRoute;
+    };
+    '/_private/schedule/spaces/add/': {
+      id: '/_private/schedule/spaces/add/';
+      path: '/schedule/spaces/add';
+      fullPath: '/schedule/spaces/add/';
+      preLoaderRoute: typeof PrivateScheduleSpacesAddIndexRouteImport;
       parentRoute: typeof PrivateRoute;
     };
     '/_private/schedule/professionals/add/': {
@@ -444,13 +504,16 @@ interface PrivateRouteChildren {
   PrivateProcessesIndexRoute: typeof PrivateProcessesIndexRoute;
   PrivateProductsIndexRoute: typeof PrivateProductsIndexRoute;
   PrivateScheduleProfessionalsDetailsRoute: typeof PrivateScheduleProfessionalsDetailsRoute;
+  PrivateScheduleSpacesDetailsRoute: typeof PrivateScheduleSpacesDetailsRoute;
   PrivateCustomersAddIndexRoute: typeof PrivateCustomersAddIndexRoute;
   PrivateCustomersKanbanIndexRoute: typeof PrivateCustomersKanbanIndexRoute;
   PrivateCustomersListIndexRoute: typeof PrivateCustomersListIndexRoute;
   PrivateProcessesAddIndexRoute: typeof PrivateProcessesAddIndexRoute;
   PrivateProductsAddIndexRoute: typeof PrivateProductsAddIndexRoute;
   PrivateScheduleProfessionalsIndexRoute: typeof PrivateScheduleProfessionalsIndexRoute;
+  PrivateScheduleSpacesIndexRoute: typeof PrivateScheduleSpacesIndexRoute;
   PrivateScheduleProfessionalsAddIndexRoute: typeof PrivateScheduleProfessionalsAddIndexRoute;
+  PrivateScheduleSpacesAddIndexRoute: typeof PrivateScheduleSpacesAddIndexRoute;
 }
 
 const PrivateRouteChildren: PrivateRouteChildren = {
@@ -465,6 +528,7 @@ const PrivateRouteChildren: PrivateRouteChildren = {
   PrivateProductsIndexRoute: PrivateProductsIndexRoute,
   PrivateScheduleProfessionalsDetailsRoute:
     PrivateScheduleProfessionalsDetailsRoute,
+  PrivateScheduleSpacesDetailsRoute: PrivateScheduleSpacesDetailsRoute,
   PrivateCustomersAddIndexRoute: PrivateCustomersAddIndexRoute,
   PrivateCustomersKanbanIndexRoute: PrivateCustomersKanbanIndexRoute,
   PrivateCustomersListIndexRoute: PrivateCustomersListIndexRoute,
@@ -472,8 +536,10 @@ const PrivateRouteChildren: PrivateRouteChildren = {
   PrivateProductsAddIndexRoute: PrivateProductsAddIndexRoute,
   PrivateScheduleProfessionalsIndexRoute:
     PrivateScheduleProfessionalsIndexRoute,
+  PrivateScheduleSpacesIndexRoute: PrivateScheduleSpacesIndexRoute,
   PrivateScheduleProfessionalsAddIndexRoute:
     PrivateScheduleProfessionalsAddIndexRoute,
+  PrivateScheduleSpacesAddIndexRoute: PrivateScheduleSpacesAddIndexRoute,
 };
 
 const PrivateRouteWithChildren =
