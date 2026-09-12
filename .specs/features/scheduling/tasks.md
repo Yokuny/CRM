@@ -770,10 +770,11 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-29, SCH-30, SCH-31, SCH-32, SCH-33, SCH-34, SCH-37, SCH-38
 
 **Done when**:
-- [ ] `appointmentsQuery({from,to,professional,space})`, `upcomingAppointmentQuery(customerId)` e as mutações criar, bloquear, remover bloqueio, cancelar, remarcar, comparecimento e pedir confirmação — todas invalidam `appointmentKeys.lists()`
-- [ ] Entradas vão como `YYYY-MM-DD`/`HH:mm`, nunca instante
+- [x] `appointmentsQuery({from,to,professional,space})`, `upcomingAppointmentQuery(customerId)` e as mutações criar, bloquear, remover bloqueio, cancelar, remarcar, comparecimento e pedir confirmação — todas invalidam `appointmentKeys.lists()`
+- [x] Entradas vão como `YYYY-MM-DD`/`HH:mm`, nunca instante
 
 **Tests**: unit · **Gate**: quick
+**Status**: ✅ Complete (commit a24ca55)
 
 ---
 
@@ -786,10 +787,11 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-29, SCH-35
 
 **Done when**:
-- [ ] 7 colunas de dia a partir de `weekStart`; o instante `2026-09-16T00:00:00Z` cai na coluna de **15/09 às 21:00** — só passa se a formatação usar o fuso de exibição, não o do navegador (a CI roda em UTC)
-- [ ] Bloqueio com estilo próprio; vencido sem marcação destacado (SCH-35); clique chama `onSelect`
+- [x] 7 colunas de dia a partir de `weekStart`; o instante `2026-09-16T00:00:00Z` cai na coluna de **15/09 às 21:00** — só passa se a formatação usar o fuso de exibição, não o do navegador (a CI roda em UTC)
+- [x] Bloqueio com estilo próprio; vencido sem marcação destacado (SCH-35); clique chama `onSelect`
 
 **Tests**: unit · **Gate**: quick
+**Status**: ✅ Complete (commit 0af5c86)
 
 ---
 
@@ -802,9 +804,10 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-29
 
 **Done when**:
-- [ ] `weekStart`, `professional`, `space` via `validateSearch`; anterior/próxima muda o search e refaz a query (nada filtrado em memória); loading e vazio padrão; gate Web verde
+- [x] `weekStart`, `professional`, `space` via `validateSearch`; anterior/próxima muda o search e refaz a query (nada filtrado em memória); loading e vazio padrão; gate Web verde
 
 **Tests**: unit · **Gate**: quick + web
+**Status**: ✅ Complete (commit 5b8dd18)
 
 ---
 
@@ -817,10 +820,11 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-30, SCH-31, SCH-32, SCH-34, SCH-37
 
 **Done when**:
-- [ ] Criar: cliente, profissional, data, hora, ambiente, observação com `zodResolver(createAppointmentSchema)`
-- [ ] Detalhe: cancelar (motivo), remarcar, comparecimento só depois do início, "Pedir confirmação" abre o `wa.me` em nova aba; 409 vira toast
+- [x] Criar: cliente, profissional, data, hora, ambiente, observação com `zodResolver(createAppointmentSchema)`
+- [x] Detalhe: cancelar (motivo), remarcar, comparecimento só depois do início, "Pedir confirmação" abre o `wa.me` em nova aba; 409 vira toast
 
 **Tests**: unit · **Gate**: quick
+**Status**: ✅ Complete (commit 82f9dcf)
 
 ---
 
@@ -833,9 +837,10 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-33
 
 **Done when**:
-- [ ] Cria (profissional, início, fim, título) com `zodResolver(createBlockSchema)` e remove
+- [x] Cria (profissional, início, fim, título) com `zodResolver(createBlockSchema)` e remove
 
 **Tests**: unit · **Gate**: quick
+**Status**: ✅ Complete (commit 96263ca)
 
 ---
 
@@ -848,11 +853,12 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-22, SCH-23, SCH-24, SCH-25, SCH-26, SCH-28
 
 **Done when**:
-- [ ] `?token=` via `validateSearch` (AD-030); mostra data/hora (`displayTime`), profissional, ambiente e cliente; confirmar e cancelar chamam as rotas de T22
-- [ ] Estados distintos: carregando, link inválido (404), expirado (410); depois da ação mostra o estado final — sem redirecionar para `/auth` como a referência (o cliente não tem conta)
-- [ ] Gate Web verde
+- [x] `?token=` via `validateSearch` (AD-030); mostra data/hora (`displayTime`), profissional, ambiente e cliente; confirmar e cancelar chamam as rotas de T22
+- [x] Estados distintos: carregando, link inválido (404), expirado (410); depois da ação mostra o estado final — sem redirecionar para `/auth` como a referência (o cliente não tem conta)
+- [x] Gate Web verde
 
 **Tests**: unit · **Gate**: quick + web
+**Status**: ✅ Complete (commit efb6263)
 
 ---
 
@@ -865,9 +871,10 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-08, SCH-29
 
 **Done when**:
-- [ ] Quatro cards (Calendário, Profissionais, Ambientes, Configuração); card "Agenda" na home; gate Web verde
+- [x] Quatro cards (Calendário, Profissionais, Ambientes, Configuração); card "Agenda" na home; gate Web verde
 
 **Tests**: unit · **Gate**: quick + web
+**Status**: ✅ Complete (commit a0780a4)
 
 ---
 
