@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { get, patch, post, put } from './client.api.js';
+import { del, get, patch, post, put } from './client.api.js';
 
 describe('client.api', () => {
   afterEach(() => {
@@ -121,6 +121,32 @@ describe('client.api', () => {
       vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
 
       const result = await put('/scheduling-settings', { maxSlotsPerResponse: 10 });
+
+      expect(result.success).toBe(false);
+      expect(result.message).toBe('Não foi possível conectar ao servidor. Tente novamente.');
+    });
+  });
+
+  describe('del', () => {
+    it('sends no body, credentials:"include" and method:"DELETE", returning the ApiResponse<T> shape on success', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        json: () => Promise.resolve({ success: true, data: { deleted: true }, message: '' }),
+      });
+      vi.stubGlobal('fetch', fetchMock);
+
+      const result = await del<{ deleted: true }>('/appointments/blocks/b1');
+
+      expect(result).toEqual({ success: true, data: { deleted: true }, message: '' });
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining('/appointments/blocks/b1'),
+        expect.objectContaining({ method: 'DELETE', credentials: 'include', headers: undefined, body: undefined }),
+      );
+    });
+
+    it('never throws on a network failure — returns an ApiResponse with success:false and a readable message', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
+
+      const result = await del('/appointments/blocks/b1');
 
       expect(result.success).toBe(false);
       expect(result.message).toBe('Não foi possível conectar ao servidor. Tente novamente.');

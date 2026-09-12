@@ -6,7 +6,7 @@ import type { ApiResponse } from '@crm/contracts';
 // `authorization` header (não existe access token aqui).
 const BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
 
-type Method = 'GET' | 'POST' | 'PATCH' | 'PUT';
+type Method = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 
 const CONNECTION_ERROR_MESSAGE = 'Não foi possível conectar ao servidor. Tente novamente.';
 
@@ -35,3 +35,8 @@ export const patch = <T>(path: string, body?: unknown): Promise<ApiResponse<T>> 
 // settings é um único documento por tenant, sem id, então o back-end usa PUT
 // (substituição do único recurso), não PATCH.
 export const put = <T>(path: string, body?: unknown): Promise<ApiResponse<T>> => request<T>(path, 'PUT', body);
+// T37 (scheduling): DELETE /appointments/blocks/:id (appointment.router.ts) é
+// o primeiro endpoint deste app a usar DELETE — sem corpo, mesmo padrão de
+// `get`. `delete` é palavra reservada, não pode nomear um binding
+// (`export const delete = ...`), daí `del`.
+export const del = <T>(path: string): Promise<ApiResponse<T>> => request<T>(path, 'DELETE');
