@@ -201,4 +201,96 @@ describe('CalendarIndexPage (T39, spec.md SCH-29)', () => {
 
     expect(await screen.findByText('João')).toBeInTheDocument();
   });
+
+  it('clicking "Novo agendamento" opens the AppointmentPanel INLINE (not a dialog) between the toolbar and the grid', async () => {
+    searchMock.mockReturnValue({});
+    mockEmptyEverything();
+    const user = userEvent.setup();
+
+    renderPage();
+    await user.click(screen.getByRole('button', { name: 'Novo agendamento' }));
+
+    // Painel inline: some no fluxo normal do documento, nunca com role="dialog".
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Novo agendamento' })).toBeInTheDocument();
+  });
+
+  it('clicking "Novo bloqueio" opens the BlockPanel inline', async () => {
+    searchMock.mockReturnValue({});
+    mockEmptyEverything();
+    const user = userEvent.setup();
+
+    renderPage();
+    await user.click(screen.getByRole('button', { name: 'Novo bloqueio' }));
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Novo bloqueio' })).toBeInTheDocument();
+  });
+
+  it('clicking an existing appointment in the grid opens AppointmentPanel in detail mode for that item (SCH-31/32/34/37)', async () => {
+    searchMock.mockReturnValue({ weekStart: '2026-09-14' });
+    getMock.mockImplementation((path: string) => {
+      if (path.startsWith('/appointments')) {
+        return Promise.resolve({
+          success: true,
+          data: [
+            {
+              id: 'a1',
+              kind: 'appointment',
+              professional: 'p1',
+              professionalName: 'Dra. Ana',
+              customer: 'c1',
+              customerName: 'João',
+              start: '2026-09-16T00:00:00.000Z',
+              end: '2026-09-16T01:00:00.000Z',
+              status: 'pending',
+              source: 'operator',
+              createdAt: '',
+              updatedAt: '',
+            },
+          ],
+        });
+      }
+      return Promise.resolve({ success: true, data: { items: [], total: 0 } });
+    });
+    const user = userEvent.setup();
+
+    renderPage();
+    await user.click(await screen.findByText('João'));
+
+    expect(await screen.findByRole('heading', { name: 'João' })).toBeInTheDocument();
+  });
+
+  it('clicking an existing block in the grid opens BlockPanel for that block (SCH-33)', async () => {
+    searchMock.mockReturnValue({ weekStart: '2026-09-14' });
+    getMock.mockImplementation((path: string) => {
+      if (path.startsWith('/appointments')) {
+        return Promise.resolve({
+          success: true,
+          data: [
+            {
+              id: 'b1',
+              kind: 'block',
+              professional: 'p1',
+              professionalName: 'Dra. Ana',
+              title: 'Almoço',
+              start: '2026-09-16T15:00:00.000Z',
+              end: '2026-09-16T16:00:00.000Z',
+              status: 'confirmed',
+              source: 'operator',
+              createdAt: '',
+              updatedAt: '',
+            },
+          ],
+        });
+      }
+      return Promise.resolve({ success: true, data: { items: [], total: 0 } });
+    });
+    const user = userEvent.setup();
+
+    renderPage();
+    await user.click(await screen.findByText('Almoço'));
+
+    expect(await screen.findByRole('heading', { name: 'Almoço' })).toBeInTheDocument();
+  });
 });

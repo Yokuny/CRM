@@ -28,7 +28,7 @@ const postMock = vi.fn();
 vi.mock('@/lib/api/client.api.js', () => ({ get: getMock, post: postMock }));
 
 const { toast } = await import('sonner');
-const { AppointmentDialog } = await import('./appointment-dialog.js');
+const { AppointmentPanel } = await import('./appointment-panel.js');
 
 // idSchema (@crm/contracts) exige exatamente 24 chars hex — 'c1'/'p1' curtos
 // falhariam a validação real do createAppointmentSchema (não é um detalhe
@@ -53,19 +53,15 @@ const mockLookups = () => {
   });
 };
 
-function renderDialog(props: {
-  appointment?: AppointmentRecord;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
-}) {
+function renderPanel(props: { appointment?: AppointmentRecord; onClose?: () => void }) {
   const queryClient = new QueryClient();
-  const onOpenChange = props.onOpenChange ?? vi.fn();
+  const onClose = props.onClose ?? vi.fn();
   const utils = render(
     <QueryClientProvider client={queryClient}>
-      <AppointmentDialog open={props.open ?? true} onOpenChange={onOpenChange} appointment={props.appointment} />
+      <AppointmentPanel onClose={onClose} appointment={props.appointment} />
     </QueryClientProvider>,
   );
-  return { ...utils, onOpenChange };
+  return { ...utils, onClose };
 }
 
 const futureAppointment: AppointmentRecord = {
@@ -90,7 +86,7 @@ const pastAppointment: AppointmentRecord = {
   end: '2020-01-01T14:00:00.000Z',
 };
 
-describe('AppointmentDialog — create mode (T40, spec.md SCH-30)', () => {
+describe('AppointmentPanel — create mode (T40, spec.md SCH-30)', () => {
   afterEach(() => {
     cleanup();
     getMock.mockReset();
@@ -98,12 +94,20 @@ describe('AppointmentDialog — create mode (T40, spec.md SCH-30)', () => {
     vi.mocked(toast.error).mockReset();
   });
 
+  it('renders inline (not in a dialog role) — no [role="dialog"] anywhere in the tree', async () => {
+    mockLookups();
+    renderPanel({});
+    await screen.findAllByRole('combobox');
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
   it('validates via createAppointmentSchema and calls createAppointmentMutation (POST /appointments) with the filled fields', async () => {
     mockLookups();
     postMock.mockResolvedValue({ success: true, data: futureAppointment });
     const user = userEvent.setup();
 
-    renderDialog({});
+    renderPanel({});
 
     const comboboxes = await screen.findAllByRole('combobox');
     await user.click(comboboxes[0] as HTMLElement); // cliente
@@ -132,7 +136,7 @@ describe('AppointmentDialog — create mode (T40, spec.md SCH-30)', () => {
     mockLookups();
     const user = userEvent.setup();
 
-    renderDialog({});
+    renderPanel({});
     await screen.findAllByRole('combobox');
 
     await user.click(screen.getByRole('button', { name: 'Salvar' }));
@@ -148,7 +152,7 @@ describe('AppointmentDialog — create mode (T40, spec.md SCH-30)', () => {
     postMock.mockResolvedValue({ success: false, message: 'Horário sobreposto' });
     const user = userEvent.setup();
 
-    renderDialog({});
+    renderPanel({});
     const comboboxes = await screen.findAllByRole('combobox');
     await user.click(comboboxes[0] as HTMLElement);
     await user.click(await screen.findByRole('option', { name: 'João da Silva' }));
@@ -161,9 +165,23 @@ describe('AppointmentDialog — create mode (T40, spec.md SCH-30)', () => {
 
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Horário sobreposto'));
   });
+
+  it('calls onClose when the explicit close button is clicked, without submitting', async () => {
+    mockLookups();
+    const onClose = vi.fn();
+    const user = userEvent.setup();
+
+    renderPanel({ onClose });
+    await screen.findAllByRole('combobox');
+
+    await user.click(screen.getByRole('button', { name: 'Fechar' }));
+
+    expect(onClose).toHaveBeenCalled();
+    expect(postMock).not.toHaveBeenCalled();
+  });
 });
 
-describe('AppointmentDialog — detail/action mode (T40, spec.md SCH-31/32/34/37)', () => {
+describe('AppointmentPanel — detail/action mode (T40, spec.md SCH-31/32/34/37)', () => {
   afterEach(() => {
     cleanup();
     getMock.mockReset();
@@ -174,9 +192,9 @@ describe('AppointmentDialog — detail/action mode (T40, spec.md SCH-31/32/34/37
   it('shows the appointment info: customer, professional, date/time (DISPLAY_TIMEZONE) and status', async () => {
     mockLookups();
 
-    renderDialog({ appointment: futureAppointment });
+    renderPanel({ appointment: futureAppointment });
 
-    // O nome do cliente vira o próprio título do diálogo (customerName), não
+    // O nome do cliente vira o próprio título do painel (customerName), não
     // se repete no bloco de info. O bloco de info é escopado (data-testid)
     // porque o Select de remarcação também renderiza o nome do profissional
     // atual como rótulo do valor selecionado ("manter o mesmo") — sem
@@ -192,10 +210,10 @@ describe('AppointmentDialog — detail/action mode (T40, spec.md SCH-31/32/34/37
   it('cancels the appointment with the optional reason via cancelAppointmentMutation (POST /appointments/:id/cancel)', async () => {
     mockLookups();
     postMock.mockResolvedValue({ success: true, data: { ...futureAppointment, status: 'canceled_by_operator' } });
-    const onOpenChange = vi.fn();
+    const onClose = vi.fn();
     const user = userEvent.setup();
 
-    renderDialog({ appointment: futureAppointment, onOpenChange });
+    renderPanel({ appointment: futureAppointment, onClose });
 
     await user.type(screen.getByPlaceholderText('Motivo (opcional)'), 'Cliente pediu para remarcar');
     await user.click(screen.getByRole('button', { name: 'Cancelar agendamento' }));
@@ -203,7 +221,7 @@ describe('AppointmentDialog — detail/action mode (T40, spec.md SCH-31/32/34/37
     await waitFor(() =>
       expect(postMock).toHaveBeenCalledWith('/appointments/a1/cancel', { reason: 'Cliente pediu para remarcar' }),
     );
-    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
   });
 
   it('reschedules the appointment via rescheduleAppointmentMutation (POST /appointments/:id/reschedule), zodResolver(rescheduleAppointmentSchema)', async () => {
@@ -211,7 +229,7 @@ describe('AppointmentDialog — detail/action mode (T40, spec.md SCH-31/32/34/37
     postMock.mockResolvedValue({ success: true, data: futureAppointment });
     const user = userEvent.setup();
 
-    renderDialog({ appointment: futureAppointment });
+    renderPanel({ appointment: futureAppointment });
 
     // O único par data/hora editável da tela é o do form de remarcação (o
     // bloco de info acima é texto puro, não <input>) — já vem pré-preenchido
@@ -229,7 +247,7 @@ describe('AppointmentDialog — detail/action mode (T40, spec.md SCH-31/32/34/37
   it('disables the attendance controls when the appointment start is still in the future (SCH-34)', async () => {
     mockLookups();
 
-    renderDialog({ appointment: futureAppointment });
+    renderPanel({ appointment: futureAppointment });
 
     expect(screen.getByRole('button', { name: 'Compareceu' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Não compareceu' })).toBeDisabled();
@@ -240,7 +258,7 @@ describe('AppointmentDialog — detail/action mode (T40, spec.md SCH-31/32/34/37
     postMock.mockResolvedValue({ success: true, data: { ...pastAppointment, status: 'completed' } });
     const user = userEvent.setup();
 
-    renderDialog({ appointment: pastAppointment });
+    renderPanel({ appointment: pastAppointment });
 
     const completedButton = screen.getByRole('button', { name: 'Compareceu' });
     expect(completedButton).not.toBeDisabled();
@@ -262,7 +280,7 @@ describe('AppointmentDialog — detail/action mode (T40, spec.md SCH-31/32/34/37
     const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
     const user = userEvent.setup();
 
-    renderDialog({ appointment: futureAppointment });
+    renderPanel({ appointment: futureAppointment });
 
     await user.click(screen.getByRole('button', { name: 'Pedir confirmação' }));
 
@@ -278,10 +296,22 @@ describe('AppointmentDialog — detail/action mode (T40, spec.md SCH-31/32/34/37
     postMock.mockResolvedValue({ success: false, message: 'Agendamento em estado terminal' });
     const user = userEvent.setup();
 
-    renderDialog({ appointment: futureAppointment });
+    renderPanel({ appointment: futureAppointment });
 
     await user.click(screen.getByRole('button', { name: 'Cancelar agendamento' }));
 
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Agendamento em estado terminal'));
+  });
+
+  it('calls onClose when the explicit close button is clicked', async () => {
+    mockLookups();
+    const onClose = vi.fn();
+    const user = userEvent.setup();
+
+    renderPanel({ appointment: futureAppointment, onClose });
+
+    await user.click(screen.getByRole('button', { name: 'Fechar' }));
+
+    expect(onClose).toHaveBeenCalled();
   });
 });

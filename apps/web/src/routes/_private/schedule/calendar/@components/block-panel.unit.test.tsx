@@ -7,7 +7,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { AppointmentRecord } from '@/query/appointment.js';
 
 // Radix Select chama APIs que o jsdom não implementa — mesmo polyfill mínimo
-// de appointment-dialog.unit.test.tsx (T40)/processes/add/index.unit.test.tsx.
+// de appointment-panel.unit.test.tsx (T40)/processes/add/index.unit.test.tsx.
 beforeAll(() => {
   Element.prototype.hasPointerCapture ??= () => false;
   Element.prototype.releasePointerCapture ??= () => {};
@@ -28,10 +28,10 @@ const delMock = vi.fn();
 vi.mock('@/lib/api/client.api.js', () => ({ get: getMock, post: postMock, del: delMock }));
 
 const { toast } = await import('sonner');
-const { BlockDialog } = await import('./block-dialog.js');
+const { BlockPanel } = await import('./block-panel.js');
 
 // idSchema (@crm/contracts) exige exatamente 24 chars hex — mesmo cuidado de
-// appointment-dialog.unit.test.tsx (T40): um id curto tipo 'p1' falharia a
+// appointment-panel.unit.test.tsx (T40): um id curto tipo 'p1' falharia a
 // validação real do createBlockSchema.
 const PROFESSIONAL_ID = '507f1f77bcf86cd799439012';
 const PROFESSIONALS = {
@@ -46,15 +46,15 @@ const mockLookups = () => {
   });
 };
 
-function renderDialog(props: { block?: AppointmentRecord; onOpenChange?: (open: boolean) => void }) {
+function renderPanel(props: { block?: AppointmentRecord; onClose?: () => void }) {
   const queryClient = new QueryClient();
-  const onOpenChange = props.onOpenChange ?? vi.fn();
+  const onClose = props.onClose ?? vi.fn();
   render(
     <QueryClientProvider client={queryClient}>
-      <BlockDialog open onOpenChange={onOpenChange} block={props.block} />
+      <BlockPanel onClose={onClose} block={props.block} />
     </QueryClientProvider>,
   );
-  return { onOpenChange };
+  return { onClose };
 }
 
 const existingBlock: AppointmentRecord = {
@@ -71,7 +71,7 @@ const existingBlock: AppointmentRecord = {
   updatedAt: '',
 };
 
-describe('BlockDialog — create mode (T41, spec.md SCH-33)', () => {
+describe('BlockPanel — create mode (T41, spec.md SCH-33)', () => {
   afterEach(() => {
     cleanup();
     getMock.mockReset();
@@ -80,12 +80,20 @@ describe('BlockDialog — create mode (T41, spec.md SCH-33)', () => {
     vi.mocked(toast.error).mockReset();
   });
 
+  it('renders inline (not in a dialog role) — no [role="dialog"] anywhere in the tree', async () => {
+    mockLookups();
+    renderPanel({});
+    await screen.findByRole('combobox');
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
   it('creates a block via zodResolver(createBlockSchema) and createBlockMutation (POST /appointments/blocks)', async () => {
     mockLookups();
     postMock.mockResolvedValue({ success: true, data: existingBlock });
     const user = userEvent.setup();
 
-    renderDialog({});
+    renderPanel({});
 
     await user.click(await screen.findByRole('combobox'));
     await user.click(await screen.findByRole('option', { name: 'Dra. Ana' }));
@@ -113,7 +121,7 @@ describe('BlockDialog — create mode (T41, spec.md SCH-33)', () => {
     mockLookups();
     const user = userEvent.setup();
 
-    renderDialog({});
+    renderPanel({});
 
     await user.click(await screen.findByRole('combobox'));
     await user.click(await screen.findByRole('option', { name: 'Dra. Ana' }));
@@ -134,7 +142,7 @@ describe('BlockDialog — create mode (T41, spec.md SCH-33)', () => {
     postMock.mockResolvedValue({ success: false, message: 'Horário sobreposto' });
     const user = userEvent.setup();
 
-    renderDialog({});
+    renderPanel({});
 
     await user.click(await screen.findByRole('combobox'));
     await user.click(await screen.findByRole('option', { name: 'Dra. Ana' }));
@@ -148,9 +156,23 @@ describe('BlockDialog — create mode (T41, spec.md SCH-33)', () => {
 
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Horário sobreposto'));
   });
+
+  it('calls onClose when the explicit close button is clicked, without submitting', async () => {
+    mockLookups();
+    const onClose = vi.fn();
+    const user = userEvent.setup();
+
+    renderPanel({ onClose });
+    await screen.findByRole('combobox');
+
+    await user.click(screen.getByRole('button', { name: 'Fechar' }));
+
+    expect(onClose).toHaveBeenCalled();
+    expect(postMock).not.toHaveBeenCalled();
+  });
 });
 
-describe('BlockDialog — existing block mode (T41, spec.md SCH-33)', () => {
+describe('BlockPanel — existing block mode (T41, spec.md SCH-33)', () => {
   afterEach(() => {
     cleanup();
     getMock.mockReset();
@@ -162,7 +184,7 @@ describe('BlockDialog — existing block mode (T41, spec.md SCH-33)', () => {
   it('shows the block info (title, date/time, professional)', () => {
     mockLookups();
 
-    renderDialog({ block: existingBlock });
+    renderPanel({ block: existingBlock });
 
     expect(screen.getByRole('heading', { name: 'Almoço' })).toBeInTheDocument();
     expect(screen.getByText(/2026-09-16/)).toBeInTheDocument();
@@ -173,15 +195,15 @@ describe('BlockDialog — existing block mode (T41, spec.md SCH-33)', () => {
   it('removes the block via deleteBlockMutation (DELETE /appointments/blocks/:id)', async () => {
     mockLookups();
     delMock.mockResolvedValue({ success: true, data: { deleted: true } });
-    const onOpenChange = vi.fn();
+    const onClose = vi.fn();
     const user = userEvent.setup();
 
-    renderDialog({ block: existingBlock, onOpenChange });
+    renderPanel({ block: existingBlock, onClose });
 
     await user.click(screen.getByRole('button', { name: 'Remover bloqueio' }));
 
     await waitFor(() => expect(delMock).toHaveBeenCalledWith('/appointments/blocks/b1'));
-    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
   });
 
   it('shows a toast when the delete mutation fails', async () => {
@@ -189,10 +211,22 @@ describe('BlockDialog — existing block mode (T41, spec.md SCH-33)', () => {
     delMock.mockResolvedValue({ success: false, message: 'Bloqueio não encontrado' });
     const user = userEvent.setup();
 
-    renderDialog({ block: existingBlock });
+    renderPanel({ block: existingBlock });
 
     await user.click(screen.getByRole('button', { name: 'Remover bloqueio' }));
 
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Bloqueio não encontrado'));
+  });
+
+  it('calls onClose when the explicit close button is clicked', async () => {
+    mockLookups();
+    const onClose = vi.fn();
+    const user = userEvent.setup();
+
+    renderPanel({ block: existingBlock, onClose });
+
+    await user.click(screen.getByRole('button', { name: 'Fechar' }));
+
+    expect(onClose).toHaveBeenCalled();
   });
 });

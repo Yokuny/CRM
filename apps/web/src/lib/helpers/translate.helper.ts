@@ -14,6 +14,7 @@ const translations: Record<string, string> = {
   cancel: 'Cancelar',
   edit: 'Editar',
   confirm: 'Confirmar',
+  close: 'Fechar',
   back: 'Voltar',
   'date.pick': 'Escolha o dia',
   customers: 'Clientes',
@@ -186,6 +187,8 @@ const translations: Record<string, string> = {
   'calendar.filter.all_professionals': 'Todos os profissionais',
   'calendar.filter.space': 'Ambiente',
   'calendar.filter.all_spaces': 'Todos os ambientes',
+  'calendar.new_appointment': 'Novo agendamento',
+  'calendar.new_block': 'Novo bloqueio',
   // Diálogo de agendamento (feature scheduling, Fase 8/T40) — routes/_private/
   // schedule/calendar/@components/appointment-dialog.tsx.
   'appointment.create.title': 'Novo agendamento',

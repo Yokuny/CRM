@@ -6,11 +6,11 @@ import {
 } from '@crm/contracts';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { X as IconClose } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button.js';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog.js';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form.js';
 import { Input } from '@/components/ui/input.js';
 import { ItemDescription } from '@/components/ui/item.js';
@@ -36,40 +36,58 @@ import { spacesQuery } from '@/query/space.js';
 const UNSET_VALUE = '__none__';
 const QUERY_LIMIT = 100;
 
-export type AppointmentDialogProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+export type AppointmentPanelProps = {
+  onClose: () => void;
   // Ausente => modo "criar" (encaixe, SCH-30); presente => modo
   // "detalhe/ação" sobre um Appointment existente (cancelar/remarcar/
   // comparecimento/pedir confirmação).
   appointment?: AppointmentRecord;
 };
 
-// T40: um único Dialog pros dois modos da agenda (SCH-30/31/32/34/37) —
-// `appointment` ausente decide o modo, mesma convenção sugerida pelo próprio
-// task (design.md).
-export function AppointmentDialog({ open, onOpenChange, appointment }: AppointmentDialogProps) {
+// T40 (revisado): painel INLINE, nunca um Dialog modal — feedback explícito
+// do usuário ("sempre evitar usar dialog, sempre renderizar abrindo campo
+// abaixo empurrando o resto da UI"). O componente só existe na árvore
+// enquanto deve estar visível (calendar/index.tsx decide isso, montando/
+// desmontando), então não há estado interno de "aberto"; `onClose` é só o
+// sinal pro pai desmontar. Renderizado num `<div>` de bloco comum — como o
+// pai o posiciona em fluxo normal (nunca posição fixa/overlay), ele empurra
+// o conteúdo abaixo dele, exatamente o efeito pedido.
+export function AppointmentPanel({ onClose, appointment }: AppointmentPanelProps) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        {appointment ? (
-          <AppointmentDetail appointment={appointment} onOpenChange={onOpenChange} />
-        ) : (
-          <AppointmentCreateForm onOpenChange={onOpenChange} />
-        )}
-      </DialogContent>
-    </Dialog>
+    <div className="grid gap-4 rounded-md border p-4">
+      {appointment ? (
+        <AppointmentDetail appointment={appointment} onClose={onClose} />
+      ) : (
+        <AppointmentCreateForm onClose={onClose} />
+      )}
+    </div>
   );
 }
 
-type WithOnOpenChange = { onOpenChange: (open: boolean) => void };
+type WithOnClose = { onClose: () => void };
+
+// Cabeçalho comum: título + botão de fechar explícito — sem a borda "X"
+// automática que o Dialog dava de graça, o painel inline precisa da própria.
+// `<h2>` de verdade (não `ItemTitle`, que renderiza `<div>`, sem `asChild`
+// nesta versão do componente): preserva `role="heading"` pra quem navega por
+// leitor de tela ou testa por role, mesmo estilo visual de ItemTitle via className.
+function PanelHeader({ title, onClose }: { title: string; onClose: () => void }) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <h2 className="flex w-fit items-center gap-2 font-medium font-mono text-sm leading-snug">{title}</h2>
+      <Button type="button" variant="basic" size="sm" onClick={onClose} aria-label={t('close')}>
+        <IconClose className="size-4" />
+      </Button>
+    </div>
+  );
+}
 
 // SCH-30: encaixe do operador — client/professional/space vêm de queries já
 // existentes (customersQuery, feature customers; professionalsQuery/
 // spacesQuery, Batch 6), `date`/`time` em hora de parede (createAppointmentSchema,
 // AD-036), validados por `zodResolver` (mesmo padrão canônico de
 // routes/_public/auth/index.tsx).
-function AppointmentCreateForm({ onOpenChange }: WithOnOpenChange) {
+function AppointmentCreateForm({ onClose }: WithOnClose) {
   const queryClient = useQueryClient();
   const customersQueryResult = useQuery(customersQuery({ limit: QUERY_LIMIT }));
   const professionalsQueryResult = useQuery(professionalsQuery({ limit: QUERY_LIMIT }));
@@ -89,7 +107,7 @@ function AppointmentCreateForm({ onOpenChange }: WithOnOpenChange) {
       {
         onSuccess: () => {
           form.reset();
-          onOpenChange(false);
+          onClose();
         },
         // 409 (sobreposição, SCH-30) ou qualquer outra falha vira toast — mesmo
         // idioma de composer.tsx (`onError: (error) => toast.error(error.message)`).
@@ -100,9 +118,7 @@ function AppointmentCreateForm({ onOpenChange }: WithOnOpenChange) {
 
   return (
     <>
-      <DialogHeader>
-        <DialogTitle>{t('appointment.create.title')}</DialogTitle>
-      </DialogHeader>
+      <PanelHeader title={t('appointment.create.title')} onClose={onClose} />
       <Form {...form}>
         <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
           <FormField
@@ -222,24 +238,24 @@ function AppointmentCreateForm({ onOpenChange }: WithOnOpenChange) {
               </FormItem>
             )}
           />
-          <DialogFooter>
+          <div className="flex flex-wrap gap-2">
             <Button type="submit" disabled={mutation.isPending}>
               {t('save')}
             </Button>
-          </DialogFooter>
+          </div>
         </form>
       </Form>
     </>
   );
 }
 
-type AppointmentDetailProps = WithOnOpenChange & { appointment: AppointmentRecord };
+type AppointmentDetailProps = WithOnClose & { appointment: AppointmentRecord };
 
 // SCH-31/32/34/37: as quatro ações do operador sobre um Appointment já
 // existente. Cada mutação (T37) já invalida `appointmentKeys.lists()` —
 // nenhuma atualização otimista aqui, o WeekGrid reflete o novo estado quando
 // a query da tela é refeita.
-function AppointmentDetail({ appointment, onOpenChange }: AppointmentDetailProps) {
+function AppointmentDetail({ appointment, onClose }: AppointmentDetailProps) {
   const queryClient = useQueryClient();
   const professionalsQueryResult = useQuery(professionalsQuery({ limit: QUERY_LIMIT }));
   const [reason, setReason] = useState('');
@@ -267,7 +283,7 @@ function AppointmentDetail({ appointment, onOpenChange }: AppointmentDetailProps
     if (cancelMutation.isPending) return;
     cancelMutation.mutate(
       { id: appointment.id, data: { reason: reason.trim() ? reason.trim() : undefined } },
-      { onSuccess: () => onOpenChange(false), onError: (error: Error) => toast.error(error.message) },
+      { onSuccess: () => onClose(), onError: (error: Error) => toast.error(error.message) },
     );
   };
 
@@ -275,7 +291,7 @@ function AppointmentDetail({ appointment, onOpenChange }: AppointmentDetailProps
     if (rescheduleMutation.isPending) return;
     rescheduleMutation.mutate(
       { id: appointment.id, data },
-      { onSuccess: () => onOpenChange(false), onError: (error: Error) => toast.error(error.message) },
+      { onSuccess: () => onClose(), onError: (error: Error) => toast.error(error.message) },
     );
   };
 
@@ -283,7 +299,7 @@ function AppointmentDetail({ appointment, onOpenChange }: AppointmentDetailProps
     if (attendanceMutation.isPending) return;
     attendanceMutation.mutate(
       { id: appointment.id, data: { status } },
-      { onSuccess: () => onOpenChange(false), onError: (error: Error) => toast.error(error.message) },
+      { onSuccess: () => onClose(), onError: (error: Error) => toast.error(error.message) },
     );
   };
 
@@ -304,9 +320,10 @@ function AppointmentDetail({ appointment, onOpenChange }: AppointmentDetailProps
 
   return (
     <>
-      <DialogHeader>
-        <DialogTitle>{appointment.customerName ?? appointment.title ?? t('appointment.detail.title')}</DialogTitle>
-      </DialogHeader>
+      <PanelHeader
+        title={appointment.customerName ?? appointment.title ?? t('appointment.detail.title')}
+        onClose={onClose}
+      />
       <div className="grid gap-1" data-testid="appointment-detail-info">
         <ItemDescription>
           {formatDisplayDate(appointment.start)} · {formatDisplayTime(appointment.start)}–
@@ -404,7 +421,7 @@ function AppointmentDetail({ appointment, onOpenChange }: AppointmentDetailProps
         </div>
       </div>
 
-      <DialogFooter className="flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2">
         <Button
           type="button"
           variant="basic"
@@ -424,7 +441,7 @@ function AppointmentDetail({ appointment, onOpenChange }: AppointmentDetailProps
         <Button type="button" disabled={confirmationMutation.isPending} onClick={handleRequestConfirmation}>
           {t('appointment.action.request_confirmation')}
         </Button>
-      </DialogFooter>
+      </div>
     </>
   );
 }

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router';
+import { useState } from 'react';
 import { z } from 'zod';
 import { DefaultEmptyData } from '@/components/default-empty-data.js';
 import { DefaultLoading } from '@/components/default-loading.js';
@@ -8,10 +9,23 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card.js';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select.js';
 import { addDaysToDisplayDate, currentDisplayWeekStart } from '@/lib/helpers/displayTime.helper.js';
 import { t } from '@/lib/helpers/translate.helper.js';
-import { appointmentsQuery } from '@/query/appointment.js';
+import { type AppointmentRecord, appointmentsQuery } from '@/query/appointment.js';
 import { professionalsQuery } from '@/query/professional.js';
 import { spacesQuery } from '@/query/space.js';
+import { AppointmentPanel } from './@components/appointment-panel.js';
+import { BlockPanel } from './@components/block-panel.js';
 import { WeekGrid } from './@components/week-grid.js';
+
+// Estado de "qual painel está aberto" — nunca mais de um por vez, e nunca um
+// Dialog modal (feedback do usuário): o painel escolhido é renderizado
+// INLINE entre a barra de ferramentas e o WeekGrid, empurrando a grade pra
+// baixo em fluxo normal de documento.
+type PanelState =
+  | { kind: 'appointment-create' }
+  | { kind: 'appointment-detail'; appointment: AppointmentRecord }
+  | { kind: 'block-create' }
+  | { kind: 'block-detail'; block: AppointmentRecord }
+  | null;
 
 const WEEK_DAYS = 7;
 // Sentinel de "sem filtro" pro <Select> (que não aceita `value=""`, Radix
@@ -43,6 +57,7 @@ export type CalendarSearch = z.infer<typeof calendarSearchSchema>;
 export function CalendarIndexPage() {
   const search = useSearch({ strict: false }) as CalendarSearch;
   const navigate = useNavigate();
+  const [panel, setPanel] = useState<PanelState>(null);
 
   const weekStart = search.weekStart ?? currentDisplayWeekStart();
   const weekEnd = addDaysToDisplayDate(weekStart, WEEK_DAYS);
@@ -85,6 +100,14 @@ export function CalendarIndexPage() {
     } as any);
   };
 
+  const handleSelectItem = (item: AppointmentRecord) => {
+    setPanel(
+      item.kind === 'block' ? { kind: 'block-detail', block: item } : { kind: 'appointment-detail', appointment: item },
+    );
+  };
+
+  const closePanel = () => setPanel(null);
+
   return (
     <Card asPage>
       <CardHeader title={t('calendar.title')} />
@@ -122,13 +145,28 @@ export function CalendarIndexPage() {
               ))}
             </SelectContent>
           </Select>
+          {/* SCH-30/33: os dois gatilhos de criação — nunca abrem um Dialog
+              modal (feedback do usuário), só trocam `panel`, que é renderizado
+              INLINE logo abaixo, empurrando o WeekGrid pra baixo dele. */}
+          <Button type="button" onClick={() => setPanel({ kind: 'appointment-create' })}>
+            {t('calendar.new_appointment')}
+          </Button>
+          <Button type="button" variant="basic" onClick={() => setPanel({ kind: 'block-create' })}>
+            {t('calendar.new_block')}
+          </Button>
         </div>
+        {panel?.kind === 'appointment-create' && <AppointmentPanel onClose={closePanel} />}
+        {panel?.kind === 'appointment-detail' && (
+          <AppointmentPanel onClose={closePanel} appointment={panel.appointment} />
+        )}
+        {panel?.kind === 'block-create' && <BlockPanel onClose={closePanel} />}
+        {panel?.kind === 'block-detail' && <BlockPanel onClose={closePanel} block={panel.block} />}
         {query.isLoading ? (
           <DefaultLoading />
         ) : !query.data || query.data.length === 0 ? (
           <DefaultEmptyData />
         ) : (
-          <WeekGrid weekStart={weekStart} items={query.data} onSelect={() => {}} />
+          <WeekGrid weekStart={weekStart} items={query.data} onSelect={handleSelectItem} />
         )}
       </CardContent>
     </Card>

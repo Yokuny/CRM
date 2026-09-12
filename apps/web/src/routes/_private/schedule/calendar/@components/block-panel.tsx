@@ -1,10 +1,10 @@
 import { type CreateBlock, createBlockSchema } from '@crm/contracts';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { X as IconClose } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button.js';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog.js';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form.js';
 import { Input } from '@/components/ui/input.js';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select.js';
@@ -15,39 +15,43 @@ import { professionalsQuery } from '@/query/professional.js';
 
 const QUERY_LIMIT = 100;
 
-export type BlockDialogProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+export type BlockPanelProps = {
+  onClose: () => void;
   // Ausente => modo "criar" (SCH-33); presente => bloqueio já existente,
   // aberto só pra ser removido (nenhum campo é editável — remarcar um
   // bloqueio não é um caso de uso do spec, só criar/remover).
   block?: AppointmentRecord;
 };
 
-// T41: mesmo formato de "único Dialog com dois modos" de appointment-dialog.tsx
-// (T40) — aqui os dois modos são bem mais simples (criar/remover, sem ação de
-// edição intermediária).
-export function BlockDialog({ open, onOpenChange, block }: BlockDialogProps) {
+// T41 (revisado): mesmo formato de "único painel com dois modos" de
+// appointment-panel.tsx (T40) — painel INLINE, nunca Dialog modal (feedback
+// do usuário). Ver o comentário equivalente em appointment-panel.tsx.
+export function BlockPanel({ onClose, block }: BlockPanelProps) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        {block ? (
-          <BlockRemoveForm block={block} onOpenChange={onOpenChange} />
-        ) : (
-          <BlockCreateForm onOpenChange={onOpenChange} />
-        )}
-      </DialogContent>
-    </Dialog>
+    <div className="grid gap-4 rounded-md border p-4">
+      {block ? <BlockRemoveForm block={block} onClose={onClose} /> : <BlockCreateForm onClose={onClose} />}
+    </div>
   );
 }
 
-type WithOnOpenChange = { onOpenChange: (open: boolean) => void };
+type WithOnClose = { onClose: () => void };
+
+function PanelHeader({ title, onClose }: { title: string; onClose: () => void }) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <h2 className="flex w-fit items-center gap-2 font-medium font-mono text-sm leading-snug">{title}</h2>
+      <Button type="button" variant="basic" size="sm" onClick={onClose} aria-label={t('close')}>
+        <IconClose className="size-4" />
+      </Button>
+    </div>
+  );
+}
 
 // SCH-33: bloqueio de horário (folga, feriado, reunião) — profissional,
 // início/fim (hora de parede, AD-036) e título, validados por
 // `zodResolver(createBlockSchema)` (mesmo padrão de
-// AppointmentCreateForm/appointment-dialog.tsx).
-function BlockCreateForm({ onOpenChange }: WithOnOpenChange) {
+// AppointmentCreateForm/appointment-panel.tsx).
+function BlockCreateForm({ onClose }: WithOnClose) {
   const queryClient = useQueryClient();
   const professionalsQueryResult = useQuery(professionalsQuery({ limit: QUERY_LIMIT }));
 
@@ -63,7 +67,7 @@ function BlockCreateForm({ onOpenChange }: WithOnOpenChange) {
     mutation.mutate(data, {
       onSuccess: () => {
         form.reset();
-        onOpenChange(false);
+        onClose();
       },
       // 409 (sobreposição) ou qualquer outra falha vira toast — mesmo idioma
       // de composer.tsx.
@@ -73,9 +77,7 @@ function BlockCreateForm({ onOpenChange }: WithOnOpenChange) {
 
   return (
     <>
-      <DialogHeader>
-        <DialogTitle>{t('block.create.title')}</DialogTitle>
-      </DialogHeader>
+      <PanelHeader title={t('block.create.title')} onClose={onClose} />
       <Form {...form}>
         <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
           <FormField
@@ -171,22 +173,22 @@ function BlockCreateForm({ onOpenChange }: WithOnOpenChange) {
               )}
             />
           </div>
-          <DialogFooter>
+          <div className="flex flex-wrap gap-2">
             <Button type="submit" disabled={mutation.isPending}>
               {t('save')}
             </Button>
-          </DialogFooter>
+          </div>
         </form>
       </Form>
     </>
   );
 }
 
-type BlockRemoveFormProps = WithOnOpenChange & { block: AppointmentRecord };
+type BlockRemoveFormProps = WithOnClose & { block: AppointmentRecord };
 
 // SCH-33: "o bloqueio SHALL poder ser removido" — sem edição, só
 // visualização + remoção (DELETE /appointments/blocks/:id, T37).
-function BlockRemoveForm({ block, onOpenChange }: BlockRemoveFormProps) {
+function BlockRemoveForm({ block, onClose }: BlockRemoveFormProps) {
   const queryClient = useQueryClient();
   const mutation = useMutation(deleteBlockMutation(queryClient));
 
@@ -194,26 +196,24 @@ function BlockRemoveForm({ block, onOpenChange }: BlockRemoveFormProps) {
     if (mutation.isPending) return;
     mutation.mutate(
       { id: block.id },
-      { onSuccess: () => onOpenChange(false), onError: (error: Error) => toast.error(error.message) },
+      { onSuccess: () => onClose(), onError: (error: Error) => toast.error(error.message) },
     );
   };
 
   return (
     <>
-      <DialogHeader>
-        <DialogTitle>{block.title ?? t('block.detail.title')}</DialogTitle>
-      </DialogHeader>
+      <PanelHeader title={block.title ?? t('block.detail.title')} onClose={onClose} />
       <div className="grid gap-1">
         <p className="text-muted-foreground text-sm">
           {formatDisplayDate(block.start)} · {formatDisplayTime(block.start)}–{formatDisplayTime(block.end)}
         </p>
         {block.professionalName && <p className="text-muted-foreground text-sm">{block.professionalName}</p>}
       </div>
-      <DialogFooter>
+      <div className="flex flex-wrap gap-2">
         <Button type="button" variant="basic" disabled={mutation.isPending} onClick={handleDelete}>
           {t('block.action.remove')}
         </Button>
-      </DialogFooter>
+      </div>
     </>
   );
 }
