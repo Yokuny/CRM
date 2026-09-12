@@ -689,9 +689,10 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-08
 
 **Done when**:
-- [ ] `professionalsQuery`, `professionalQuery(id)`, `createProfessionalMutation`, `updateProfessionalMutation` — URL/método/params corretos, erro → `throw`, mutações invalidam as listas
+- [x] `professionalsQuery`, `professionalQuery(id)`, `createProfessionalMutation`, `updateProfessionalMutation` — URL/método/params corretos, erro → `throw`, mutações invalidam as listas
 
 **Tests**: unit · **Gate**: quick
+**Status**: ✅ Complete (commit c422f60)
 
 ---
 
@@ -704,9 +705,10 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-02, SCH-03, SCH-08
 
 **Done when**:
-- [ ] Agrupa por dia; adiciona e remove janela; entradas `HH:mm`; mostra o erro de sobreposição vindo do schema de T10
+- [x] Agrupa por dia; adiciona e remove janela; entradas `HH:mm`; mostra o erro de sobreposição vindo do schema de T10
 
 **Tests**: unit · **Gate**: quick
+**Status**: ✅ Complete (commit 3d6a6f5, com dois ajustes do orquestrador: 48e6f2d corrige variância de `Control<T>` do react-hook-form entre formulários de generic concreto diferente; 21bc5f2 mantém os inputs de hora sempre controlados — os dois achados na verificação visual via Playwright, não no código original do worker)
 
 ---
 
@@ -719,10 +721,11 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-05, SCH-08
 
 **Done when**:
-- [ ] Lista server-driven (AD-028) com filtro de ativos; `add` com `zodResolver(createProfessionalSchema)`; `details` por `search:{id}` edita e desativa
-- [ ] Gate Web verde (`routeTree.gen.ts` regenerado + `build`)
+- [x] Lista server-driven (AD-028) com filtro de ativos; `add` com `zodResolver(createProfessionalSchema)`; `details` por `search:{id}` edita e desativa
+- [x] Gate Web verde (`routeTree.gen.ts` regenerado + `build`)
 
 **Tests**: unit · **Gate**: quick + web
+**Status**: ✅ Complete (commit 4c99096) — verificado visualmente via Playwright (login real, criar profissional, ver na lista, abrir detalhe com a grade pré-preenchida, desativar) contra `crm-api`+`web` rodando de verdade; um console warning de "uncontrolled to controlled" achado durante a verificação era PRÉ-EXISTENTE na tela `/auth` (fora do escopo desta feature), não desta tela
 
 ---
 
@@ -735,9 +738,10 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-04, SCH-08
 
 **Done when**:
-- [ ] Query com as 4 funções; telas no mesmo padrão de T34; gate Web verde
+- [x] Query com as 4 funções; telas no mesmo padrão de T34; gate Web verde
 
 **Tests**: unit · **Gate**: quick + web
+**Status**: ✅ Complete (commit 2ae7b6e) — telas de lista/adicionar verificadas visualmente via Playwright (renderização e estado vazio); create/edit não repetido via browser por reusar exatamente o mesmo código de T34 já testado ponta a ponta
 
 ---
 
@@ -750,9 +754,10 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-06, SCH-08
 
 **Done when**:
-- [ ] Mostra 16 quando nunca configurado; salvar 10 chama `PUT`; 0 e 51 bloqueados pelo schema; gate Web verde
+- [x] Mostra 16 quando nunca configurado; salvar 10 chama `PUT`; 0 e 51 bloqueados pelo schema; gate Web verde
 
 **Tests**: unit · **Gate**: quick + web
+**Status**: ✅ Complete (commit fbf5c8e) — verificado ponta a ponta via Playwright contra `crm-api` real: 16 default, `PUT` 10 persiste e sobrevive a reload, 0 e 51 nunca chegam a chamar `PUT` (bloqueados pelo schema no cliente)
 
 ---
 
