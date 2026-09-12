@@ -1,8 +1,33 @@
+export type {
+  AppointmentTransitionError,
+  AppointmentTransitionErrorCode,
+  BookAppointmentInput,
+  BookAppointmentSuccess,
+} from './appointmentTransitions.js';
+export {
+  bookAppointment,
+  cancelByOperator,
+  cancelByToken,
+  confirmByToken,
+  createBlock,
+  createManualAppointment,
+  deleteBlock,
+  issueConfirmationToken,
+  markAttendance,
+  rescheduleAppointment,
+} from './appointmentTransitions.js';
 export { connect, disconnect } from './connection.js';
 export type { EncryptedSecret } from './crypto.helper.js';
 export { decrypt, encrypt, maskSecret, sha256 } from './crypto.helper.js';
 export type { AiSessionDocument } from './models/aiSession.model.js';
 export { AiSession } from './models/aiSession.model.js';
+export type {
+  AppointmentDocument,
+  AppointmentKind,
+  AppointmentSource,
+  AppointmentStatus,
+} from './models/appointment.model.js';
+export { Appointment } from './models/appointment.model.js';
 export type { AsaasEventDocument, AsaasEventStatus } from './models/asaasEvent.model.js';
 export { AsaasEvent } from './models/asaasEvent.model.js';
 export type {
@@ -44,8 +69,14 @@ export type { ProcessDocument } from './models/process.model.js';
 export { Process } from './models/process.model.js';
 export type { ProductDocument } from './models/product.model.js';
 export { Product } from './models/product.model.js';
+export type { ProfessionalDocument } from './models/professional.model.js';
+export { Professional } from './models/professional.model.js';
+export type { SchedulingSettingsDocument } from './models/schedulingSettings.model.js';
+export { SchedulingSettings } from './models/schedulingSettings.model.js';
 export type { SessionDocument } from './models/session.model.js';
 export { Session } from './models/session.model.js';
+export type { SpaceDocument } from './models/space.model.js';
+export { Space } from './models/space.model.js';
 export type { TenantDocument, TenantStatus } from './models/tenant.model.js';
 export { Tenant, transitionTenantStatus } from './models/tenant.model.js';
 export type { UserDocument } from './models/user.model.js';
@@ -54,9 +85,24 @@ export type { OrderItemInput, OrderTransitionResult } from './orderTransitions.j
 export { rejectOrder, setCustomerConfirmed, setOperatorApproved, tryConfirmOrder } from './orderTransitions.js';
 export type { PaymentTransitionResult } from './paymentTransitions.js';
 export { applyAsaasPaymentStatus, expireOrderPayment } from './paymentTransitions.js';
+export type { FreeSlot, ScheduleWindow } from './scheduling.js';
+export {
+  computeFreeSlots,
+  DEFAULT_MAX_SLOTS,
+  dateInDisplayTz,
+  expandWindowsToSlots,
+  isSlotAligned,
+  MAX_HORIZON_DAYS,
+  MIN_LEAD_MINUTES,
+  overlaps,
+  timeInDisplayTz,
+  wallClockToUtc,
+  weekdayInDisplayTz,
+} from './scheduling.js';
 export { tenantScoped } from './tenantScoped.js';
 
 import { AiSession } from './models/aiSession.model.js';
+import { Appointment } from './models/appointment.model.js';
 import { AsaasEvent } from './models/asaasEvent.model.js';
 import { AsaasIntegration } from './models/asaasIntegration.model.js';
 import { Channel } from './models/channel.model.js';
@@ -70,7 +116,10 @@ import { Order } from './models/order.model.js';
 import { Payment } from './models/payment.model.js';
 import { Process } from './models/process.model.js';
 import { Product } from './models/product.model.js';
+import { Professional } from './models/professional.model.js';
+import { SchedulingSettings } from './models/schedulingSettings.model.js';
 import { Session } from './models/session.model.js';
+import { Space } from './models/space.model.js';
 import { Tenant } from './models/tenant.model.js';
 import { User } from './models/user.model.js';
 
@@ -85,6 +134,9 @@ export const syncIndexes = async (): Promise<void> => {
     Customer.createIndexes(),
     Process.createIndexes(),
     Product.createIndexes(),
+    Professional.createIndexes(),
+    Space.createIndexes(),
+    SchedulingSettings.createIndexes(),
     Order.createIndexes(),
     Payment.createIndexes(),
     AsaasIntegration.createIndexes(),
@@ -93,5 +145,6 @@ export const syncIndexes = async (): Promise<void> => {
     Conversation.createIndexes(),
     Message.createIndexes(),
     AiSession.createIndexes(),
+    Appointment.createIndexes(),
   ]);
 };

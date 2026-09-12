@@ -14,6 +14,7 @@ const translations: Record<string, string> = {
   cancel: 'Cancelar',
   edit: 'Editar',
   confirm: 'Confirmar',
+  close: 'Fechar',
   back: 'Voltar',
   'date.pick': 'Escolha o dia',
   customers: 'Clientes',
@@ -144,6 +145,105 @@ const translations: Record<string, string> = {
   'order.payment.expired': 'Cobrança expirada',
   'order.payment.refunded': 'Reembolsado',
   'order.payment.canceled': 'Cancelado',
+  // Grade semanal de Professional (feature scheduling, Fase 7/T33) —
+  // weekday-editor.tsx agrupa `weeklySchedule` por dia da semana.
+  'weekday.0': 'Domingo',
+  'weekday.1': 'Segunda-feira',
+  'weekday.2': 'Terça-feira',
+  'weekday.3': 'Quarta-feira',
+  'weekday.4': 'Quinta-feira',
+  'weekday.5': 'Sexta-feira',
+  'weekday.6': 'Sábado',
+  'schedule.window.start': 'Início',
+  'schedule.window.end': 'Fim',
+  // Telas de Profissional (feature scheduling, Fase 7/T34) — routes/_private/
+  // schedule/professionals/**. Chave crua `professionals` é o fallback de
+  // breadcrumb (card.tsx, PageBreadcrumb) pro segmento intermediário da URL
+  // quando a página aberta é `add`/`details` (rota-irmã de `index.tsx`, sem
+  // staticData própria pro prefixo) — mesmo padrão de `customers`/`schedule`.
+  professionals: 'Profissionais',
+  'professional.list.title': 'Profissionais',
+  'professional.create.title': 'Novo profissional',
+  'professional.details.title': 'Detalhe do profissional',
+  'professional.slot_duration': 'Duração do horário (min)',
+  'professional.weekly_schedule': 'Grade semanal',
+  'professional.status.active': 'Ativo',
+  'professional.status.inactive': 'Inativo',
+  'professional.filter.show_inactive': 'Mostrar inativos',
+  // Telas de Ambiente (feature scheduling, Fase 7/T35) — routes/_private/
+  // schedule/spaces/**. Chave crua `spaces` é o mesmo fallback de breadcrumb
+  // de `professionals` acima.
+  spaces: 'Ambientes',
+  'space.list.title': 'Ambientes',
+  'space.create.title': 'Novo ambiente',
+  'space.details.title': 'Detalhe do ambiente',
+  'space.status.active': 'Ativo',
+  'space.status.inactive': 'Inativo',
+  'space.filter.show_inactive': 'Mostrar inativos',
+  // Configuração da agenda (feature scheduling, Fase 7/T36) — routes/
+  // _private/schedule/settings/index.tsx.
+  'scheduling_settings.title': 'Configuração da agenda',
+  'scheduling_settings.max_slots': 'Máximo de horários por resposta',
+  // Calendário da agenda (feature scheduling, Fase 8/T39) — routes/_private/
+  // schedule/calendar/index.tsx.
+  'calendar.title': 'Calendário',
+  'calendar.previous_week': 'Semana anterior',
+  'calendar.next_week': 'Próxima semana',
+  'calendar.filter.professional': 'Profissional',
+  'calendar.filter.all_professionals': 'Todos os profissionais',
+  'calendar.filter.space': 'Ambiente',
+  'calendar.filter.all_spaces': 'Todos os ambientes',
+  'calendar.new_appointment': 'Novo agendamento',
+  'calendar.new_block': 'Novo bloqueio',
+  // Diálogo de agendamento (feature scheduling, Fase 8/T40) — routes/_private/
+  // schedule/calendar/@components/appointment-dialog.tsx.
+  'appointment.create.title': 'Novo agendamento',
+  'appointment.detail.title': 'Agendamento',
+  'appointment.field.customer': 'Cliente',
+  'appointment.field.professional': 'Profissional',
+  'appointment.field.date': 'Data',
+  'appointment.field.time': 'Hora',
+  'appointment.field.space': 'Ambiente',
+  'appointment.field.space_none': 'Sem ambiente',
+  'appointment.field.notes': 'Observações',
+  'appointment.status.pending': 'Pendente',
+  'appointment.status.confirmed': 'Confirmado',
+  'appointment.status.completed': 'Concluído',
+  'appointment.status.no_show': 'Não compareceu',
+  'appointment.status.canceled_by_customer': 'Cancelado pelo cliente',
+  'appointment.status.canceled_by_operator': 'Cancelado pelo operador',
+  'appointment.action.cancel': 'Cancelar agendamento',
+  'appointment.cancel.reason_placeholder': 'Motivo (opcional)',
+  'appointment.action.reschedule': 'Remarcar',
+  'appointment.attendance.completed': 'Compareceu',
+  'appointment.attendance.no_show': 'Não compareceu',
+  'appointment.action.request_confirmation': 'Pedir confirmação',
+  'appointment.notice.queued': 'Cliente avisado.',
+  'appointment.notice.wa_me_button': 'Avisar pelo WhatsApp',
+  // Diálogo de bloqueio (feature scheduling, Fase 8/T41) — routes/_private/
+  // schedule/calendar/@components/block-dialog.tsx.
+  'block.create.title': 'Novo bloqueio',
+  'block.detail.title': 'Bloqueio',
+  'block.field.title': 'Título',
+  'block.field.start_date': 'Data de início',
+  'block.field.start_time': 'Hora de início',
+  'block.field.end_date': 'Data de fim',
+  'block.field.end_time': 'Hora de fim',
+  'block.action.remove': 'Remover bloqueio',
+  // Página pública de confirmação (feature scheduling, Fase 8/T42) —
+  // routes/_public/appointment/**, sem sessão, anônima (SCH-28).
+  'appointment_confirmation.title': 'Confirmação de agendamento',
+  'appointment_confirmation.description': 'Revise os detalhes do seu agendamento e confirme sua presença.',
+  'appointment_confirmation.missing_token': 'Link de confirmação inválido.',
+  'appointment_confirmation.not_found': 'Link de confirmação não encontrado.',
+  'appointment_confirmation.expired': 'Link de confirmação expirado.',
+  'appointment_confirmation.error': 'Não foi possível carregar seu agendamento.',
+  'appointment_confirmation.confirm_action': 'Confirmar presença',
+  'appointment_confirmation.cancel_action': 'Não vou comparecer',
+  'appointment_confirmation.footer_note': 'Em caso de dúvidas, entre em contato com o estabelecimento.',
+  // Hub da agenda (feature scheduling, Fase 8/T43) — routes/_private/
+  // schedule/index.tsx + card "Agenda" na home (routes/_private/index.tsx).
+  schedule: 'Agenda',
 };
 
 export const t = (key: string): string => translations[key] ?? key;

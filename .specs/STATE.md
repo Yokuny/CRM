@@ -280,102 +280,106 @@ de AD-014 em diante, a entrada abaixo é o registro completo (indexada no mesmo 
 - **Date**: 2026-09-09
 - **Status**: active
 
+### AD-035
+- **Decision**: As collections de agenda de `scheduling` (feature 9) seguem o modelo por-write-path do AD-032: `appointments` (discriminada por `kind: 'appointment' | 'block'`) é escrita pelos DOIS apps — `apps/crm-api` (CRUD do operador: criar manual, cancelar, remarcar, marcar comparecimento, bloquear; e a rota **pública** de confirmação, que é o cliente agindo pela superfície do CRM) e `apps/ai-gateway`/`packages/ai-kit` (tool `book_appointment`) — enquanto `professionals`, `spaces` e `schedulingSettings` são escritas exclusivamente por `apps/crm-api`. Toda a matemática de grade (`packages/db/src/scheduling.ts`, sem Mongoose) e toda a máquina de estados do agendamento (`packages/db/src/appointmentTransitions.ts`) vivem uma única vez em `packages/db`, nunca duplicadas por app — mesmo lugar e mesma forma de `orderTransitions.ts` (AD-033) e `paymentTransitions.ts` (AD-034). A invariante de dupla reserva não é checar-antes-de-gravar: é um **índice único parcial** `{Tenant, professional, start}` filtrado por `status ∈ {pending, confirmed}`, que faz o banco eleger um vencedor entre reservas concorrentes (verificado por execução no Design: 5 inserções concorrentes no mesmo slot → 1 aceita, 4 rejeitadas com E11000; cancelar sai do índice e libera o horário).
+- **Reason**: Tanto o operador quanto o cliente (via IA) marcam horário na mesma agenda — é a terceira feature seguida com escrita dos dois lados na mesma collection, depois de `orders` (AD-032/AD-033) e `payments` (AD-034), então o padrão já está estabelecido e só precisa ser aplicado. A escolha do índice parcial em vez de consulta-e-grava veio direto da lição `L-027` da feature 8: um guard de corrida que depende de leitura prévia passa em teste sequencial mesmo quando a condição atômica é removida. Aqui a garantia é estrutural — nenhum código de aplicação pode esquecê-la.
+- **Trade-off**: O índice único só cobre `start` idêntico, então o **encaixe** do operador (agendamento fora da grade, permitido por decisão do usuário) continua dependendo de checagem de sobreposição por consulta, que é racy entre dois operadores simultâneos — aceito por ser ação humana de baixa concorrência, enquanto o caminho da IA (o de alta concorrência) fica 100% coberto. `packages/db` ganha sua terceira peça de lógica de negócio compartilhada, confirmando que esse pacote deixou de ser só "models + tenantScoped"; uma feature futura com escrita dos dois lados deve seguir o mesmo caminho em vez de duplicar.
+- **Scope**: `packages/db` (`appointments`, `professionals`, `spaces`, `schedulingSettings`, `scheduling.ts`, `appointmentTransitions.ts`), `apps/crm-api`, `apps/ai-gateway`/`packages/ai-kit`, `docs/architecture.md`.
+- **Date**: 2026-09-10
+- **Status**: active
+
+### AD-036
+- **Decision**: Convenção de tempo do projeto, nascida em `scheduling` e válida para toda feature futura: (1) **instante** é sempre gravado em UTC, sem exceção; (2) **regra recorrente** (ex.: "seg a sex, 08:00") não é instante e não tem UTC próprio — é gravada como hora de parede (`HH:mm`) e interpretada numa constante única de exibição, `DISPLAY_TIMEZONE = 'America/Sao_Paulo'`, exportada por `packages/db/src/scheduling.ts`; (3) a conversão hora de parede ↔ instante resolve o offset pelo `Intl.DateTimeFormat` com `timeZoneName: 'longOffset'` **na data alvo**, em duas passadas, nunca por offset fixo em string; (4) a conversão para horário local acontece só na borda de apresentação (tela e texto que a IA envia), em nenhuma outra camada. `contextBuild.ts` passa a importar `DISPLAY_TIMEZONE` em vez de repetir a string `'America/Sao_Paulo'` que já carrega hoje.
+- **Reason**: Instrução literal do usuário na sessão de Discuss de `scheduling` ("evitar fuso, sempre o fuso vai ser em +0 e apenas no momento de apresentação deve ser calculado e aplicado o timezone partindo do +0"), com a ressalva técnica de que a grade semanal não é um instante — converter a regra recorrente para UTC na gravação deforma o dado (uma janela 21:00–23:00 local vira o dia seguinte em UTC e muda o dia da semana gravado, verificado por execução). O offset resolvido por `Intl` em vez de `-03:00` cravado (o que a referência DentalEase faz) mantém o cálculo correto se o horário de verão brasileiro voltar, e já funciona para outros fusos sem reescrita.
+- **Trade-off**: Não existe fuso por tenant — um tenant fora do horário de Brasília (Manaus, Rio Branco) vê horários deslocados; aceito explicitamente pelo usuário. Como a matemática já resolve offset por data e por fuso nomeado, adotar fuso por tenant depois é trocar a constante por um campo, não reescrever o cálculo. Toda leitura de "agora" no domínio de agenda tem que passar pelos helpers, não por `new Date().getHours()`, sob pena de reintroduzir hora local do servidor.
+- **Scope**: todo o projeto — `packages/db` (`scheduling.ts`), `packages/ai-kit` (`contextBuild.ts`), `apps/crm-api`, `apps/web`, e qualquer feature futura que grave data/hora.
+- **Date**: 2026-09-10
+- **Status**: active
+- **Correção (fase Tasks, 2026-09-11)**: o item (2) acima dizia que `DISPLAY_TIMEZONE` é exportada por `packages/db/src/scheduling.ts`. Ao planejar as telas, o grafo de dependências mostrou que o `apps/web` depende só de `@crm/contracts`/`@crm/field-engine` e nunca de `@crm/db` — importar `packages/db` levaria Mongoose para o bundle do navegador —, e o front precisa da mesma constante para exibir horário igual ao que a IA escreve, qualquer que seja o fuso do navegador. A constante passa a ser exportada por **`packages/contracts`** (o único pacote sem dependência `@crm`, importado pelos dois backends e pelo `web`); `packages/db/src/scheduling.ts` e `contextBuild.ts` a importam de lá. Consequência de fronteira, no mesmo espírito do item (4): a API do operador recebe data e hora **em hora de parede** (`YYYY-MM-DD` + `HH:mm`) e o servidor converte para UTC com a implementação única de `packages/db`; o `apps/web` só formata UTC → exibição, nunca converte no sentido contrário.
+
+### AD-037
+- **Decision**: `apps/web` nunca usa `Dialog` (modal Radix, overlay fixo) para ações de criar/editar/agir sobre um registro — o padrão do projeto passa a ser um **painel inline**: um `<div>` comum, renderizado em fluxo normal de documento entre o gatilho (botão/item clicado) e o conteúdo que vem depois, que portanto é empurrado pra baixo quando o painel aparece. O componente não guarda estado próprio de "aberto" (`open`/`onOpenChange`) — o pai decide montar/desmontar, e o componente só recebe `onClose: () => void` como sinal de "terminei". Primeiro par de componentes escritos assim: `appointment-panel.tsx`/`block-panel.tsx` (`scheduling`, T40/T41), renomeados de `appointment-dialog.tsx`/`block-dialog.tsx`.
+- **Reason**: Instrução explícita do usuário durante o Execute de `scheduling`, ao corrigir um gap onde a tela de calendário (T39) não tinha nenhum jeito de abrir os painéis de agendamento/bloqueio (T40/T41 existiam e tinham teste unitário, mas `WeekGrid.onSelect` era no-op e não havia botão de criar). Ao corrigir, o usuário pediu explicitamente para NUNCA usar `Dialog` neste projeto, sempre abrir um campo abaixo empurrando o resto da UI — uma preferência de UI declarada como regra geral, não só para este caso.
+- **Trade-off**: `apps/web/src/components/ui/dialog.tsx` (wrapper Radix já no projeto desde antes desta feature) fica sem nenhum consumidor — não removido (pode servir outro caso de uso genuinamente modal no futuro, ex. confirmação destrutiva "tem certeza?"), mas não é mais o padrão-fonte para telas de criar/editar. Um painel inline precisa do próprio botão de fechar explícito (Dialog dava um "X" de graça); cada painel novo repete esse pequeno cabeçalho.
+- **Scope**: `apps/web`, todo componente futuro que hoje usaria um Dialog para criar/editar/agir sobre um registro.
+- **Date**: 2026-09-12
+- **Status**: active
+
 ---
 
 ## Handoff
 
-- **Feature**: `payments-asaas` (feature 8 de 11) — **Execute completo e Verificado
-  (PASS)** neste worktree (`../CRM-payments-asaas`, branch `feature/payments-asaas`).
-  Todas as 31 tasks (T1–T31, 8 fases, P1+P2 juntos nesta sessão) implementadas, Build gate
-  cheio verde, Verifier independente (author≠verifier) rodou automaticamente após T31,
-  achou 1 gap (fix aplicado, ver abaixo), fechado sem precisar de novo ciclo completo.
-- **Phase / Task**: Specify/Discuss/Design/Tasks (sessão anterior) → Execute (esta sessão,
-  5 batches de sub-agentes, offer-then-confirm aceito pelo usuário no início, incluindo
-  Fase 8/P2 no mesmo Execute) → Verifier (automático, não prompted) → fix do único gap
-  achado (orquestrador, sem novo Verifier completo — justificativa abaixo). Todas as fases
-  completas.
-- **Completed**:
-  - **Batch 1** (Fase 1, T1–T6): models `Payment`/`AsaasIntegration`/`AsaasEvent`
-    (`packages/db`), campo aditivo `Customer.asaasCustomerId`, status aditivo
-    `Order.status:'payment_expired'`, `paymentTransitions.ts` (AD-034 — precedente
-    AD-033 — `applyAsaasPaymentStatus`/`expireOrderPayment`, rank-guard). 8 commits,
-    `27eb20d`..`daaf5fa`. 1108 testes verdes ao final do batch.
-  - **Batch 2** (Fase 2, T7–T12): CRUD completo de `asaasIntegration` em `apps/crm-api`
-    (env vars, `providers/asaasClient.ts`, schema Zod, repository/service/controller/router,
-    montado em `/asaas-integrations`) — valida chave ao vivo, criptografa, auto-detecta
-    ambiente, auto-registra webhook, mascara na leitura (mesmo padrão de `channel.*`).
-    6 commits, `c1fcd7d`..`2864079`. 1154 testes verdes.
-  - **Batch 3** (Fases 3–4, T13–T20): `AsaasClient` real em `apps/ai-gateway`
-    (conversão centavos↔reais na fronteira HTTP, retry/backoff), `ToolContext.asaasClient`,
-    `RunTurnOptions.asaasClient`, tool `issue_payment_link` (Anel B, gate estrutural
-    `confirmed`, idempotência, `Customer.asaasCustomerId` sob demanda), `get_order_status`
-    estendido, registro como 8ª tool + teste estrutural atualizado. 9 commits,
-    `32ab56d`..`a8c447a`. 1183 testes (1181 verdes / 2 falhas conhecidas e antecipadas —
-    ver Batch 4).
-  - **Batch 4** (Fases 5–7, T21–T28): `asaasWebhookAuth.middleware.ts` + `asaasWebhook.
-    router.ts` (dedup por `AsaasEvent`, rank-guard delegado, sempre 200), wiring no
-    `app.ts`/`webhook.router.ts` (Meta), worker `asaasReconcile.ts` (retry de eventos
-    falhos + poll de todo Payment pending per spec.md AC6 — decisão explícita de seguir a
-    AC, não a leitura mais restrita do design.md, documentada em código), start em
-    `server.ts`, golden set novo (`issuePaymentLinkGuardrails.int.test.ts`) + fix dos 2
-    golden sets antigos com superfície de tools hardcoded (`promptInjection`/`happyPath` —
-    o 2º achado pelo worker mesmo depois desta mesma sessão ter previsto erroneamente que
-    seria no-op, corrigido com investigação própria antes de confiar na briefing). 9
-    commits, `09d8671`..`508e7e0`. 1200 testes verdes — P1 (MVP) completo aqui.
-  - **Batch 5** (Fase 8/P2, T29–T31): `order.router.ts` já tinha o enum `payment_expired`
-    (achado do Batch 1/T5, sem mudança de schema, só teste e2e novo); `order.repository.ts`
-    enriquece leitura com `paymentStatus` (batch-lookup, nunca populate/N+1, AD-034: nunca
-    escreve `Payment`); `apps/web` mostra badge de pagamento na tela de Pedidos (3 estados +
-    ausente) e corrige o mirror `payment_expired` que ficava fora de escopo desde o Batch 1.
-    **Decisão registrada**: `order-card.tsx` (card inline do Inbox) foi deliberadamente
-    NÃO alterado — sua query já é hard-filtrada a `pending_approval` (decisão 5 do
-    `catalog-orders`, já testada), e `Payment` só existe para Order `confirmed`, então o AC
-    de status de pagamento é estruturalmente inatingível para este card específico sem
-    reverter aquela decisão já validada; o badge foi implementado na tela de Pedidos, que
-    cobre todos os status. 4 commits, `8976d77`..`409b133`. 1211 testes verdes, build de
-    `apps/web` verificado — todas as 31 tasks completas.
-  - **Verifier** (após T31): 18/18 ACs (`spec.md` tem 18 ACs em 5 histórias, não 1:1 com as
-    15 `PAY-ID`s) spec-anchored com evidência `file:line`, 0 spec-precision gaps, gate
-    1211/1211 verde. Sensor de discriminação EXPANDIDO (feature P0-adjacent — pagamento):
-    5 mutações, 4 mortas, **1 sobrevivente** — o filtro atômico `status:'pending'` de
-    `expireOrderPayment` (`paymentTransitions.ts:105`) nunca era exercitado por nenhum teste
-    porque o único teste de "2ª chamada" era sequencial (barrado antes por um guard de
-    leitura anterior, não pelo filtro atômico). Relatório completo:
-    `.specs/features/payments-asaas/validation.md`.
-  - **Fix do gap único** (orquestrador, commit `a9c6af7`): 1 teste novo em
-    `paymentTransitions.int.test.ts` forçando 2 chamadas genuinamente concorrentes
-    (`Promise.all`) contra o mesmo Payment `pending` — nenhuma mudança de código de
-    produção (o guard já estava correto). Confirmado manualmente que o teste mata a mutação
-    (reaplicada e revertida à mão) e que o gate completo segue verde (1212/1212, com 1 flake
-    transitório conhecido do `MongoMemoryServer` compartilhado — já documentado em AD-031 —
-    que limpou no retry, em arquivo não relacionado a esta feature). **Sem novo ciclo
-    completo de Verifier**: o próprio relatório já recomendava isso ("Given it is a single,
-    additive test with no code change required, this does not need a full fix→re-verify
-    cycle"), e a confirmação equivalente (mutação reaplicada e morta, gate completo verde)
-    foi feita diretamente — closure documentado como seção própria em `validation.md`,
-    preservando o relatório original do Verifier intacto. Traceability de `spec.md`
-    atualizada (`Implementing` → `Verified`, todas as 15 linhas). Lição candidata `L-027`
-    registrada (guard atômico de corrida precisa de teste com `Promise.all` genuíno, não
-    chamada sequencial — um teste sequencial pode passar mesmo com a condição do filtro
-    atômico removida, porque um guard de leitura anterior absorve o caso sequencial).
-- **In-progress**: nenhum. Feature completa e verificada (todas as 15 `PAY-ID`s Verified).
+- **Feature**: `scheduling` (feature 9 de 11) — **Execute completo e Verificado (PASS)**,
+  branch `feature/scheduling`. Todas as 47 tasks (T1–T47, 9 fases, 8 batches) implementadas,
+  Build gate cheio verde, Verifier independente (author≠verifier) rodou automaticamente após
+  T47 e retornou **PASS** com 2 gaps menores não-bloqueantes (ver abaixo). Nenhum fix task
+  obrigatório.
+- **Branch**: `feature/scheduling`, HEAD em `80ba107`, 70 commits à frente de
+  `origin/feature/scheduling` (sem push nesta feature ainda). Working tree limpo.
+- **Completed — Batches 1–7 (T1–T43)**: sem incidentes de código (ver commits individuais no
+  histórico, um por task, scope `scheduling`). T40/T41 tiveram uma correção pós-Batch 7
+  (commit `b2bd3ea`) — os dois componentes existiam e passavam nos próprios testes, mas nada
+  na tela do calendário (T39) os abria (`WeekGrid.onSelect` era no-op, sem botão de criar);
+  corrigidos na mesma sessão, incluindo reescrever `Dialog` (modal Radix) para painel inline
+  por pedido explícito do usuário (AD-037) — `appointment-dialog.tsx`/`block-dialog.tsx` →
+  `appointment-panel.tsx`/`block-panel.tsx`.
+- **Completed — Batch 8 (T44–T47, sessão final, execução inline sem sub-agente — só 4 tasks,
+  abaixo do teto de ~8)**:
+  - **T44** (`db5ee02`): `appointment.service.ts` ganha `notifyCustomer` — cancelar/remarcar
+    resolvem a `Conversation` (`appointment.conversation` ou, na falta,
+    `appointmentRepository.findLatestConversationIdByCustomer`, nova função) e reusam
+    `createOutboundMessage` (já barra fora da janela de 24h antes de inserir); janela aberta →
+    `notice:{kind:'queued'}`; fechada ou sem conversa → `notice:{kind:'wa_me', url}`. Resposta
+    de `/appointments/:id/{cancel,reschedule}` passa a ser `{appointment, notice}` (mudança de
+    contrato — testes e2e/unit existentes desses dois endpoints atualizados para o novo
+    formato). Testes unit+integration+e2e, gate full verde.
+  - **T45** (`1715d83`): `appointment-panel.tsx` (`AppointmentDetail`) lê `result.notice`:
+    `queued` → toast + fecha o painel (comportamento antigo preservado); `wa_me` → painel
+    fica aberto com um link "Avisar pelo WhatsApp" (`target="_blank"`), mesmo idioma do botão
+    de "Pedir confirmação" já existente. `query/appointment.ts` tipa o novo
+    `AppointmentActionResult`.
+  - **T46** (`7db15c4`): `appointment-card.tsx` novo (Inbox) — espelha `order-card.tsx`:
+    próximo agendamento ativo do cliente (data/hora/profissional/status), nada quando não há
+    ou durante o loading. `ConversationThread` ganha prop `customerId` (o endpoint é por
+    `customer`, não `conversation`) threaded a partir de `InboxPage`.
+  - **T47** (`e823ce0`): `docs/architecture.md` (tabela de propriedade +
+    `professionals`/`spaces`/`schedulingSettings`/`appointments`, superfície de tools 10/10,
+    fluxo "Agendamento" em Fluxos principais, seção nova "Convenção de tempo" com AD-036) e
+    `docs/glossary.md` (seção nova "Agenda": Professional, Space, Appointment, Block, token de
+    confirmação, hora de exibição). Partiu da versão commitada (confirmado limpo antes de
+    editar — a pendência de 2026-09-11 não existia mais).
+- **Verifier** (após T47, `80ba107`): **PASS** — 39/40 ACs (`SCH-01..40`) com evidência
+  `file:line` batendo o outcome exato do spec; `SCH-17` só com evidência indireta (via o
+  teste de corrida do SCH-20, que passa pelo mesmo caminho de `Appointment.create()`) — gap
+  cosmético, não funcional. Gate 1762/1763 verde (1 falha pré-existente e não relacionada,
+  `media-card.unit.test.tsx`/INBOX-17, confirmada fora do diff desta feature; 1 timeout de
+  conexão Mongo visto uma vez em corrida cheia, não reproduziu numa segunda rodada — mesmo
+  flake já documentado em AD-031). Sensor de discriminação: 3 mutações, 3 mortas
+  (`isDuplicateKeyError` do índice único parcial, expiração de `confirmByToken`, o guard
+  `instanceof` do fallback de `notifyCustomer`). Relatório completo:
+  `.specs/features/scheduling/validation.md` (commit `80ba107`). Traceability de `spec.md`
+  atualizada (`In Tasks` → `Verified`, 39 linhas; `SCH-17` → `⚠️ Verified (evidência
+  indireta)`). Duas lições candidatas registradas: `L-028` (PATCH de config de agenda/duração
+  precisa de teste que cria um registro dependente antes e confere que ele não mudou) e
+  `L-029` (uma AC que alega garantia estrutural ainda merece um teste com o próprio id da AC
+  no título, mesmo se um teste vizinho já cobre o mesmo caminho de código).
+- **Gaps do Verifier (não-bloqueantes, não corrigidos nesta sessão — decisão: aceitar como
+  estão, per o próprio relatório)**: (1) Edge Case "grade editada não afeta agendamento
+  existente" sem teste dedicado para `weeklySchedule` (só `active:false` é testado); (2) Edge
+  Case "duração do slot não recalcula agendamento existente" sem teste dedicado; (3) SCH-17
+  sem teste nomeado (só evidência indireta). Ver `validation.md` seção "Fix Plans" para as
+  tasks de teste sugeridas, caso alguém queira fechá-las depois.
+- **In-progress**: nenhum. Feature completa, verificada, todos os commits com gate verde.
 - **Next step**: revisar o diff/branch e decidir sobre push + abertura de PR para `main`
-  (nenhum push feito ainda nesta sessão). Considerar UAT interativo do usuário nas telas
-  novas de `apps/web` (config de integração Asaas, badge de pagamento em Pedidos) antes ou
-  depois do merge, já que o Verifier automático não cobre essa camada. Após merge, feature
-  9 do roadmap é a próxima.
-- **Blockers**: nenhum.
-- **Uncommitted files**: nenhum — working tree limpo, 49 commits nesta sessão de Execute
-  (`d279789`..`e8d2642`, branch `feature/payments-asaas`, incluindo os 2 commits de docs
-  desta sessão que vieram antes do 1º task — AD-034 e spec/design/tasks — e os 3 commits de
-  fechamento pós-Verifier), todos com testes verdes no commit correspondente.
-- **Branch**: `feature/payments-asaas` (worktree `../CRM-payments-asaas`) — commits à
-  frente de `origin/feature/payments-asaas`, sem push ainda.
-- **Nota operacional — skill não registrada**: a skill `tlc-spec-driven` não aparece no
-  listing de skills desta sessão (arquivos existem em `tlc-spec-driven/` na raiz do repo,
-  versionados no git, mas não há `.claude/skills/` no CRM). Mesma resolução já usada nas
-  sessões anteriores: leitura manual de `SKILL.md` + `references/{implement,sub-agents,
-  coding-principles,validate,lessons}.md` no início desta sessão de Execute, sem registrar
-  em `.claude/skills/`. Nota adicional: `scripts/lessons.py` referenciado por `lessons.md`
-  na verdade vive em `tlc-spec-driven/scripts/lessons.py` (resolução relativa ao diretório
-  da skill, não à raiz do workspace) — confirmado funcionando a partir da raiz do repo.
+  (nenhum push feito). Considerar UAT interativo do usuário nas telas novas de P2 (aviso no
+  painel de agendamento, card no Inbox) e no fluxo de agendamento pela conversa/calendário em
+  geral, já que o Verifier automático não cobre essa camada — a sessão anterior já fez
+  verificação visual via Playwright de Batches 6–7 (profissionais/ambientes/configuração/
+  calendário/página pública), mas T44–T47 (aviso automático, card) não foram verificados
+  visualmente nesta sessão. Após merge, feature 10 (`kanban-tool`) é a próxima do roadmap.
+- **Blockers**: nenhum. Pendência herdada da feature 8 (mergeada em `main` pelo PR #8): UAT
+  interativo do badge de pagamento na tela de Pedidos — não relacionada a esta feature.
+- **Nota operacional — skill não registrada**: desde `114e0cc` a skill `tlc-spec-driven` vive
+  em `.claude/tlc-spec-driven/`, fora de `.claude/skills/`, e por isso não aparece no listing —
+  ler `SKILL.md` + `references/` manualmente. Lições:
+  `python3 .claude/tlc-spec-driven/scripts/lessons.py`.

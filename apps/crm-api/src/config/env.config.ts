@@ -28,6 +28,13 @@ export const envSchema = z.object({
   // pública do apps/ai-gateway (onde o webhook é recebido), nunca localhost
   // em produção.
   ASAAS_WEBHOOK_BASE_URL: z.string().min(1, 'ASAAS_WEBHOOK_BASE_URL é obrigatória'),
+  // Origem pública de apps/web (SCH-21/SCH-37) — usada para montar a URL da
+  // página pública de confirmação (`${WEB_BASE_URL}/appointment?token=...`)
+  // devolvida pela IA (book_appointment) e pelo botão "Pedir confirmação" do
+  // operador (appointment.service.ts, requestConfirmationLink). Mesmo padrão
+  // de ASAAS_WEBHOOK_BASE_URL acima, mas apontando para o front, não para o
+  // ai-gateway.
+  WEB_BASE_URL: z.string().min(1, 'WEB_BASE_URL é obrigatória'),
 });
 
 export type Env = z.infer<typeof envSchema>;

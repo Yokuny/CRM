@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 28,
+  "next_id": 30,
   "lessons": [
     {
       "id": "L-001",
@@ -492,6 +492,42 @@
       ],
       "created": "2026-09-09T22:35:43Z",
       "last_seen": "2026-09-09T22:35:43Z"
+    },
+    {
+      "id": "L-028",
+      "key": "ac_gap::when an entity s schedule duration config is edited via patch add a test that creates a dependent record first and asserts it is byte identical after the patch not just that the config change itself persists",
+      "text": "When an entity's schedule/duration config is edited via PATCH, add a test that creates a dependent record first and asserts it is byte-identical after the PATCH, not just that the config change itself persists.",
+      "signal": "ac_gap",
+      "scope": "scheduling",
+      "status": "candidate",
+      "features": [
+        "scheduling"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "spec.md Edge Cases (grade/duração) — validation.md Gap 1/2 (scheduling)"
+      ],
+      "created": "2026-09-12T18:14:55Z",
+      "last_seen": "2026-09-12T18:14:55Z"
+    },
+    {
+      "id": "L-029",
+      "key": "ac_gap::when an ac claims a data integrity guarantee is structural e g a single atomic write prevents orphans still add one test with that ac s id in its title even if an adjacent test already exercises the same code path",
+      "text": "When an AC claims a data-integrity guarantee is structural (e.g. a single atomic write prevents orphans), still add one test with that AC's id in its title, even if an adjacent test already exercises the same code path.",
+      "signal": "ac_gap",
+      "scope": "scheduling",
+      "status": "candidate",
+      "features": [
+        "scheduling"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "SCH-17 — validation.md Gap 3 (scheduling)"
+      ],
+      "created": "2026-09-12T18:14:56Z",
+      "last_seen": "2026-09-12T18:14:56Z"
     }
   ]
 }
