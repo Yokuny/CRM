@@ -580,13 +580,14 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-09, SCH-10, SCH-11, SCH-12, SCH-13, SCH-14
 
 **Done when**:
-- [ ] Horários com `start` ISO UTC, `time` na hora de exibição e profissionais livres; agendamento ativo e bloqueio removem o slot só do profissional ocupado
-- [ ] `{error}` para formato inválido, data passada e > 90 dias; lista vazia (nunca erro) para data sem horário e para tenant sem profissional ativo
-- [ ] `professionalId` filtra; inexistente, inativo ou de outro tenant → `{error}`
-- [ ] Teto vem do `SchedulingSettings` (asserção com 3 configurado e com ausência → 16)
-- [ ] `upcomingAppointments` só com os ativos futuros do `Customer` desta `Conversation` — nunca de outro cliente ou tenant
+- [x] Horários com `start` ISO UTC, `time` na hora de exibição e profissionais livres; agendamento ativo e bloqueio removem o slot só do profissional ocupado
+- [x] `{error}` para formato inválido, data passada e > 90 dias; lista vazia (nunca erro) para data sem horário e para tenant sem profissional ativo
+- [x] `professionalId` filtra; inexistente, inativo ou de outro tenant → `{error}`
+- [x] Teto vem do `SchedulingSettings` (asserção com 3 configurado e com ausência → 16)
+- [x] `upcomingAppointments` só com os ativos futuros do `Customer` desta `Conversation` — nunca de outro cliente ou tenant
 
 **Tests**: integration · **Gate**: full
+**Status**: ✅ Complete (commit ba11b2e)
 
 ---
 
@@ -599,12 +600,13 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-15, SCH-16, SCH-17, SCH-18, SCH-19
 
 **Done when**:
-- [ ] `confirmationUrl === \`${ctx.webBaseUrl}/appointment?token=apt_…\``, com data/hora na exibição, nome do profissional e `status:'pending'`
-- [ ] Sem `ctx.webBaseUrl` → `{error}` e **zero** `Appointment` criado
-- [ ] Erros de T6 chegam como `{error}` (nunca `throw`); Conversation de outro tenant → `{error}`
-- [ ] Input sem campo de tenant, canal, conversa ou cliente
+- [x] `confirmationUrl === \`${ctx.webBaseUrl}/appointment?token=apt_…\``, com data/hora na exibição, nome do profissional e `status:'pending'`
+- [x] Sem `ctx.webBaseUrl` → `{error}` e **zero** `Appointment` criado
+- [x] Erros de T6 chegam como `{error}` (nunca `throw`); Conversation de outro tenant → `{error}`
+- [x] Input sem campo de tenant, canal, conversa ou cliente
 
 **Tests**: integration · **Gate**: full
+**Status**: ✅ Complete (commit ed8b00b)
 
 ---
 
@@ -617,10 +619,11 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-19
 
 **Done when**:
-- [ ] `EXPECTED_TOOL_NAMES` com 10 nomes e `toHaveLength(10)`; lista de `promptInjection.int.test.ts:159` com 10
-- [ ] Descrições das tools mandam usar exatamente o `start` devolvido e repassar o link de confirmação
+- [x] `EXPECTED_TOOL_NAMES` com 10 nomes e `toHaveLength(10)`; lista de `promptInjection.int.test.ts:159` com 10
+- [x] Descrições das tools mandam usar exatamente o `start` devolvido e repassar o link de confirmação
 
 **Tests**: structural, integration · **Gate**: full
+**Status**: ✅ Complete (commit 6c06143)
 
 ---
 
@@ -633,10 +636,11 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-15
 
 **Done when**:
-- [ ] Caso novo em `runTurn.int.test.ts`: fake client pede `book_appointment` e o `tool_result` traz URL começando com o `webBaseUrl` injetado; sem injeção → `tool_result` com `{error}` e zero `Appointment`
-- [ ] Os demais casos de `runTurn` seguem verdes sem alteração
+- [x] Caso novo em `runTurn.int.test.ts`: fake client pede `book_appointment` e o `tool_result` traz URL começando com o `webBaseUrl` injetado; sem injeção → `tool_result` com `{error}` e zero `Appointment`
+- [x] Os demais casos de `runTurn` seguem verdes sem alteração
 
 **Tests**: integration · **Gate**: full
+**Status**: ✅ Complete (commit 7f9c8d1) — corrigido também um flake latente e pré-existente (grid 00:00-23:30 sem slot às 23:30), achado ao escrever o teste desta task
 
 ---
 
@@ -649,11 +653,12 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-09, SCH-15 · AD-036
 
 **Done when**:
-- [ ] Prompt descreve as 10 tools e a sequência consultar → escolher → reservar → enviar o link
-- [ ] `SYSTEM_PROMPT` continua byte-idêntico entre tenants e turnos (asserção existente preservada)
-- [ ] `formatNow` usa `DISPLAY_TIMEZONE` de `@crm/contracts`; nenhum `'America/Sao_Paulo'` literal sobra no arquivo
+- [x] Prompt descreve as 10 tools e a sequência consultar → escolher → reservar → enviar o link
+- [x] `SYSTEM_PROMPT` continua byte-idêntico entre tenants e turnos (asserção existente preservada)
+- [x] `formatNow` usa `DISPLAY_TIMEZONE` de `@crm/contracts`; nenhum `'America/Sao_Paulo'` literal sobra no arquivo
 
 **Tests**: integration · **Gate**: full
+**Status**: ✅ Complete (commit 6f2da34)
 
 ---
 
@@ -666,11 +671,12 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-15, SCH-16, SCH-20 · Edge Case do `guard.output`
 
 **Done when**:
-- [ ] `runTurn` real: `get_available_slots` → `book_appointment` cria `pending` com `start` UTC, e a resposta ao cliente contém o link `apt_…` intacto (sem `[removido]`)
-- [ ] Modelo tentando reservar fora da grade ou horário ocupado → `tool_result` `{error}` e nenhum `Appointment`
-- [ ] Dois `runTurn` concorrentes (`Promise.all`) para o mesmo slot → exatamente 1 agendamento
+- [x] `runTurn` real: `get_available_slots` → `book_appointment` cria `pending` com `start` UTC, e a resposta ao cliente contém o link `apt_…` intacto (sem `[removido]`)
+- [x] Modelo tentando reservar fora da grade ou horário ocupado → `tool_result` `{error}` e nenhum `Appointment`
+- [x] Dois `runTurn` concorrentes (`Promise.all`) para o mesmo slot → exatamente 1 agendamento
 
 **Tests**: integration · **Gate**: full
+**Status**: ✅ Complete (commit 5a141a4)
 
 ---
 
