@@ -115,6 +115,30 @@ describe('WeekGrid (T38, spec.md SCH-29/SCH-35)', () => {
     expect(completedButton.className).not.toContain('border-destructive');
   });
 
+  it('colors a canceled appointment as muted, regardless of who canceled it', () => {
+    const canceled: AppointmentRecord = {
+      ...baseAppointment,
+      id: 'canceled-1',
+      status: 'canceled_by_operator',
+    };
+
+    render(<WeekGrid weekStart="2026-09-14" items={[canceled]} onSelect={vi.fn()} />);
+
+    const canceledButton = screen.getByTestId('week-grid-item-canceled-1');
+    expect(canceledButton.className).toContain('bg-muted');
+    expect(canceledButton.className).not.toContain('border-destructive');
+  });
+
+  it('colors a completed appointment differently from a no-show one', () => {
+    const completed: AppointmentRecord = { ...baseAppointment, id: 'completed-2', status: 'completed' };
+    const noShow: AppointmentRecord = { ...baseAppointment, id: 'no-show-1', status: 'no_show' };
+
+    render(<WeekGrid weekStart="2026-09-14" items={[completed, noShow]} onSelect={vi.fn()} />);
+
+    expect(screen.getByTestId('week-grid-item-completed-2').className).toContain('emerald');
+    expect(screen.getByTestId('week-grid-item-no-show-1').className).toContain('red');
+  });
+
   it('calls onSelect with the clicked item', () => {
     const onSelect = vi.fn();
     render(<WeekGrid weekStart="2026-09-14" items={[baseAppointment]} onSelect={onSelect} />);

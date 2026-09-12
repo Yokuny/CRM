@@ -22,6 +22,22 @@ export type WeekGridProps = {
 
 const DAYS_IN_WEEK = 7;
 const ACTIVE_STATUSES: AppointmentRecord['status'][] = ['pending', 'confirmed'];
+const CANCELED_STATUSES: AppointmentRecord['status'][] = ['canceled_by_customer', 'canceled_by_operator'];
+
+// Cor por status, mesma paleta semântica de badge.tsx (completed/no_show) —
+// só cor, sem badge/riscado, pra caber no botão compacto da grade. Cancelado
+// usa o mesmo tom neutro de bloqueio (sem o `border-dashed`), já que os dois
+// significam "não é mais um compromisso ativo" para quem olha a agenda.
+const statusColorClasses = (status: AppointmentRecord['status']): string | false => {
+  if (CANCELED_STATUSES.includes(status)) return 'border-muted-foreground/30 bg-muted text-muted-foreground';
+  if (status === 'completed') {
+    return 'border-emerald-600/30 bg-emerald-50 text-emerald-900 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-400';
+  }
+  if (status === 'no_show') {
+    return 'border-red-600/20 bg-red-50 text-red-900 dark:border-red-400/20 dark:bg-red-400/10 dark:text-red-400';
+  }
+  return false;
+};
 
 // SCH-29/SCH-35: 7 colunas de dia a partir de `weekStart`, cada item
 // posicionado/rotulado só via displayTime.helper.ts (nunca `formatDate.helper.ts`
@@ -60,6 +76,7 @@ export function WeekGrid({ weekStart, items, onSelect }: WeekGridProps) {
                     className={cn(
                       'rounded-sm border p-1.5 text-left text-xs',
                       isBlock ? 'border-dashed bg-muted text-muted-foreground' : 'bg-background',
+                      !isBlock && statusColorClasses(item.status),
                       isOverdue && 'border-destructive bg-destructive/10 text-destructive',
                     )}
                   >

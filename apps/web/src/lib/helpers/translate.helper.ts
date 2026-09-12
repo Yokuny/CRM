@@ -157,7 +157,11 @@ const translations: Record<string, string> = {
   'schedule.window.start': 'Início',
   'schedule.window.end': 'Fim',
   // Telas de Profissional (feature scheduling, Fase 7/T34) — routes/_private/
-  // schedule/professionals/**.
+  // schedule/professionals/**. Chave crua `professionals` é o fallback de
+  // breadcrumb (card.tsx, PageBreadcrumb) pro segmento intermediário da URL
+  // quando a página aberta é `add`/`details` (rota-irmã de `index.tsx`, sem
+  // staticData própria pro prefixo) — mesmo padrão de `customers`/`schedule`.
+  professionals: 'Profissionais',
   'professional.list.title': 'Profissionais',
   'professional.create.title': 'Novo profissional',
   'professional.details.title': 'Detalhe do profissional',
@@ -167,7 +171,9 @@ const translations: Record<string, string> = {
   'professional.status.inactive': 'Inativo',
   'professional.filter.show_inactive': 'Mostrar inativos',
   // Telas de Ambiente (feature scheduling, Fase 7/T35) — routes/_private/
-  // schedule/spaces/**.
+  // schedule/spaces/**. Chave crua `spaces` é o mesmo fallback de breadcrumb
+  // de `professionals` acima.
+  spaces: 'Ambientes',
   'space.list.title': 'Ambientes',
   'space.create.title': 'Novo ambiente',
   'space.details.title': 'Detalhe do ambiente',
