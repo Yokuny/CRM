@@ -272,6 +272,12 @@ const translations: Record<string, string> = {
   'kanban.card.update.error': 'Não foi possível salvar o card.',
   'kanban.card.delete.action': 'Remover card',
   'kanban.card.delete.error': 'Não foi possível remover o card.',
+  // T19 — routes/_private/kanban/details/@components/column-manager-panel.tsx
+  // (painel inline de gerenciar colunas, AD-037).
+  'kanban.column_manager.title': 'Gerenciar colunas',
+  'kanban.column_manager.move_up': 'Mover para cima',
+  'kanban.column_manager.move_down': 'Mover para baixo',
+  'kanban.column.field.color': 'Cor',
 };
 
 export const t = (key: string): string => translations[key] ?? key;
