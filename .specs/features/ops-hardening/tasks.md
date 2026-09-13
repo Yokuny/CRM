@@ -393,6 +393,8 @@ other injectable-boundary functions in `packages/ai-kit/src/providers/`.
 
 **Commit**: `feat(ops): add evaluateThreshold pure function for cache audit`
 
+**Status**: ✅ Done — commit `cad32ad`
+
 ---
 
 ### T9: Cache audit CLI wiring + root script
@@ -431,6 +433,10 @@ devDependency, same invocation style as `"dev": "tsx watch src/server.ts"`).
 
 **Commit**: `feat(ops): wire cache threshold audit CLI`
 
+**Status**: ✅ Done — commit `c58b5f8` (also exports `SYSTEM_PROMPT` from `contextBuild.ts`,
+which was module-private — a one-keyword addition outside this task's `Where`, required so the
+audit script can import the real frozen prompt instead of duplicating it)
+
 ---
 
 ### T10: Extend `vitest.config.ts` to collect `evals/**/*.unit.test.ts`
@@ -460,6 +466,8 @@ coletaria os arquivos").
 **Gate**: build
 
 **Commit**: `chore(ops): collect evals/**/*.unit.test.ts in the unit project`
+
+**Status**: ✅ Done — commit `8551e00`
 
 ---
 
@@ -495,6 +503,8 @@ collected because of T10.
 **Gate**: quick
 
 **Commit**: `feat(ops): add anonymizeTranscript for replay pipeline`
+
+**Status**: ✅ Done — commit `9b0fff9`
 
 ---
 
@@ -540,6 +550,8 @@ the `integration` project).
 
 **Commit**: `feat(ops): add runReplay orchestration for replay pipeline`
 
+**Status**: ✅ Done — commit `afa2a1c`
+
 ---
 
 ### T13: Replay CLI entrypoint + root script
@@ -575,6 +587,11 @@ devDependency via `packages/db`'s test setup), `connect`/`disconnect` (`@crm/db`
 **Gate**: build
 
 **Commit**: `feat(ops): add replay CLI entrypoint`
+
+**Status**: ✅ Done — commit `2437a97` (also adds `mongodb-memory-server` as a root
+devDependency, pinned to the same `11.2.0` already used by `packages/db` — `cli.ts` lives outside
+any workspace package and could not otherwise resolve it; `package.json` was already in this
+task's `Where`, `pnpm-lock.yaml`'s update is the mechanical side effect of `pnpm install`)
 
 ---
 
