@@ -20,6 +20,9 @@ importers:
       '@crm/db':
         specifier: workspace:*
         version: link:packages/db
+      mongodb-memory-server:
+        specifier: 11.2.0
+        version: 11.2.0
       tsx:
         specifier: ^4.19.2
         version: 4.23.13
