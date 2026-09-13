@@ -5,3 +5,4 @@ coverage/
 *.local
 /playwright-skill/
 /whatsapp-mcp
+.temp-execution-*.js
