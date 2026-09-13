@@ -244,41 +244,41 @@ Cada requisito recebe um ID único para rastreio entre design, tasks e validaç�
 
 | Requirement ID | Story | Phase | Status | Task(s) |
 | --- | --- | --- | --- | --- |
-| KAN-01 | P1: Board CRUD e hub | Tasks | In Tasks | T1, T3, T6, T8, T10, T12, T14, T16 |
-| KAN-02 | P1: Board CRUD e hub | Tasks | In Tasks | T1, T3, T8, T10, T12, T16 |
-| KAN-03 | P1: Board CRUD e hub | Tasks | In Tasks | T6, T10, T12, T14, T15, T20 |
-| KAN-04 | P1: Board CRUD e hub | Tasks | In Tasks | T3, T6, T8, T10, T12, T14 |
-| KAN-05 | P1: Board CRUD e hub | Tasks | In Tasks | T12 |
-| KAN-06 | P1: Board CRUD e hub | Tasks | In Tasks | T6, T8, T10, T12, T20 |
-| KAN-07 | P1: Gerenciar colunas | Tasks | In Tasks | T4, T6, T8, T10, T12, T14, T19 |
-| KAN-08 | P1: Gerenciar colunas | Tasks | In Tasks | T4, T6, T8, T10, T12, T14, T19 |
-| KAN-09 | P1: Gerenciar colunas | Tasks | In Tasks | T4, T6, T8, T10, T12, T14, T19 |
-| KAN-10 | P1: Gerenciar colunas | Tasks | In Tasks | T4, T8, T10, T12, T19 |
-| KAN-11 | P1: Gerenciar colunas | Tasks | In Tasks | T4, T8, T10, T12, T19 |
-| KAN-12 | P1: Gerenciar colunas | Tasks | In Tasks | T4, T6, T8, T10, T12, T14, T19 |
-| KAN-13 | P1: CRUD de card | Tasks | In Tasks | T2, T5, T7, T9, T11, T13, T14, T18 |
-| KAN-14 | P1: CRUD de card | Tasks | In Tasks | T2, T5, T9, T11, T13, T18 |
-| KAN-15 | P1: CRUD de card | Tasks | In Tasks | T5, T9, T11, T13 |
-| KAN-16 | P1: CRUD de card | Tasks | In Tasks | T5, T7, T9, T11, T13, T14, T18 |
-| KAN-17 | P1: CRUD de card | Tasks | In Tasks | T7, T9, T11, T13, T14, T18 |
-| KAN-18 | P1: Mover card | Tasks | In Tasks | T5, T7, T9, T11, T13, T14, T20 |
-| KAN-19 | P1: Mover card | Tasks | In Tasks | T5, T7, T9, T11, T13, T14, T20 |
-| KAN-20 | P1: Mover card | Tasks | In Tasks | T13, T14, T20 |
-| KAN-21 | P1: Mover card | Tasks | In Tasks | T5, T9, T11, T13, T20 |
-| KAN-22 | P2: Apagar board | Tasks | In Tasks | T8, T10, T12, T14 |
-| KAN-23 | P2: Apagar board | Tasks | In Tasks | T12 |
-| KAN-24 | P2: Card exibe vínculos | Tasks | In Tasks | T7, T11, T13, T17 |
-| KAN-25 | P2: Card exibe vínculos | Tasks | In Tasks | T7, T11, T13, T17 |
-| KAN-26 | P2: Card exibe vínculos | Tasks | In Tasks | T7, T11, T13, T17 |
-| KAN-27 | P2: Card exibe vínculos | Tasks | In Tasks | T7, T11, T13, T17 |
-| KAN-28 | P2: Card exibe vínculos | Tasks | In Tasks | T7, T11, T13, T17 |
-| KAN-29 | P3: Cor por coluna | Tasks | In Tasks | T1, T4, T12, T19 |
+| KAN-01 | P1: Board CRUD e hub | Tasks | ✅ Verified | T1, T3, T6, T8, T10, T12, T14, T16 |
+| KAN-02 | P1: Board CRUD e hub | Tasks | ✅ Verified | T1, T3, T8, T10, T12, T16 |
+| KAN-03 | P1: Board CRUD e hub | Tasks | ✅ Verified | T6, T10, T12, T14, T15, T20 |
+| KAN-04 | P1: Board CRUD e hub | Tasks | ✅ Verified | T3, T6, T8, T10, T12, T14 |
+| KAN-05 | P1: Board CRUD e hub | Tasks | ✅ Verified | T12 |
+| KAN-06 | P1: Board CRUD e hub | Tasks | ✅ Verified | T6, T8, T10, T12, T20 |
+| KAN-07 | P1: Gerenciar colunas | Tasks | ✅ Verified | T4, T6, T8, T10, T12, T14, T19 |
+| KAN-08 | P1: Gerenciar colunas | Tasks | ✅ Verified | T4, T6, T8, T10, T12, T14, T19 |
+| KAN-09 | P1: Gerenciar colunas | Tasks | ✅ Verified | T4, T6, T8, T10, T12, T14, T19 |
+| KAN-10 | P1: Gerenciar colunas | Tasks | ✅ Verified | T4, T8, T10, T12, T19 |
+| KAN-11 | P1: Gerenciar colunas | Tasks | ✅ Verified | T4, T8, T10, T12, T19 |
+| KAN-12 | P1: Gerenciar colunas | Tasks | ✅ Verified | T4, T6, T8, T10, T12, T14, T19 |
+| KAN-13 | P1: CRUD de card | Tasks | ✅ Verified | T2, T5, T7, T9, T11, T13, T14, T18 |
+| KAN-14 | P1: CRUD de card | Tasks | ✅ Verified | T2, T5, T9, T11, T13, T18 |
+| KAN-15 | P1: CRUD de card | Tasks | ✅ Verified | T5, T9, T11, T13 |
+| KAN-16 | P1: CRUD de card | Tasks | ✅ Verified | T5, T7, T9, T11, T13, T14, T18 |
+| KAN-17 | P1: CRUD de card | Tasks | ✅ Verified | T7, T9, T11, T13, T14, T18 |
+| KAN-18 | P1: Mover card | Tasks | ✅ Verified | T5, T7, T9, T11, T13, T14, T20 |
+| KAN-19 | P1: Mover card | Tasks | ✅ Verified | T5, T7, T9, T11, T13, T14, T20 |
+| KAN-20 | P1: Mover card | Tasks | ✅ Verified | T13, T14, T20 |
+| KAN-21 | P1: Mover card | Tasks | ✅ Verified | T5, T9, T11, T13, T20 |
+| KAN-22 | P2: Apagar board | Tasks | ✅ Verified | T8, T10, T12, T14 |
+| KAN-23 | P2: Apagar board | Tasks | ✅ Verified | T12 |
+| KAN-24 | P2: Card exibe vínculos | Tasks | ✅ Verified | T7, T11, T13, T17 |
+| KAN-25 | P2: Card exibe vínculos | Tasks | ✅ Verified | T7, T11, T13, T17 |
+| KAN-26 | P2: Card exibe vínculos | Tasks | ✅ Verified | T7, T11, T13, T17 |
+| KAN-27 | P2: Card exibe vínculos | Tasks | ✅ Verified | T7, T11, T13, T17 |
+| KAN-28 | P2: Card exibe vínculos | Tasks | ✅ Verified | T7, T11, T13, T17 |
+| KAN-29 | P3: Cor por coluna | Tasks | ⚠️ Verified (partial — see validation.md) | T1, T4, T12, T19 |
 
 **ID format:** `KAN-[NUMBER]`
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Verified
 
-**Coverage:** 29 total, 29 mapped to tasks, 0 unmapped ✅
+**Coverage:** 29 total, 29 mapped to tasks, 28 ✅ Verified, 1 ⚠️ Verified (partial — KAN-29, ver `validation.md`)
 
 ---
 
