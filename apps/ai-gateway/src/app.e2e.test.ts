@@ -1,9 +1,12 @@
-import { createHmac } from 'node:crypto';
-import { connect, disconnect } from '@crm/db';
+import crypto, { createHmac } from 'node:crypto';
+import { AiSession, Conversation, connect, disconnect, Message } from '@crm/db';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { buildApp } from './app.js';
 import { env } from './config/env.config.js';
+
+const randomId = (): string => crypto.randomBytes(12).toString('hex');
+const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 // AD-002: dois serviços sobre o mesmo Mongo — o ai-gateway também precisa
 // responder /health desde a feature 1. MongoMemoryServer real (globalSetup do
@@ -93,6 +96,88 @@ describe('start()', () => {
 
     expect(handle).toBeDefined();
     expect(handle?.httpServer.listening).toBe(true);
+
+    handle?.stopWorkers();
+    await new Promise<void>((resolve, reject) => {
+      handle?.httpServer.close((err) => (err ? reject(err) : resolve()));
+    });
+  });
+
+  // OPS-08 (wiring-level): flag desligada (default do env de teste, sem
+  // RETENTION_PURGE_ENABLED definida — env.config.ts .default('false')) nunca
+  // agenda o worker, mesmo com retentionIntervalMs/retentionMs curtos.
+  it('with retentionPurgeEnabled left at its env default (false), never deletes a seeded expired Conversation even after waiting past a short interval', async () => {
+    const { start } = await import('./server.js');
+
+    const handle = await start({
+      port: 0,
+      outboxIntervalMs: 10,
+      reaperIntervalMs: 10,
+      reaperStaleAfterMs: 10,
+      idleIntervalMs: 10,
+      idleAfterMs: 10,
+      retentionIntervalMs: 10,
+      retentionMs: 10,
+    });
+
+    const conversation = await Conversation.create({
+      Tenant: randomId(),
+      Channel: randomId(),
+      Customer: randomId(),
+      createdAt: new Date(Date.now() - 1000),
+    });
+
+    await sleep(80);
+
+    expect(await Conversation.findById(conversation._id).lean()).not.toBeNull();
+
+    handle?.stopWorkers();
+    await new Promise<void>((resolve, reject) => {
+      handle?.httpServer.close((err) => (err ? reject(err) : resolve()));
+    });
+    await Conversation.deleteMany({ _id: conversation._id });
+  });
+
+  // OPS-09 (wiring-level): flag ligada via opts (mesmo padrão de
+  // reaperIntervalMs) agenda o worker de fato — expira e faz cascata via
+  // start()/stopWorkers(), não só via chamada direta da função pura (T5).
+  it('with retentionPurgeEnabled:true deletes a seeded expired Conversation (and its Message/AiSession) after a short wait', async () => {
+    const { start } = await import('./server.js');
+
+    const handle = await start({
+      port: 0,
+      outboxIntervalMs: 10,
+      reaperIntervalMs: 10,
+      reaperStaleAfterMs: 10,
+      idleIntervalMs: 10,
+      idleAfterMs: 10,
+      retentionPurgeEnabled: true,
+      retentionIntervalMs: 10,
+      retentionMs: 10,
+    });
+
+    const conversation = await Conversation.create({
+      Tenant: randomId(),
+      Channel: randomId(),
+      Customer: randomId(),
+      createdAt: new Date(Date.now() - 1000),
+    });
+    const message = await Message.create({
+      Tenant: randomId(),
+      Conversation: conversation._id,
+      Channel: randomId(),
+      Customer: randomId(),
+      direction: 'in',
+      type: 'text',
+      text: 'olá',
+    });
+    const aiSession = await AiSession.create({ Tenant: randomId(), Conversation: conversation._id });
+
+    await sleep(80);
+
+    expect(await Conversation.findById(conversation._id).lean()).toBeNull();
+    expect(await Message.findById(message._id).lean()).toBeNull();
+    expect(await AiSession.findById(aiSession._id).lean()).toBeNull();
 
     handle?.stopWorkers();
     await new Promise<void>((resolve, reject) => {

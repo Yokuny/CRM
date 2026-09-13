@@ -8,6 +8,7 @@ import { startAsaasReconcile } from './workers/asaasReconcile.js';
 import { startIdleTakeoverSweep } from './workers/idleTakeoverSweep.js';
 import { startOutboxConsumer } from './workers/outboxConsumer.js';
 import { startReaper } from './workers/reaper.js';
+import { startRetentionPurge } from './workers/retentionPurge.js';
 
 // `opts` existe só para permitir que o e2e teste (T32) injete uma porta
 // efêmera (0) e intervalos curtos para os 3 workers, sem esperar os defaults
@@ -23,6 +24,12 @@ export type StartOptions = {
   // payments-asaas T25: mesmo motivo dos demais — deixa o e2e injetar um
   // intervalo curto, defaultando a 300000ms (5min, design.md) em produção.
   asaasReconcileIntervalMs?: number;
+  // OPS-08/09: permite ao e2e ligar/desligar e injetar intervalos curtos sem
+  // depender de env.RETENTION_PURGE_ENABLED real — mesmo motivo das opções
+  // acima. Sem override, cai no valor do env (default 'false').
+  retentionPurgeEnabled?: boolean;
+  retentionIntervalMs?: number;
+  retentionMs?: number;
 };
 
 export type StartHandle = {
@@ -52,6 +59,14 @@ export const start = async (opts: StartOptions = {}): Promise<StartHandle | unde
     // createAudioDownloader (app.ts) e startOutboxConsumer (aqui).
     const asaasClient = createAsaasClient(env.ASAAS_ENC_KEY);
     const asaasReconcile = startAsaasReconcile({ asaasClient }, opts.asaasReconcileIntervalMs);
+    // OPS-08: desligado por padrão (env.RETENTION_PURGE_ENABLED === 'false')
+    // — só agenda o setInterval quando explicitamente ligado (opts ou env).
+    // stop() sempre existe (no-op quando nunca agendado) para stopWorkers
+    // tratar os 4 workers uniformemente.
+    const retentionPurgeEnabled = opts.retentionPurgeEnabled ?? env.RETENTION_PURGE_ENABLED === 'true';
+    const retentionPurge = retentionPurgeEnabled
+      ? startRetentionPurge(opts.retentionIntervalMs, opts.retentionMs)
+      : { stop: () => {} };
 
     return {
       httpServer,
@@ -60,6 +75,7 @@ export const start = async (opts: StartOptions = {}): Promise<StartHandle | unde
         reaper.stop();
         idle.stop();
         asaasReconcile.stop();
+        retentionPurge.stop();
       },
     };
   } catch (e) {

@@ -57,7 +57,8 @@ describe('ops/grafana/crm-api-dashboard.json', () => {
 
     expect(metricRefs.length).toBeGreaterThan(0);
     for (const ref of metricRefs) {
-      const isKnownMetric = ref.startsWith('http_request_duration_seconds_') || ref.startsWith('db_operation_duration_seconds_');
+      const isKnownMetric =
+        ref.startsWith('http_request_duration_seconds_') || ref.startsWith('db_operation_duration_seconds_');
       expect(isKnownMetric).toBe(true);
     }
   });

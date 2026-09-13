@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
-import { AiSession, connect, Conversation, disconnect, Message } from '@crm/db';
+import type { ConversationDocument } from '@crm/db';
+import { AiSession, Conversation, connect, disconnect, Message } from '@crm/db';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { purgeExpiredConversations, startRetentionPurge } from './retentionPurge.js';
 
@@ -15,7 +16,7 @@ const seedConversation = async (overrides: Record<string, unknown> = {}) =>
     ...overrides,
   });
 
-const seedMessage = async (conversationId: unknown, overrides: Record<string, unknown> = {}) =>
+const seedMessage = async (conversationId: ConversationDocument['_id'], overrides: Record<string, unknown> = {}) =>
   Message.create({
     Tenant: randomId(),
     Conversation: conversationId,
@@ -27,7 +28,7 @@ const seedMessage = async (conversationId: unknown, overrides: Record<string, un
     ...overrides,
   });
 
-const seedAiSession = async (conversationId: unknown, overrides: Record<string, unknown> = {}) =>
+const seedAiSession = async (conversationId: ConversationDocument['_id'], overrides: Record<string, unknown> = {}) =>
   AiSession.create({
     Tenant: randomId(),
     Conversation: conversationId,
