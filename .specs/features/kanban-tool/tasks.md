@@ -386,6 +386,8 @@ de gravar)
 
 **Commit**: `feat(kanban): add board controller`
 
+**Status**: ✅ Done — commit `87f0a71`
+
 ---
 
 ### T11: `card.controller.ts`
@@ -409,6 +411,8 @@ de gravar)
 **Gate**: build
 
 **Commit**: `feat(kanban): add card controller`
+
+**Status**: ✅ Done — commit `a46718b`
 
 ---
 
@@ -441,6 +445,8 @@ declaração), `PATCH/DELETE /boards/:id/columns/:columnId`; `validToken`+`tenan
 
 **Commit**: `feat(kanban): add board router with column sub-routes and mount in app`
 
+**Status**: ✅ Done — commit `a274b1c`
+
 ---
 
 ### T13: `board.router.ts` (sub-rotas de card)
@@ -468,6 +474,8 @@ declaração), `PATCH/DELETE /boards/:id/columns/:columnId`; `validToken`+`tenan
 **Gate**: full
 
 **Commit**: `feat(kanban): add card sub-routes to board router`
+
+**Status**: ✅ Done — commit `2896a19`
 
 ---
 
@@ -497,6 +505,8 @@ declaração), `PATCH/DELETE /boards/:id/columns/:columnId`; `validToken`+`tenan
 
 **Commit**: `feat(kanban): add board/card TanStack Query hooks`
 
+**Status**: ✅ Done — commit `4f6d01b`
+
 ---
 
 ### T15: Hub de boards (`kanban/index.tsx`)
@@ -524,6 +534,8 @@ quando não há nenhum, `Link` pra `/kanban/add` e pra `/kanban/details?id=`.
 
 **Commit**: `feat(kanban): add boards hub screen`
 
+**Status**: ✅ Done — commit `4910566`
+
 ---
 
 ### T16: Criar board (`kanban/add/index.tsx`)
@@ -550,6 +562,8 @@ quando não há nenhum, `Link` pra `/kanban/add` e pra `/kanban/details?id=`.
 
 **Commit**: `feat(kanban): add create-board form`
 
+**Status**: ✅ Done — commit `fa69ca5`
+
 ---
 
 ### T17: Conteúdo do card (`kanban-card-content.tsx`)
@@ -575,6 +589,8 @@ customer/process/order/assignee (só renderiza o que existe, KAN-28).
 **Gate**: quick
 
 **Commit**: `feat(kanban): add card content display component`
+
+**Status**: ✅ Done — commit `b607d71`
 
 ---
 
@@ -603,6 +619,8 @@ inline, AD-037)
 
 **Commit**: `feat(kanban): add inline card panel (create/edit/delete)`
 
+**Status**: ✅ Done — commit `807dd59`. SPEC_DEVIATION: campos `process`/`order`/`assignee` são inputs de texto (ID cru), não `<Select>` pesquisável — não existe hoje uma query de listagem tenant-wide de Process/Order/User no front-end, e criá-la estava fora do escopo desta task. `customer` usa `<Select>` de verdade (`customersQuery` já existe).
+
 ---
 
 ### T19: Painel de gerenciar colunas (`column-manager-panel.tsx`)
@@ -630,6 +648,8 @@ for a última).
 **Gate**: quick
 
 **Commit**: `feat(kanban): add inline column manager panel`
+
+**Status**: ✅ Done — commit `3b27e31`
 
 ---
 
@@ -660,6 +680,8 @@ for a última).
 **Gate**: quick
 
 **Commit**: `feat(kanban): add board detail screen with drag-and-drop`
+
+**Status**: ✅ Done — commit `378e71d`
 
 ---
 
