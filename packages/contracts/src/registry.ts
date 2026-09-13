@@ -7,6 +7,7 @@ import { createAsaasIntegrationSchema } from './schemas/createAsaasIntegration.s
 import { createBlockSchema } from './schemas/createBlock.schema.js';
 import { createBoardSchema } from './schemas/createBoard.schema.js';
 import { createChannelSchema } from './schemas/createChannel.schema.js';
+import { createColumnSchema, hexColorSchema } from './schemas/createColumn.schema.js';
 import { createCustomerSchema } from './schemas/createCustomer.schema.js';
 import { createFieldTemplateSchema } from './schemas/createFieldTemplate.schema.js';
 import { createInviteSchema } from './schemas/createInvite.schema.js';
@@ -28,11 +29,13 @@ import { migrationActionSchema } from './schemas/migrationAction.schema.js';
 import { openProcessInputSchema } from './schemas/openProcessInput.schema.js';
 import { provisionTenantSchema } from './schemas/provisionTenant.schema.js';
 import { rejectOrderSchema } from './schemas/rejectOrder.schema.js';
+import { reorderColumnsSchema } from './schemas/reorderColumns.schema.js';
 import { rescheduleAppointmentSchema } from './schemas/rescheduleAppointment.schema.js';
 import { sendMessageSchema } from './schemas/sendMessage.schema.js';
 import { setProcessFieldsInputSchema } from './schemas/setProcessFieldsInput.schema.js';
 import { signinSchema } from './schemas/signin.schema.js';
 import { updateBoardSchema } from './schemas/updateBoard.schema.js';
+import { updateColumnSchema } from './schemas/updateColumn.schema.js';
 import { updateCustomerSchema } from './schemas/updateCustomer.schema.js';
 import { updateProcessStageSchema } from './schemas/updateProcessStage.schema.js';
 import { updateProcessValuesSchema } from './schemas/updateProcessValues.schema.js';
@@ -71,6 +74,10 @@ export const schemaRegistry: ReadonlyArray<{ name: string; schema: ZodType }> = 
   { name: 'createChannelSchema', schema: createChannelSchema },
   { name: 'createBoardSchema', schema: createBoardSchema },
   { name: 'updateBoardSchema', schema: updateBoardSchema },
+  { name: 'createColumnSchema', schema: createColumnSchema },
+  { name: 'hexColorSchema', schema: hexColorSchema },
+  { name: 'updateColumnSchema', schema: updateColumnSchema },
+  { name: 'reorderColumnsSchema', schema: reorderColumnsSchema },
   { name: 'createCustomerSchema', schema: createCustomerSchema },
   { name: 'updateCustomerSchema', schema: updateCustomerSchema },
   { name: 'createProcessSchema', schema: createProcessSchema },
