@@ -17,6 +17,7 @@ import { createAppointmentRouter } from './routers/appointment.router.js';
 import { appointmentConfirmationRouter } from './routers/appointmentConfirmation.router.js';
 import { createAsaasIntegrationRouter } from './routers/asaasIntegration.router.js';
 import { createAuthRouter } from './routers/auth.router.js';
+import { createBoardRouter } from './routers/board.router.js';
 import { createChannelRouter } from './routers/channel.router.js';
 import { createConversationRouter } from './routers/conversation.router.js';
 import { createCustomerRouter } from './routers/customer.router.js';
@@ -77,6 +78,7 @@ export const buildApp = (): Express => {
   app.use('/processes', createProcessRouter({ validToken }));
   app.use('/products', createProductRouter({ validToken }));
   app.use('/professionals', createProfessionalRouter({ validToken }));
+  app.use('/boards', createBoardRouter({ validToken }));
   app.use('/spaces', createSpaceRouter({ validToken }));
   app.use('/scheduling-settings', createSchedulingSettingsRouter({ validToken }));
   app.use('/appointments', createAppointmentRouter({ validToken }));
