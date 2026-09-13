@@ -1,15 +1,19 @@
 import {
   createBoardSchema,
+  createCardSchema,
   createColumnSchema,
   idSchema,
+  moveCardSchema,
   reorderColumnsSchema,
   updateBoardSchema,
+  updateCardSchema,
   updateColumnSchema,
 } from '@crm/contracts';
 import type { RequestHandler } from 'express';
 import { Router } from 'express';
 import { z } from 'zod';
 import * as boardController from '../controllers/board.controller.js';
+import * as cardController from '../controllers/card.controller.js';
 import { checkRole, isAdmin } from '../middlewares/authorization.middleware.js';
 import { tenantAssignmentCheck } from '../middlewares/tenantAssign.middleware.js';
 import { validBody, validParams } from '../middlewares/validation.middleware.js';
@@ -21,6 +25,7 @@ const canOperate = checkRole(['admin', 'gestor', 'operador']);
 
 const boardIdParamSchema = z.object({ id: idSchema }).strict();
 const columnParamSchema = z.object({ id: idSchema, columnId: idSchema }).strict();
+const cardParamSchema = z.object({ id: idSchema, cardId: idSchema }).strict();
 
 export type BoardRouterDeps = { validToken: RequestHandler };
 
@@ -108,6 +113,56 @@ export const createBoardRouter = (deps: BoardRouterDeps): Router => {
     canOperate,
     validParams(columnParamSchema),
     boardController.removeColumn,
+  );
+
+  router.post(
+    '/:id/cards',
+    deps.validToken,
+    tenantAssignmentCheck,
+    canOperate,
+    validParams(boardIdParamSchema),
+    validBody(createCardSchema),
+    cardController.createCard,
+  );
+
+  router.get(
+    '/:id/cards',
+    deps.validToken,
+    tenantAssignmentCheck,
+    canOperate,
+    validParams(boardIdParamSchema),
+    cardController.listCards,
+  );
+
+  router.patch(
+    '/:id/cards/:cardId',
+    deps.validToken,
+    tenantAssignmentCheck,
+    canOperate,
+    validParams(cardParamSchema),
+    validBody(updateCardSchema),
+    cardController.updateCard,
+  );
+
+  // KAN-18/19/21: rota dedicada de mover, separada de updateCard — nunca
+  // aceita column/position fora desta rota (design.md).
+  router.patch(
+    '/:id/cards/:cardId/move',
+    deps.validToken,
+    tenantAssignmentCheck,
+    canOperate,
+    validParams(cardParamSchema),
+    validBody(moveCardSchema),
+    cardController.moveCard,
+  );
+
+  router.delete(
+    '/:id/cards/:cardId',
+    deps.validToken,
+    tenantAssignmentCheck,
+    canOperate,
+    validParams(cardParamSchema),
+    cardController.deleteCard,
   );
 
   return router;

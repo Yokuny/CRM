@@ -1,6 +1,20 @@
 import crypto from 'node:crypto';
 import type { Role } from '@crm/contracts';
-import { Board, Card, connect, disconnect, hashToken, Session, syncIndexes, Tenant, User } from '@crm/db';
+import {
+  Board,
+  Card,
+  Customer,
+  connect,
+  disconnect,
+  FieldTemplate,
+  hashToken,
+  Order,
+  Process,
+  Session,
+  syncIndexes,
+  Tenant,
+  User,
+} from '@crm/db';
 import cookieParser from 'cookie-parser';
 import express from 'express';
 import * as jwt from 'jsonwebtoken';
@@ -61,6 +75,44 @@ const buildTestApp = () => {
   return app;
 };
 
+// Fixtures de referência do card (KAN-14/24-27) — mesmo formato de
+// card.repository.int.test.ts: `template`/`conversation`/`product` recebem
+// um ObjectId aleatório (nunca precisam resolver pra um documento real, só
+// o formato importa pro Mongoose).
+const randomId = (): string => crypto.randomBytes(12).toString('hex');
+
+const createCustomer = async (tenantId: string, name = 'Cliente X') =>
+  Customer.create({ Tenant: tenantId, name, phone: '5511999999999', template: randomId(), templateVersion: 1 });
+
+const createProcessWithTemplate = async (tenantId: string, customerId: string, stage = 'Em andamento') => {
+  const template = await FieldTemplate.create({
+    Tenant: tenantId,
+    targetType: 'process',
+    key: `flow-${randomId()}`,
+    name: 'Fluxo Padrão',
+    currentVersion: 1,
+  });
+  const processDoc = await Process.create({
+    Tenant: tenantId,
+    customer: customerId,
+    template: template._id,
+    templateVersion: 1,
+    stage,
+  });
+  return processDoc;
+};
+
+const createOrder = async (tenantId: string, customerId: string) =>
+  Order.create({
+    Tenant: tenantId,
+    conversation: randomId(),
+    customer: customerId,
+    items: [{ product: randomId(), name: 'Produto', unitPrice: 100, quantity: 1 }],
+    totalPrice: 100,
+    status: 'pending_approval',
+    idempotencyKey: `key-${randomId()}`,
+  });
+
 // Cada teste recebe seu PRÓPRIO Tenant — mesmo padrão de
 // professional.router.e2e.test.ts (isolamento entre casos deste arquivo).
 let seq = 0;
@@ -92,6 +144,10 @@ describe('board routes', () => {
     await Promise.all([
       Card.deleteMany({}),
       Board.deleteMany({}),
+      Customer.deleteMany({}),
+      Process.deleteMany({}),
+      FieldTemplate.deleteMany({}),
+      Order.deleteMany({}),
       Session.deleteMany({}),
       User.deleteMany({}),
       Tenant.deleteMany({}),
@@ -456,6 +512,335 @@ describe('board routes', () => {
       expect(res.status).toBe(400);
       const persisted = await Board.findById(board._id).lean();
       expect(persisted?.columns).toHaveLength(1);
+    });
+  });
+
+  describe('POST /boards/:id/cards (spec.md P1 "CRUD de card"/KAN-13/KAN-14/KAN-15)', () => {
+    it('creates a card with only title and destination column, no optional reference (spec.md KAN-13)', async () => {
+      const { tenant, cookie } = await seedTenantUser(['operador']);
+      const board = await Board.create({ Tenant: tenant._id, name: 'Board', columns: [{ label: 'A', order: 0 }] });
+      const columnId = board.columns[0]?._id.toString() as string;
+      const app = buildTestApp();
+
+      const res = await request(app)
+        .post(`/boards/${board._id.toString()}/cards`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE)
+        .send({ title: 'Ligar para o cliente', column: columnId });
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.title).toBe('Ligar para o cliente');
+      expect(res.body.data.customer).toBeUndefined();
+      expect(await Card.countDocuments({ board: board._id })).toBe(1);
+    });
+
+    it("rejects an assignee id belonging to ANOTHER tenant's User, creating nothing (spec.md KAN-14)", async () => {
+      const { tenant, cookie } = await seedTenantUser(['operador']);
+      const board = await Board.create({ Tenant: tenant._id, name: 'Board', columns: [{ label: 'A', order: 0 }] });
+      const columnId = board.columns[0]?._id.toString() as string;
+      const other = await seedTenantUser(['admin']);
+      const app = buildTestApp();
+
+      const res = await request(app)
+        .post(`/boards/${board._id.toString()}/cards`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE)
+        .send({ title: 'Card', column: columnId, assignee: other.user.id });
+
+      expect(res.status).toBe(400);
+      expect(await Card.countDocuments({})).toBe(0);
+    });
+
+    it('rejects a customer id that does not exist at all, creating nothing (spec.md KAN-14)', async () => {
+      const { tenant, cookie } = await seedTenantUser(['operador']);
+      const board = await Board.create({ Tenant: tenant._id, name: 'Board', columns: [{ label: 'A', order: 0 }] });
+      const columnId = board.columns[0]?._id.toString() as string;
+      const app = buildTestApp();
+
+      const res = await request(app)
+        .post(`/boards/${board._id.toString()}/cards`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE)
+        .send({ title: 'Card', column: columnId, customer: randomId() });
+
+      expect(res.status).toBe(400);
+      expect(await Card.countDocuments({})).toBe(0);
+    });
+
+    it('rejects a column that does not exist in that board, even with a well-formed id (spec.md KAN-15)', async () => {
+      const { tenant, cookie } = await seedTenantUser(['operador']);
+      const board = await Board.create({ Tenant: tenant._id, name: 'Board', columns: [{ label: 'A', order: 0 }] });
+      const app = buildTestApp();
+
+      const res = await request(app)
+        .post(`/boards/${board._id.toString()}/cards`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE)
+        .send({ title: 'Card', column: randomId() });
+
+      expect(res.status).toBe(400);
+      expect(await Card.countDocuments({})).toBe(0);
+    });
+
+    it('responds 403 for a caller without any operational role, creating nothing (spec.md KAN-05)', async () => {
+      const { tenant, cookie } = await seedTenantUser([]);
+      const board = await Board.create({ Tenant: tenant._id, name: 'Board', columns: [{ label: 'A', order: 0 }] });
+      const columnId = board.columns[0]?._id.toString() as string;
+      const app = buildTestApp();
+
+      const res = await request(app)
+        .post(`/boards/${board._id.toString()}/cards`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE)
+        .send({ title: 'Card', column: columnId });
+
+      expect(res.status).toBe(403);
+      expect(await Card.countDocuments({})).toBe(0);
+    });
+  });
+
+  describe('GET /boards/:id/cards (spec.md P2 "Card exibe vínculos"/KAN-24..28)', () => {
+    it('returns customer.name, process.stage+template.name, order.totalPrice+status and assignee.name when present (spec.md KAN-24..27)', async () => {
+      const { tenant, cookie } = await seedTenantUser(['operador']);
+      const board = await Board.create({ Tenant: tenant._id, name: 'Board', columns: [{ label: 'A', order: 0 }] });
+      const columnId = board.columns[0]?._id.toString() as string;
+      const customer = await createCustomer(tenant._id.toString(), 'Maria Cliente');
+      const proc = await createProcessWithTemplate(tenant._id.toString(), customer.id, 'Negociação');
+      const order = await createOrder(tenant._id.toString(), customer.id);
+      // Responsável precisa ser um User do MESMO tenant do board (KAN-14) —
+      // nunca via seedTenantUser (cria um Tenant novo a cada chamada).
+      const assignee = await User.create({
+        name: 'Operador Bruno',
+        email: `${randomId()}@empresa.com`,
+        password: 'hash',
+        Tenant: tenant._id,
+        role: ['operador'],
+      });
+      const app = buildTestApp();
+
+      const createRes = await request(app)
+        .post(`/boards/${board._id.toString()}/cards`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE)
+        .send({
+          title: 'Card completo',
+          column: columnId,
+          customer: customer.id,
+          process: proc.id,
+          order: order.id,
+          assignee: assignee.id,
+        });
+      expect(createRes.status).toBe(201);
+
+      const res = await request(app)
+        .get(`/boards/${board._id.toString()}/cards`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE);
+
+      expect(res.status).toBe(200);
+      const [card] = res.body.data;
+      expect(card.customerName).toBe('Maria Cliente');
+      expect(card.processStage).toBe('Negociação');
+      expect(card.processTemplateName).toBe('Fluxo Padrão');
+      expect(card.orderTotalPrice).toBe(100);
+      expect(card.orderStatus).toBe('pending_approval');
+      expect(card.assigneeName).toBe('Operador Bruno');
+    });
+
+    it('omits every display field for a card with no optional reference (spec.md KAN-28)', async () => {
+      const { tenant, cookie } = await seedTenantUser(['operador']);
+      const board = await Board.create({ Tenant: tenant._id, name: 'Board', columns: [{ label: 'A', order: 0 }] });
+      const columnId = board.columns[0]?._id.toString() as string;
+      await Card.create({ Tenant: tenant._id, board: board._id, column: columnId, title: 'Só título', position: 0 });
+      const app = buildTestApp();
+
+      const res = await request(app)
+        .get(`/boards/${board._id.toString()}/cards`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE);
+
+      expect(res.status).toBe(200);
+      const [card] = res.body.data;
+      expect(card.customerName).toBeUndefined();
+      expect(card.processStage).toBeUndefined();
+      expect(card.orderTotalPrice).toBeUndefined();
+      expect(card.assigneeName).toBeUndefined();
+    });
+  });
+
+  describe('PATCH /boards/:id/cards/:cardId (spec.md KAN-16)', () => {
+    it('updates title/description/references without altering the current column', async () => {
+      const { tenant, cookie } = await seedTenantUser(['operador']);
+      const board = await Board.create({
+        Tenant: tenant._id,
+        name: 'Board',
+        columns: [
+          { label: 'A', order: 0 },
+          { label: 'B', order: 1 },
+        ],
+      });
+      const columnId = board.columns[0]?._id.toString() as string;
+      const card = await Card.create({
+        Tenant: tenant._id,
+        board: board._id,
+        column: columnId,
+        title: 'Original',
+        position: 0,
+      });
+      const app = buildTestApp();
+
+      const res = await request(app)
+        .patch(`/boards/${board._id.toString()}/cards/${card._id.toString()}`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE)
+        .send({ title: 'Editado' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.title).toBe('Editado');
+      expect(res.body.data.column).toBe(columnId);
+    });
+
+    it("responds 404 for a card belonging to ANOTHER board's tenant (AD-010)", async () => {
+      const { cookie } = await seedTenantUser(['operador']);
+      const owner = await seedTenantUser(['admin']);
+      const board = await Board.create({
+        Tenant: owner.tenant._id,
+        name: 'Board',
+        columns: [{ label: 'A', order: 0 }],
+      });
+      const columnId = board.columns[0]?._id.toString() as string;
+      const card = await Card.create({
+        Tenant: owner.tenant._id,
+        board: board._id,
+        column: columnId,
+        title: 'De outro tenant',
+        position: 0,
+      });
+      const app = buildTestApp();
+
+      const res = await request(app)
+        .patch(`/boards/${board._id.toString()}/cards/${card._id.toString()}`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE)
+        .send({ title: 'Tentativa' });
+
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe('PATCH /boards/:id/cards/:cardId/move (spec.md P1 "Mover card"/KAN-18/KAN-19/KAN-21)', () => {
+    it('moves a card to a different column, persisting it (spec.md KAN-18)', async () => {
+      const { tenant, cookie } = await seedTenantUser(['operador']);
+      const board = await Board.create({
+        Tenant: tenant._id,
+        name: 'Board',
+        columns: [
+          { label: 'A', order: 0 },
+          { label: 'B', order: 1 },
+        ],
+      });
+      const [colA, colB] = board.columns;
+      const card = await Card.create({
+        Tenant: tenant._id,
+        board: board._id,
+        column: colA?._id,
+        title: 'Card',
+        position: 0,
+      });
+      const app = buildTestApp();
+
+      const res = await request(app)
+        .patch(`/boards/${board._id.toString()}/cards/${card._id.toString()}/move`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE)
+        .send({ column: colB?._id.toString(), position: 0 });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.column).toBe(colB?._id.toString());
+    });
+
+    it('reorders a card within the SAME column, persisting the new position (spec.md KAN-19)', async () => {
+      const { tenant, cookie } = await seedTenantUser(['operador']);
+      const board = await Board.create({ Tenant: tenant._id, name: 'Board', columns: [{ label: 'A', order: 0 }] });
+      const columnId = board.columns[0]?._id.toString() as string;
+      const card = await Card.create({
+        Tenant: tenant._id,
+        board: board._id,
+        column: columnId,
+        title: 'Card',
+        position: 0,
+      });
+      const app = buildTestApp();
+
+      const res = await request(app)
+        .patch(`/boards/${board._id.toString()}/cards/${card._id.toString()}/move`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE)
+        .send({ column: columnId, position: 2 });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.position).toBe(2);
+    });
+
+    it('rejects a move payload referencing a column that does not exist in that board, backend-side (spec.md KAN-21)', async () => {
+      const { tenant, cookie } = await seedTenantUser(['operador']);
+      const board = await Board.create({ Tenant: tenant._id, name: 'Board', columns: [{ label: 'A', order: 0 }] });
+      const columnId = board.columns[0]?._id.toString() as string;
+      const card = await Card.create({
+        Tenant: tenant._id,
+        board: board._id,
+        column: columnId,
+        title: 'Card',
+        position: 0,
+      });
+      const app = buildTestApp();
+
+      const res = await request(app)
+        .patch(`/boards/${board._id.toString()}/cards/${card._id.toString()}/move`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE)
+        .send({ column: randomId(), position: 0 });
+
+      expect(res.status).toBe(400);
+      const persisted = await Card.findById(card._id).lean();
+      expect(persisted?.column.toString()).toBe(columnId);
+    });
+  });
+
+  describe('DELETE /boards/:id/cards/:cardId (spec.md KAN-17)', () => {
+    it('removes the card from the board', async () => {
+      const { tenant, cookie } = await seedTenantUser(['operador']);
+      const board = await Board.create({ Tenant: tenant._id, name: 'Board', columns: [{ label: 'A', order: 0 }] });
+      const columnId = board.columns[0]?._id.toString() as string;
+      const card = await Card.create({
+        Tenant: tenant._id,
+        board: board._id,
+        column: columnId,
+        title: 'A apagar',
+        position: 0,
+      });
+      const app = buildTestApp();
+
+      const res = await request(app)
+        .delete(`/boards/${board._id.toString()}/cards/${card._id.toString()}`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE);
+
+      expect(res.status).toBe(200);
+      expect(await Card.findById(card._id).lean()).toBeNull();
+    });
+
+    it('responds 404 for a card that no longer exists', async () => {
+      const { tenant, cookie } = await seedTenantUser(['operador']);
+      const board = await Board.create({ Tenant: tenant._id, name: 'Board', columns: [{ label: 'A', order: 0 }] });
+      const app = buildTestApp();
+
+      const res = await request(app)
+        .delete(`/boards/${board._id.toString()}/cards/${randomId()}`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE);
+
+      expect(res.status).toBe(404);
     });
   });
 });
