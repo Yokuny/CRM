@@ -121,8 +121,14 @@ Pacote isomórfico (`packages/field-engine`) que define os tipos de campo e exp�
 principal do monorepo. Ver [ADR-0001](adr/0001-monorepo-pnpm-workspaces.md).
 
 **Board / Card**
-Kanban (feature 10, ainda não implementado). Ferramenta à parte, portada do DentalEase. Um Card **pode** referenciar um
-Process, mas não é um Process. Ver [ADR-0011](adr/0011-kanban-como-ferramenta-separada.md).
+Kanban (feature 10). Ferramenta à parte, portada do DentalEase — mas com Board e Card como duas
+collections Mongo separadas (não um documento único embutido como no DentalEase), tenant-wide
+(sem owner/collaborators). Um Board tem `columns[]` 100% livres (sem status-base seedado, sempre
+≥1). Um Card só exige `title`; opcionalmente referencia `Customer`, `Process`, `Order` e um
+`User` responsável (`assignee`) — nenhuma referência é obrigatória e nenhuma sincroniza
+automaticamente com o `stage` do Process. Ver
+[ADR-0011](adr/0011-kanban-como-ferramenta-separada.md) e
+[`.specs/features/kanban-tool/`](../.specs/features/kanban-tool/spec.md).
 
 ---
 

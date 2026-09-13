@@ -309,77 +309,71 @@ de AD-014 em diante, a entrada abaixo é o registro completo (indexada no mesmo 
 
 ## Handoff
 
-- **Feature**: `scheduling` (feature 9 de 11) — **Execute completo e Verificado (PASS)**,
-  branch `feature/scheduling`. Todas as 47 tasks (T1–T47, 9 fases, 8 batches) implementadas,
-  Build gate cheio verde, Verifier independente (author≠verifier) rodou automaticamente após
-  T47 e retornou **PASS** com 2 gaps menores não-bloqueantes (ver abaixo). Nenhum fix task
-  obrigatório.
-- **Branch**: `feature/scheduling`, HEAD em `80ba107`, 70 commits à frente de
-  `origin/feature/scheduling` (sem push nesta feature ainda). Working tree limpo.
-- **Completed — Batches 1–7 (T1–T43)**: sem incidentes de código (ver commits individuais no
-  histórico, um por task, scope `scheduling`). T40/T41 tiveram uma correção pós-Batch 7
-  (commit `b2bd3ea`) — os dois componentes existiam e passavam nos próprios testes, mas nada
-  na tela do calendário (T39) os abria (`WeekGrid.onSelect` era no-op, sem botão de criar);
-  corrigidos na mesma sessão, incluindo reescrever `Dialog` (modal Radix) para painel inline
-  por pedido explícito do usuário (AD-037) — `appointment-dialog.tsx`/`block-dialog.tsx` →
-  `appointment-panel.tsx`/`block-panel.tsx`.
-- **Completed — Batch 8 (T44–T47, sessão final, execução inline sem sub-agente — só 4 tasks,
-  abaixo do teto de ~8)**:
-  - **T44** (`db5ee02`): `appointment.service.ts` ganha `notifyCustomer` — cancelar/remarcar
-    resolvem a `Conversation` (`appointment.conversation` ou, na falta,
-    `appointmentRepository.findLatestConversationIdByCustomer`, nova função) e reusam
-    `createOutboundMessage` (já barra fora da janela de 24h antes de inserir); janela aberta →
-    `notice:{kind:'queued'}`; fechada ou sem conversa → `notice:{kind:'wa_me', url}`. Resposta
-    de `/appointments/:id/{cancel,reschedule}` passa a ser `{appointment, notice}` (mudança de
-    contrato — testes e2e/unit existentes desses dois endpoints atualizados para o novo
-    formato). Testes unit+integration+e2e, gate full verde.
-  - **T45** (`1715d83`): `appointment-panel.tsx` (`AppointmentDetail`) lê `result.notice`:
-    `queued` → toast + fecha o painel (comportamento antigo preservado); `wa_me` → painel
-    fica aberto com um link "Avisar pelo WhatsApp" (`target="_blank"`), mesmo idioma do botão
-    de "Pedir confirmação" já existente. `query/appointment.ts` tipa o novo
-    `AppointmentActionResult`.
-  - **T46** (`7db15c4`): `appointment-card.tsx` novo (Inbox) — espelha `order-card.tsx`:
-    próximo agendamento ativo do cliente (data/hora/profissional/status), nada quando não há
-    ou durante o loading. `ConversationThread` ganha prop `customerId` (o endpoint é por
-    `customer`, não `conversation`) threaded a partir de `InboxPage`.
-  - **T47** (`e823ce0`): `docs/architecture.md` (tabela de propriedade +
-    `professionals`/`spaces`/`schedulingSettings`/`appointments`, superfície de tools 10/10,
-    fluxo "Agendamento" em Fluxos principais, seção nova "Convenção de tempo" com AD-036) e
-    `docs/glossary.md` (seção nova "Agenda": Professional, Space, Appointment, Block, token de
-    confirmação, hora de exibição). Partiu da versão commitada (confirmado limpo antes de
-    editar — a pendência de 2026-09-11 não existia mais).
-- **Verifier** (após T47, `80ba107`): **PASS** — 39/40 ACs (`SCH-01..40`) com evidência
-  `file:line` batendo o outcome exato do spec; `SCH-17` só com evidência indireta (via o
-  teste de corrida do SCH-20, que passa pelo mesmo caminho de `Appointment.create()`) — gap
-  cosmético, não funcional. Gate 1762/1763 verde (1 falha pré-existente e não relacionada,
-  `media-card.unit.test.tsx`/INBOX-17, confirmada fora do diff desta feature; 1 timeout de
-  conexão Mongo visto uma vez em corrida cheia, não reproduziu numa segunda rodada — mesmo
-  flake já documentado em AD-031). Sensor de discriminação: 3 mutações, 3 mortas
-  (`isDuplicateKeyError` do índice único parcial, expiração de `confirmByToken`, o guard
-  `instanceof` do fallback de `notifyCustomer`). Relatório completo:
-  `.specs/features/scheduling/validation.md` (commit `80ba107`). Traceability de `spec.md`
-  atualizada (`In Tasks` → `Verified`, 39 linhas; `SCH-17` → `⚠️ Verified (evidência
-  indireta)`). Duas lições candidatas registradas: `L-028` (PATCH de config de agenda/duração
-  precisa de teste que cria um registro dependente antes e confere que ele não mudou) e
-  `L-029` (uma AC que alega garantia estrutural ainda merece um teste com o próprio id da AC
-  no título, mesmo se um teste vizinho já cobre o mesmo caminho de código).
-- **Gaps do Verifier (não-bloqueantes, não corrigidos nesta sessão — decisão: aceitar como
-  estão, per o próprio relatório)**: (1) Edge Case "grade editada não afeta agendamento
-  existente" sem teste dedicado para `weeklySchedule` (só `active:false` é testado); (2) Edge
-  Case "duração do slot não recalcula agendamento existente" sem teste dedicado; (3) SCH-17
-  sem teste nomeado (só evidência indireta). Ver `validation.md` seção "Fix Plans" para as
-  tasks de teste sugeridas, caso alguém queira fechá-las depois.
-- **In-progress**: nenhum. Feature completa, verificada, todos os commits com gate verde.
-- **Next step**: revisar o diff/branch e decidir sobre push + abertura de PR para `main`
-  (nenhum push feito). Considerar UAT interativo do usuário nas telas novas de P2 (aviso no
-  painel de agendamento, card no Inbox) e no fluxo de agendamento pela conversa/calendário em
-  geral, já que o Verifier automático não cobre essa camada — a sessão anterior já fez
-  verificação visual via Playwright de Batches 6–7 (profissionais/ambientes/configuração/
-  calendário/página pública), mas T44–T47 (aviso automático, card) não foram verificados
-  visualmente nesta sessão. Após merge, feature 10 (`kanban-tool`) é a próxima do roadmap.
-- **Blockers**: nenhum. Pendência herdada da feature 8 (mergeada em `main` pelo PR #8): UAT
-  interativo do badge de pagamento na tela de Pedidos — não relacionada a esta feature.
-- **Nota operacional — skill não registrada**: desde `114e0cc` a skill `tlc-spec-driven` vive
-  em `.claude/tlc-spec-driven/`, fora de `.claude/skills/`, e por isso não aparece no listing —
-  ler `SKILL.md` + `references/` manualmente. Lições:
-  `python3 .claude/tlc-spec-driven/scripts/lessons.py`.
+- **Feature**: `kanban-tool` (feature 10 de 11) — **Execute completo e Verificado (PASS)**,
+  mesma branch `feature/scheduling` (nenhuma branch nova criada; `scheduling`, feature 9, ainda
+  não foi mergeada em `main`). Todas as 20 tasks (T1–T20, 4 fases, 2 batches) implementadas via
+  sub-agente de batch, Verifier independente (author≠verifier) rodou automaticamente após T20 e
+  retornou **PASS** — 28/29 ACs totalmente verificadas com evidência `file:line`, 1 gap cosmético
+  não-bloqueante (ver abaixo). Nenhum fix task obrigatório.
+- **Decisão de arquitetura confirmada com o usuário no Design** (não virou AD-NNN — design.md
+  já justifica por quê: generaliza só o que AD-010/AD-024/AD-026/AD-032 já cobrem): Board e Card
+  são **duas collections Mongo separadas** — `boards` (Tenant-scoped, embute só `columns[]`,
+  array pequeno curado à mão) e `cards` (collection própria, `Tenant`+`board`+`column`+
+  `position`+ referências opcionais) — não o documento único `Kanban{statuses[],cards[]}`
+  embutido que o DentalEase usa. Escolhido por seguir a convenção já emergente deste `crm-api`
+  (toda entidade endereçável individualmente é sua própria collection — `Professional`/`Space`/
+  `Order`/etc.) em vez do formato literal da referência.
+- **Escopo do produto (Discuss, confirmado com o usuário)**: vários boards nomeados por tenant
+  (hub), sem owner/collaborators (tenant-wide — qualquer `admin`/`gestor`/`operador` vê/edita
+  todos os boards, ao contrário do DentalEase); colunas 100% livres, sem status-base seedado,
+  sempre ≥1; Card só exige `title` — `customer`/`process`/`order`/`assignee`(User, não
+  `Professional` da feature scheduling) são as 4 referências opcionais e independentes; apagar
+  board exige role `admin` e cascata (apaga os cards junto); apagar coluna com card(s) dentro é
+  bloqueado.
+- **Branch**: `feature/scheduling`, HEAD em `6e3c929`, working tree limpo (só a
+  reorganização pré-existente de `.claude/*-skill/` → `.claude/skill/` segue não-commitada,
+  fora do escopo desta feature — não mexi nela). Sem push desta feature ainda.
+- **Commits desta feature** (22 ao todo, todos `feat(kanban): *`/`docs(kanban): *`, um por task):
+  `f9f3359`..`7655cba` (T1–T9, batch 1, incluindo 1 commit de formatação `32e417d`),
+  `4f17801` (docs: spec/context/design/tasks), `87f0a71`..`378e71d` (T10–T20, batch 2),
+  `a19a636` (docs: tasks.md status), `6e3c929` (docs: Verifier PASS — validation.md +
+  traceability).
+- **Verifier** (`80ba107`→ não, ver `6e3c929`): **PASS** — sensor de discriminação 5/5 mutações
+  mortas (guard de coluna não-vazia, guard de última coluna, validação cross-tenant de
+  referência do card, ordem de rota `reorder` vs `:columnId`, gate `isAdmin` do delete de
+  board). Gate: `tsc` 0 erros, 0 falha de teste relacionada a kanban (1985/1986 verde no repo
+  inteiro — a 1 falha é pré-existente/não-relacionada, `media-card.unit.test.tsx`/INBOX-17,
+  já fora do diff desta feature); `pnpm run check` composto falha só por débito de `biome`
+  pré-existente em 3 arquivos não tocados por esta feature (`professional.unit.test.ts`,
+  `schedulingSettings.ts`, `space.unit.test.ts` em `apps/web/src/query/`) — não-relacionado,
+  sinalizado no relatório mas fora do mandato read-only do Verifier corrigir.
+  Relatório completo: `.specs/features/kanban-tool/validation.md`. Traceability de `spec.md`
+  atualizada (28× `In Tasks`→`✅ Verified`, 1× `⚠️ Verified (partial)`).
+- **Gap do Verifier (não-bloqueante, não corrigido nesta sessão)**: KAN-29 (cor por coluna, P3)
+  — a persistência está 100% coberta, mas o indicador visual de cor no cabeçalho da coluna
+  (`details.tsx:154-161`) não tem asserção dedicada em `details.unit.test.tsx`. Fix sugerido em
+  `validation.md` (Fix 1), prioridade cosmética.
+- **SPEC_DEVIATION conhecido (revisado e aceito pelo Verifier)**: `card-panel.tsx` usa input de
+  texto (id cru) para `process`/`order`/`assignee` em vez de `<Select>` pesquisável — não existe
+  hoje uma query de frontend que liste todos os processos/pedidos/usuários de um tenant, e
+  criá-la estava fora do escopo de T18. `customer` usa `<Select>` de verdade
+  (`customersQuery` já existe). Enforcement real continua no backend (`card.service.ts`,
+  KAN-14), testado e coberto pelo sensor de discriminação.
+- **Docs atualizados nesta sessão** (fora do `tasks.md`, feitos pelo orquestrador após o
+  Verifier, mesmo padrão do T47 da feature `scheduling`): `docs/architecture.md` (tabela de
+  propriedade de escrita, linha `boards`/`cards`) e `docs/glossary.md` (entrada "Board / Card"
+  atualizada de "ainda não implementado" pra descrição real). `docs/roadmap.md` **não** foi
+  tocado — mesmo critério já aplicado à feature `scheduling` (a "Quadro geral"/seções "Entregue"
+  só são atualizadas no merge pra `main`, não no Execute+Verify na branch).
+- **In-progress**: nenhum. Feature completa, verificada, todos os commits com gate verde
+  (kanban-tool isolado; o débito de biome/inbox acima é pré-existente e não desta feature).
+- **Next step**: revisar o diff/branch e decidir sobre push + abertura de PR pra `main` — tanto
+  `scheduling` (feature 9) quanto `kanban-tool` (feature 10) estão prontas e verificadas na
+  mesma branch `feature/scheduling`, nenhuma das duas mergeada ainda. Considerar UAT interativo
+  do usuário nas 3 telas novas (hub, criar board, detalhe do board com drag-and-drop) — o
+  usuário já pediu verificação visual manual via Playwright ao final do Execute (ainda não
+  executada nesta sessão). Depois do merge, feature 11 (`ops-hardening`) é a última do roadmap.
+- **Blockers**: nenhum. Corrigir o débito de `biome` pré-existente (3 arquivos em
+  `apps/web/src/query/`) e a falha pré-existente/flaky de `media-card.unit.test.tsx` (inbox)
+  ficam como housekeeping separado, fora do escopo desta feature — apontados pelo Verifier, não
+  corrigidos aqui.

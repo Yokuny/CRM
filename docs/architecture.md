@@ -95,7 +95,7 @@ refinado por [AD-032](../.specs/STATE.md#ad-032): ninguém escreve na fatia do o
 | `sessions` | `crm-api` | `crm-api` |
 | `professionals`, `spaces`, `schedulingSettings` | `crm-api` | ambos |
 | `appointments` | `crm-api` (CRUD do operador: criar manual, cancelar, remarcar, bloquear; e a rota **pública** de confirmação) e `ai-gateway` (`book_appointment`) — cada um só na sua fatia; a garantia contra dupla reserva é um índice único parcial no banco, não checagem prévia em código, ver [AD-035](../.specs/STATE.md#ad-035) | ambos |
-| `boards` (kanban, feature 10 — ainda não existe) | `crm-api` | `crm-api` |
+| `boards`, `cards` (kanban, feature 10) | `crm-api` (CRUD do operador — nenhuma tool da IA escreve nessas collections) | `crm-api` |
 
 ---
 
