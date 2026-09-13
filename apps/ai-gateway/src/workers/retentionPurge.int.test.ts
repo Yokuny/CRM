@@ -1,9 +1,11 @@
 import crypto from 'node:crypto';
 import { AiSession, connect, Conversation, disconnect, Message } from '@crm/db';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { purgeExpiredConversations } from './retentionPurge.js';
+import { purgeExpiredConversations, startRetentionPurge } from './retentionPurge.js';
 
 const randomId = (): string => crypto.randomBytes(12).toString('hex');
+
+const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 const seedConversation = async (overrides: Record<string, unknown> = {}) =>
   Conversation.create({
@@ -122,5 +124,57 @@ describe('purgeExpiredConversations (OPS-09/10/11)', () => {
 
     const second = await purgeExpiredConversations(retentionMs);
     expect(second).toEqual({ conversations: 0, messages: 0, aiSessions: 0 });
+  });
+});
+
+// OPS-12: mesma forma de reaper.int.test.ts's "ticks on the given interval
+// and stop() halts further reaping" — prova tick/stop do wrapper de
+// intervalo, e o log-and-continue em caso de erro (vi.spyOn(Model, method),
+// mesmo padrão de outboxConsumer.int.test.ts).
+describe('startRetentionPurge (OPS-12)', () => {
+  beforeAll(async () => {
+    await connect(process.env.MONGODB_URI as string);
+  });
+
+  afterEach(async () => {
+    await Conversation.deleteMany({});
+    await Message.deleteMany({});
+    await AiSession.deleteMany({});
+  });
+
+  afterAll(async () => {
+    await disconnect();
+  });
+
+  it('ticks on the given interval and stop() halts further purging', async () => {
+    const first = await seedConversation({ createdAt: new Date(Date.now() - 100) });
+    const handle = startRetentionPurge(20, 50);
+    await sleep(80);
+    handle.stop();
+    expect(await Conversation.findById(first._id).lean()).toBeNull();
+
+    const second = await seedConversation({ createdAt: new Date(Date.now() - 100) });
+    await sleep(80);
+
+    expect(await Conversation.findById(second._id).lean()).not.toBeNull();
+  });
+
+  it('logs a JSON retentionPurge.tick_failed event via console.error and keeps ticking after a failed tick', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const deleteManySpy = vi.spyOn(Message, 'deleteMany').mockRejectedValueOnce(new Error('Mongo indisponível'));
+    const expired = await seedConversation({ createdAt: new Date(Date.now() - 100) });
+
+    const handle = startRetentionPurge(20, 50);
+    await sleep(80);
+    handle.stop();
+
+    const loggedEvents = errorSpy.mock.calls.map(([arg]) => JSON.parse(arg as string));
+    expect(loggedEvents).toContainEqual({ event: 'retentionPurge.tick_failed', message: 'Mongo indisponível' });
+    // Tick subsequente (depois que o mockRejectedValueOnce se esgota) segue
+    // rodando e completa a exclusão — a falha não derruba o worker.
+    expect(await Conversation.findById(expired._id).lean()).toBeNull();
+
+    errorSpy.mockRestore();
+    deleteManySpy.mockRestore();
   });
 });

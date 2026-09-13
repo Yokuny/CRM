@@ -30,3 +30,23 @@ export const purgeExpiredConversations = async (
     aiSessions: aiSessionsResult.deletedCount ?? 0,
   };
 };
+
+export type RetentionPurgeHandle = { stop: () => void };
+
+// OPS-08/09/12: mesma forma exata de startReaper (reaper.ts) — setInterval/
+// clearInterval, handle {stop}, log JSON em console.error e segue rodando no
+// próximo tick em caso de erro (nunca derruba o processo).
+export const startRetentionPurge = (intervalMs = 86400000, retentionMs = TWELVE_MONTHS_MS): RetentionPurgeHandle => {
+  const handle = setInterval(() => {
+    void purgeExpiredConversations(retentionMs).catch((err) => {
+      console.error(
+        JSON.stringify({
+          event: 'retentionPurge.tick_failed',
+          message: err instanceof Error ? err.message : String(err),
+        }),
+      );
+    });
+  }, intervalMs);
+
+  return { stop: () => clearInterval(handle) };
+};
