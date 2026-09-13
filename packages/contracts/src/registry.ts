@@ -6,6 +6,7 @@ import { createAppointmentSchema } from './schemas/createAppointment.schema.js';
 import { createAsaasIntegrationSchema } from './schemas/createAsaasIntegration.schema.js';
 import { createBlockSchema } from './schemas/createBlock.schema.js';
 import { createBoardSchema } from './schemas/createBoard.schema.js';
+import { createCardSchema } from './schemas/createCard.schema.js';
 import { createChannelSchema } from './schemas/createChannel.schema.js';
 import { createColumnSchema, hexColorSchema } from './schemas/createColumn.schema.js';
 import { createCustomerSchema } from './schemas/createCustomer.schema.js';
@@ -26,6 +27,7 @@ import { idSchema } from './schemas/id.schema.js';
 import { inviteTokenParamSchema } from './schemas/inviteToken.schema.js';
 import { markAttendanceSchema } from './schemas/markAttendance.schema.js';
 import { migrationActionSchema } from './schemas/migrationAction.schema.js';
+import { moveCardSchema } from './schemas/moveCard.schema.js';
 import { openProcessInputSchema } from './schemas/openProcessInput.schema.js';
 import { provisionTenantSchema } from './schemas/provisionTenant.schema.js';
 import { rejectOrderSchema } from './schemas/rejectOrder.schema.js';
@@ -35,6 +37,7 @@ import { sendMessageSchema } from './schemas/sendMessage.schema.js';
 import { setProcessFieldsInputSchema } from './schemas/setProcessFieldsInput.schema.js';
 import { signinSchema } from './schemas/signin.schema.js';
 import { updateBoardSchema } from './schemas/updateBoard.schema.js';
+import { updateCardSchema } from './schemas/updateCard.schema.js';
 import { updateColumnSchema } from './schemas/updateColumn.schema.js';
 import { updateCustomerSchema } from './schemas/updateCustomer.schema.js';
 import { updateProcessStageSchema } from './schemas/updateProcessStage.schema.js';
@@ -74,6 +77,9 @@ export const schemaRegistry: ReadonlyArray<{ name: string; schema: ZodType }> = 
   { name: 'createChannelSchema', schema: createChannelSchema },
   { name: 'createBoardSchema', schema: createBoardSchema },
   { name: 'updateBoardSchema', schema: updateBoardSchema },
+  { name: 'createCardSchema', schema: createCardSchema },
+  { name: 'updateCardSchema', schema: updateCardSchema },
+  { name: 'moveCardSchema', schema: moveCardSchema },
   { name: 'createColumnSchema', schema: createColumnSchema },
   { name: 'hexColorSchema', schema: hexColorSchema },
   { name: 'updateColumnSchema', schema: updateColumnSchema },
