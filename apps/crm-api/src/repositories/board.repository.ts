@@ -92,11 +92,7 @@ export type UpdateBoardInput = { name?: string; description?: string };
 
 // Só os campos informados entram no $set — mesmo padrão de
 // professional.repository.updateProfessional.
-export const updateBoard = async (
-  tenantId: string,
-  id: string,
-  data: UpdateBoardInput,
-): Promise<BoardRecord | null> =>
+export const updateBoard = async (tenantId: string, id: string, data: UpdateBoardInput): Promise<BoardRecord | null> =>
   withDbTiming('board.updateBoard', async () => {
     const update: Record<string, unknown> = {};
     if (data.name !== undefined) update.name = data.name;
@@ -185,11 +181,7 @@ export const reorderColumns = async (
 // KAN-10/KAN-11 (guard de coluna não-vazia / última coluna) são
 // responsabilidade do service (board.service.removeColumn, T8) ANTES de
 // chamar esta função — o repository só executa o $pull.
-export const removeColumn = async (
-  tenantId: string,
-  boardId: string,
-  columnId: string,
-): Promise<BoardRecord | null> =>
+export const removeColumn = async (tenantId: string, boardId: string, columnId: string): Promise<BoardRecord | null> =>
   withDbTiming('board.removeColumn', async () => {
     const doc = await Board.findOneAndUpdate(
       tenantScoped({ Tenant: tenantId, _id: boardId }),
