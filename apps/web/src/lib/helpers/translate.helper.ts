@@ -249,6 +249,12 @@ const translations: Record<string, string> = {
   'kanban.board.list.title': 'Quadros',
   'kanban.card.singular': 'card',
   'kanban.card.plural': 'cards',
+  // T16 — routes/_private/kanban/add/index.tsx (criação de board).
+  'kanban.board.create.title': 'Novo quadro',
+  'kanban.board.field.description': 'Descrição',
+  'kanban.board.columns.label': 'Colunas iniciais',
+  'kanban.board.columns.column_label': 'Nome da coluna',
+  'kanban.board.columns.add': 'Adicionar coluna',
 };
 
 export const t = (key: string): string => translations[key] ?? key;
