@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge.js';
 import { ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item.js';
 import { formatMoney } from '@/lib/helpers/money.helper.js';
@@ -12,6 +13,12 @@ export type KanbanCardContentProps = {
   orderTotalPrice?: number;
   orderStatus?: string;
   assigneeName?: string;
+  // T20: atalho "editar" do details.tsx entra aqui — mesmo slot deliberado
+  // de customer-kanban-card-content.tsx (WEB-10), pro chamador nunca
+  // precisar reestruturar este componente pra acomodar uma ação clicável
+  // dentro de um card arrastável (precisa de onPointerDown+stopPropagation
+  // pra não ser interpretado como início de um drag pelo dnd-kit).
+  actions?: ReactNode;
 };
 
 // spec.md P2 "Card exibe as entidades vinculadas" (KAN-24..28): cada
@@ -29,6 +36,7 @@ export function KanbanCardContent({
   orderTotalPrice,
   orderStatus,
   assigneeName,
+  actions,
 }: KanbanCardContentProps) {
   const hasAnyReference = Boolean(customerName || processStage || orderStatus || assigneeName);
 
@@ -37,6 +45,7 @@ export function KanbanCardContent({
       <ItemContent className="gap-1">
         <ItemTitle>{title}</ItemTitle>
         {description && <ItemDescription>{description}</ItemDescription>}
+        {actions}
       </ItemContent>
       {hasAnyReference && (
         <div className="flex flex-wrap gap-1">

@@ -278,6 +278,10 @@ const translations: Record<string, string> = {
   'kanban.column_manager.move_up': 'Mover para cima',
   'kanban.column_manager.move_down': 'Mover para baixo',
   'kanban.column.field.color': 'Cor',
+  // T20 — routes/_private/kanban/details.tsx (tela do board, drag-and-drop).
+  'kanban.board.details.title': 'Detalhe do quadro',
+  'kanban.column_manager.action': 'Colunas',
+  'kanban.card.move.error': 'Não foi possível mover o card. Tente novamente.',
 };
 
 export const t = (key: string): string => translations[key] ?? key;
