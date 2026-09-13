@@ -126,6 +126,8 @@ gate command stays identical).
 
 **Commit**: `chore(ops): pin CI Node version to 24`
 
+**Status**: ✅ Done — commit `7af1ef5`
+
 ---
 
 ### T2: `GET /metrics` endpoint on `apps/crm-api`
@@ -161,6 +163,8 @@ responds with `prom-client`'s `register.metrics()` body and correct `Content-Typ
 **Gate**: full
 
 **Commit**: `feat(ops): expose GET /metrics on crm-api`
+
+**Status**: ✅ Done — commit `bd75e2a`
 
 ---
 
@@ -202,6 +206,8 @@ that reads and validates the file's shape.
 
 **Commit**: `feat(ops): add Grafana dashboard-as-code for crm-api metrics`
 
+**Status**: ✅ Done — commit `1639fd5`
+
 ---
 
 ### T4: `RETENTION_PURGE_ENABLED` env flag
@@ -229,6 +235,8 @@ that reads and validates the file's shape.
 **Gate**: build
 
 **Commit**: `feat(ops): add RETENTION_PURGE_ENABLED env flag`
+
+**Status**: ✅ Done — commit `8b50870`
 
 ---
 
@@ -273,6 +281,8 @@ to seed `Conversation`/`Message`/`AiSession`).
 
 **Commit**: `feat(ops): add purgeExpiredConversations retention function`
 
+**Status**: ✅ Done — commit `3913ce4`
+
 ---
 
 ### T6: `startRetentionPurge` interval worker
@@ -309,6 +319,8 @@ test.
 **Gate**: full
 
 **Commit**: `feat(ops): add startRetentionPurge interval worker`
+
+**Status**: ✅ Done — commit `5567034`
 
 ---
 
@@ -347,6 +359,8 @@ the same `start()` describe block in `app.e2e.test.ts`.
 **Gate**: build
 
 **Commit**: `feat(ops): wire retention purge worker into ai-gateway startup`
+
+**Status**: ✅ Done — commit `35df4f6` (also folds in two gate-only fixes from T3/T6 that only surfaced under the full build gate: a biome format fix in `dashboard.unit.test.ts` and a type-only fix in `retentionPurge.int.test.ts`)
 
 ---
 
