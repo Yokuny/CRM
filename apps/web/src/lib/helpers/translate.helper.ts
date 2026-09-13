@@ -255,6 +255,12 @@ const translations: Record<string, string> = {
   'kanban.board.columns.label': 'Colunas iniciais',
   'kanban.board.columns.column_label': 'Nome da coluna',
   'kanban.board.columns.add': 'Adicionar coluna',
+  // T17 — routes/_private/kanban/details/@components/kanban-card-content.tsx
+  // (badges de referência do card: cliente/processo/pedido/responsável).
+  'kanban.card.field.customer': 'Cliente',
+  'kanban.card.field.process': 'Processo',
+  'kanban.card.field.order': 'Pedido',
+  'kanban.card.field.assignee': 'Responsável',
 };
 
 export const t = (key: string): string => translations[key] ?? key;
