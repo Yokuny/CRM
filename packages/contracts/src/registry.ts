@@ -5,6 +5,7 @@ import { cancelAppointmentSchema } from './schemas/cancelAppointment.schema.js';
 import { createAppointmentSchema } from './schemas/createAppointment.schema.js';
 import { createAsaasIntegrationSchema } from './schemas/createAsaasIntegration.schema.js';
 import { createBlockSchema } from './schemas/createBlock.schema.js';
+import { createBoardSchema } from './schemas/createBoard.schema.js';
 import { createChannelSchema } from './schemas/createChannel.schema.js';
 import { createCustomerSchema } from './schemas/createCustomer.schema.js';
 import { createFieldTemplateSchema } from './schemas/createFieldTemplate.schema.js';
@@ -31,6 +32,7 @@ import { rescheduleAppointmentSchema } from './schemas/rescheduleAppointment.sch
 import { sendMessageSchema } from './schemas/sendMessage.schema.js';
 import { setProcessFieldsInputSchema } from './schemas/setProcessFieldsInput.schema.js';
 import { signinSchema } from './schemas/signin.schema.js';
+import { updateBoardSchema } from './schemas/updateBoard.schema.js';
 import { updateCustomerSchema } from './schemas/updateCustomer.schema.js';
 import { updateProcessStageSchema } from './schemas/updateProcessStage.schema.js';
 import { updateProcessValuesSchema } from './schemas/updateProcessValues.schema.js';
@@ -67,6 +69,8 @@ export const schemaRegistry: ReadonlyArray<{ name: string; schema: ZodType }> = 
   { name: 'bumpFieldTemplateSchema', schema: bumpFieldTemplateSchema },
   { name: 'createAsaasIntegrationSchema', schema: createAsaasIntegrationSchema },
   { name: 'createChannelSchema', schema: createChannelSchema },
+  { name: 'createBoardSchema', schema: createBoardSchema },
+  { name: 'updateBoardSchema', schema: updateBoardSchema },
   { name: 'createCustomerSchema', schema: createCustomerSchema },
   { name: 'updateCustomerSchema', schema: updateCustomerSchema },
   { name: 'createProcessSchema', schema: createProcessSchema },
