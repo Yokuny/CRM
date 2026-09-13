@@ -36,6 +36,8 @@ export type {
   AsaasIntegrationStatus,
 } from './models/asaasIntegration.model.js';
 export { AsaasIntegration } from './models/asaasIntegration.model.js';
+export type { BoardColumn, BoardDocument } from './models/board.model.js';
+export { Board } from './models/board.model.js';
 export type { ChannelDocument } from './models/channel.model.js';
 export { Channel } from './models/channel.model.js';
 export type { ConversationDocument, ConversationMode, TurnLock } from './models/conversation.model.js';
@@ -105,6 +107,7 @@ import { AiSession } from './models/aiSession.model.js';
 import { Appointment } from './models/appointment.model.js';
 import { AsaasEvent } from './models/asaasEvent.model.js';
 import { AsaasIntegration } from './models/asaasIntegration.model.js';
+import { Board } from './models/board.model.js';
 import { Channel } from './models/channel.model.js';
 import { Conversation } from './models/conversation.model.js';
 import { Customer } from './models/customer.model.js';
@@ -141,6 +144,7 @@ export const syncIndexes = async (): Promise<void> => {
     Payment.createIndexes(),
     AsaasIntegration.createIndexes(),
     AsaasEvent.createIndexes(),
+    Board.createIndexes(),
     Channel.createIndexes(),
     Conversation.createIndexes(),
     Message.createIndexes(),

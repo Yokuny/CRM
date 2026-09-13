@@ -4,6 +4,7 @@ import { AiSession } from './models/aiSession.model.js';
 import { Appointment } from './models/appointment.model.js';
 import { AsaasEvent } from './models/asaasEvent.model.js';
 import { AsaasIntegration } from './models/asaasIntegration.model.js';
+import { Board } from './models/board.model.js';
 import { Channel } from './models/channel.model.js';
 import { Conversation } from './models/conversation.model.js';
 import { Customer } from './models/customer.model.js';
@@ -23,7 +24,7 @@ import { Tenant } from './models/tenant.model.js';
 import { User } from './models/user.model.js';
 
 describe('syncIndexes', () => {
-  it('calls createIndexes on the 21 models', async () => {
+  it('calls createIndexes on the 22 models', async () => {
     const spies = [
       Tenant,
       User,
@@ -41,6 +42,7 @@ describe('syncIndexes', () => {
       Payment,
       AsaasIntegration,
       AsaasEvent,
+      Board,
       Channel,
       Conversation,
       Message,
