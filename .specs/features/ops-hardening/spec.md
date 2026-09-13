@@ -236,36 +236,39 @@ inteiramente sintética (nunca dado real).
 
 ## Requirement Traceability
 
-| Requirement ID | Story                                  | Phase  | Status  |
-| --------------- | --------------------------------------- | ------ | ------- |
-| OPS-01          | P1: Pin de Node na CI                  | Design | Pending |
-| OPS-02          | P1: Pin de Node na CI                  | Design | Pending |
-| OPS-03          | P1: Endpoint `/metrics` + dashboard    | Design | Pending |
-| OPS-04          | P1: Endpoint `/metrics` + dashboard    | Design | Pending |
-| OPS-05          | P1: Endpoint `/metrics` + dashboard    | Design | Pending |
-| OPS-06          | P1: Endpoint `/metrics` + dashboard    | Design | Pending |
-| OPS-07          | P1: Endpoint `/metrics` + dashboard    | Design | Pending |
-| OPS-08          | P2: Retenção/LGPD (expurgo inativo)    | Design | Pending |
-| OPS-09          | P2: Retenção/LGPD (expurgo inativo)    | Design | Pending |
-| OPS-10          | P2: Retenção/LGPD (expurgo inativo)    | Design | Pending |
-| OPS-11          | P2: Retenção/LGPD (expurgo inativo)    | Design | Pending |
-| OPS-12          | P2: Retenção/LGPD (expurgo inativo)    | Design | Pending |
-| OPS-13          | P2: Auditoria de threshold de cache    | Design | Pending |
-| OPS-14          | P2: Auditoria de threshold de cache    | Design | Pending |
-| OPS-15          | P2: Auditoria de threshold de cache    | Design | Pending |
-| OPS-16          | P2: Auditoria de threshold de cache    | Design | Pending |
-| OPS-17          | P3: Scaffolding de replay              | Design | Pending |
-| OPS-18          | P3: Scaffolding de replay              | Design | Pending |
-| OPS-19          | P3: Scaffolding de replay              | Design | Pending |
-| OPS-20          | P3: Scaffolding de replay              | Design | Pending |
-| OPS-21          | P3: Scaffolding de replay              | Design | Pending |
-| OPS-22          | P3: Scaffolding de replay              | Design | Pending |
+| Requirement ID | Story                                  | Phase  | Status       | Task(s)        |
+| --------------- | --------------------------------------- | ------ | ------------- | -------------- |
+| OPS-01          | P1: Pin de Node na CI                  | Tasks  | ✅ Verified  | T1             |
+| OPS-02          | P1: Pin de Node na CI                  | Tasks  | ✅ Verified  | T1             |
+| OPS-03          | P1: Endpoint `/metrics` + dashboard    | Tasks  | ✅ Verified  | T2             |
+| OPS-04          | P1: Endpoint `/metrics` + dashboard    | Tasks  | ✅ Verified  | T2             |
+| OPS-05          | P1: Endpoint `/metrics` + dashboard    | Tasks  | ✅ Verified  | T2             |
+| OPS-06          | P1: Endpoint `/metrics` + dashboard    | Tasks  | ✅ Verified  | T3             |
+| OPS-07          | P1: Endpoint `/metrics` + dashboard    | Tasks  | ✅ Verified  | T3             |
+| OPS-08          | P2: Retenção/LGPD (expurgo inativo)    | Tasks  | ✅ Verified  | T4, T7         |
+| OPS-09          | P2: Retenção/LGPD (expurgo inativo)    | Tasks  | ✅ Verified  | T5, T7         |
+| OPS-10          | P2: Retenção/LGPD (expurgo inativo)    | Tasks  | ✅ Verified  | T5             |
+| OPS-11          | P2: Retenção/LGPD (expurgo inativo)    | Tasks  | ✅ Verified  | T5             |
+| OPS-12          | P2: Retenção/LGPD (expurgo inativo)    | Tasks  | ✅ Verified  | T6             |
+| OPS-13          | P2: Auditoria de threshold de cache    | Tasks  | ✅ Verified  | T9             |
+| OPS-14          | P2: Auditoria de threshold de cache    | Tasks  | ✅ Verified  | T8             |
+| OPS-15          | P2: Auditoria de threshold de cache    | Tasks  | ✅ Verified  | T8             |
+| OPS-16          | P2: Auditoria de threshold de cache    | Tasks  | ✅ Verified  | T9             |
+| OPS-17          | P3: Scaffolding de replay              | Tasks  | ✅ Verified  | T12            |
+| OPS-18          | P3: Scaffolding de replay              | Tasks  | ✅ Verified  | T12            |
+| OPS-19          | P3: Scaffolding de replay              | Tasks  | ✅ Verified  | T12            |
+| OPS-20          | P3: Scaffolding de replay              | Tasks  | ✅ Verified  | T11            |
+| OPS-21          | P3: Scaffolding de replay              | Tasks  | ✅ Verified  | T12            |
+| OPS-22          | P3: Scaffolding de replay              | Tasks  | ✅ Verified  | T13            |
 
 **ID format:** `OPS-NN`
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Verified
 
-**Coverage:** 22 total, 0 mapped to tasks, 22 unmapped ⚠️ (aguardando Tasks)
+**Coverage:** 22 total, 22 mapped to tasks, 0 unmapped. Verified by independent Verifier sub-agent
+— see `.specs/features/ops-hardening/validation.md` (OPS-13/OPS-16 carry a documented coverage
+caveat: correct by code inspection, no automated test for the CLI-wiring branch — not a functional
+gap).
 
 ---
 
