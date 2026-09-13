@@ -244,6 +244,11 @@ const translations: Record<string, string> = {
   // Hub da agenda (feature scheduling, Fase 8/T43) — routes/_private/
   // schedule/index.tsx + card "Agenda" na home (routes/_private/index.tsx).
   schedule: 'Agenda',
+  // Kanban livre (feature kanban-tool, Fase 4/T15) — routes/_private/kanban/
+  // index.tsx (hub de boards).
+  'kanban.board.list.title': 'Quadros',
+  'kanban.card.singular': 'card',
+  'kanban.card.plural': 'cards',
 };
 
 export const t = (key: string): string => translations[key] ?? key;
