@@ -20,6 +20,11 @@ export const envSchema = z.object({
   // book_appointment pelo seam webhook.router.ts -> runTurn -> ToolContext,
   // no mesmo formato do ASAAS_ENC_KEY/asaasClient acima.
   WEB_BASE_URL: z.string().min(1, 'WEB_BASE_URL é obrigatória'),
+  // OPS-08: desligado por padrão (mecanismo pronto, mas inativo até uma
+  // política de retenção real ser decidida — spec.md Assumptions). Mesmo
+  // padrão de MAIL_PROVIDER (apps/crm-api/src/config/env.config.ts): enum
+  // com .default(), nunca obrigatório.
+  RETENTION_PURGE_ENABLED: z.enum(['true', 'false']).default('false'),
 });
 
 export type Env = z.infer<typeof envSchema>;

@@ -1,0 +1,5 @@
+{
+  "name": "example",
+  "messages": ["Quero abrir um orçamento, o motivo é: Solicitação via WhatsApp"],
+  "expectedTools": ["find_or_create_customer", "open_process", "set_process_fields"]
+}

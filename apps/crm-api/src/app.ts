@@ -3,6 +3,7 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express, { type Express } from 'express';
 import nodemailer from 'nodemailer';
+import { register } from 'prom-client';
 import { buildAuthDeps } from './authDeps.js';
 import { env } from './config/env.config.js';
 import { createAuthMiddleware } from './middlewares/authentication.middleware.js';
@@ -68,6 +69,17 @@ export const buildApp = (): Express => {
 
   app.get('/health', (_req, res) => {
     res.json(respObj({ data: { service: 'crm-api' } }));
+  });
+
+  // OPS-03/04/05: sem validToken (mesmo padrão não-autenticado de /health) —
+  // register.metrics() já contém dbReqResTime/reqResTime (db.metric.ts,
+  // responseTime.middleware.ts), nenhuma métrica nova criada aqui.
+  app.get('/metrics', async (_req, res) => {
+    res.set('Content-Type', register.contentType);
+    // res.end (não res.send): res.send() reprocessa Content-Type de corpo
+    // string via setCharset, reordenando os parâmetros alfabeticamente
+    // (charset antes de version) — res.end() preserva o header exato.
+    res.end(await register.metrics());
   });
 
   app.use('/platform', createPlatformRouter({ validToken, mailProvider, inviteBaseUrl }));

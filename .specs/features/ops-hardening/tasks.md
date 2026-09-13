@@ -126,6 +126,8 @@ gate command stays identical).
 
 **Commit**: `chore(ops): pin CI Node version to 24`
 
+**Status**: ✅ Done — commit `7af1ef5`
+
 ---
 
 ### T2: `GET /metrics` endpoint on `apps/crm-api`
@@ -161,6 +163,8 @@ responds with `prom-client`'s `register.metrics()` body and correct `Content-Typ
 **Gate**: full
 
 **Commit**: `feat(ops): expose GET /metrics on crm-api`
+
+**Status**: ✅ Done — commit `bd75e2a`
 
 ---
 
@@ -202,6 +206,8 @@ that reads and validates the file's shape.
 
 **Commit**: `feat(ops): add Grafana dashboard-as-code for crm-api metrics`
 
+**Status**: ✅ Done — commit `1639fd5`
+
 ---
 
 ### T4: `RETENTION_PURGE_ENABLED` env flag
@@ -229,6 +235,8 @@ that reads and validates the file's shape.
 **Gate**: build
 
 **Commit**: `feat(ops): add RETENTION_PURGE_ENABLED env flag`
+
+**Status**: ✅ Done — commit `8b50870`
 
 ---
 
@@ -273,6 +281,8 @@ to seed `Conversation`/`Message`/`AiSession`).
 
 **Commit**: `feat(ops): add purgeExpiredConversations retention function`
 
+**Status**: ✅ Done — commit `3913ce4`
+
 ---
 
 ### T6: `startRetentionPurge` interval worker
@@ -309,6 +319,8 @@ test.
 **Gate**: full
 
 **Commit**: `feat(ops): add startRetentionPurge interval worker`
+
+**Status**: ✅ Done — commit `5567034`
 
 ---
 
@@ -348,6 +360,8 @@ the same `start()` describe block in `app.e2e.test.ts`.
 
 **Commit**: `feat(ops): wire retention purge worker into ai-gateway startup`
 
+**Status**: ✅ Done — commit `35df4f6` (also folds in two gate-only fixes from T3/T6 that only surfaced under the full build gate: a biome format fix in `dashboard.unit.test.ts` and a type-only fix in `retentionPurge.int.test.ts`)
+
 ---
 
 ### T8: `evaluateThreshold` pure function
@@ -378,6 +392,8 @@ other injectable-boundary functions in `packages/ai-kit/src/providers/`.
 **Gate**: quick
 
 **Commit**: `feat(ops): add evaluateThreshold pure function for cache audit`
+
+**Status**: ✅ Done — commit `cad32ad`
 
 ---
 
@@ -417,6 +433,10 @@ devDependency, same invocation style as `"dev": "tsx watch src/server.ts"`).
 
 **Commit**: `feat(ops): wire cache threshold audit CLI`
 
+**Status**: ✅ Done — commit `c58b5f8` (also exports `SYSTEM_PROMPT` from `contextBuild.ts`,
+which was module-private — a one-keyword addition outside this task's `Where`, required so the
+audit script can import the real frozen prompt instead of duplicating it)
+
 ---
 
 ### T10: Extend `vitest.config.ts` to collect `evals/**/*.unit.test.ts`
@@ -446,6 +466,8 @@ coletaria os arquivos").
 **Gate**: build
 
 **Commit**: `chore(ops): collect evals/**/*.unit.test.ts in the unit project`
+
+**Status**: ✅ Done — commit `8551e00`
 
 ---
 
@@ -481,6 +503,8 @@ collected because of T10.
 **Gate**: quick
 
 **Commit**: `feat(ops): add anonymizeTranscript for replay pipeline`
+
+**Status**: ✅ Done — commit `9b0fff9`
 
 ---
 
@@ -526,6 +550,8 @@ the `integration` project).
 
 **Commit**: `feat(ops): add runReplay orchestration for replay pipeline`
 
+**Status**: ✅ Done — commit `afa2a1c`
+
 ---
 
 ### T13: Replay CLI entrypoint + root script
@@ -561,6 +587,11 @@ devDependency via `packages/db`'s test setup), `connect`/`disconnect` (`@crm/db`
 **Gate**: build
 
 **Commit**: `feat(ops): add replay CLI entrypoint`
+
+**Status**: ✅ Done — commit `2437a97` (also adds `mongodb-memory-server` as a root
+devDependency, pinned to the same `11.2.0` already used by `packages/db` — `cli.ts` lives outside
+any workspace package and could not otherwise resolve it; `package.json` was already in this
+task's `Where`, `pnpm-lock.yaml`'s update is the mechanical side effect of `pnpm install`)
 
 ---
 

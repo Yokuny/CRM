@@ -53,7 +53,16 @@ export default defineConfig({
         },
         test: {
           name: 'unit',
-          include: ['packages/**/*.unit.test.ts', 'apps/*/src/**/*.unit.test.ts', 'apps/*/src/**/*.unit.test.tsx'],
+          include: [
+            'packages/**/*.unit.test.ts',
+            'apps/*/src/**/*.unit.test.ts',
+            'apps/*/src/**/*.unit.test.tsx',
+            // ops-hardening T10/T11: evals/ vive fora de packages/*/apps/*, mesmo
+            // motivo já documentado abaixo para o project "integration" —
+            // anonymizeTranscript.unit.test.ts não usa Mongo, então entra aqui
+            // (unit), não no glob de integration.
+            'evals/**/*.unit.test.ts',
+          ],
           passWithNoTests: true,
           env: crmApiTestEnv,
         },

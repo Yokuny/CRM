@@ -3,10 +3,15 @@
   "private": true,
   "type": "module",
   "packageManager": "pnpm@11.11.0",
+  "engines": {
+    "node": ">=24 <25"
+  },
   "scripts": {
     "check": "pnpm -r exec tsc --noEmit && pnpm biome check . && pnpm vitest run",
     "format": "biome format . --write",
-    "evals": "vitest run --project integration evals/"
+    "evals": "vitest run --project integration evals/",
+    "audit:cache": "tsx packages/ai-kit/scripts/auditCacheThreshold.ts",
+    "replay": "tsx evals/replay/cli.ts"
   },
   "devDependencies": {
     "typescript": "5.9.3",
@@ -16,6 +21,7 @@
     "@crm/contracts": "workspace:*",
     "@crm/ai-kit": "workspace:*",
     "@crm/db": "workspace:*",
-    "tsx": "^4.19.2"
+    "tsx": "^4.19.2",
+    "mongodb-memory-server": "11.2.0"
   }
 }
