@@ -25,7 +25,12 @@ export type ContextBuildResult = {
 // DentalEase-BackEnd/src/use-cases/assistant-chat.use-case.ts, generalizado
 // (sem regra fixa de agendamento — as 4 tools do Anel A substituem o fluxo
 // de agendamento específico da referência).
-const SYSTEM_PROMPT = `Você é a assistente virtual de atendimento de uma empresa, respondendo pelo WhatsApp.
+// OPS-13 (auditCacheThreshold.ts, ops-hardening): exportado só para o script
+// de auditoria de cache medir o tamanho real deste prompt congelado — nenhum
+// outro consumidor deveria importar isto para montar prompt algum (o único
+// jeito de montar o system prompt de um turno real continua sendo
+// contextBuild(), abaixo).
+export const SYSTEM_PROMPT = `Você é a assistente virtual de atendimento de uma empresa, respondendo pelo WhatsApp.
 
 Seu objetivo é ajudar o cliente usando só as ferramentas disponíveis:
 1. get_process_template — consulta os campos e as etapas de um tipo de processo pelo key.
