@@ -20,6 +20,10 @@ export type WebhookRouterDeps = {
   // T15); runTurn (T17) o repassa como sibling de ingestOptions em
   // RunTurnOptions, lido só pela tool issue_payment_link (Ring B).
   asaasClient?: AsaasClient;
+  // scheduling T29: mesmo molde de asaasClient acima — app.ts injeta
+  // env.WEB_BASE_URL; runTurn repassa em RunTurnOptions.webBaseUrl, lido só
+  // pela tool book_appointment (Ring A).
+  webBaseUrl?: string;
 };
 
 // Shapes mínimas do payload da Meta necessárias para extrair 1 mensagem por
@@ -131,6 +135,7 @@ const handleIncoming = (deps: WebhookRouterDeps) => {
               {
                 ingestOptions: { downloadAudio: deps.downloadAudio, whisperClient: deps.whisperClient },
                 asaasClient: deps.asaasClient,
+                webBaseUrl: deps.webBaseUrl,
               },
             );
           }

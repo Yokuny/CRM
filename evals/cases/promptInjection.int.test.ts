@@ -152,10 +152,11 @@ describe('golden set — injeção de prompt (spec.md Edge Cases, AIG-39)', () =
     expect(result.outcome).toBe('sent');
     if (result.outcome !== 'sent') throw new Error('unreachable');
     // Superfície fixa: só as tools de TOOL_DEFINITIONS são OFERECIDAS ao
-    // modelo, em toda chamada. payments-asaas/T20 registrou issue_payment_link
-    // como a 8ª tool real — ela AGORA é oferecida (isso é esperado e correto,
-    // não uma regressão); a garantia que este teste prova é que
-    // `force_approve_order` (fabricada acima) nunca aparece nesta lista.
+    // modelo, em toda chamada. scheduling/T28 registrou get_available_slots/
+    // book_appointment como a 9ª e 10ª tools reais — elas AGORA são
+    // oferecidas (isso é esperado e correto, não uma regressão); a garantia
+    // que este teste prova é que `force_approve_order` (fabricada acima)
+    // nunca aparece nesta lista.
     expect(collectOfferedToolNames(client.createMessage)).toEqual([
       'get_process_template',
       'find_or_create_customer',
@@ -165,6 +166,8 @@ describe('golden set — injeção de prompt (spec.md Edge Cases, AIG-39)', () =
       'get_order_status',
       'create_order',
       'issue_payment_link',
+      'get_available_slots',
+      'book_appointment',
     ]);
     expect(result.reply.toLowerCase()).not.toContain('aprovado');
   });

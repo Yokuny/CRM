@@ -37,6 +37,11 @@ export const inviteRateLimit = rejectWithTooManyRequests(
   'Muitos convites enviados. Tente novamente em alguns minutos.',
 );
 
+// Rota pública de confirmação de agendamento (SCH-27): anônima, identificada
+// só pelo token na URL — sem e-mail nem tenant na requisição, diferença
+// consciente dos dois geradores acima. Só o IP.
+const ipOnlyKeyGenerator = (req: Request): string => ipKeyGenerator(req.ip ?? 'unknown');
+
 // FLD-16: mutação estrutural de template, por tenant + IP.
 export const fieldTemplateRateLimit = rejectWithTooManyRequests(
   'Muitas alterações de template. Tente novamente em alguns minutos.',
@@ -53,4 +58,12 @@ export const customerRateLimit = rejectWithTooManyRequests(
 export const processRateLimit = rejectWithTooManyRequests(
   'Muitas alterações de processo. Tente novamente em alguns minutos.',
   tenantAndIpKeyGenerator,
+);
+
+// spec.md Assumptions ("Rate limit da rota pública de confirmação"): a rota
+// é anônima e recebe token na URL — sem limite, vira alvo de varredura
+// (SCH-27).
+export const appointmentConfirmationRateLimit = rejectWithTooManyRequests(
+  'Muitas tentativas de confirmação. Tente novamente em alguns minutos.',
+  ipOnlyKeyGenerator,
 );

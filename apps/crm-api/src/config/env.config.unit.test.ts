@@ -22,7 +22,7 @@ const parseDotEnvExample = (): Record<string, string> => {
   return entries;
 };
 
-const requiredKeys = ['MONGODB_URI', 'CRM_API_PORT', 'SESSION_JWT_SECRET', 'CORS_ORIGIN'];
+const requiredKeys = ['MONGODB_URI', 'CRM_API_PORT', 'SESSION_JWT_SECRET', 'CORS_ORIGIN', 'WEB_BASE_URL'];
 
 describe('parseEnv', () => {
   it('parses successfully when .env.example (T3) provides every key envSchema requires', () => {

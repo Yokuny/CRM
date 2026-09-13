@@ -1,6 +1,6 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { Users } from 'lucide-react';
+import { Calendar, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '../../components/ui/card.js';
 import { Item, ItemContent, ItemDescription, ItemMedia, ItemTitle } from '../../components/ui/item.js';
 import { t } from '../../lib/helpers/translate.helper.js';
@@ -30,6 +30,16 @@ export function PrivateIndexPage() {
               </ItemMedia>
               <ItemContent>
                 <ItemTitle>{t('customers')}</ItemTitle>
+              </ItemContent>
+            </Link>
+          </Item>
+          <Item variant="outline" asChild>
+            <Link to="/schedule">
+              <ItemMedia variant="icon">
+                <Calendar className="size-4" />
+              </ItemMedia>
+              <ItemContent>
+                <ItemTitle>{t('schedule')}</ItemTitle>
               </ItemContent>
             </Link>
           </Item>

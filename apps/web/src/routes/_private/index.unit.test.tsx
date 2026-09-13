@@ -47,4 +47,22 @@ describe('PrivateIndexPage', () => {
     expect(screen.getByText('Papel: admin, gestor')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Clientes/ })).toHaveAttribute('href', '/customers');
   });
+
+  it('T43: also shows an "Agenda" card linking to /schedule, alongside the existing "Clientes" card', () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(sessionQuery.queryKey, {
+      tenant: { id: 't1', name: 'Empresa X', status: 'active' },
+      user: { id: 'u1', name: 'Admin', email: 'admin@empresa.com' },
+      role: ['admin', 'gestor'],
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <PrivateIndexPage />
+      </QueryClientProvider>,
+    );
+
+    expect(screen.getByRole('link', { name: /Agenda/ })).toHaveAttribute('href', '/schedule');
+    expect(screen.getByRole('link', { name: /Clientes/ })).toHaveAttribute('href', '/customers');
+  });
 });

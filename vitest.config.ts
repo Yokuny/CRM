@@ -28,6 +28,9 @@ const crmApiBaseEnv = {
   // 32 bytes base64 válidos — Buffer.alloc(32,7).toString('base64').
   ASAAS_ENC_KEY: 'BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc=',
   ASAAS_WEBHOOK_BASE_URL: 'http://localhost:8080',
+  // apps/crm-api/src/config/env.config.ts (scheduling T20) — validado no
+  // import do módulo (fail-fast, FND-18), mesmo motivo das vars acima.
+  WEB_BASE_URL: 'http://localhost:5173',
 };
 
 // unit/e2e/structural não têm globalSetup — precisam de um MONGODB_URI

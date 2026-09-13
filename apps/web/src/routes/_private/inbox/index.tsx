@@ -62,6 +62,7 @@ export function InboxPage() {
               <TakeoverBadge conversation={conversation} />
               <ConversationThread
                 conversationId={conversation.id}
+                customerId={conversation.customer}
                 renderFailedAction={(message) => (
                   <ResendButton conversationId={conversation.id} messageId={message.id} />
                 )}

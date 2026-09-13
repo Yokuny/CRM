@@ -36,6 +36,12 @@ const getMock = vi.fn((path: string) => {
   if (path === '/conversations?limit=100') {
     return Promise.resolve({ success: true, data: { items: [OPEN_CONVERSATION], total: 1 } });
   }
+  // T46: AppointmentCard (montado dentro de ConversationThread) chama GET
+  // /appointments/upcoming?customer= — resposta é um Appointment ou `null`,
+  // nunca a forma paginada {items,total} do catch-all abaixo.
+  if (path.startsWith('/appointments')) {
+    return Promise.resolve({ success: true, data: null });
+  }
   return Promise.resolve({ success: true, data: { items: [], total: 0 } });
 });
 vi.mock('../../../lib/api/client.api.js', () => ({ get: getMock }));

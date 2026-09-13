@@ -121,8 +121,14 @@ Pacote isomórfico (`packages/field-engine`) que define os tipos de campo e exp�
 principal do monorepo. Ver [ADR-0001](adr/0001-monorepo-pnpm-workspaces.md).
 
 **Board / Card**
-Kanban (feature 10, ainda não implementado). Ferramenta à parte, portada do DentalEase. Um Card **pode** referenciar um
-Process, mas não é um Process. Ver [ADR-0011](adr/0011-kanban-como-ferramenta-separada.md).
+Kanban (feature 10). Ferramenta à parte, portada do DentalEase — mas com Board e Card como duas
+collections Mongo separadas (não um documento único embutido como no DentalEase), tenant-wide
+(sem owner/collaborators). Um Board tem `columns[]` 100% livres (sem status-base seedado, sempre
+≥1). Um Card só exige `title`; opcionalmente referencia `Customer`, `Process`, `Order` e um
+`User` responsável (`assignee`) — nenhuma referência é obrigatória e nenhuma sincroniza
+automaticamente com o `stage` do Process. Ver
+[ADR-0011](adr/0011-kanban-como-ferramenta-separada.md) e
+[`.specs/features/kanban-tool/`](../.specs/features/kanban-tool/spec.md).
 
 ---
 
@@ -163,6 +169,49 @@ fica `failed` e volta pela reconciliação.
 Worker do `ai-gateway` que cobre o que o webhook perdeu: retenta `AsaasEvent` `failed`,
 consulta no Asaas todo `Payment` `pending` e expira os pendentes há mais de 24h, devolvendo
 o estoque e movendo o Order para `payment_expired`.
+
+---
+
+## Agenda
+
+**Professional**
+Quem presta o atendimento. Dono da grade semanal (`weeklySchedule`: janelas
+`{weekday, start, end}` em hora de parede, 0..N por dia) e da duração fixa do slot
+(`slotDurationMinutes`). Sem vínculo com `User` — é cadastro de agenda, não conta de
+acesso ao sistema.
+
+**Space**
+Ambiente onde o atendimento acontece (sala, cadeira, mesa, quadra — nome genérico de
+propósito). Puramente informativo: aparece no agendamento e filtra a tela da Agenda, mas
+não restringe quantos atendimentos acontecem nele ao mesmo tempo.
+
+**Appointment**
+Um horário reservado, discriminado do `Block` pelo campo `kind` na mesma collection — os
+dois disputam o mesmo índice único parcial `{Tenant, professional, start}` (só
+`pending`/`confirmed` contam), a garantia de dupla reserva do sistema: o banco elege um
+vencedor, nunca uma checagem prévia em código. Ciclo de vida: `pending` → `confirmed` (o
+cliente confirmou pelo link) → `completed` | `no_show`; ou `canceled_by_customer` |
+`canceled_by_operator` a qualquer momento antes disso. Criado pela IA (`book_appointment`)
+ou pelo operador (encaixe, inclusive fora da grade). Ver [AD-035](../.specs/STATE.md#ad-035).
+
+**Block**
+Um `Appointment` com `kind: 'block'`, sem `customer` — folga, feriado, almoço pontual,
+reunião. Nasce e permanece `confirmed` (ocupa o horário, disputa o mesmo índice que um
+agendamento real) e é removido por deleção, nunca cancelado: um bloqueio não tem ciclo de
+vida de atendimento.
+
+**Token de confirmação**
+Identificador opaco (`apt_` + 32 caracteres) que a página pública de confirmação usa para
+ler e mutar um Appointment — nunca o id do documento, ao contrário da referência que este
+projeto desviou deliberadamente. Gravado só como hash (mesmo padrão de
+`Invite.tokenHash`/`hashToken`); pedir um novo invalida o anterior, e todo token expira, no
+máximo, no fim do agendamento a que pertence.
+
+**Hora de exibição**
+Fuso único do projeto para apresentação, `DISPLAY_TIMEZONE` (`packages/contracts`, hoje
+`'America/Sao_Paulo'`) — usado tanto para interpretar toda regra recorrente (a grade
+semanal) quanto para formatar todo instante UTC na tela e no texto que a IA manda. Ver
+Convenção de tempo em [`docs/architecture.md`](architecture.md).
 
 ---
 

@@ -6,6 +6,7 @@ import { formatDate } from '@/lib/helpers/formatDate.helper.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 import { cn } from '@/lib/utils.js';
 import { type MessageRecord, messagesQuery } from '@/query/message.js';
+import { AppointmentCard } from './appointment-card.js';
 import { MediaCard } from './media-card.js';
 import { OrderCard } from './order-card.js';
 
@@ -40,6 +41,9 @@ function renderMessageBody(message: MessageRecord, conversationId: string): Reac
 
 type ThreadProps = {
   conversationId: string;
+  // T46 (SCH-38): id do Customer desta Conversation — AppointmentCard usa
+  // GET /appointments/upcoming?customer=, que não existe por conversationId.
+  customerId: string;
   // T25 (composer.tsx) injeta o botão de reenvio aqui via callback — thread
   // continua sem importar composer.tsx (acoplamento só no ponto de uso,
   // index.tsx), e é opcional para que este componente/teste continue
@@ -57,7 +61,7 @@ type ThreadProps = {
 // (prefixo que casa com a query abaixo independente do `limit`), então uma
 // `message.new` aparece aqui sem nenhum refetch — nenhum código extra
 // necessário neste componente para isso.
-export function ConversationThread({ conversationId, renderFailedAction }: ThreadProps) {
+export function ConversationThread({ conversationId, customerId, renderFailedAction }: ThreadProps) {
   const query = useQuery(messagesQuery(conversationId, { limit: MESSAGE_LIMIT }));
 
   if (query.isLoading) return <DefaultLoading />;
@@ -68,9 +72,11 @@ export function ConversationThread({ conversationId, renderFailedAction }: Threa
   // de pedido pendente desta Conversation, se houver — OrderCard (T24) já
   // se auto-esconde (renderiza null) quando não há nenhum, então ele fica
   // sempre montado aqui, independente de a Conversation ter mensagens.
+  // T46 (SCH-38): AppointmentCard segue o MESMO padrão, ao lado do OrderCard.
   return (
     <div className="flex flex-col gap-2">
       <OrderCard conversationId={conversationId} />
+      <AppointmentCard customerId={customerId} />
       {items.length === 0 ? (
         <p className="text-muted-foreground text-sm">{t('inbox.thread.empty')}</p>
       ) : (

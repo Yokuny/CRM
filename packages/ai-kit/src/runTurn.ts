@@ -28,7 +28,10 @@ export type RunTurnOutcome =
 // audio-transcription-shaped); `asaasClient` is read by `issue_payment_link`, a Ring B
 // TOOL executed inside `runLoop`/`executeTool`. A different pipeline stage needs it,
 // so it gets its own seam instead of conflating the two.
-export type RunTurnOptions = { ingestOptions?: IngestOptions; asaasClient?: AsaasClient };
+// `webBaseUrl` (scheduling T27/T29): same shape as `asaasClient` — read only by
+// `book_appointment`, a Ring A tool. No package reads `process.env` directly
+// (design.md Research Provenance); this is how the value reaches the tool.
+export type RunTurnOptions = { ingestOptions?: IngestOptions; asaasClient?: AsaasClient; webBaseUrl?: string };
 
 // catalog-orders T16 (design.md "guard.output — extensão de escopo de
 // preço"): extrai os tool_results que este turno realmente produziu, já
@@ -147,6 +150,7 @@ export const runTurn = async (
     channelId: channel._id.toString(),
     conversationId,
     asaasClient: opts.asaasClient,
+    webBaseUrl: opts.webBaseUrl,
   };
 
   let reply: string;

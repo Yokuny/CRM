@@ -174,6 +174,18 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: packages/db/src/paymentTransitions.ts:105 (mutant #5, validation.md Discrimination Sensor) (db-transitions)
 - last seen: 2026-09-09T22:35:43Z
 
+### L-028 — When an entity's schedule/duration config is edited via PATCH, add a test that creates a dependent record first and asserts it is byte-identical after the PATCH, not just that the config change itself persists.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `scheduling` · harmful: 0
+- features: scheduling
+- evidence: spec.md Edge Cases (grade/duração) — validation.md Gap 1/2 (scheduling)
+- last seen: 2026-09-12T18:14:55Z
+
+### L-029 — When an AC claims a data-integrity guarantee is structural (e.g. a single atomic write prevents orphans), still add one test with that AC's id in its title, even if an adjacent test already exercises the same code path.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `scheduling` · harmful: 0
+- features: scheduling
+- evidence: SCH-17 — validation.md Gap 3 (scheduling)
+- last seen: 2026-09-12T18:14:56Z
+
 ## Quarantined (failed when applied — ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

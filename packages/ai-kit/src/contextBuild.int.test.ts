@@ -1,4 +1,7 @@
 import crypto from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { DISPLAY_TIMEZONE } from '@crm/contracts';
 import { connect, disconnect, FieldTemplate } from '@crm/db';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { contextBuild } from './contextBuild.js';
@@ -71,6 +74,41 @@ describe('contextBuild (AIG-13)', () => {
     const text = textOf(lastMessage.content);
     expect(text).toContain('orcamento: Orçamento');
     expect(text).not.toContain('contrato: Contrato');
+  });
+
+  it('describes all 10 tools by name and the scheduling sequence (scheduling T30, SCH-09/15)', async () => {
+    const result = await contextBuild({ tenantId: randomId(), name: 'Empresa A' }, {}, { rawHistory: [] }, 'oi');
+
+    for (const toolName of [
+      'get_process_template',
+      'find_or_create_customer',
+      'open_process',
+      'set_process_fields',
+      'search_products',
+      'get_order_status',
+      'create_order',
+      'issue_payment_link',
+      'get_available_slots',
+      'book_appointment',
+    ]) {
+      expect(result.system).toContain(toolName);
+    }
+    expect(result.system).toContain('get_available_slots');
+    expect(result.system.toLowerCase()).toContain('confirmationurl');
+  });
+
+  it('formatNow uses DISPLAY_TIMEZONE from @crm/contracts, and the label in the user turn names it (AD-036)', async () => {
+    const result = await contextBuild({ tenantId: randomId(), name: 'Empresa A' }, {}, { rawHistory: [] }, 'oi');
+
+    const lastMessage = result.messages[result.messages.length - 1];
+    const text = textOf(lastMessage.content);
+    expect(text).toContain(`(${DISPLAY_TIMEZONE})`);
+
+    // Nenhum literal 'America/Sao_Paulo' sobra no arquivo-fonte — a
+    // constante vem só de @crm/contracts (AD-036, correção da fase Tasks).
+    const sourcePath = fileURLToPath(new URL('./contextBuild.ts', import.meta.url));
+    const source = readFileSync(sourcePath, 'utf-8');
+    expect(source).not.toContain('America/Sao_Paulo');
   });
 
   it('messages includes the summary (when present) BEFORE rawHistory', async () => {

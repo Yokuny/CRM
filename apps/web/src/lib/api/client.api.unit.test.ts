@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { get, patch, post } from './client.api.js';
+import { del, get, getWithStatus, patch, post, put } from './client.api.js';
 
 describe('client.api', () => {
   afterEach(() => {
@@ -93,6 +93,119 @@ describe('client.api', () => {
 
       expect(result.success).toBe(false);
       expect(result.message).toBe('Não foi possível conectar ao servidor. Tente novamente.');
+    });
+  });
+
+  describe('put', () => {
+    it('sends a JSON body with Content-Type, credentials:"include" and method:"PUT", returning the ApiResponse<T> shape on success', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        json: () => Promise.resolve({ success: true, data: { maxSlotsPerResponse: 10 }, message: '' }),
+      });
+      vi.stubGlobal('fetch', fetchMock);
+
+      const result = await put<{ maxSlotsPerResponse: number }>('/scheduling-settings', { maxSlotsPerResponse: 10 });
+
+      expect(result).toEqual({ success: true, data: { maxSlotsPerResponse: 10 }, message: '' });
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining('/scheduling-settings'),
+        expect.objectContaining({
+          method: 'PUT',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ maxSlotsPerResponse: 10 }),
+        }),
+      );
+    });
+
+    it('never throws on a network failure — returns an ApiResponse with success:false and a readable message', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
+
+      const result = await put('/scheduling-settings', { maxSlotsPerResponse: 10 });
+
+      expect(result.success).toBe(false);
+      expect(result.message).toBe('Não foi possível conectar ao servidor. Tente novamente.');
+    });
+  });
+
+  describe('del', () => {
+    it('sends no body, credentials:"include" and method:"DELETE", returning the ApiResponse<T> shape on success', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        json: () => Promise.resolve({ success: true, data: { deleted: true }, message: '' }),
+      });
+      vi.stubGlobal('fetch', fetchMock);
+
+      const result = await del<{ deleted: true }>('/appointments/blocks/b1');
+
+      expect(result).toEqual({ success: true, data: { deleted: true }, message: '' });
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining('/appointments/blocks/b1'),
+        expect.objectContaining({ method: 'DELETE', credentials: 'include', headers: undefined, body: undefined }),
+      );
+    });
+
+    it('never throws on a network failure — returns an ApiResponse with success:false and a readable message', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
+
+      const result = await del('/appointments/blocks/b1');
+
+      expect(result.success).toBe(false);
+      expect(result.message).toBe('Não foi possível conectar ao servidor. Tente novamente.');
+    });
+  });
+
+  describe('getWithStatus', () => {
+    it('returns the ApiResponse<T> shape plus the raw HTTP status on success', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        status: 200,
+        json: () => Promise.resolve({ success: true, data: { date: '2026-09-16' }, message: '' }),
+      });
+      vi.stubGlobal('fetch', fetchMock);
+
+      const result = await getWithStatus<{ date: string }>('/appointment-confirmations/tok1');
+
+      expect(result).toEqual({ success: true, data: { date: '2026-09-16' }, message: '', status: 200 });
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining('/appointment-confirmations/tok1'),
+        expect.objectContaining({ method: 'GET', credentials: 'include' }),
+      );
+    });
+
+    it('carries a 404 status through on a not-found response (never collapsed into the generic error message)', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        status: 404,
+        json: () => Promise.resolve({ success: false, message: 'Link de confirmação não encontrado' }),
+      });
+      vi.stubGlobal('fetch', fetchMock);
+
+      const result = await getWithStatus('/appointment-confirmations/bad-token');
+
+      expect(result.status).toBe(404);
+      expect(result.success).toBe(false);
+    });
+
+    it('carries a 410 status through on an expired-token response', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        status: 410,
+        json: () => Promise.resolve({ success: false, message: 'Link de confirmação expirado' }),
+      });
+      vi.stubGlobal('fetch', fetchMock);
+
+      const result = await getWithStatus('/appointment-confirmations/expired-token');
+
+      expect(result.status).toBe(410);
+      expect(result.success).toBe(false);
+    });
+
+    it('never throws on a network failure — returns success:false, status:0 and a readable message', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
+
+      const result = await getWithStatus('/appointment-confirmations/tok1');
+
+      expect(result).toEqual({
+        success: false,
+        message: 'Não foi possível conectar ao servidor. Tente novamente.',
+        status: 0,
+      });
     });
   });
 });

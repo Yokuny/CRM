@@ -146,4 +146,37 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
       required: ['orderId'],
     },
   },
+  {
+    name: 'get_available_slots',
+    description:
+      'Consulta os horários livres de uma data para agendamento, com a lista de profissionais disponíveis em cada um, mais os agendamentos futuros já ativos deste cliente. Use antes de oferecer horário ao cliente — nunca invente um horário.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        date: { type: 'string', description: 'Data no formato YYYY-MM-DD, de hoje até 90 dias à frente.' },
+        professionalId: {
+          type: 'string',
+          description: 'ID de um profissional específico, para filtrar só os horários dele.',
+        },
+      },
+      required: ['date'],
+    },
+  },
+  {
+    name: 'book_appointment',
+    description:
+      'Reserva um horário de agendamento para o cliente desta conversa, com o profissional escolhido. Use SEMPRE o valor de `start` exatamente como devolvido por get_available_slots, nunca um horário calculado ou digitado. Depois de reservar, repasse ao cliente o `confirmationUrl` devolvido, palavra por palavra — é o link para ele confirmar presença ou cancelar.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        professionalId: { type: 'string', description: 'ID do profissional escolhido (de get_available_slots).' },
+        start: {
+          type: 'string',
+          description: 'Horário exato do slot escolhido, EXATAMENTE como devolvido por get_available_slots.',
+        },
+        spaceId: { type: 'string', description: 'ID do ambiente de atendimento escolhido, se houver.' },
+      },
+      required: ['professionalId', 'start'],
+    },
+  },
 ];

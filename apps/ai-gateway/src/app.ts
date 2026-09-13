@@ -46,6 +46,7 @@ export const buildApp = (): Express => {
       downloadAudio,
       whisperClient,
       asaasClient,
+      webBaseUrl: env.WEB_BASE_URL,
     }),
   );
   // design.md Architecture Overview: rota nova, ao lado do webhook da Meta —

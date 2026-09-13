@@ -14,8 +14,15 @@ const getMock = vi.fn();
 // válidas. mockOrdersResponse permite testes dedicados ao OrderCard
 // sobrescreverem esse default.
 let mockOrdersResponse: unknown = { success: true, data: { items: [], total: 0 } };
+// T46: mesmo raciocínio para <AppointmentCard> (GET /appointments/upcoming),
+// default `null` (nenhum agendamento futuro ativo — um estado válido).
+let mockUpcomingAppointmentResponse: unknown = { success: true, data: null };
 vi.mock('../../../../lib/api/client.api.js', () => ({
-  get: (path: string) => (path.startsWith('/orders') ? Promise.resolve(mockOrdersResponse) : getMock(path)),
+  get: (path: string) => {
+    if (path.startsWith('/orders')) return Promise.resolve(mockOrdersResponse);
+    if (path.startsWith('/appointments')) return Promise.resolve(mockUpcomingAppointmentResponse);
+    return getMock(path);
+  },
 }));
 
 const { ConversationThread } = await import('./thread.js');
@@ -25,7 +32,7 @@ function renderThread(conversationId: string, props: Record<string, unknown> = {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const utils = render(
     <QueryClientProvider client={queryClient}>
-      <ConversationThread conversationId={conversationId} {...props} />
+      <ConversationThread conversationId={conversationId} customerId="cust1" {...props} />
     </QueryClientProvider>,
   );
   return { ...utils, queryClient };
@@ -35,6 +42,7 @@ describe('ConversationThread (T23 — INBOX-05/06/07/10/15)', () => {
   afterEach(() => {
     cleanup();
     mockOrdersResponse = { success: true, data: { items: [], total: 0 } };
+    mockUpcomingAppointmentResponse = { success: true, data: null };
     getMock.mockReset();
   });
 
@@ -215,5 +223,39 @@ describe('ConversationThread (T23 — INBOX-05/06/07/10/15)', () => {
 
     await screen.findByText('Nenhuma mensagem ainda.');
     expect(screen.queryByRole('button', { name: 'Aprovar' })).not.toBeInTheDocument();
+  });
+
+  it('T46 (SCH-38): shows the inline appointment-card when the customer has an upcoming active Appointment', async () => {
+    mockUpcomingAppointmentResponse = {
+      success: true,
+      data: {
+        id: 'a1',
+        kind: 'appointment',
+        professional: 'p1',
+        professionalName: 'Dra. Ana',
+        customer: 'cust1',
+        start: '2099-01-01T13:00:00.000Z',
+        end: '2099-01-01T14:00:00.000Z',
+        status: 'confirmed',
+        source: 'operator',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      },
+    };
+    getMock.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
+
+    renderThread('c1', { customerId: 'cust1' });
+
+    expect(await screen.findByText('Dra. Ana')).toBeInTheDocument();
+    expect(screen.getByText('Confirmado')).toBeInTheDocument();
+  });
+
+  it('T46: shows no appointment-card content when the customer has no upcoming Appointment (default mockUpcomingAppointmentResponse)', async () => {
+    getMock.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
+
+    renderThread('c1', { customerId: 'cust1' });
+
+    await screen.findByText('Nenhuma mensagem ainda.');
+    expect(screen.queryByText('Confirmado')).not.toBeInTheDocument();
   });
 });

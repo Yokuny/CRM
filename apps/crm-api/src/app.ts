@@ -13,8 +13,11 @@ import { createProcessFieldValueStore } from './providers/fieldValueStore/proces
 import type { MailProvider } from './providers/mail/index.js';
 import { createLogMailProvider } from './providers/mail/log.mailProvider.js';
 import { createNodemailerMailProvider } from './providers/mail/nodemailer.mailProvider.js';
+import { createAppointmentRouter } from './routers/appointment.router.js';
+import { appointmentConfirmationRouter } from './routers/appointmentConfirmation.router.js';
 import { createAsaasIntegrationRouter } from './routers/asaasIntegration.router.js';
 import { createAuthRouter } from './routers/auth.router.js';
+import { createBoardRouter } from './routers/board.router.js';
 import { createChannelRouter } from './routers/channel.router.js';
 import { createConversationRouter } from './routers/conversation.router.js';
 import { createCustomerRouter } from './routers/customer.router.js';
@@ -24,6 +27,9 @@ import { createOrderRouter } from './routers/order.router.js';
 import { createPlatformRouter } from './routers/platform.router.js';
 import { createProcessRouter } from './routers/process.router.js';
 import { createProductRouter } from './routers/product.router.js';
+import { createProfessionalRouter } from './routers/professional.router.js';
+import { createSchedulingSettingsRouter } from './routers/schedulingSettings.router.js';
+import { createSpaceRouter } from './routers/space.router.js';
 import type { FieldValueStores } from './services/fieldTemplate.service.js';
 
 const buildMailProvider = (): MailProvider => {
@@ -71,6 +77,13 @@ export const buildApp = (): Express => {
   app.use('/customers', createCustomerRouter({ validToken }));
   app.use('/processes', createProcessRouter({ validToken }));
   app.use('/products', createProductRouter({ validToken }));
+  app.use('/professionals', createProfessionalRouter({ validToken }));
+  app.use('/boards', createBoardRouter({ validToken }));
+  app.use('/spaces', createSpaceRouter({ validToken }));
+  app.use('/scheduling-settings', createSchedulingSettingsRouter({ validToken }));
+  app.use('/appointments', createAppointmentRouter({ validToken }));
+  // Público (SCH-22/SCH-27) — nenhum validToken, mesmo padrão de inviteRouter.
+  app.use('/appointment-confirmations', appointmentConfirmationRouter);
   app.use('/orders', createOrderRouter({ validToken }));
   app.use('/channels', createChannelRouter({ validToken }));
   app.use('/conversations', createConversationRouter({ validToken }));

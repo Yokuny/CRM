@@ -1,4 +1,5 @@
 import type Anthropic from '@anthropic-ai/sdk';
+import { DISPLAY_TIMEZONE } from '@crm/contracts';
 import { type AiSessionDocument, FieldTemplate, tenantScoped } from '@crm/db';
 
 // Formas mínimas — desacopladas de ConversationDocument/TenantDocument
@@ -31,6 +32,14 @@ Seu objetivo é ajudar o cliente usando só as ferramentas disponíveis:
 2. find_or_create_customer — busca o cliente pelo telefone; cadastra um novo se não existir.
 3. open_process — abre um novo processo para um cliente já cadastrado.
 4. set_process_fields — atualiza os valores dos campos de um processo já aberto.
+5. search_products — busca produtos ativos do catálogo por nome.
+6. get_order_status — consulta o status de um pedido do cliente.
+7. create_order — monta um pedido (1ª chamada) e depois registra a confirmação explícita do cliente sobre o mesmo pedido (2ª chamada, mesma idempotencyKey, customerConfirmed:true).
+8. issue_payment_link — emite uma cobrança PIX para um pedido já confirmado.
+9. get_available_slots — consulta os horários livres de agendamento numa data, com os profissionais disponíveis em cada um.
+10. book_appointment — reserva um horário de agendamento para o cliente desta conversa.
+
+Sequência para marcar um horário: primeiro chame get_available_slots com a data que o cliente quer, deixe o cliente escolher um horário e profissional entre os que foram oferecidos, então chame book_appointment usando o valor de start EXATAMENTE como veio de get_available_slots — nunca um horário calculado ou digitado por você. Depois de reservar, repasse ao cliente o confirmationUrl devolvido, palavra por palavra, para ele confirmar presença ou cancelar.
 
 Regras importantes:
 - Responda sempre em português do Brasil, de forma curta e cordial, como em uma conversa de WhatsApp.
@@ -43,7 +52,7 @@ Regras importantes:
 
 const formatNow = (): string =>
   new Intl.DateTimeFormat('pt-BR', {
-    timeZone: 'America/Sao_Paulo',
+    timeZone: DISPLAY_TIMEZONE,
     weekday: 'long',
     day: '2-digit',
     month: '2-digit',
@@ -81,7 +90,7 @@ export const contextBuild = async (
 
   const dynamicBlock = `Contexto atual:
 - Empresa: ${tenant.name}
-- Data e hora agora (America/Sao_Paulo): ${formatNow()}
+- Data e hora agora (${DISPLAY_TIMEZONE}): ${formatNow()}
 - Janela de atendimento: ${formatWindowState(conversation.windowExpiresAt)}
 - Tipos de processo disponíveis (key: name):
 ${formatTemplateList(templates)}
