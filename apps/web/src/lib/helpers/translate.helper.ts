@@ -261,6 +261,17 @@ const translations: Record<string, string> = {
   'kanban.card.field.process': 'Processo',
   'kanban.card.field.order': 'Pedido',
   'kanban.card.field.assignee': 'Responsável',
+  // T18 — routes/_private/kanban/details/@components/card-panel.tsx (painel
+  // inline de criar/editar/apagar card, AD-037).
+  'kanban.card.create.title': 'Novo card',
+  'kanban.card.detail.title': 'Card',
+  'kanban.card.field.title': 'Título',
+  'kanban.card.field.description': 'Descrição',
+  'kanban.card.field.none': 'Nenhum',
+  'kanban.card.create.error': 'Não foi possível criar o card.',
+  'kanban.card.update.error': 'Não foi possível salvar o card.',
+  'kanban.card.delete.action': 'Remover card',
+  'kanban.card.delete.error': 'Não foi possível remover o card.',
 };
 
 export const t = (key: string): string => translations[key] ?? key;
