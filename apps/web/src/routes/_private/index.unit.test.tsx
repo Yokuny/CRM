@@ -65,4 +65,24 @@ describe('PrivateIndexPage', () => {
     expect(screen.getByRole('link', { name: /Agenda/ })).toHaveAttribute('href', '/schedule');
     expect(screen.getByRole('link', { name: /Clientes/ })).toHaveAttribute('href', '/customers');
   });
+
+  it('shows cards for Catálogo, Pedidos, Caixa de entrada and Quadros, the other top-level sections without a nav entry', () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(sessionQuery.queryKey, {
+      tenant: { id: 't1', name: 'Empresa X', status: 'active' },
+      user: { id: 'u1', name: 'Admin', email: 'admin@empresa.com' },
+      role: ['admin', 'gestor'],
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <PrivateIndexPage />
+      </QueryClientProvider>,
+    );
+
+    expect(screen.getByRole('link', { name: /Catálogo/ })).toHaveAttribute('href', '/products');
+    expect(screen.getByRole('link', { name: /Pedidos/ })).toHaveAttribute('href', '/orders');
+    expect(screen.getByRole('link', { name: /Caixa de entrada/ })).toHaveAttribute('href', '/inbox');
+    expect(screen.getByRole('link', { name: /Quadros/ })).toHaveAttribute('href', '/kanban');
+  });
 });
