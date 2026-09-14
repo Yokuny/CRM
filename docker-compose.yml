@@ -1,3 +1,24 @@
+x-app: &app
+  build:
+    context: .
+    dockerfile: Dockerfile.dev
+  env_file: .env
+  environment:
+    MONGODB_URI: mongodb://mongo:27017/crm
+  depends_on:
+    mongo:
+      condition: service_healthy
+  volumes:
+    - .:/app
+    - /app/node_modules
+    - /app/apps/crm-api/node_modules
+    - /app/apps/ai-gateway/node_modules
+    - /app/apps/web/node_modules
+    - /app/packages/contracts/node_modules
+    - /app/packages/db/node_modules
+    - /app/packages/field-engine/node_modules
+    - /app/packages/ai-kit/node_modules
+
 services:
   mongo:
     image: mongo:8
@@ -13,6 +34,35 @@ services:
       timeout: 5s
       retries: 5
       start_period: 15s
+
+  crm-api:
+    <<: *app
+    container_name: crm-api
+    working_dir: /app/apps/crm-api
+    # Chama o tsx direto (em vez de `pnpm run dev`) — o `pnpm --filter` faz um
+    # check de deps a cada start que quebra com "disk I/O error" no índice
+    # sqlite do store quando /app é bind mount (Docker Desktop no macOS).
+    command: /app/node_modules/.bin/tsx watch src/server.ts
+    ports:
+      - '8080:8080'
+
+  ai-gateway:
+    <<: *app
+    container_name: crm-ai-gateway
+    working_dir: /app/apps/ai-gateway
+    command: /app/node_modules/.bin/tsx watch src/server.ts
+    ports:
+      - '8081:8081'
+
+  web:
+    <<: *app
+    container_name: crm-web
+    working_dir: /app/apps/web
+    command: /app/node_modules/.bin/vite --host 0.0.0.0
+    depends_on:
+      - crm-api
+    ports:
+      - '5173:5173'
 
 volumes:
   mongo-data:
