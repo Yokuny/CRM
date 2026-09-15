@@ -138,7 +138,10 @@ describe('updateSpaceMutation (T35, spec.md SCH-04)', () => {
     patchMock.mockResolvedValueOnce({ success: false, message: 'Ambiente não encontrado' });
 
     await expect(
-      updateSpaceMutation(fakeQueryClient()).mutationFn?.({ id: 'missing', data: { active: false } }, fakeMutationContext),
+      updateSpaceMutation(fakeQueryClient()).mutationFn?.(
+        { id: 'missing', data: { active: false } },
+        fakeMutationContext,
+      ),
     ).rejects.toThrow('Ambiente não encontrado');
   });
 

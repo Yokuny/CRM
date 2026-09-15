@@ -1,16 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, useNavigate, useSearch } from '@tanstack/react-router';
-import type { ColumnDef, OnChangeFn, PaginationState, SortingState } from '@tanstack/react-table';
-import { useMemo } from 'react';
+import type { OnChangeFn, PaginationState } from '@tanstack/react-table';
 import { z } from 'zod';
 import { DefaultEmptyData } from '@/components/default-empty-data.js';
 import { DefaultLoading } from '@/components/default-loading.js';
 import { Button } from '@/components/ui/button.js';
 import { Card, CardAction, CardContent, CardHeader } from '@/components/ui/card.js';
-import { DataTable } from '@/components/ui/data-table.js';
-import { formatMoney } from '@/lib/helpers/money.helper.js';
+import { Input } from '@/components/ui/input.js';
+import { useDebouncedSearch } from '@/hooks/useDebouncedSearch.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 import { type ProductRecord, productsQuery } from '@/query/product.js';
+import { ProductsTable } from './@components/products-table.js';
 
 // spec.md P1 "Cadastro de catálogo"/AC2: page/limit/name (busca por nome) —
 // mesmo molde de customers/@interface/customers.interface.ts, sem `sort`/
@@ -22,20 +22,6 @@ export const productsSearchSchema = z.object({
   name: z.string().optional().default(''),
 });
 export type ProductsSearch = z.infer<typeof productsSearchSchema>;
-
-// Nenhuma coluna é ordenável (o back-end não aceita `sort`) — mesmo
-// raciocínio de inbox/@components/conversation-queue.tsx.
-const productColumns: ColumnDef<ProductRecord, unknown>[] = [
-  { accessorKey: 'name', header: t('name'), enableSorting: false },
-  { id: 'price', header: t('product.price'), enableSorting: false, cell: ({ row }) => formatMoney(row.original.price) },
-  { accessorKey: 'stock', header: t('product.stock'), enableSorting: false },
-  {
-    id: 'active',
-    header: t('status'),
-    enableSorting: false,
-    cell: ({ row }) => t(row.original.active ? 'product.status.active' : 'product.status.inactive'),
-  },
-];
 
 // design.md/T19: sem hub — index.tsx é a própria listagem (Product só tem
 // list/add/details, ao contrário de Customer que também tem kanban). FND-10-
@@ -49,11 +35,6 @@ export function ProductsIndexPage() {
   const query = useQuery(productsQuery({ page: search.page, limit: search.limit, name: search.name || undefined }));
 
   const pageCount = Math.max(1, Math.ceil((query.data?.total ?? 0) / search.limit));
-
-  const tableState = useMemo(
-    () => ({ pagination: { pageIndex: search.page - 1, pageSize: search.limit }, sorting: [] as SortingState }),
-    [search.page, search.limit],
-  );
 
   // AD-028: nunca re-busca a coleção inteira — só navega com um novo search
   // param, `productsQuery` (T18) refaz a chamada ao servidor com os
@@ -73,6 +54,8 @@ export function ProductsIndexPage() {
     navigate({ search: ((prev: ProductsSearch) => ({ ...prev, name: value, page: 1 })) as any, replace: true } as any);
   };
 
+  const [searchInput, handleSearchInput] = useDebouncedSearch(search.name, handleSearchChange);
+
   const handleRowClick = (row: ProductRecord) => {
     navigate({ to: '/products/details', search: { id: row.id } });
   };
@@ -90,18 +73,26 @@ export function ProductsIndexPage() {
         {query.isLoading ? (
           <DefaultLoading />
         ) : (
-          <DataTable
-            data={query.data?.items ?? []}
-            columns={productColumns}
-            pageCount={pageCount}
-            state={tableState}
-            onPaginationChange={handlePaginationChange}
-            onSortingChange={() => {}}
-            searchValue={search.name}
-            onSearchChange={handleSearchChange}
-            onRowClick={handleRowClick}
-            emptyState={<DefaultEmptyData />}
-          />
+          <div className="flex flex-col gap-4">
+            <Input
+              variant="primary"
+              placeholder={t('search.placeholder')}
+              value={searchInput}
+              onChange={(e) => handleSearchInput(e.target.value)}
+            />
+            {(query.data?.items.length ?? 0) === 0 ? (
+              <DefaultEmptyData />
+            ) : (
+              <ProductsTable
+                data={query.data?.items ?? []}
+                pageCount={pageCount}
+                pageIndex={search.page - 1}
+                pageSize={search.limit}
+                onPaginationChange={handlePaginationChange}
+                onRowClick={handleRowClick}
+              />
+            )}
+          </div>
         )}
       </CardContent>
     </Card>

@@ -26,7 +26,8 @@ export const schedulingSettingsQuery = () =>
     queryKey: schedulingSettingsKeys.detail(),
     queryFn: async (): Promise<SchedulingSettingsRecord> => {
       const res = await get<SchedulingSettingsRecord>('/scheduling-settings');
-      if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível carregar a configuração da agenda.');
+      if (!res.success || !res.data)
+        throw new Error(res.message ?? 'Não foi possível carregar a configuração da agenda.');
       return res.data;
     },
   });

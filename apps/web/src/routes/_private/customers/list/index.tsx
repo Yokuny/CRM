@@ -6,11 +6,12 @@ import { DefaultEmptyData } from '@/components/default-empty-data.js';
 import { DefaultLoading } from '@/components/default-loading.js';
 import { Button } from '@/components/ui/button.js';
 import { Card, CardAction, CardContent, CardHeader } from '@/components/ui/card.js';
-import { DataTable } from '@/components/ui/data-table.js';
+import { Input } from '@/components/ui/input.js';
+import { useDebouncedSearch } from '@/hooks/useDebouncedSearch.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 import { type CustomerRecord, customersQuery } from '@/query/customer.js';
 import { type CustomersSearch, customersSearchSchema } from '../@interface/customers.interface.js';
-import { customerColumns } from '../@utils/columns.js';
+import { CustomersTable } from './@components/customers-table.js';
 
 // FND-10-style: useSearch({strict:false}) (não Route.useSearch()) — o
 // componente fica testável isolado do router real, mesmo convenção já usada
@@ -75,6 +76,8 @@ export function CustomersListPage() {
     navigate({ search: ((prev: CustomersSearch) => ({ ...prev, q: value, page: 1 })) as any, replace: true } as any);
   };
 
+  const [searchInput, handleSearchInput] = useDebouncedSearch(search.q, handleSearchChange);
+
   const handleRowClick = (row: CustomerRecord) => {
     navigate({ to: '/customers/details', search: { id: row.id } });
   };
@@ -92,18 +95,26 @@ export function CustomersListPage() {
         {query.isLoading ? (
           <DefaultLoading />
         ) : (
-          <DataTable
-            data={query.data?.items ?? []}
-            columns={customerColumns}
-            pageCount={pageCount}
-            state={tableState}
-            onPaginationChange={handlePaginationChange}
-            onSortingChange={handleSortingChange}
-            searchValue={search.q}
-            onSearchChange={handleSearchChange}
-            onRowClick={handleRowClick}
-            emptyState={<DefaultEmptyData />}
-          />
+          <div className="flex flex-col gap-4">
+            <Input
+              variant="primary"
+              placeholder={t('search.placeholder')}
+              value={searchInput}
+              onChange={(e) => handleSearchInput(e.target.value)}
+            />
+            {(query.data?.items.length ?? 0) === 0 ? (
+              <DefaultEmptyData />
+            ) : (
+              <CustomersTable
+                data={query.data?.items ?? []}
+                pageCount={pageCount}
+                state={tableState}
+                onPaginationChange={handlePaginationChange}
+                onSortingChange={handleSortingChange}
+                onRowClick={handleRowClick}
+              />
+            )}
+          </div>
         )}
       </CardContent>
     </Card>

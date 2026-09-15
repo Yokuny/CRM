@@ -6,8 +6,13 @@ const postMock = vi.fn();
 const patchMock = vi.fn();
 vi.mock('../lib/api/client.api.js', () => ({ get: getMock, post: postMock, patch: patchMock }));
 
-const { professionalsQuery, professionalQuery, createProfessionalMutation, updateProfessionalMutation, professionalKeys } =
-  await import('./professional.js');
+const {
+  professionalsQuery,
+  professionalQuery,
+  createProfessionalMutation,
+  updateProfessionalMutation,
+  professionalKeys,
+} = await import('./professional.js');
 
 const fakeQueryClient = (): QueryClient & { invalidateQueries: ReturnType<typeof vi.fn> } =>
   ({ invalidateQueries: vi.fn() }) as unknown as QueryClient & { invalidateQueries: ReturnType<typeof vi.fn> };
@@ -98,7 +103,11 @@ describe('professionalQuery (T32, spec.md SCH-08 — GET /professionals/:id real
 describe('createProfessionalMutation (T32, spec.md SCH-01)', () => {
   it('calls POST /professionals with the given input and resolves with the created record', async () => {
     postMock.mockResolvedValueOnce({ success: true, data: PROFESSIONAL_RECORD });
-    const input = { name: 'Dra. Ana', slotDurationMinutes: 30, weeklySchedule: [{ weekday: 1, start: '09:00', end: '12:00' }] };
+    const input = {
+      name: 'Dra. Ana',
+      slotDurationMinutes: 30,
+      weeklySchedule: [{ weekday: 1, start: '09:00', end: '12:00' }],
+    };
 
     const result = await createProfessionalMutation(fakeQueryClient()).mutationFn?.(input, fakeMutationContext);
 

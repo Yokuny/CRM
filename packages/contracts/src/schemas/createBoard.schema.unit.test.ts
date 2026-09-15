@@ -11,10 +11,7 @@ describe('createBoardSchema (KAN-01, KAN-02, KAN-04)', () => {
     const result = createBoardSchema.safeParse({
       name: 'Cobranças em atraso',
       description: 'Board de cobranças',
-      columns: [
-        { label: 'A fazer' },
-        { label: 'Em andamento', color: '#00AA00' },
-      ],
+      columns: [{ label: 'A fazer' }, { label: 'Em andamento', color: '#00AA00' }],
     });
 
     expect(result.success).toBe(true);

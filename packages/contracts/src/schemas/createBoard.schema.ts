@@ -8,7 +8,10 @@ import { z } from 'zod';
 const initialColumnSchema = z
   .object({
     label: z.string().trim().min(1, 'label é obrigatório').max(60, 'label inválido'),
-    color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'color inválida (#RRGGBB)').optional(),
+    color: z
+      .string()
+      .regex(/^#[0-9A-Fa-f]{6}$/, 'color inválida (#RRGGBB)')
+      .optional(),
   })
   .strict();
 

@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router';
-import type { ColumnDef, OnChangeFn, PaginationState, SortingState } from '@tanstack/react-table';
-import { useMemo } from 'react';
+import type { ColumnDef, OnChangeFn, PaginationState } from '@tanstack/react-table';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { DefaultEmptyData } from '@/components/default-empty-data.js';
@@ -9,7 +8,8 @@ import { DefaultLoading } from '@/components/default-loading.js';
 import { Badge } from '@/components/ui/badge.js';
 import { Button } from '@/components/ui/button.js';
 import { Card, CardContent, CardHeader } from '@/components/ui/card.js';
-import { DataTable } from '@/components/ui/data-table.js';
+import { Input } from '@/components/ui/input.js';
+import { useDebouncedSearch } from '@/hooks/useDebouncedSearch.js';
 import { formatMoney } from '@/lib/helpers/money.helper.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 import {
@@ -20,6 +20,7 @@ import {
   type PaymentStatus,
   rejectOrderMutation,
 } from '@/query/order.js';
+import { OrdersTable } from './@components/orders-table.js';
 
 // spec.md P1 "Operador aprova ou rejeita um pedido pendente"/AC1/AC2:
 // filtro por status via search (AD-030), default 'pending_approval' — a
@@ -96,11 +97,6 @@ export function OrdersIndexPage() {
 
   const pageCount = Math.max(1, Math.ceil((query.data?.total ?? 0) / search.limit));
 
-  const tableState = useMemo(
-    () => ({ pagination: { pageIndex: search.page - 1, pageSize: search.limit }, sorting: [] as SortingState }),
-    [search.page, search.limit],
-  );
-
   // AD-028: nunca re-busca a coleção inteira — só navega com um novo search
   // param, ordersQuery (T22) refaz a chamada ao servidor com os parâmetros
   // corretos. `as any`: mesmo workaround já usado em products/index.tsx
@@ -124,6 +120,8 @@ export function OrdersIndexPage() {
   const handleStatusChange = (status: OrderStatus) => {
     navigate({ search: ((prev: OrdersSearch) => ({ ...prev, status, page: 1 })) as any, replace: true } as any);
   };
+
+  const [searchInput, handleSearchInput] = useDebouncedSearch(search.conversation, handleConversationChange);
 
   // spec.md AC2: ações Aprovar/Rejeitar visíveis SÓ em linhas
   // status:'pending_approval' — confirmed/rejected (histórico) nunca
@@ -218,17 +216,26 @@ export function OrdersIndexPage() {
         {query.isLoading ? (
           <DefaultLoading />
         ) : (
-          <DataTable
-            data={query.data?.items ?? []}
-            columns={columns}
-            pageCount={pageCount}
-            state={tableState}
-            onPaginationChange={handlePaginationChange}
-            onSortingChange={() => {}}
-            searchValue={search.conversation}
-            onSearchChange={handleConversationChange}
-            emptyState={<DefaultEmptyData />}
-          />
+          <div className="flex flex-col gap-4">
+            <Input
+              variant="primary"
+              placeholder={t('search.placeholder')}
+              value={searchInput}
+              onChange={(e) => handleSearchInput(e.target.value)}
+            />
+            {(query.data?.items.length ?? 0) === 0 ? (
+              <DefaultEmptyData />
+            ) : (
+              <OrdersTable
+                data={query.data?.items ?? []}
+                columns={columns}
+                pageCount={pageCount}
+                pageIndex={search.page - 1}
+                pageSize={search.limit}
+                onPaginationChange={handlePaginationChange}
+              />
+            )}
+          </div>
         )}
       </CardContent>
     </Card>
