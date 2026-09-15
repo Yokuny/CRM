@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { DefaultFormLayout } from '@/components/default-form-layout.js';
 import { DefaultLoading } from '@/components/default-loading.js';
 import { Button } from '@/components/ui/button.js';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form.js';
@@ -67,31 +68,44 @@ export function InvitePage() {
           <ItemDescription>{peekQuery.data.email}</ItemDescription>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} noValidate className="mt-4 flex flex-col gap-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('name')}</FormLabel>
-                    <FormControl>
-                      <Input autoComplete="name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('password')}</FormLabel>
-                    <FormControl>
-                      <Input type="password" autoComplete="new-password" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+              <DefaultFormLayout
+                sections={[
+                  {
+                    title: t('invite.accept.section_info'),
+                    description: t('invite.accept.section_info_description'),
+                    layout: 'vertical',
+                    fields: [
+                      <FormField
+                        key="name"
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('name')}</FormLabel>
+                            <FormControl>
+                              <Input autoComplete="name" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />,
+                      <FormField
+                        key="password"
+                        control={form.control}
+                        name="password"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('password')}</FormLabel>
+                            <FormControl>
+                              <Input type="password" autoComplete="new-password" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />,
+                    ],
+                  },
+                ]}
               />
               {submitError && <ItemDescription role="alert">{submitError}</ItemDescription>}
               <Button type="submit" disabled={form.formState.isSubmitting}>

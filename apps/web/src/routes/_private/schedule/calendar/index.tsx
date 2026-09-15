@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { DefaultEmptyData } from '@/components/default-empty-data.js';
 import { DefaultLoading } from '@/components/default-loading.js';
 import { Button } from '@/components/ui/button.js';
+import { ButtonGroup } from '@/components/ui/button-group.js';
 import { Card, CardContent, CardHeader } from '@/components/ui/card.js';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select.js';
 import { addDaysToDisplayDate, currentDisplayWeekStart } from '@/lib/helpers/displayTime.helper.js';
@@ -113,12 +114,14 @@ export function CalendarIndexPage() {
       <CardHeader title={t('calendar.title')} />
       <CardContent className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center gap-2">
-          <Button type="button" variant="basic" onClick={handlePrevious}>
-            {t('calendar.previous_week')}
-          </Button>
-          <Button type="button" variant="basic" onClick={handleNext}>
-            {t('calendar.next_week')}
-          </Button>
+          <ButtonGroup>
+            <Button type="button" variant="basic" onClick={handlePrevious}>
+              {t('calendar.previous_week')}
+            </Button>
+            <Button type="button" variant="basic" onClick={handleNext}>
+              {t('calendar.next_week')}
+            </Button>
+          </ButtonGroup>
           <Select value={search.professional ?? ALL_FILTER_VALUE} onValueChange={handleProfessionalChange}>
             <SelectTrigger>
               <SelectValue placeholder={t('calendar.filter.professional')} />

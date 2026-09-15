@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { DefaultFormLayout } from '@/components/default-form-layout.js';
 import { DefaultLoading } from '@/components/default-loading.js';
 import { Button } from '@/components/ui/button.js';
 import { Card, CardContent, CardHeader } from '@/components/ui/card.js';
@@ -46,27 +47,39 @@ function SchedulingSettingsForm({ settings }: SchedulingSettingsFormProps) {
   return (
     <Form {...form}>
       <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6">
-        <FormField
-          control={form.control}
-          name="maxSlotsPerResponse"
-          render={({ field }) => (
-            <FormItem className="max-w-xs">
-              <FormLabel>{t('scheduling_settings.max_slots')}</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  inputMode="numeric"
-                  min={1}
-                  max={50}
-                  step={1}
-                  value={field.value ?? 0}
-                  onChange={(e) => field.onChange(e.target.value === '' ? 0 : Number(e.target.value))}
-                  onBlur={field.onBlur}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+        <DefaultFormLayout
+          sections={[
+            {
+              title: t('scheduling_settings.section.info'),
+              description: t('scheduling_settings.section.info_description'),
+              fields: [
+                <FormField
+                  key="maxSlotsPerResponse"
+                  control={form.control}
+                  name="maxSlotsPerResponse"
+                  render={({ field }) => (
+                    <FormItem className="max-w-xs">
+                      <FormLabel>{t('scheduling_settings.max_slots')}</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          inputMode="numeric"
+                          min={1}
+                          max={50}
+                          step={1}
+                          placeholder={t('scheduling_settings.max_slots_placeholder')}
+                          value={field.value ?? 0}
+                          onChange={(e) => field.onChange(e.target.value === '' ? 0 : Number(e.target.value))}
+                          onBlur={field.onBlur}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />,
+              ],
+            },
+          ]}
         />
         {errorMessage && (
           <p role="alert" className="text-destructive text-sm">

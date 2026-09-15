@@ -20,6 +20,15 @@ const translations: Record<string, string> = {
   customers: 'Clientes',
   'customer.create.title': 'Novo cliente',
   'customer.create.error': 'Não foi possível criar o cliente.',
+  // Seções de customers/add/index.tsx (DefaultFormLayout).
+  'customer.create.section.identification': 'Identificação',
+  'customer.create.section.identification_description': 'Dados básicos para identificar e contatar o cliente.',
+  'customer.create.section.details': 'Detalhes adicionais',
+  'customer.create.section.details_description':
+    'Campos extras que sua empresa configurou para o cadastro de clientes.',
+  'customer.create.field.name_placeholder': 'Ex.: Maria Silva',
+  'customer.create.field.phone_placeholder': 'Ex.: 11999999999',
+  'customer.create.field.document_placeholder': 'Ex.: 000.000.000-00',
   'customer.details.title': 'Detalhe do cliente',
   'customer.processes.title': 'Processos',
   'customer.edit.error': 'Não foi possível salvar as alterações.',
@@ -28,14 +37,26 @@ const translations: Record<string, string> = {
   'process.create.success': 'Processo criado com sucesso.',
   'process.template.placeholder': 'Escolha um tipo de processo',
   'process.new.action': 'Novo processo',
+  // Seção de processes/add/index.tsx (DefaultFormLayout).
+  'process.create.section.template': 'Tipo de processo',
+  'process.create.section.template_description': 'Escolha o modelo de processo que será criado para este cliente.',
   'process.details.title': 'Detalhe do processo',
   'process.values.error': 'Não foi possível salvar os valores do processo.',
+  // Seção de processes/details.tsx (DefaultFormLayout, ProcessValuesForm).
+  'process.details.section.values': 'Valores do processo',
+  'process.details.section.values_description': 'Campos configurados no template deste processo.',
   'process.stage.label': 'Etapa',
   'process.stage.error': 'Não foi possível avançar a etapa do processo.',
   'auth.signin.title': 'Entrar',
+  // Seção de auth/index.tsx (DefaultFormLayout).
+  'auth.signin.section_info': 'Credenciais de acesso',
+  'auth.signin.section_info_description': 'Informe seu e-mail e senha cadastrados.',
   'auth.signin.submit': 'Entrar',
   'auth.signin.error': 'Não foi possível entrar.',
   'invite.accept.title': 'Aceitar convite',
+  // Seção de invite/index.tsx (DefaultFormLayout).
+  'invite.accept.section_info': 'Seus dados',
+  'invite.accept.section_info_description': 'Defina seu nome e senha para concluir o cadastro.',
   'invite.accept.submit': 'Criar conta',
   'invite.accept.missing_token': 'Link de convite inválido.',
   'invite.accept.invited_to': 'Convite para',
@@ -118,6 +139,13 @@ const translations: Record<string, string> = {
   // T20 — products/add/index.tsx.
   'product.create.title': 'Novo produto',
   'product.create.error': 'Não foi possível criar o produto.',
+  // Seção de products/add/index.tsx (DefaultFormLayout).
+  'product.create.section.info': 'Informações do produto',
+  'product.create.section.info_description': 'Dados usados no catálogo e na conferência de estoque.',
+  'product.create.field.name_placeholder': 'Ex.: Camiseta Branca P',
+  'product.create.field.sku_placeholder': 'Ex.: CAM-BR-P',
+  'product.create.field.stock_placeholder': 'Ex.: 10',
+  'product.create.field.description_placeholder': 'Ex.: Descrição curta do produto',
   'product.sku': 'SKU',
   'product.description': 'Descrição',
   // T21 — products/details.tsx.
@@ -170,6 +198,14 @@ const translations: Record<string, string> = {
   'professional.status.active': 'Ativo',
   'professional.status.inactive': 'Inativo',
   'professional.filter.show_inactive': 'Mostrar inativos',
+  // Seções de schedule/professionals/add/index.tsx (DefaultFormLayout).
+  'professional.create.section.info': 'Informações do profissional',
+  'professional.create.section.info_description': 'Nome e duração padrão dos horários de atendimento.',
+  'professional.create.section.schedule': 'Grade semanal',
+  'professional.create.section.schedule_description':
+    'Defina os horários em que o profissional está disponível para agendamentos.',
+  'professional.create.field.name_placeholder': 'Ex.: Dra. Ana Souza',
+  'professional.slot_duration_placeholder': 'Ex.: 30',
   // Telas de Ambiente (feature scheduling, Fase 7/T35) — routes/_private/
   // schedule/spaces/**. Chave crua `spaces` é o mesmo fallback de breadcrumb
   // de `professionals` acima.
@@ -180,10 +216,19 @@ const translations: Record<string, string> = {
   'space.status.active': 'Ativo',
   'space.status.inactive': 'Inativo',
   'space.filter.show_inactive': 'Mostrar inativos',
+  // Seção de schedule/spaces/add/index.tsx (DefaultFormLayout).
+  'space.create.section.info': 'Informações do ambiente',
+  'space.create.section.info_description': 'Nome do ambiente usado nos agendamentos.',
+  'space.create.field.name_placeholder': 'Ex.: Sala 1',
   // Configuração da agenda (feature scheduling, Fase 7/T36) — routes/
   // _private/schedule/settings/index.tsx.
   'scheduling_settings.title': 'Configuração da agenda',
   'scheduling_settings.max_slots': 'Máximo de horários por resposta',
+  'scheduling_settings.max_slots_placeholder': 'Ex.: 16',
+  // Seção de schedule/settings/index.tsx (DefaultFormLayout).
+  'scheduling_settings.section.info': 'Limite de horários',
+  'scheduling_settings.section.info_description':
+    'Quantidade máxima de horários sugeridos em cada resposta automática do agendamento.',
   // Calendário da agenda (feature scheduling, Fase 8/T39) — routes/_private/
   // schedule/calendar/index.tsx.
   'calendar.title': 'Calendário',
@@ -198,6 +243,10 @@ const translations: Record<string, string> = {
   // Diálogo de agendamento (feature scheduling, Fase 8/T40) — routes/_private/
   // schedule/calendar/@components/appointment-dialog.tsx.
   'appointment.create.title': 'Novo agendamento',
+  // Seções de appointment-panel.tsx (DefaultFormLayout).
+  'appointment.create.section.info': 'Detalhes do agendamento',
+  'appointment.create.section.info_description': 'Escolha cliente, profissional, data e horário do atendimento.',
+  'appointment.reschedule.section_description': 'Escolha a nova data, horário e, se necessário, o profissional.',
   'appointment.detail.title': 'Agendamento',
   'appointment.field.customer': 'Cliente',
   'appointment.field.professional': 'Profissional',
@@ -220,10 +269,15 @@ const translations: Record<string, string> = {
   'appointment.action.request_confirmation': 'Pedir confirmação',
   'appointment.notice.queued': 'Cliente avisado.',
   'appointment.notice.wa_me_button': 'Avisar pelo WhatsApp',
-  // Diálogo de bloqueio (feature scheduling, Fase 8/T41) — routes/_private/
-  // schedule/calendar/@components/block-dialog.tsx.
-  'block.create.title': 'Novo bloqueio',
   'block.detail.title': 'Bloqueio',
+  // Seção de block-panel.tsx/BlockCreateForm (DefaultFormLayout).
+  'block.create.section.info': 'Bloqueio de horário',
+  'block.create.section.info_description': 'Impede novos agendamentos deste profissional durante o período informado.',
+  'block.field.title_placeholder': 'Ex.: Feriado, folga ou reunião',
+  'block.field.start_date_placeholder': 'dd/mm/aaaa',
+  'block.field.start_time_placeholder': 'hh:mm',
+  'block.field.end_date_placeholder': 'dd/mm/aaaa',
+  'block.field.end_time_placeholder': 'hh:mm',
   'block.field.title': 'Título',
   'block.field.start_date': 'Data de início',
   'block.field.start_time': 'Hora de início',
@@ -255,6 +309,15 @@ const translations: Record<string, string> = {
   'kanban.board.columns.label': 'Colunas iniciais',
   'kanban.board.columns.column_label': 'Nome da coluna',
   'kanban.board.columns.add': 'Adicionar coluna',
+  // Seções de kanban/add/index.tsx (DefaultFormLayout).
+  'kanban.board.create.section.info': 'Informações do quadro',
+  'kanban.board.create.section.info_description': 'Nome e descrição do quadro Kanban.',
+  'kanban.board.create.section.columns': 'Colunas',
+  'kanban.board.create.section.columns_description':
+    'Defina as colunas iniciais do quadro — é possível ajustar depois.',
+  'kanban.board.create.field.name_placeholder': 'Ex.: Vendas',
+  'kanban.board.field.description_placeholder': 'Ex.: Quadro para acompanhar vendas em andamento',
+  'kanban.board.columns.column_label_placeholder': 'Ex.: A fazer',
   // T17 — routes/_private/kanban/details/@components/kanban-card-content.tsx
   // (badges de referência do card: cliente/processo/pedido/responsável).
   'kanban.card.field.customer': 'Cliente',
@@ -264,6 +327,10 @@ const translations: Record<string, string> = {
   // T18 — routes/_private/kanban/details/@components/card-panel.tsx (painel
   // inline de criar/editar/apagar card, AD-037).
   'kanban.card.create.title': 'Novo card',
+  // Seção de card-panel.tsx (DefaultFormLayout, criar e editar).
+  'kanban.card.section.info': 'Detalhes do card',
+  'kanban.card.section.info_description':
+    'Título, descrição e referências opcionais (cliente, processo, pedido, responsável).',
   'kanban.card.detail.title': 'Card',
   'kanban.card.field.title': 'Título',
   'kanban.card.field.description': 'Descrição',
@@ -275,12 +342,16 @@ const translations: Record<string, string> = {
   // T19 — routes/_private/kanban/details/@components/column-manager-panel.tsx
   // (painel inline de gerenciar colunas, AD-037).
   'kanban.column_manager.title': 'Gerenciar colunas',
+  // Seção de column-manager-panel.tsx (DefaultFormLayout).
+  'kanban.column_manager.section_title': 'Colunas',
+  'kanban.column_manager.section_description': 'Renomeie, defina uma cor, reordene ou remova as colunas deste quadro.',
   'kanban.column_manager.move_up': 'Mover para cima',
   'kanban.column_manager.move_down': 'Mover para baixo',
   'kanban.column.field.color': 'Cor',
   // T20 — routes/_private/kanban/details.tsx (tela do board, drag-and-drop).
   'kanban.board.details.title': 'Detalhe do quadro',
   'kanban.column_manager.action': 'Colunas',
+  'kanban.board.edit.error': 'Não foi possível salvar as alterações do quadro.',
   'kanban.card.move.error': 'Não foi possível mover o card. Tente novamente.',
 };
 

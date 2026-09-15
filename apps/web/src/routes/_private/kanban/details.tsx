@@ -11,6 +11,7 @@ import { Card, CardAction, CardContent, CardHeader } from '@/components/ui/card.
 import { KanbanBoard, KanbanCard, KanbanCards, KanbanHeader, KanbanProvider } from '@/components/ui/kanban.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 import { boardCardsQuery, boardQuery, type CardRecord, moveCardMutation } from '@/query/board.js';
+import { BoardEditPanel } from './details/@components/board-edit-panel.js';
 import { CardPanel } from './details/@components/card-panel.js';
 import { ColumnManagerPanel } from './details/@components/column-manager-panel.js';
 import { KanbanCardContent } from './details/@components/kanban-card-content.js';
@@ -22,7 +23,11 @@ export type KanbanDetailsSearch = z.infer<typeof kanbanDetailsSearchSchema>;
 
 type KanbanItem = CardRecord & { name: string };
 
-type PanelState = { type: 'card'; columnId?: string; card?: CardRecord } | { type: 'columns' } | null;
+type PanelState =
+  | { type: 'card'; columnId?: string; card?: CardRecord }
+  | { type: 'columns' }
+  | { type: 'board-edit' }
+  | null;
 
 // FND-10-style: useSearch({strict:false}) — mesmo motivo já documentado em
 // products/details.tsx/customers/details.tsx: o componente fica testável
@@ -117,9 +122,12 @@ export function KanbanDetailsPage() {
 
   return (
     <Card asPage>
-      <CardHeader title={t('kanban.board.details.title')}>
+      <CardHeader title={board?.name ?? t('kanban.board.details.title')}>
         {board && (
           <CardAction>
+            <Button type="button" variant="basic" size="sm" onClick={() => setPanel({ type: 'board-edit' })}>
+              {t('edit')}
+            </Button>
             <Button type="button" variant="basic" size="sm" onClick={() => setPanel({ type: 'columns' })}>
               {t('kanban.column_manager.action')}
             </Button>
@@ -136,6 +144,7 @@ export function KanbanDetailsPage() {
           <DefaultEmptyData />
         ) : (
           <>
+            {board.description && <p className="text-muted-foreground text-sm">{board.description}</p>}
             {panel?.type === 'card' && (
               <CardPanel
                 boardId={search.id}
@@ -147,6 +156,7 @@ export function KanbanDetailsPage() {
             {panel?.type === 'columns' && (
               <ColumnManagerPanel boardId={search.id} columns={board.columns} onClose={() => setPanel(null)} />
             )}
+            {panel?.type === 'board-edit' && <BoardEditPanel board={board} onClose={() => setPanel(null)} />}
             <KanbanProvider columns={columns} data={data} onDragEnd={handleDragEnd}>
               {(column) => (
                 <KanbanBoard id={column.id} key={column.id}>

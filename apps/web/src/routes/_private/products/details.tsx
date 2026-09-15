@@ -6,15 +6,24 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { DefaultEmptyData } from '@/components/default-empty-data.js';
+import { DefaultFormLayout } from '@/components/default-form-layout.js';
 import { DefaultLoading } from '@/components/default-loading.js';
 import { Button } from '@/components/ui/button.js';
-import { Card, CardContent, CardHeader } from '@/components/ui/card.js';
+import { Card, CardAction, CardContent, CardHeader } from '@/components/ui/card.js';
 import { Checkbox } from '@/components/ui/checkbox.js';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form.js';
 import { Input } from '@/components/ui/input.js';
+import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item.js';
 import { MoneyInput } from '@/components/ui/money-input.js';
+import { formatMoney } from '@/lib/helpers/money.helper.js';
 import { t } from '@/lib/helpers/translate.helper.js';
-import { type ProductRecord, productsQuery, updateProductMutation } from '@/query/product.js';
+import {
+  type ProductRecord,
+  type ProductsListResult,
+  productKeys,
+  productsQuery,
+  updateProductMutation,
+} from '@/query/product.js';
 
 // AD-030: `search: { id }`, nunca um `$id` path segment — mesmo padrão de
 // customers/details.tsx.
@@ -34,13 +43,62 @@ export type ProductDetailsSearch = z.infer<typeof productDetailsSearchSchema>;
 // futura se o volume real do catálogo justificar.
 const CATALOG_FETCH_LIMIT = 500;
 
-type ProductEditFormProps = { product: ProductRecord };
+type ProductDetailsViewProps = { product: ProductRecord };
 
-// T21 Done when: "edita stock/active/demais campos" — um único formulário
-// sempre editável (sem alternância view/edit, que ninguém pediu aqui — mesmo
-// espírito de ProcessValuesForm/ProcessStageControl em processes/details.tsx),
-// validado por `updateProductSchema` (packages/contracts, T4).
-function ProductEditForm({ product }: ProductEditFormProps) {
+// Padrão view/edit documentado em apps/web/CLAUDE.md ("Detalhe de entidade")
+// — mesmo componente-irmão de CustomerDetailsView (customers/details.tsx):
+// lista os campos em modo leitura, `Editar` (CardAction) troca pro form.
+function ProductDetailsView({ product }: ProductDetailsViewProps) {
+  return (
+    <ItemGroup>
+      <Item>
+        <ItemContent>
+          <ItemTitle>{t('name')}</ItemTitle>
+          <ItemDescription>{product.name}</ItemDescription>
+        </ItemContent>
+      </Item>
+      <Item>
+        <ItemContent>
+          <ItemTitle>{t('product.sku')}</ItemTitle>
+          <ItemDescription>{product.sku || '-'}</ItemDescription>
+        </ItemContent>
+      </Item>
+      <Item>
+        <ItemContent>
+          <ItemTitle>{t('product.price')}</ItemTitle>
+          <ItemDescription>{formatMoney(product.price)}</ItemDescription>
+        </ItemContent>
+      </Item>
+      <Item>
+        <ItemContent>
+          <ItemTitle>{t('product.stock')}</ItemTitle>
+          <ItemDescription>{product.stock}</ItemDescription>
+        </ItemContent>
+      </Item>
+      <Item>
+        <ItemContent>
+          <ItemTitle>{t('product.description')}</ItemTitle>
+          <ItemDescription>{product.description || '-'}</ItemDescription>
+        </ItemContent>
+      </Item>
+      <Item>
+        <ItemContent>
+          <ItemTitle>{t('status')}</ItemTitle>
+          <ItemDescription>{t(product.active ? 'product.status.active' : 'product.status.inactive')}</ItemDescription>
+        </ItemContent>
+      </Item>
+    </ItemGroup>
+  );
+}
+
+type ProductEditFormProps = { product: ProductRecord; onSaved: () => void; onCancel: () => void };
+
+// Padrão view/edit (apps/web/CLAUDE.md): validado por `updateProductSchema`
+// (packages/contracts, T4). `onSaved` fecha o modo edição — mesmo raciocínio
+// de CustomerEditForm em customers/details.tsx, mas aqui a mutação já
+// devolve o registro atualizado direto pro cache da lista (WEB-06-style),
+// então não precisa de um `setQueryData` de detalhe dedicado.
+function ProductEditForm({ product, onSaved, onCancel }: ProductEditFormProps) {
   const queryClient = useQueryClient();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const form = useForm<UpdateProduct>({
@@ -62,18 +120,15 @@ function ProductEditForm({ product }: ProductEditFormProps) {
     mutation.mutate(
       { id: product.id, data },
       {
-        // A mutação já devolve o registro atualizado — re-semeia o form com
-        // o valor que o SERVIDOR devolveu (nunca só o que foi digitado),
-        // mesmo raciocínio de ProcessValuesForm em processes/details.tsx.
+        // Escreve a resposta do SERVIDOR direto no cache da lista (não há
+        // query de detalhe própria de Product) — mesmo raciocínio de
+        // ProcessValuesForm em processes/details.tsx, evita um GET extra e
+        // qualquer flash de dado desatualizado ao voltar pro modo leitura.
         onSuccess: (updated) => {
-          form.reset({
-            name: updated.name,
-            sku: updated.sku ?? '',
-            description: updated.description ?? '',
-            price: updated.price,
-            stock: updated.stock,
-            active: updated.active,
-          });
+          queryClient.setQueryData<ProductsListResult>(productKeys.list({ limit: CATALOG_FETCH_LIMIT }), (old) =>
+            old ? { ...old, items: old.items.map((item) => (item.id === updated.id ? updated : item)) } : old,
+          );
+          onSaved();
         },
         onError: (error: Error) => setErrorMessage(error.message),
       },
@@ -83,105 +138,121 @@ function ProductEditForm({ product }: ProductEditFormProps) {
   return (
     <Form {...form}>
       <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('name')}</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="sku"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('product.sku')}</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="price"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('product.price')}</FormLabel>
-                <FormControl>
-                  <MoneyInput value={field.value ?? 0} onChange={field.onChange} onBlur={field.onBlur} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="stock"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('product.stock')}</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    inputMode="numeric"
-                    min={0}
-                    step={1}
-                    value={field.value ?? 0}
-                    onChange={(e) => field.onChange(e.target.value === '' ? 0 : Number(e.target.value))}
-                    onBlur={field.onBlur}
+        <DefaultFormLayout
+          sections={[
+            {
+              title: t('product.create.section.info'),
+              description: t('product.create.section.info_description'),
+              fields: [
+                <div key="product-fields" className="grid gap-4 sm:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('name')}</FormLabel>
+                        <FormControl>
+                          <Input placeholder={t('product.create.field.name_placeholder')} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('product.description')}</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="active"
-          render={({ field }) => (
-            <FormItem>
-              <FormControl>
-                <Checkbox
-                  label={t('product.status.active')}
-                  checked={field.value ?? true}
-                  onCheckedChange={(checked) => field.onChange(checked === true)}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+                  <FormField
+                    control={form.control}
+                    name="sku"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('product.sku')}</FormLabel>
+                        <FormControl>
+                          <Input placeholder={t('product.create.field.sku_placeholder')} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="price"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('product.price')}</FormLabel>
+                        <FormControl>
+                          <MoneyInput value={field.value ?? 0} onChange={field.onChange} onBlur={field.onBlur} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="stock"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('product.stock')}</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            inputMode="numeric"
+                            min={0}
+                            step={1}
+                            placeholder={t('product.create.field.stock_placeholder')}
+                            value={field.value ?? 0}
+                            onChange={(e) => field.onChange(e.target.value === '' ? 0 : Number(e.target.value))}
+                            onBlur={field.onBlur}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>,
+                <FormField
+                  key="description"
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('product.description')}</FormLabel>
+                      <FormControl>
+                        <Input placeholder={t('product.create.field.description_placeholder')} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />,
+                <FormField
+                  key="active"
+                  control={form.control}
+                  name="active"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Checkbox
+                          label={t('product.status.active')}
+                          checked={field.value ?? true}
+                          onCheckedChange={(checked) => field.onChange(checked === true)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />,
+              ],
+            },
+          ]}
         />
         {errorMessage && (
           <p role="alert" className="text-destructive text-sm">
             {errorMessage}
           </p>
         )}
-        <div>
+        <div className="flex gap-2">
           <Button type="submit" disabled={mutation.isPending}>
             {t('save')}
+          </Button>
+          <Button type="button" variant="basic" onClick={onCancel} disabled={mutation.isPending}>
+            {t('cancel')}
           </Button>
         </div>
       </form>
@@ -194,12 +265,21 @@ function ProductEditForm({ product }: ProductEditFormProps) {
 // isolado do router real.
 export function ProductDetailsPage() {
   const search = useSearch({ strict: false }) as ProductDetailsSearch;
+  const [isEditing, setIsEditing] = useState(false);
   const query = useQuery(productsQuery({ limit: CATALOG_FETCH_LIMIT }));
   const product = query.data?.items.find((item) => item.id === search.id);
 
   return (
     <Card asPage>
-      <CardHeader title={t('product.details.title')} />
+      <CardHeader title={t('product.details.title')}>
+        {product && !isEditing && (
+          <CardAction>
+            <Button variant="basic" onClick={() => setIsEditing(true)}>
+              {t('edit')}
+            </Button>
+          </CardAction>
+        )}
+      </CardHeader>
       <CardContent>
         {query.isLoading ? (
           <DefaultLoading />
@@ -209,8 +289,10 @@ export function ProductDetailsPage() {
           // encontrado", mesmo padrão de customers/details.tsx/
           // processes/details.tsx.
           <DefaultEmptyData />
+        ) : isEditing ? (
+          <ProductEditForm product={product} onSaved={() => setIsEditing(false)} onCancel={() => setIsEditing(false)} />
         ) : (
-          <ProductEditForm product={product} />
+          <ProductDetailsView product={product} />
         )}
       </CardContent>
     </Card>

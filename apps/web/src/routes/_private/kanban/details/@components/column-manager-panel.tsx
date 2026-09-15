@@ -1,10 +1,11 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ChevronDown, ChevronUp, X as IconClose } from 'lucide-react';
-import { useId, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { DefaultFormLayout } from '@/components/default-form-layout.js';
 import { Button } from '@/components/ui/button.js';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form.js';
 import { Input } from '@/components/ui/input.js';
-import { Label } from '@/components/ui/label.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 import {
   addColumnMutation,
@@ -34,6 +35,8 @@ function PanelHeader({ title, onClose }: { title: string; onClose: () => void })
   );
 }
 
+type ColumnRowFormValues = { label: string; color: string };
+
 type ColumnRowProps = {
   boardId: string;
   column: BoardColumnRecord;
@@ -45,9 +48,16 @@ type ColumnRowProps = {
   reorderPending: boolean;
 };
 
-// KAN-08/KAN-29: renomear e/ou definir cor de UMA coluna — estado local por
-// linha (não react-hook-form: cada coluna é uma unidade independente, sem
-// validação cruzada entre campos que justifique um form inteiro).
+// KAN-08/KAN-29: renomear e/ou definir cor de UMA coluna — mesmo padrão
+// Form/FormField/react-hook-form do resto do sistema (apps/web/CLAUDE.md,
+// "Formulário"), um `useForm` próprio por linha (cada coluna é uma unidade
+// independente, sem validação cruzada entre campos que justifique um form
+// só pro board inteiro). Sem `zodResolver(updateColumnSchema)` de propósito:
+// o schema exige `color` no formato hex QUANDO presente, mas o campo vazio
+// (`''`, nunca tocado) precisa continuar submetendo como `undefined` sem
+// bloquear o submit — a conversão abaixo (`trim() || undefined`) já cobre
+// isso antes de chamar a mutation, e o back-end (mesmo schema) valida de
+// verdade.
 function ColumnRow({
   boardId,
   column,
@@ -59,18 +69,15 @@ function ColumnRow({
   reorderPending,
 }: ColumnRowProps) {
   const queryClient = useQueryClient();
-  const [label, setLabel] = useState(column.label);
-  const [color, setColor] = useState(column.color ?? '');
-  const labelId = useId();
-  const colorId = useId();
+  const form = useForm<ColumnRowFormValues>({ defaultValues: { label: column.label, color: column.color ?? '' } });
 
   const updateMutation = useMutation(updateColumnMutation(queryClient));
   const removeMutation = useMutation(removeColumnMutation(queryClient));
 
-  const handleSave = () => {
+  const onSubmit = (values: ColumnRowFormValues) => {
     if (updateMutation.isPending) return;
     updateMutation.mutate(
-      { boardId, columnId: column.id, data: { label: label.trim(), color: color.trim() || undefined } },
+      { boardId, columnId: column.id, data: { label: values.label.trim(), color: values.color.trim() || undefined } },
       { onError: (error: Error) => toast.error(error.message) },
     );
   };
@@ -85,72 +92,97 @@ function ColumnRow({
   };
 
   return (
-    <div className="grid gap-2 rounded-md border p-3">
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
-          <Label htmlFor={labelId}>{t('kanban.board.columns.column_label')}</Label>
-          <Input id={labelId} value={label} onChange={(e) => setLabel(e.target.value)} />
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-2 rounded-md border p-3">
+        <div className="flex items-end gap-2">
+          <FormField
+            control={form.control}
+            name="label"
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormLabel>{t('kanban.board.columns.column_label')}</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="color"
+            render={({ field }) => (
+              <FormItem className="w-28">
+                <FormLabel>{t('kanban.column.field.color')}</FormLabel>
+                <FormControl>
+                  <Input placeholder="#RRGGBB" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <Button type="submit" size="sm" disabled={updateMutation.isPending}>
+            {t('save')}
+          </Button>
         </div>
-        <div className="w-28">
-          <Label htmlFor={colorId}>{t('kanban.column.field.color')}</Label>
-          <Input id={colorId} value={color} onChange={(e) => setColor(e.target.value)} placeholder="#RRGGBB" />
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="basic"
+            size="sm"
+            aria-label={t('kanban.column_manager.move_up')}
+            disabled={!canMoveUp || reorderPending}
+            onClick={onMoveUp}
+          >
+            <ChevronUp className="size-4" />
+          </Button>
+          <Button
+            type="button"
+            variant="basic"
+            size="sm"
+            aria-label={t('kanban.column_manager.move_down')}
+            disabled={!canMoveDown || reorderPending}
+            onClick={onMoveDown}
+          >
+            <ChevronDown className="size-4" />
+          </Button>
+          <Button type="button" variant="basic" size="sm" disabled={!canRemove} onClick={handleRemove}>
+            {t('remove')}
+          </Button>
         </div>
-        <Button type="button" size="sm" disabled={updateMutation.isPending} onClick={handleSave}>
-          {t('save')}
-        </Button>
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <Button
-          type="button"
-          variant="basic"
-          size="sm"
-          aria-label={t('kanban.column_manager.move_up')}
-          disabled={!canMoveUp || reorderPending}
-          onClick={onMoveUp}
-        >
-          <ChevronUp className="size-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="basic"
-          size="sm"
-          aria-label={t('kanban.column_manager.move_down')}
-          disabled={!canMoveDown || reorderPending}
-          onClick={onMoveDown}
-        >
-          <ChevronDown className="size-4" />
-        </Button>
-        <Button type="button" variant="basic" size="sm" disabled={!canRemove} onClick={handleRemove}>
-          {t('remove')}
-        </Button>
-      </div>
-    </div>
+      </form>
+    </Form>
   );
 }
+
+type NewColumnFormValues = { label: string };
 
 // design.md/T19: painel INLINE, nunca um Dialog modal (AD-037) — mesmo
 // formato de appointment-panel.tsx/block-panel.tsx/card-panel.tsx. Reordenar
 // via botões subir/descer (não drag-and-drop): context.md deixa o widget
 // exato a critério do Design, e nested DnD contexts dentro do
 // KanbanProvider/DndContext do board (T20, `components/ui/kanban.tsx`)
-// adicionaria complexidade não pedida por nenhuma AC do spec.
+// adicionaria complexidade não pedida por nenhuma AC do spec. Padrão
+// view/edit (apps/web/CLAUDE.md): `DefaultFormLayout` agrupa a lista de
+// colunas + o form de "nova coluna" numa única seção — um título por
+// COLUNA (ColumnRow) ficaria repetitivo, então a seção é uma só pro painel
+// inteiro, não uma por form aninhado.
 export function ColumnManagerPanel({ onClose, boardId, columns }: ColumnManagerPanelProps) {
   const queryClient = useQueryClient();
   const addMutation = useMutation(addColumnMutation(queryClient));
   const reorderMutation = useMutation(reorderColumnsMutation(queryClient));
-  const [newLabel, setNewLabel] = useState('');
-  const newLabelId = useId();
+  const addForm = useForm<NewColumnFormValues>({ defaultValues: { label: '' } });
 
   const sorted = [...columns].sort((a, b) => a.order - b.order);
 
   // KAN-07: nova coluna sempre ao final da ordem atual (o backend já garante
   // isso, board.repository.addColumn) — este painel só envia o label.
-  const handleAdd = () => {
-    const label = newLabel.trim();
+  const handleAdd = (values: NewColumnFormValues) => {
+    const label = values.label.trim();
     if (!label || addMutation.isPending) return;
     addMutation.mutate(
       { boardId, data: { label } },
-      { onSuccess: () => setNewLabel(''), onError: (error: Error) => toast.error(error.message) },
+      { onSuccess: () => addForm.reset({ label: '' }), onError: (error: Error) => toast.error(error.message) },
     );
   };
 
@@ -171,31 +203,53 @@ export function ColumnManagerPanel({ onClose, boardId, columns }: ColumnManagerP
   return (
     <div className="grid gap-4 rounded-md border p-4">
       <PanelHeader title={t('kanban.column_manager.title')} onClose={onClose} />
-      <div className="grid gap-2">
-        {sorted.map((column, index) => (
-          <ColumnRow
-            key={column.id}
-            boardId={boardId}
-            column={column}
-            // KAN-11: a última coluna restante nunca pode ser removida, mesmo vazia.
-            canRemove={sorted.length > 1}
-            canMoveUp={index > 0}
-            canMoveDown={index < sorted.length - 1}
-            onMoveUp={() => move(index, -1)}
-            onMoveDown={() => move(index, 1)}
-            reorderPending={reorderMutation.isPending}
-          />
-        ))}
-      </div>
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
-          <Label htmlFor={newLabelId}>{t('kanban.board.columns.column_label')}</Label>
-          <Input id={newLabelId} value={newLabel} onChange={(e) => setNewLabel(e.target.value)} />
-        </div>
-        <Button type="button" size="sm" disabled={addMutation.isPending} onClick={handleAdd}>
-          {t('kanban.board.columns.add')}
-        </Button>
-      </div>
+      <DefaultFormLayout
+        sections={[
+          {
+            title: t('kanban.column_manager.section_title'),
+            description: t('kanban.column_manager.section_description'),
+            layout: 'vertical',
+            fields: [
+              <div key="columns" className="grid gap-2">
+                {sorted.map((column, index) => (
+                  <ColumnRow
+                    key={column.id}
+                    boardId={boardId}
+                    column={column}
+                    // KAN-11: a última coluna restante nunca pode ser removida, mesmo vazia.
+                    canRemove={sorted.length > 1}
+                    canMoveUp={index > 0}
+                    canMoveDown={index < sorted.length - 1}
+                    onMoveUp={() => move(index, -1)}
+                    onMoveDown={() => move(index, 1)}
+                    reorderPending={reorderMutation.isPending}
+                  />
+                ))}
+              </div>,
+              <Form key="add-column" {...addForm}>
+                <form onSubmit={addForm.handleSubmit(handleAdd)} className="flex items-end gap-2">
+                  <FormField
+                    control={addForm.control}
+                    name="label"
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormLabel>{t('kanban.board.columns.column_label')}</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit" size="sm" disabled={addMutation.isPending}>
+                    {t('kanban.board.columns.add')}
+                  </Button>
+                </form>
+              </Form>,
+            ],
+          },
+        ]}
+      />
     </div>
   );
 }

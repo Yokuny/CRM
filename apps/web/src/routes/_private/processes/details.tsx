@@ -7,6 +7,7 @@ import type { FieldValues } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { DefaultEmptyData } from '@/components/default-empty-data.js';
+import { DefaultFormLayout } from '@/components/default-form-layout.js';
 import { DefaultLoading } from '@/components/default-loading.js';
 import { DynamicField } from '@/components/dynamic-field/dynamic-field.js';
 import { renderNodesToDefaultValues } from '@/components/dynamic-field/dynamic-field.utils.js';
@@ -73,9 +74,17 @@ function ProcessValuesForm({ process, fields, customerId }: ProcessValuesFormPro
 
   return (
     <form noValidate onSubmit={handleSubmit(onSubmit)} className="grid gap-6">
-      {nodes.map((node) => (
-        <DynamicField key={node.fieldId} node={node} name={node.fieldId} control={control} />
-      ))}
+      <DefaultFormLayout
+        sections={[
+          {
+            title: t('process.details.section.values'),
+            description: t('process.details.section.values_description'),
+            fields: nodes.map((node) => (
+              <DynamicField key={node.fieldId} node={node} name={node.fieldId} control={control} />
+            )),
+          },
+        ]}
+      />
       {errorMessage && (
         <p role="alert" className="text-destructive text-sm">
           {errorMessage}

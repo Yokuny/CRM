@@ -10,6 +10,7 @@ import { X as IconClose } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { DefaultFormLayout } from '@/components/default-form-layout.js';
 import { Button } from '@/components/ui/button.js';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form.js';
 import { Input } from '@/components/ui/input.js';
@@ -122,122 +123,137 @@ function AppointmentCreateForm({ onClose }: WithOnClose) {
       <PanelHeader title={t('appointment.create.title')} onClose={onClose} />
       <Form {...form}>
         <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
-          <FormField
-            control={form.control}
-            name="customerId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('appointment.field.customer')}</FormLabel>
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder={t('appointment.field.customer')} />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {(customersQueryResult.data?.items ?? []).map((customer) => (
-                      <SelectItem key={customer.id} value={customer.id}>
-                        {customer.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="professionalId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('appointment.field.professional')}</FormLabel>
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder={t('appointment.field.professional')} />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {(professionalsQueryResult.data?.items ?? []).map((professional) => (
-                      <SelectItem key={professional.id} value={professional.id}>
-                        {professional.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <div className="grid grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('appointment.field.date')}</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="time"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('appointment.field.time')}</FormLabel>
-                  <FormControl>
-                    <Input type="time" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          <FormField
-            control={form.control}
-            name="spaceId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('appointment.field.space')}</FormLabel>
-                <Select
-                  value={field.value ?? UNSET_VALUE}
-                  onValueChange={(value) => field.onChange(value === UNSET_VALUE ? undefined : value)}
-                >
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder={t('appointment.field.space')} />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value={UNSET_VALUE}>{t('appointment.field.space_none')}</SelectItem>
-                    {(spacesQueryResult.data?.items ?? []).map((space) => (
-                      <SelectItem key={space.id} value={space.id}>
-                        {space.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="notes"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('appointment.field.notes')}</FormLabel>
-                <FormControl>
-                  <Input {...field} value={field.value ?? ''} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+          <DefaultFormLayout
+            sections={[
+              {
+                title: t('appointment.create.section.info'),
+                description: t('appointment.create.section.info_description'),
+                layout: 'vertical',
+                fields: [
+                  <FormField
+                    key="customerId"
+                    control={form.control}
+                    name="customerId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('appointment.field.customer')}</FormLabel>
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <FormControl>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder={t('appointment.field.customer')} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {(customersQueryResult.data?.items ?? []).map((customer) => (
+                              <SelectItem key={customer.id} value={customer.id}>
+                                {customer.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />,
+                  <FormField
+                    key="professionalId"
+                    control={form.control}
+                    name="professionalId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('appointment.field.professional')}</FormLabel>
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <FormControl>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder={t('appointment.field.professional')} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {(professionalsQueryResult.data?.items ?? []).map((professional) => (
+                              <SelectItem key={professional.id} value={professional.id}>
+                                {professional.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />,
+                  <div key="date-time" className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="date"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('appointment.field.date')}</FormLabel>
+                          <FormControl>
+                            <Input type="date" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="time"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('appointment.field.time')}</FormLabel>
+                          <FormControl>
+                            <Input type="time" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>,
+                  <FormField
+                    key="spaceId"
+                    control={form.control}
+                    name="spaceId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('appointment.field.space')}</FormLabel>
+                        <Select
+                          value={field.value ?? UNSET_VALUE}
+                          onValueChange={(value) => field.onChange(value === UNSET_VALUE ? undefined : value)}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder={t('appointment.field.space')} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value={UNSET_VALUE}>{t('appointment.field.space_none')}</SelectItem>
+                            {(spacesQueryResult.data?.items ?? []).map((space) => (
+                              <SelectItem key={space.id} value={space.id}>
+                                {space.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />,
+                  <FormField
+                    key="notes"
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('appointment.field.notes')}</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value ?? ''} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />,
+                ],
+              },
+            ]}
           />
           <div className="flex flex-wrap gap-2">
             <Button type="submit" disabled={mutation.isPending}>
@@ -367,64 +383,77 @@ function AppointmentDetail({ appointment, onClose }: AppointmentDetailProps) {
           onSubmit={rescheduleForm.handleSubmit(onReschedule)}
           className="grid gap-3 rounded-md border p-3"
         >
-          <ItemDescription>{t('appointment.action.reschedule')}</ItemDescription>
-          <div className="grid grid-cols-2 gap-4">
-            <FormField
-              control={rescheduleForm.control}
-              name="date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('appointment.field.date')}</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={rescheduleForm.control}
-              name="time"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('appointment.field.time')}</FormLabel>
-                  <FormControl>
-                    <Input type="time" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          <FormField
-            control={rescheduleForm.control}
-            name="professionalId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('appointment.field.professional')}</FormLabel>
-                <Select
-                  value={field.value ?? UNSET_VALUE}
-                  onValueChange={(value) => field.onChange(value === UNSET_VALUE ? undefined : value)}
-                >
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder={appointment.professionalName ?? t('appointment.field.professional')} />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value={UNSET_VALUE}>
-                      {appointment.professionalName ?? t('appointment.field.professional')}
-                    </SelectItem>
-                    {(professionalsQueryResult.data?.items ?? []).map((professional) => (
-                      <SelectItem key={professional.id} value={professional.id}>
-                        {professional.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
+          <DefaultFormLayout
+            sections={[
+              {
+                title: t('appointment.action.reschedule'),
+                description: t('appointment.reschedule.section_description'),
+                layout: 'vertical',
+                fields: [
+                  <div key="date-time" className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={rescheduleForm.control}
+                      name="date"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('appointment.field.date')}</FormLabel>
+                          <FormControl>
+                            <Input type="date" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={rescheduleForm.control}
+                      name="time"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('appointment.field.time')}</FormLabel>
+                          <FormControl>
+                            <Input type="time" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>,
+                  <FormField
+                    key="professionalId"
+                    control={rescheduleForm.control}
+                    name="professionalId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('appointment.field.professional')}</FormLabel>
+                        <Select
+                          value={field.value ?? UNSET_VALUE}
+                          onValueChange={(value) => field.onChange(value === UNSET_VALUE ? undefined : value)}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-full">
+                              <SelectValue
+                                placeholder={appointment.professionalName ?? t('appointment.field.professional')}
+                              />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value={UNSET_VALUE}>
+                              {appointment.professionalName ?? t('appointment.field.professional')}
+                            </SelectItem>
+                            {(professionalsQueryResult.data?.items ?? []).map((professional) => (
+                              <SelectItem key={professional.id} value={professional.id}>
+                                {professional.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />,
+                ],
+              },
+            ]}
           />
           <div>
             <Button type="submit" variant="basic" disabled={rescheduleMutation.isPending}>

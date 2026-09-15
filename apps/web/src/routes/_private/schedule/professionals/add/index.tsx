@@ -5,11 +5,11 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import type { Control } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
+import { DefaultFormLayout } from '@/components/default-form-layout.js';
 import { Button } from '@/components/ui/button.js';
 import { Card, CardContent, CardHeader } from '@/components/ui/card.js';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form.js';
 import { Input } from '@/components/ui/input.js';
-import { Label } from '@/components/ui/label.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 import { createProfessionalMutation } from '@/query/professional.js';
 import { WeeklyScheduleEditor } from '../@components/weekly-schedule-editor.js';
@@ -48,47 +48,65 @@ export function ProfessionalAddPage() {
       <CardContent>
         <Form {...form}>
           <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('name')}</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="slotDurationMinutes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('professional.slot_duration')}</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        inputMode="numeric"
-                        min={5}
-                        max={480}
-                        step={5}
-                        value={field.value}
-                        onChange={(e) => field.onChange(e.target.value === '' ? 0 : Number(e.target.value))}
-                        onBlur={field.onBlur}
+            <DefaultFormLayout
+              sections={[
+                {
+                  title: t('professional.create.section.info'),
+                  description: t('professional.create.section.info_description'),
+                  fields: [
+                    <div key="professional-fields" className="grid gap-4 sm:grid-cols-2">
+                      <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('name')}</FormLabel>
+                            <FormControl>
+                              <Input placeholder={t('professional.create.field.name_placeholder')} {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
                       />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label>{t('professional.weekly_schedule')}</Label>
-              <WeeklyScheduleEditor control={form.control as unknown as Control} name="weeklySchedule" />
-            </div>
+                      <FormField
+                        control={form.control}
+                        name="slotDurationMinutes"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('professional.slot_duration')}</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                inputMode="numeric"
+                                min={5}
+                                max={480}
+                                step={5}
+                                placeholder={t('professional.slot_duration_placeholder')}
+                                value={field.value}
+                                onChange={(e) => field.onChange(e.target.value === '' ? 0 : Number(e.target.value))}
+                                onBlur={field.onBlur}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>,
+                  ],
+                },
+                {
+                  title: t('professional.create.section.schedule'),
+                  description: t('professional.create.section.schedule_description'),
+                  fields: [
+                    <WeeklyScheduleEditor
+                      key="weeklySchedule"
+                      control={form.control as unknown as Control}
+                      name="weeklySchedule"
+                    />,
+                  ],
+                },
+              ]}
+            />
             {errorMessage && (
               <p role="alert" className="text-destructive text-sm">
                 {errorMessage}

@@ -63,11 +63,25 @@ describe('ProductDetailsPage (T21, spec.md P1 "Cadastro de catálogo"/AC3)', () 
     searchMock.mockReset();
   });
 
-  it("loads the catalog and pre-fills the form with the matching Product's current fields (AC3: carrega Product por search.id)", async () => {
+  it('shows the Product in read-only view mode by default', async () => {
     searchMock.mockReturnValue({ id: 'p1' });
     getMock.mockResolvedValue({ success: true, data: catalogPage });
 
     renderPage();
+
+    expect(await screen.findByText('Camiseta')).toBeInTheDocument();
+    expect(screen.getByText('CAM-1')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Nome')).not.toBeInTheDocument();
+  });
+
+  it("clicking Editar pre-fills the form with the matching Product's current fields (AC3: carrega Product por search.id)", async () => {
+    searchMock.mockReturnValue({ id: 'p1' });
+    getMock.mockResolvedValue({ success: true, data: catalogPage });
+    const user = userEvent.setup();
+
+    renderPage();
+    await screen.findByText('Camiseta');
+    await user.click(screen.getByRole('button', { name: 'Editar' }));
 
     expect(await screen.findByLabelText('Nome')).toHaveValue('Camiseta');
     expect(screen.getByLabelText('SKU')).toHaveValue('CAM-1');
@@ -93,6 +107,8 @@ describe('ProductDetailsPage (T21, spec.md P1 "Cadastro de catálogo"/AC3)', () 
     });
     const user = userEvent.setup();
     renderPage();
+    await screen.findByText('Calça');
+    await user.click(screen.getByRole('button', { name: 'Editar' }));
     await screen.findByLabelText('Nome');
 
     // fireEvent.change de uma vez só (não user.clear + user.type):
@@ -115,8 +131,10 @@ describe('ProductDetailsPage (T21, spec.md P1 "Cadastro de catálogo"/AC3)', () 
         active: true,
       });
     });
-    expect(await screen.findByLabelText('Estoque')).toHaveValue(15);
-    expect(screen.getByRole('checkbox', { name: 'Ativo' })).toBeChecked();
+    // Volta ao modo visualização com o novo estoque/status — mesmo padrão de
+    // CustomerEditForm em customers/details.tsx.
+    expect(await screen.findByText('15')).toBeInTheDocument();
+    expect(screen.getByText('Ativo')).toBeInTheDocument();
   });
 
   it("shows the backend's error message on failure, keeping the form's current (unsaved) values intact", async () => {
@@ -125,6 +143,8 @@ describe('ProductDetailsPage (T21, spec.md P1 "Cadastro de catálogo"/AC3)', () 
     patchMock.mockResolvedValue({ success: false, message: 'Produto não encontrado' });
     const user = userEvent.setup();
     renderPage();
+    await screen.findByText('Camiseta');
+    await user.click(screen.getByRole('button', { name: 'Editar' }));
     await screen.findByLabelText('Nome');
 
     await user.click(screen.getByRole('button', { name: 'Salvar' }));

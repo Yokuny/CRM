@@ -3,6 +3,7 @@ import { createFileRoute, Link, useSearch } from '@tanstack/react-router';
 import { useState } from 'react';
 import { z } from 'zod';
 import { DefaultEmptyData } from '@/components/default-empty-data.js';
+import { DefaultFormLayout } from '@/components/default-form-layout.js';
 import { DefaultLoading } from '@/components/default-loading.js';
 import { Button } from '@/components/ui/button.js';
 import { Card, CardContent, CardHeader } from '@/components/ui/card.js';
@@ -74,19 +75,29 @@ export function ProcessAddPage() {
           // renderizado).
           <DefaultEmptyData />
         ) : (
-          <div className="grid gap-4">
-            <Select value={selectedKey} onValueChange={setSelectedKey}>
-              <SelectTrigger>
-                <SelectValue placeholder={t('process.template.placeholder')} />
-              </SelectTrigger>
-              <SelectContent>
-                {availableTemplates.map((template) => (
-                  <SelectItem key={template.key} value={template.key}>
-                    {template.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="grid gap-6">
+            <DefaultFormLayout
+              sections={[
+                {
+                  title: t('process.create.section.template'),
+                  description: t('process.create.section.template_description'),
+                  fields: [
+                    <Select key="templateKey" value={selectedKey} onValueChange={setSelectedKey}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t('process.template.placeholder')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableTemplates.map((template) => (
+                          <SelectItem key={template.key} value={template.key}>
+                            {template.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>,
+                  ],
+                },
+              ]}
+            />
             {errorMessage && (
               <p role="alert" className="text-destructive text-sm">
                 {errorMessage}

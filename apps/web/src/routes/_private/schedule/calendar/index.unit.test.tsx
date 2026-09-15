@@ -224,7 +224,7 @@ describe('CalendarIndexPage (T39, spec.md SCH-29)', () => {
     await user.click(screen.getByRole('button', { name: 'Novo bloqueio' }));
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    expect(await screen.findByRole('heading', { name: 'Novo bloqueio' })).toBeInTheDocument();
+    expect(await screen.findByText('Bloqueio de horário')).toBeInTheDocument();
   });
 
   it('clicking an existing appointment in the grid opens AppointmentPanel in detail mode for that item (SCH-31/32/34/37)', async () => {
@@ -291,6 +291,6 @@ describe('CalendarIndexPage (T39, spec.md SCH-29)', () => {
     renderPage();
     await user.click(await screen.findByText('Almoço'));
 
-    expect(await screen.findByRole('heading', { name: 'Almoço' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Remover bloqueio' })).toBeInTheDocument();
   });
 });

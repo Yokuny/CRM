@@ -51,9 +51,10 @@ src/routes/_private/{feature}/
 |---|---|
 | Toda rota | `<Card asPage>` (`@/components/ui/card.js`) — breadcrumb automático via `staticData.title`/`description` |
 | Loading / vazio | `<DefaultLoading/>` / `<DefaultEmptyData/>` |
-| Listagem tabular | `<DataTable>` (`@/components/ui/data-table.js`) — **sempre server-driven**, nunca filtra/ordena/pagina `data` em memória |
+| Listagem tabular | `Table/TableHeader/TableBody/TableRow/TableHead/TableCell` (`@/components/ui/table.js`) num componente próprio da rota (`@components/*-table.tsx`, ex.: `customers/list/@components/customers-table.tsx`) — **sempre server-driven**, nunca filtra/ordena/pagina em memória; a página alterna entre a tabela e `<DefaultEmptyData/>` conforme o resultado (nunca esconder esse toggle dentro de um componente genérico de tabela) |
 | Agrupar conteúdo que não é página inteira | `Item/ItemGroup/ItemContent/ItemTitle/ItemDescription/ItemMedia/ItemFooter` (`@/components/ui/item.js`) |
-| Formulário | `Form/FormField/FormItem/FormLabel/FormControl/FormMessage` (`@/components/ui/form.js`) + `react-hook-form` + `zodResolver` com schema de `@crm/contracts` — ver `routes/_public/auth/index.tsx` |
+| Formulário | `Form/FormField/FormItem/FormLabel/FormControl/FormMessage` (`@/components/ui/form.js`) + `react-hook-form` + `zodResolver` com schema de `@crm/contracts` — ver `routes/_public/auth/index.tsx`. Seções com título + subtítulo (`<DefaultFormLayout>`, `@/components/default-form-layout.js`) e `placeholder` em todo `<Input>` |
+| Detalhe de entidade (visualizar + editar) | Vista somente-leitura por padrão (`Item/ItemGroup/...`); `Editar` no `CardAction` do `CardHeader` troca pro formulário, que ganha `Salvar` + `Cancelar` — nunca um form sempre-editável sem esse toggle. Ver `customers/details.tsx` (referência), `products/details.tsx`, `schedule/professionals/details.tsx`, `schedule/spaces/details.tsx`; em telas sem um "detalhe" de página inteira (ex.: `kanban/details.tsx`, um canvas), o mesmo conceito vira um painel inline (AD-037) aberto pelo `Editar` |
 
 Navegação desktop é só o breadcrumb do `Card asPage` (não há sidebar); mobile
 é só `@/components/mobile-dock.tsx` (`md:hidden`, estado ativo via

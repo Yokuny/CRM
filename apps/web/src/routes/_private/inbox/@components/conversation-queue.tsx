@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { DefaultEmptyData } from '@/components/default-empty-data.js';
 import { DefaultLoading } from '@/components/default-loading.js';
 import { Button } from '@/components/ui/button.js';
+import { ButtonGroup } from '@/components/ui/button-group.js';
 import { Input } from '@/components/ui/input.js';
 import { useDebouncedSearch } from '@/hooks/useDebouncedSearch.js';
 import { t } from '@/lib/helpers/translate.helper.js';
@@ -57,7 +58,7 @@ export function ConversationQueue({ onSelect }: ConversationQueueProps) {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex gap-2">
+      <ButtonGroup>
         {MODE_FILTERS.map((filter) => (
           <Button
             key={filter.label}
@@ -69,9 +70,8 @@ export function ConversationQueue({ onSelect }: ConversationQueueProps) {
             {filter.label}
           </Button>
         ))}
-      </div>
+      </ButtonGroup>
       <Input
-        variant="primary"
         placeholder={t('search.placeholder')}
         value={searchInput}
         onChange={(e) => handleSearchInput(e.target.value)}

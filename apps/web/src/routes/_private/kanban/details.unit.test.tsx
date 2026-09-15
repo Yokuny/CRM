@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
@@ -242,9 +242,15 @@ describe('KanbanDetailsPage (T20, spec.md KAN-03/KAN-06/KAN-18/KAN-19/KAN-20/KAN
     mockBoardAndCards();
     const user = userEvent.setup();
     renderPage();
-    await screen.findByText('Ligar para o cliente');
+    const cardTitle = await screen.findByText('Ligar para o cliente');
 
-    await user.click(screen.getByRole('button', { name: 'Editar' }));
+    // `getByRole('button', {name:'Editar'})` sozinho seria ambíguo agora: o
+    // CardHeader também tem um `Editar` (T20-followup, padrão view/edit de
+    // apps/web/CLAUDE.md, edita nome/descrição do board) — escopar pelo
+    // `data-slot="item-content"` do próprio card (item.tsx) pega só a ação
+    // deste card.
+    const cardContent = cardTitle.closest('[data-slot="item-content"]') as HTMLElement;
+    await user.click(within(cardContent).getByRole('button', { name: 'Editar' }));
 
     expect(await screen.findByDisplayValue('Ligar para o cliente')).toBeInTheDocument();
   });

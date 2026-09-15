@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { X as IconClose } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { DefaultFormLayout } from '@/components/default-form-layout.js';
 import { Button } from '@/components/ui/button.js';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form.js';
 import { Input } from '@/components/ui/input.js';
@@ -128,98 +129,115 @@ function CardCreateForm({ boardId, columnId, onClose }: CardCreateFormProps) {
       <PanelHeader title={t('kanban.card.create.title')} onClose={onClose} />
       <Form {...form}>
         <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
-          <FormField
-            control={form.control}
-            name="title"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('kanban.card.field.title')}</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('kanban.card.field.description')}</FormLabel>
-                <FormControl>
-                  <Input {...field} value={field.value ?? ''} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="customer"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('kanban.card.field.customer')}</FormLabel>
-                <Select
-                  value={field.value ?? UNSET_VALUE}
-                  onValueChange={(value) => field.onChange(value === UNSET_VALUE ? undefined : value)}
-                >
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder={t('kanban.card.field.customer')} />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value={UNSET_VALUE}>{t('kanban.card.field.none')}</SelectItem>
-                    {(customersQueryResult.data?.items ?? []).map((customer) => (
-                      <SelectItem key={customer.id} value={customer.id}>
-                        {customer.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="process"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('kanban.card.field.process')}</FormLabel>
-                <FormControl>
-                  <Input {...field} value={field.value ?? ''} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="order"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('kanban.card.field.order')}</FormLabel>
-                <FormControl>
-                  <Input {...field} value={field.value ?? ''} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="assignee"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('kanban.card.field.assignee')}</FormLabel>
-                <FormControl>
-                  <Input {...field} value={field.value ?? ''} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+          <DefaultFormLayout
+            sections={[
+              {
+                title: t('kanban.card.section.info'),
+                description: t('kanban.card.section.info_description'),
+                layout: 'vertical',
+                fields: [
+                  <FormField
+                    key="title"
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('kanban.card.field.title')}</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />,
+                  <FormField
+                    key="description"
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('kanban.card.field.description')}</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value ?? ''} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />,
+                  <FormField
+                    key="customer"
+                    control={form.control}
+                    name="customer"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('kanban.card.field.customer')}</FormLabel>
+                        <Select
+                          value={field.value ?? UNSET_VALUE}
+                          onValueChange={(value) => field.onChange(value === UNSET_VALUE ? undefined : value)}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder={t('kanban.card.field.customer')} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value={UNSET_VALUE}>{t('kanban.card.field.none')}</SelectItem>
+                            {(customersQueryResult.data?.items ?? []).map((customer) => (
+                              <SelectItem key={customer.id} value={customer.id}>
+                                {customer.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />,
+                  <FormField
+                    key="process"
+                    control={form.control}
+                    name="process"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('kanban.card.field.process')}</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value ?? ''} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />,
+                  <FormField
+                    key="order"
+                    control={form.control}
+                    name="order"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('kanban.card.field.order')}</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value ?? ''} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />,
+                  <FormField
+                    key="assignee"
+                    control={form.control}
+                    name="assignee"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('kanban.card.field.assignee')}</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value ?? ''} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />,
+                ],
+              },
+            ]}
           />
           <div className="flex flex-wrap gap-2">
             <Button type="submit" disabled={mutation.isPending}>
@@ -275,98 +293,115 @@ function CardEditForm({ boardId, card, onClose }: CardEditFormProps) {
       <PanelHeader title={card.title || t('kanban.card.detail.title')} onClose={onClose} />
       <Form {...form}>
         <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
-          <FormField
-            control={form.control}
-            name="title"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('kanban.card.field.title')}</FormLabel>
-                <FormControl>
-                  <Input {...field} value={field.value ?? ''} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('kanban.card.field.description')}</FormLabel>
-                <FormControl>
-                  <Input {...field} value={field.value ?? ''} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="customer"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('kanban.card.field.customer')}</FormLabel>
-                <Select
-                  value={field.value ?? UNSET_VALUE}
-                  onValueChange={(value) => field.onChange(value === UNSET_VALUE ? undefined : value)}
-                >
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder={t('kanban.card.field.customer')} />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value={UNSET_VALUE}>{t('kanban.card.field.none')}</SelectItem>
-                    {(customersQueryResult.data?.items ?? []).map((customer) => (
-                      <SelectItem key={customer.id} value={customer.id}>
-                        {customer.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="process"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('kanban.card.field.process')}</FormLabel>
-                <FormControl>
-                  <Input {...field} value={field.value ?? ''} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="order"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('kanban.card.field.order')}</FormLabel>
-                <FormControl>
-                  <Input {...field} value={field.value ?? ''} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="assignee"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('kanban.card.field.assignee')}</FormLabel>
-                <FormControl>
-                  <Input {...field} value={field.value ?? ''} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+          <DefaultFormLayout
+            sections={[
+              {
+                title: t('kanban.card.section.info'),
+                description: t('kanban.card.section.info_description'),
+                layout: 'vertical',
+                fields: [
+                  <FormField
+                    key="title"
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('kanban.card.field.title')}</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value ?? ''} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />,
+                  <FormField
+                    key="description"
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('kanban.card.field.description')}</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value ?? ''} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />,
+                  <FormField
+                    key="customer"
+                    control={form.control}
+                    name="customer"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('kanban.card.field.customer')}</FormLabel>
+                        <Select
+                          value={field.value ?? UNSET_VALUE}
+                          onValueChange={(value) => field.onChange(value === UNSET_VALUE ? undefined : value)}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder={t('kanban.card.field.customer')} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value={UNSET_VALUE}>{t('kanban.card.field.none')}</SelectItem>
+                            {(customersQueryResult.data?.items ?? []).map((customer) => (
+                              <SelectItem key={customer.id} value={customer.id}>
+                                {customer.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />,
+                  <FormField
+                    key="process"
+                    control={form.control}
+                    name="process"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('kanban.card.field.process')}</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value ?? ''} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />,
+                  <FormField
+                    key="order"
+                    control={form.control}
+                    name="order"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('kanban.card.field.order')}</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value ?? ''} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />,
+                  <FormField
+                    key="assignee"
+                    control={form.control}
+                    name="assignee"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('kanban.card.field.assignee')}</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value ?? ''} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />,
+                ],
+              },
+            ]}
           />
           <div className="flex flex-wrap gap-2">
             <Button type="submit" disabled={updateMutation.isPending}>

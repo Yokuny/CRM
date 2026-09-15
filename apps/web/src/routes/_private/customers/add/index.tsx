@@ -5,6 +5,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
 import type { FieldValues } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
+import { DefaultFormLayout, type FormSection } from '@/components/default-form-layout.js';
 import { DefaultLoading } from '@/components/default-loading.js';
 import { DynamicField } from '@/components/dynamic-field/dynamic-field.js';
 import { renderNodesToDefaultValues } from '@/components/dynamic-field/dynamic-field.utils.js';
@@ -67,25 +68,60 @@ function CustomerCreateForm({ fields }: CustomerCreateFormProps) {
     });
   };
 
+  const sections: FormSection[] = [
+    {
+      title: t('customer.create.section.identification'),
+      description: t('customer.create.section.identification_description'),
+      fields: [
+        <div key="customer-identification" className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-2">
+            <Label htmlFor="name">{t('name')}</Label>
+            <Input
+              id="name"
+              required
+              placeholder={t('customer.create.field.name_placeholder')}
+              {...register('name', { required: true })}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="phone">{t('phone')}</Label>
+            <Input
+              id="phone"
+              required
+              placeholder={t('customer.create.field.phone_placeholder')}
+              {...register('phone', { required: true })}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="document">{t('document')}</Label>
+            <Input
+              id="document"
+              placeholder={t('customer.create.field.document_placeholder')}
+              {...register('document')}
+            />
+          </div>
+        </div>,
+      ],
+    },
+  ];
+
+  // Só adiciona a seção "Detalhes adicionais" quando o template de cliente
+  // tem de fato campos configurados — evita um FieldSet vazio (nenhuma
+  // empresa nova/sem customização passa por FLD-09 sem ao menos os campos
+  // default, mas templates customizados podem zerar `fields`).
+  if (nodes.length > 0) {
+    sections.push({
+      title: t('customer.create.section.details'),
+      description: t('customer.create.section.details_description'),
+      fields: nodes.map((node) => (
+        <DynamicField key={node.fieldId} node={node} name={`values.${node.fieldId}`} control={control} />
+      )),
+    });
+  }
+
   return (
     <form noValidate onSubmit={handleSubmit(onSubmit)} className="grid gap-6">
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="grid gap-2">
-          <Label htmlFor="name">{t('name')}</Label>
-          <Input id="name" required {...register('name', { required: true })} />
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="phone">{t('phone')}</Label>
-          <Input id="phone" required {...register('phone', { required: true })} />
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="document">{t('document')}</Label>
-          <Input id="document" {...register('document')} />
-        </div>
-      </div>
-      {nodes.map((node) => (
-        <DynamicField key={node.fieldId} node={node} name={`values.${node.fieldId}`} control={control} />
-      ))}
+      <DefaultFormLayout sections={sections} />
       {errorMessage && (
         <p role="alert" className="text-destructive text-sm">
           {errorMessage}

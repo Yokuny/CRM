@@ -7,6 +7,7 @@ import { DefaultEmptyData } from '@/components/default-empty-data.js';
 import { DefaultLoading } from '@/components/default-loading.js';
 import { Badge } from '@/components/ui/badge.js';
 import { Button } from '@/components/ui/button.js';
+import { ButtonGroup } from '@/components/ui/button-group.js';
 import { Card, CardContent, CardHeader } from '@/components/ui/card.js';
 import { Input } from '@/components/ui/input.js';
 import { useDebouncedSearch } from '@/hooks/useDebouncedSearch.js';
@@ -200,7 +201,7 @@ export function OrdersIndexPage() {
     <Card asPage>
       <CardHeader title={t('order.list.title')} />
       <CardContent>
-        <div className="mb-3 flex gap-2">
+        <ButtonGroup className="mb-3">
           {STATUS_FILTERS.map((filter) => (
             <Button
               key={filter.value}
@@ -212,13 +213,12 @@ export function OrdersIndexPage() {
               {filter.label}
             </Button>
           ))}
-        </div>
+        </ButtonGroup>
         {query.isLoading ? (
           <DefaultLoading />
         ) : (
           <div className="flex flex-col gap-4">
             <Input
-              variant="primary"
               placeholder={t('search.placeholder')}
               value={searchInput}
               onChange={(e) => handleSearchInput(e.target.value)}

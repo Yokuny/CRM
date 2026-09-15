@@ -157,7 +157,7 @@ describe('BlockPanel — create mode (T41, spec.md SCH-33)', () => {
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Horário sobreposto'));
   });
 
-  it('calls onClose when the explicit close button is clicked, without submitting', async () => {
+  it('calls onClose when the cancel button is clicked, without submitting', async () => {
     mockLookups();
     const onClose = vi.fn();
     const user = userEvent.setup();
@@ -165,7 +165,7 @@ describe('BlockPanel — create mode (T41, spec.md SCH-33)', () => {
     renderPanel({ onClose });
     await screen.findByRole('combobox');
 
-    await user.click(screen.getByRole('button', { name: 'Fechar' }));
+    await user.click(screen.getByRole('button', { name: 'Cancelar' }));
 
     expect(onClose).toHaveBeenCalled();
     expect(postMock).not.toHaveBeenCalled();
@@ -186,7 +186,7 @@ describe('BlockPanel — existing block mode (T41, spec.md SCH-33)', () => {
 
     renderPanel({ block: existingBlock });
 
-    expect(screen.getByRole('heading', { name: 'Almoço' })).toBeInTheDocument();
+    expect(screen.getByText('Almoço')).toBeInTheDocument();
     expect(screen.getByText(/2026-09-16/)).toBeInTheDocument();
     expect(screen.getByText(/12:00–13:00/)).toBeInTheDocument();
     expect(screen.getByText('Dra. Ana')).toBeInTheDocument();
@@ -218,14 +218,14 @@ describe('BlockPanel — existing block mode (T41, spec.md SCH-33)', () => {
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Bloqueio não encontrado'));
   });
 
-  it('calls onClose when the explicit close button is clicked', async () => {
+  it('calls onClose when the cancel button is clicked', async () => {
     mockLookups();
     const onClose = vi.fn();
     const user = userEvent.setup();
 
     renderPanel({ block: existingBlock, onClose });
 
-    await user.click(screen.getByRole('button', { name: 'Fechar' }));
+    await user.click(screen.getByRole('button', { name: 'Cancelar' }));
 
     expect(onClose).toHaveBeenCalled();
   });

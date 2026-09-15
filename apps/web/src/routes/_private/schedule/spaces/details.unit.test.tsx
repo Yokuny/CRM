@@ -63,11 +63,25 @@ describe('SpaceDetailsPage (T35, spec.md SCH-04)', () => {
     searchMock.mockReset();
   });
 
-  it("loads via GET /spaces/:id and pre-fills the form with the space's current fields", async () => {
+  it('shows the Space in read-only view mode by default', async () => {
     searchMock.mockReturnValue({ id: 'sp1' });
     getMock.mockResolvedValue({ success: true, data: SPACE });
 
     renderPage();
+
+    expect(await screen.findByText('Sala 1')).toBeInTheDocument();
+    expect(screen.getByText('Ativo')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Nome')).not.toBeInTheDocument();
+  });
+
+  it("clicking Editar pre-fills the form with the space's current fields", async () => {
+    searchMock.mockReturnValue({ id: 'sp1' });
+    getMock.mockResolvedValue({ success: true, data: SPACE });
+    const user = userEvent.setup();
+
+    renderPage();
+    await screen.findByText('Sala 1');
+    await user.click(screen.getByRole('button', { name: 'Editar' }));
 
     expect(await screen.findByLabelText('Nome')).toHaveValue('Sala 1');
     expect(screen.getByRole('checkbox', { name: 'Ativo' })).toBeChecked();
@@ -88,13 +102,17 @@ describe('SpaceDetailsPage (T35, spec.md SCH-04)', () => {
     patchMock.mockResolvedValue({ success: true, data: { ...SPACE, active: false } });
     const user = userEvent.setup();
     renderPage();
+    await screen.findByText('Sala 1');
+    await user.click(screen.getByRole('button', { name: 'Editar' }));
     await screen.findByLabelText('Nome');
 
     await user.click(screen.getByRole('checkbox', { name: 'Ativo' }));
     await user.click(screen.getByRole('button', { name: 'Salvar' }));
 
     await waitFor(() => expect(patchMock).toHaveBeenCalledWith('/spaces/sp1', { name: 'Sala 1', active: false }));
-    expect(screen.getByRole('checkbox', { name: 'Ativo' })).not.toBeChecked();
+    // Volta ao modo visualização com o novo status — mesmo padrão de
+    // CustomerEditForm em customers/details.tsx.
+    expect(await screen.findByText('Inativo')).toBeInTheDocument();
   });
 
   it("shows the backend's error message on failure, keeping the form's current (unsaved) values intact", async () => {
@@ -103,6 +121,8 @@ describe('SpaceDetailsPage (T35, spec.md SCH-04)', () => {
     patchMock.mockResolvedValue({ success: false, message: 'Ambiente não encontrado' });
     const user = userEvent.setup();
     renderPage();
+    await screen.findByText('Sala 1');
+    await user.click(screen.getByRole('button', { name: 'Editar' }));
     await screen.findByLabelText('Nome');
 
     await user.click(screen.getByRole('button', { name: 'Salvar' }));

@@ -67,11 +67,27 @@ describe('ProfessionalDetailsPage (T34, spec.md SCH-05)', () => {
     searchMock.mockReset();
   });
 
-  it("loads via GET /professionals/:id and pre-fills the form with the professional's current fields", async () => {
+  it('shows the Professional in read-only view mode by default, including a weekly schedule summary', async () => {
     searchMock.mockReturnValue({ id: 'pr1' });
     getMock.mockResolvedValue({ success: true, data: PROFESSIONAL });
 
     renderPage();
+
+    expect(await screen.findByText('Dra. Ana')).toBeInTheDocument();
+    expect(screen.getByText('30')).toBeInTheDocument();
+    expect(screen.getByText('Ativo')).toBeInTheDocument();
+    expect(screen.getByText(/Segunda-feira.*09:00.*12:00/)).toBeInTheDocument();
+    expect(screen.queryByLabelText('Nome')).not.toBeInTheDocument();
+  });
+
+  it("clicking Editar pre-fills the form with the professional's current fields", async () => {
+    searchMock.mockReturnValue({ id: 'pr1' });
+    getMock.mockResolvedValue({ success: true, data: PROFESSIONAL });
+    const user = userEvent.setup();
+
+    renderPage();
+    await screen.findByText('Dra. Ana');
+    await user.click(screen.getByRole('button', { name: 'Editar' }));
 
     expect(await screen.findByLabelText('Nome')).toHaveValue('Dra. Ana');
     expect(screen.getByLabelText('Duração do horário (min)')).toHaveValue(30);
@@ -95,6 +111,8 @@ describe('ProfessionalDetailsPage (T34, spec.md SCH-05)', () => {
     patchMock.mockResolvedValue({ success: true, data: { ...PROFESSIONAL, active: false } });
     const user = userEvent.setup();
     renderPage();
+    await screen.findByText('Dra. Ana');
+    await user.click(screen.getByRole('button', { name: 'Editar' }));
     await screen.findByLabelText('Nome');
 
     await user.click(screen.getByRole('checkbox', { name: 'Ativo' }));
@@ -108,7 +126,9 @@ describe('ProfessionalDetailsPage (T34, spec.md SCH-05)', () => {
         active: false,
       });
     });
-    expect(screen.getByRole('checkbox', { name: 'Ativo' })).not.toBeChecked();
+    // Volta ao modo visualização com o novo status — mesmo padrão de
+    // CustomerEditForm em customers/details.tsx.
+    expect(await screen.findByText('Inativo')).toBeInTheDocument();
   });
 
   it("shows the backend's error message on failure, keeping the form's current (unsaved) values intact", async () => {
@@ -117,6 +137,8 @@ describe('ProfessionalDetailsPage (T34, spec.md SCH-05)', () => {
     patchMock.mockResolvedValue({ success: false, message: 'Profissional não encontrado' });
     const user = userEvent.setup();
     renderPage();
+    await screen.findByText('Dra. Ana');
+    await user.click(screen.getByRole('button', { name: 'Editar' }));
     await screen.findByLabelText('Nome');
 
     await user.click(screen.getByRole('button', { name: 'Salvar' }));
@@ -131,6 +153,8 @@ describe('ProfessionalDetailsPage (T34, spec.md SCH-05)', () => {
     patchMock.mockResolvedValue({ success: true, data: { ...PROFESSIONAL, slotDurationMinutes: 45 } });
     const user = userEvent.setup();
     renderPage();
+    await screen.findByText('Dra. Ana');
+    await user.click(screen.getByRole('button', { name: 'Editar' }));
     await screen.findByLabelText('Nome');
 
     fireEvent.change(screen.getByLabelText('Duração do horário (min)'), { target: { value: '45' } });
@@ -144,6 +168,6 @@ describe('ProfessionalDetailsPage (T34, spec.md SCH-05)', () => {
         active: true,
       });
     });
-    expect(await screen.findByLabelText('Duração do horário (min)')).toHaveValue(45);
+    expect(await screen.findByText('45')).toBeInTheDocument();
   });
 });

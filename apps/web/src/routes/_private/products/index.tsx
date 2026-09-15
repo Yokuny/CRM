@@ -75,7 +75,6 @@ export function ProductsIndexPage() {
         ) : (
           <div className="flex flex-col gap-4">
             <Input
-              variant="primary"
               placeholder={t('search.placeholder')}
               value={searchInput}
               onChange={(e) => handleSearchInput(e.target.value)}
