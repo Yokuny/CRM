@@ -2,6 +2,18 @@ packages:
   - 'apps/*'
   - 'packages/*'
 
+# vite@8/Rolldown quebra o dev server do apps/web em silêncio (resolver não
+# acha os imports .js->.tsx deste projeto) — sem este override, o `vitest`
+# do workspace ROOT (devDependency direto de package.json, peer-context
+# separado do vitest usado por apps/web) resolve seu PRÓPRIO peer de `vite`
+# de forma independente e pode escolher 8.x, o que faz o pnpm hoistar
+# QUALQUER uma das duas versões pro symlink de `node_modules/.bin/vite` da
+# raiz — o mesmo binário que o serviço `web` do docker-compose.yml chama
+# direto (`/app/node_modules/.bin/vite`). Fixar aqui garante uma única
+# versão de vite no repo inteiro, independente de qual pacote a puxa.
+overrides:
+  vite: 7.3.6
+
 allowBuilds:
   bcrypt: true
   esbuild: true

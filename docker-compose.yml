@@ -58,7 +58,15 @@ services:
     <<: *app
     container_name: crm-web
     working_dir: /app/apps/web
-    command: /app/node_modules/.bin/vite --host 0.0.0.0
+    # /app/apps/web/node_modules/.bin (não o /app/node_modules/.bin raiz,
+    # como crm-api/ai-gateway usam pro tsx): `vite` só é dependência DIRETA
+    # de apps/web/package.json, nunca da raiz — o pnpm só promove um bin pro
+    # node_modules/.bin raiz quando o pacote é dependência direta dali (caso
+    # do tsx) ou por uma heurística de hoist oportunista sem ambiguidade,
+    # que não é garantida entre reinstalls (já vimos o root resolver ora pra
+    # vite@7, ora nem existir, dependendo do resto do grafo de deps). O
+    # caminho local a apps/web sempre existe, sem depender de hoist nenhum.
+    command: /app/apps/web/node_modules/.bin/vite --host 0.0.0.0
     depends_on:
       - crm-api
     ports:

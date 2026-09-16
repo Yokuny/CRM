@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { DefaultEmptyData } from '@/components/default-empty-data.js';
 import { DefaultFormLayout } from '@/components/default-form-layout.js';
 import { DefaultLoading } from '@/components/default-loading.js';
+import { BadgeIndicator } from '@/components/ui/badge.js';
 import { Button } from '@/components/ui/button.js';
 import { Card, CardAction, CardContent, CardHeader } from '@/components/ui/card.js';
 import { Checkbox } from '@/components/ui/checkbox.js';
@@ -80,7 +81,9 @@ function ProfessionalDetailsView({ professional }: ProfessionalDetailsViewProps)
         <ItemContent>
           <ItemTitle>{t('status')}</ItemTitle>
           <ItemDescription>
-            {t(professional.active ? 'professional.status.active' : 'professional.status.inactive')}
+            <BadgeIndicator variant={professional.active ? 'active' : 'neutral'}>
+              {t(professional.active ? 'professional.status.active' : 'professional.status.inactive')}
+            </BadgeIndicator>
           </ItemDescription>
         </ItemContent>
       </Item>

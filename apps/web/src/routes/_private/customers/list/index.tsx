@@ -1,3 +1,4 @@
+import { DEFAULT_CUSTOMER_TEMPLATE_KEY } from '@crm/field-engine';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, useNavigate, useSearch } from '@tanstack/react-router';
 import type { OnChangeFn, PaginationState, SortingState } from '@tanstack/react-table';
@@ -9,7 +10,8 @@ import { Card, CardAction, CardContent, CardHeader } from '@/components/ui/card.
 import { Input } from '@/components/ui/input.js';
 import { useDebouncedSearch } from '@/hooks/useDebouncedSearch.js';
 import { t } from '@/lib/helpers/translate.helper.js';
-import { type CustomerRecord, customersQuery } from '@/query/customer.js';
+import { type CustomerRecord, customerStatusOptions, customersQuery } from '@/query/customer.js';
+import { currentCustomerTemplateQuery } from '@/query/fieldTemplate.js';
 import { type CustomersSearch, customersSearchSchema } from '../@interface/customers.interface.js';
 import { CustomersTable } from './@components/customers-table.js';
 
@@ -30,6 +32,11 @@ export function CustomersListPage() {
       status: search.status,
     }),
   );
+  // Coluna "status" (dinâmica por tenant, values.status) precisa do template
+  // pra resolver chave -> {label,color} (StatusOption) — mesmo template já
+  // usado pelo filtro/kanban (WEB-02, query/customer.ts:customerStatusOptions).
+  const templateQuery = useQuery(currentCustomerTemplateQuery(DEFAULT_CUSTOMER_TEMPLATE_KEY));
+  const statusOptions = useMemo(() => customerStatusOptions(templateQuery.data?.fields ?? []), [templateQuery.data]);
 
   const pageCount = Math.max(1, Math.ceil((query.data?.total ?? 0) / search.limit));
 
@@ -108,6 +115,7 @@ export function CustomersListPage() {
                 data={query.data?.items ?? []}
                 pageCount={pageCount}
                 state={tableState}
+                statusOptions={statusOptions}
                 onPaginationChange={handlePaginationChange}
                 onSortingChange={handleSortingChange}
                 onRowClick={handleRowClick}

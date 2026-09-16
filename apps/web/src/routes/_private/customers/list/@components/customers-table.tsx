@@ -1,3 +1,4 @@
+import type { StatusOption } from '@crm/contracts';
 import type { OnChangeFn, PaginationState, SortingState } from '@tanstack/react-table';
 import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import {
@@ -6,6 +7,7 @@ import {
   ChevronRight as IconRight,
   ChevronUp as IconUp,
 } from 'lucide-react';
+import { useMemo } from 'react';
 import { Button } from '@/components/ui/button.js';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table.js';
 import { t } from '@/lib/helpers/translate.helper.js';
@@ -16,6 +18,7 @@ type CustomersTableProps = {
   data: CustomerRecord[];
   pageCount: number;
   state: { pagination: PaginationState; sorting: SortingState };
+  statusOptions: StatusOption[];
   onPaginationChange: OnChangeFn<PaginationState>;
   onSortingChange: OnChangeFn<SortingState>;
   onRowClick: (row: CustomerRecord) => void;
@@ -27,13 +30,15 @@ export function CustomersTable({
   data,
   pageCount,
   state,
+  statusOptions,
   onPaginationChange,
   onSortingChange,
   onRowClick,
 }: CustomersTableProps) {
+  const columns = useMemo(() => customerColumns(statusOptions), [statusOptions]);
   const table = useReactTable({
     data,
-    columns: customerColumns,
+    columns,
     pageCount,
     state,
     onPaginationChange,

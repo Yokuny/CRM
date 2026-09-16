@@ -1,7 +1,7 @@
 import type { ColumnDef, OnChangeFn, PaginationState } from '@tanstack/react-table';
 import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { ChevronLeft as IconLeft, ChevronRight as IconRight } from 'lucide-react';
-import { Badge, BadgeIndicator } from '@/components/ui/badge.js';
+import { BadgeIndicator } from '@/components/ui/badge.js';
 import { Button } from '@/components/ui/button.js';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table.js';
 import { formatDistanceToNow } from '@/lib/helpers/formatDate.helper.js';
@@ -23,9 +23,9 @@ const conversationColumns: ColumnDef<ConversationRecord, unknown>[] = [
     header: t('inbox.column.mode'),
     enableSorting: false,
     cell: ({ row }) => (
-      <Badge variant={row.original.mode === 'human' ? 'success' : 'secondary'}>
+      <BadgeIndicator variant={row.original.mode === 'human' ? 'success' : 'secondary'}>
         {t(row.original.mode === 'human' ? 'inbox.mode.human' : 'inbox.mode.bot')}
-      </Badge>
+      </BadgeIndicator>
     ),
   },
   {
@@ -46,12 +46,7 @@ const conversationColumns: ColumnDef<ConversationRecord, unknown>[] = [
     enableSorting: false,
     cell: ({ row }) =>
       row.original.unread ? (
-        // BadgeIndicatorProps.variant é tipado como SystemStatus
-        // (components/ui/badge.tsx) — não inclui um estado genérico
-        // "unread"/"warning"; 'pending' é o mais próximo semanticamente
-        // (algo aguardando atenção do operador) e já resolve pra amarelo
-        // no indicatorColorMap do próprio componente.
-        <BadgeIndicator variant="pending" pulse>
+        <BadgeIndicator variant="warning" pulse>
           {t('inbox.unread.yes')}
         </BadgeIndicator>
       ) : null,
@@ -61,9 +56,9 @@ const conversationColumns: ColumnDef<ConversationRecord, unknown>[] = [
     header: t('inbox.column.window'),
     enableSorting: false,
     cell: ({ row }) => (
-      <Badge variant={row.original.windowOpen ? 'success' : 'muted'}>
+      <BadgeIndicator variant={row.original.windowOpen ? 'success' : 'muted'}>
         {t(row.original.windowOpen ? 'inbox.window.open' : 'inbox.window.closed')}
-      </Badge>
+      </BadgeIndicator>
     ),
   },
 ];

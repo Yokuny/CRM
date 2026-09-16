@@ -105,7 +105,7 @@ function Badge({ className, variant, asChild = false, ...props }: BadgeProps) {
 
 // ─── BadgeIndicator ───────────────────────────────────────────────────────────
 
-const indicatorColorMap: Record<string, string> = {
+const indicatorColorMap: Record<IndicatorVariant, string> = {
   pending: 'bg-yellow-500',
   waiting: 'bg-sky-500',
   confirmed: 'bg-emerald-500',
@@ -124,35 +124,67 @@ const indicatorColorMap: Record<string, string> = {
   error: 'bg-red-500',
   info: 'bg-blue-500',
   neutral: 'bg-gray-500',
+  secondary: 'bg-gray-500',
+  muted: 'bg-gray-400',
 };
 
-function Dot({ status, pulse, className }: { status: string; pulse?: boolean; className?: string }) {
-  const color = indicatorColorMap[status] ?? 'bg-gray-400 dark:bg-gray-500';
+// `color` (hex/CSS cru) tem prioridade sobre `variant` — cobre o status
+// CONFIGURÁVEL por tenant (FieldDef type:'status', StatusOption.color já
+// existe no schema, packages/contracts/fieldDef.schema.ts) que não tem cor
+// fixa no indicatorColorMap: mesmo valor que dynamic-field.tsx (StatusLeaf) e
+// customers/kanban/index.tsx (KanbanHeader) já aplicam via
+// `style={{backgroundColor}}` num dot solto — centralizado aqui em vez de um
+// terceiro dot inline duplicado.
+function Dot({
+  status,
+  color,
+  pulse,
+  className,
+}: {
+  status?: IndicatorVariant;
+  color?: string;
+  pulse?: boolean;
+  className?: string;
+}) {
+  const colorClass = color ? undefined : indicatorColorMap[status ?? 'neutral'];
+  const style = color ? { backgroundColor: color } : undefined;
   return (
     <span className={cn('relative flex size-2', className)}>
       {pulse && (
-        <span className={cn('absolute inline-flex h-full w-full animate-ping rounded-full opacity-75', color)} />
+        <span
+          className={cn('absolute inline-flex h-full w-full animate-ping rounded-full opacity-75', colorClass)}
+          style={style}
+        />
       )}
-      <span className={cn('relative inline-flex size-2 rounded-full', color)} />
+      <span className={cn('relative inline-flex size-2 rounded-full', colorClass)} style={style} />
     </span>
   );
 }
 
 function BadgeIndicator({
   className,
-  variant = 'pending',
+  variant,
+  color,
   pulse = false,
   asChild = false,
   children,
   ...props
 }: BadgeIndicatorProps) {
   const Comp = asChild ? Slot : 'span';
+  const resolvedVariant = color ? undefined : (variant ?? 'pending');
 
-  if (!children) return <Dot status={variant} pulse={pulse} className={className} />;
+  if (!children) return <Dot status={resolvedVariant} color={color} pulse={pulse} className={className} />;
 
+  // Só a bolinha + o texto do status, sem a caixa/borda de badgeVars — o
+  // indicador não é mais um "badge" visual, por instrução explícita do
+  // usuário (todo lugar que mostra status usa este componente).
   return (
-    <Comp data-slot="badge" className={cn(badgeVars({ variant: 'muted' }), className)} {...props}>
-      <Dot status={variant} pulse={pulse} />
+    <Comp
+      data-slot="badge-indicator"
+      className={cn('inline-flex w-fit shrink-0 items-center gap-1.5 whitespace-nowrap font-medium text-xs', className)}
+      {...props}
+    >
+      <Dot status={resolvedVariant} color={color} pulse={pulse} />
       {children}
     </Comp>
   );
@@ -220,11 +252,21 @@ type ScheduleStatus =
 type FinancialStatus = 'pending' | 'partial' | 'paid' | 'refund' | 'canceled';
 type SystemStatus = ScheduleStatus | FinancialStatus;
 export type StatusVariant = 'success' | 'active' | 'warning' | 'pending' | 'error' | 'canceled' | 'info' | 'neutral';
+// União de todo status/tom usado pelos badges de status do app (agendamento,
+// financeiro, semântico) + 'secondary'/'muted' (tons neutros que não têm
+// status "real" associado, ex.: modo bot/janela fechada do inbox) — cobre o
+// indicatorColorMap inteiro, então adicionar um variant novo sem cor
+// correspondente vira erro de tipo (Record exaustivo), não um cinza mudo
+// silencioso em runtime.
+export type IndicatorVariant = SystemStatus | StatusVariant | 'secondary' | 'muted';
 
 type BadgeProps = ComponentProps<'span'> & VariantProps<typeof badgeVars> & { asChild?: boolean };
 
 export type BadgeIndicatorProps = ComponentProps<'span'> & {
-  variant?: SystemStatus;
+  variant?: IndicatorVariant;
+  // Cor crua (hex/CSS) pra status configurável por tenant — sobrepõe
+  // `variant` quando presente (StatusOption.color, @crm/contracts).
+  color?: string;
   pulse?: boolean;
   asChild?: boolean;
   children?: ReactNode;

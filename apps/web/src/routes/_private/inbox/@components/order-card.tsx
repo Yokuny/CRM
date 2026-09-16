@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Badge } from '@/components/ui/badge.js';
+import { BadgeIndicator } from '@/components/ui/badge.js';
 import { Button } from '@/components/ui/button.js';
 import { formatMoney } from '@/lib/helpers/money.helper.js';
 import { t } from '@/lib/helpers/translate.helper.js';
@@ -39,7 +39,7 @@ export function OrderCard({ conversationId }: OrderCardProps) {
 
   return (
     <div className="flex items-center gap-2 rounded-md border p-2">
-      <Badge variant="warning">{t('order.status.pending_approval')}</Badge>
+      <BadgeIndicator variant="warning">{t('order.status.pending_approval')}</BadgeIndicator>
       <span className="text-sm">{formatMoney(order.totalPrice)}</span>
       <Button type="button" size="sm" variant="success" onClick={handleApprove} disabled={approveMutation.isPending}>
         {t('order.approve.action')}

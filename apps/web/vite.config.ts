@@ -1,5 +1,6 @@
 import { fileURLToPath, URL } from 'node:url';
 import tailwindcss from '@tailwindcss/vite';
+import { devtools } from '@tanstack/devtools-vite';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
@@ -10,11 +11,19 @@ import { defineConfig } from 'vite';
 // process.env) — sem isso, client.api.ts não encontra VITE_API_URL e toda
 // chamada falha com "Não foi possível conectar ao servidor".
 //
+// devtools() PRECISA ser o PRIMEIRO plugin (doc oficial) — instrumenta os
+// outros plugins/transforms pra inspeção de fonte (go-to-source) e injeta o
+// piping de console antes de qualquer outra transformação rodar.
+// removeDevtoolsOnBuild (default true) já tira TanStackDevtools/painéis do
+// bundle de produção sozinho — main.tsx importa/monta sem guard manual de
+// import.meta.env.DEV.
+//
 // tanstackRouter() PRECISA vir antes de react() (mesma ordem do front de
 // referência) — o plugin reescreve as rotas antes do Babel/SWC do
 // @vitejs/plugin-react processar os arquivos (AD-030).
 export default defineConfig({
   plugins: [
+    devtools(),
     tanstackRouter({
       target: 'react',
       autoCodeSplitting: true,

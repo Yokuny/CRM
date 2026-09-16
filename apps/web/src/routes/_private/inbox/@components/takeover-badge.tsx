@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Badge } from '@/components/ui/badge.js';
+import { BadgeIndicator } from '@/components/ui/badge.js';
 import { Button } from '@/components/ui/button.js';
 import { post } from '@/lib/api/client.api.js';
 import { t } from '@/lib/helpers/translate.helper.js';
@@ -80,9 +80,9 @@ export function TakeoverBadge({ conversation }: TakeoverBadgeProps) {
 
   return (
     <div className="flex items-center gap-2">
-      <Badge variant={conversation.mode === 'human' ? 'success' : 'secondary'}>
+      <BadgeIndicator variant={conversation.mode === 'human' ? 'success' : 'secondary'}>
         {t(conversation.mode === 'human' ? 'inbox.mode.human' : 'inbox.mode.bot')}
-      </Badge>
+      </BadgeIndicator>
       {assigneeLabel && <span className="text-muted-foreground text-sm">{assigneeLabel}</span>}
       <Button
         type="button"

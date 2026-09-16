@@ -29,6 +29,36 @@ Acompanhar os logs:
 docker compose logs -f crm-api ai-gateway web
 ```
 
+## Rodar o `web` fora do Docker (Mongo/crm-api/ai-gateway continuam no compose)
+
+Sem conflito nenhum: `crm-api`/`ai-gateway`/`mongo` publicam a porta no host
+(`8080`/`8081`/`27017`) e o `.env` da raiz já usa `localhost` em todo lugar
+que cruza serviço (`VITE_API_URL`, `CORS_ORIGIN`, `WEB_BASE_URL`) — nunca o
+nome do serviço do compose (`crm-api`/`ai-gateway`) como hostname. O
+navegador acessa `http://localhost:5173` do mesmo jeito rodando o `web` no
+container ou local, então o `Origin` que o `crm-api` vê pro CORS é idêntico
+nos dois casos.
+
+1. Pare só o container do `web` (mantém mongo/crm-api/ai-gateway rodando):
+   ```bash
+   docker compose stop web
+   ```
+2. Rode o front localmente (lê o mesmo `.env` da raiz via `envDir` do
+   `vite.config.ts`, sem configuração extra):
+   ```bash
+   pnpm run dev:web
+   ```
+   Isso te devolve o Vite/TanStack Router rodando no processo local — Cmd/Ctrl+click
+   nos DevTools do TanStack Router volta a abrir o arquivo de verdade no editor,
+   o que não funciona quando o `web` roda dentro do container (source maps
+   apontam pro path `/app/...` de dentro do container, não pro path local).
+
+Pra voltar ao modo 100% Docker depois:
+
+```bash
+docker compose up -d web
+```
+
 ## Serviços
 
 | Serviço      | URL                          | Healthcheck                    |

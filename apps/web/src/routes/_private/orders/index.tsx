@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import { DefaultEmptyData } from '@/components/default-empty-data.js';
 import { DefaultLoading } from '@/components/default-loading.js';
-import { Badge } from '@/components/ui/badge.js';
+import { BadgeIndicator } from '@/components/ui/badge.js';
 import { Button } from '@/components/ui/button.js';
 import { ButtonGroup } from '@/components/ui/button-group.js';
 import { Card, CardContent, CardHeader } from '@/components/ui/card.js';
@@ -151,7 +151,9 @@ export function OrdersIndexPage() {
       header: t('status'),
       enableSorting: false,
       cell: ({ row }) => (
-        <Badge variant={STATUS_BADGE_VARIANT[row.original.status]}>{t(`order.status.${row.original.status}`)}</Badge>
+        <BadgeIndicator variant={STATUS_BADGE_VARIANT[row.original.status]}>
+          {t(`order.status.${row.original.status}`)}
+        </BadgeIndicator>
       ),
     },
     {
@@ -162,9 +164,9 @@ export function OrdersIndexPage() {
       // um badge vazio) — só renderiza quando paymentStatus está presente.
       cell: ({ row }) =>
         row.original.paymentStatus ? (
-          <Badge variant={PAYMENT_BADGE_VARIANT[row.original.paymentStatus]}>
+          <BadgeIndicator variant={PAYMENT_BADGE_VARIANT[row.original.paymentStatus]}>
             {t(`order.payment.${row.original.paymentStatus}`)}
-          </Badge>
+          </BadgeIndicator>
         ) : null,
     },
     {

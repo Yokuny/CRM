@@ -1,6 +1,7 @@
 import type { ColumnDef, OnChangeFn, PaginationState } from '@tanstack/react-table';
 import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { ChevronLeft as IconLeft, ChevronRight as IconRight } from 'lucide-react';
+import { BadgeIndicator } from '@/components/ui/badge.js';
 import { Button } from '@/components/ui/button.js';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table.js';
 import { t } from '@/lib/helpers/translate.helper.js';
@@ -13,7 +14,11 @@ const professionalColumns: ColumnDef<ProfessionalRecord, unknown>[] = [
     id: 'active',
     header: t('status'),
     enableSorting: false,
-    cell: ({ row }) => t(row.original.active ? 'professional.status.active' : 'professional.status.inactive'),
+    cell: ({ row }) => (
+      <BadgeIndicator variant={row.original.active ? 'active' : 'neutral'}>
+        {t(row.original.active ? 'professional.status.active' : 'professional.status.inactive')}
+      </BadgeIndicator>
+    ),
   },
 ];
 

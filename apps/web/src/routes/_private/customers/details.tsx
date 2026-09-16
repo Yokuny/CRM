@@ -1,4 +1,4 @@
-import type { FieldDef } from '@crm/contracts';
+import type { FieldDef, StatusOption } from '@crm/contracts';
 import { DEFAULT_CUSTOMER_TEMPLATE_KEY, hydrate } from '@crm/field-engine';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, Link, useSearch } from '@tanstack/react-router';
@@ -11,6 +11,7 @@ import { DefaultFormLayout, type FormSection } from '@/components/default-form-l
 import { DefaultLoading } from '@/components/default-loading.js';
 import { DynamicField } from '@/components/dynamic-field/dynamic-field.js';
 import { renderNodesToDefaultValues } from '@/components/dynamic-field/dynamic-field.utils.js';
+import { BadgeIndicator } from '@/components/ui/badge.js';
 import { Button } from '@/components/ui/button.js';
 import { Card, CardAction, CardContent, CardHeader } from '@/components/ui/card.js';
 import { Input } from '@/components/ui/input.js';
@@ -19,7 +20,7 @@ import { Label } from '@/components/ui/label.js';
 import { patch } from '@/lib/api/client.api.js';
 import { formatDate } from '@/lib/helpers/formatDate.helper.js';
 import { t } from '@/lib/helpers/translate.helper.js';
-import { type CustomerRecord, customerKeys, customerQuery } from '@/query/customer.js';
+import { type CustomerRecord, customerKeys, customerQuery, customerStatusOptions } from '@/query/customer.js';
 import { currentCustomerTemplateQuery } from '@/query/fieldTemplate.js';
 import { processesQuery } from '@/query/process.js';
 
@@ -27,9 +28,13 @@ import { processesQuery } from '@/query/process.js';
 export const customerDetailsSearchSchema = z.object({ id: z.string().min(1) });
 export type CustomerDetailsSearch = z.infer<typeof customerDetailsSearchSchema>;
 
-type CustomerDetailsViewProps = { customer: CustomerRecord };
+type CustomerDetailsViewProps = { customer: CustomerRecord; statusOptions: StatusOption[] };
 
-function CustomerDetailsView({ customer }: CustomerDetailsViewProps) {
+// `key==='status'` é o único campo com tratamento especial aqui — mesma
+// convenção de fieldId usada pelo template (customerStatusOptions,
+// query/customer.ts): resolve pra {label,color} (StatusOption) e usa o dot
+// colorido; qualquer outro campo dinâmico continua genérico (raw value).
+function CustomerDetailsView({ customer, statusOptions }: CustomerDetailsViewProps) {
   const processesQueryResult = useQuery(processesQuery(customer.id));
 
   return (
@@ -55,14 +60,26 @@ function CustomerDetailsView({ customer }: CustomerDetailsViewProps) {
             </ItemContent>
           </Item>
         )}
-        {Object.entries(customer.values).map(([key, value]) => (
-          <Item key={key}>
-            <ItemContent>
-              <ItemTitle>{key}</ItemTitle>
-              <ItemDescription>{String(value)}</ItemDescription>
-            </ItemContent>
-          </Item>
-        ))}
+        {Object.entries(customer.values).map(([key, value]) => {
+          const statusOption =
+            key === 'status' && typeof value === 'string'
+              ? statusOptions.find((option) => option.key === value)
+              : undefined;
+          return (
+            <Item key={key}>
+              <ItemContent>
+                <ItemTitle>{key === 'status' ? t('status') : key}</ItemTitle>
+                <ItemDescription>
+                  {statusOption ? (
+                    <BadgeIndicator color={statusOption.color}>{statusOption.label}</BadgeIndicator>
+                  ) : (
+                    String(value)
+                  )}
+                </ItemDescription>
+              </ItemContent>
+            </Item>
+          );
+        })}
       </ItemGroup>
 
       <div className="grid gap-2">
@@ -237,12 +254,13 @@ export function CustomerDetailsPage() {
   const search = useSearch({ strict: false }) as CustomerDetailsSearch;
   const [isEditing, setIsEditing] = useState(false);
   const customerQueryResult = useQuery(customerQuery(search.id));
-  // Só busca o template quando entra em modo edição — a visualização (WEB-05)
-  // nunca precisa dele.
-  const templateQuery = useQuery({
-    ...currentCustomerTemplateQuery(DEFAULT_CUSTOMER_TEMPLATE_KEY),
-    enabled: isEditing,
-  });
+  // Sempre busca (não só em modo edição, WEB-05): a visualização agora
+  // também precisa do template pra resolver a bolinha+cor do campo `status`
+  // (customerStatusOptions) — a view em si NUNCA bloqueia nela (fallback pro
+  // valor cru enquanto carrega), só o form de edição continua esperando
+  // (precisa do FieldDef inteiro pra montar os campos dinâmicos).
+  const templateQuery = useQuery(currentCustomerTemplateQuery(DEFAULT_CUSTOMER_TEMPLATE_KEY));
+  const statusOptions = useMemo(() => customerStatusOptions(templateQuery.data?.fields ?? []), [templateQuery.data]);
 
   const customer = customerQueryResult.data;
 
@@ -278,7 +296,7 @@ export function CustomerDetailsPage() {
             />
           )
         ) : (
-          <CustomerDetailsView customer={customer} />
+          <CustomerDetailsView customer={customer} statusOptions={statusOptions} />
         )}
       </CardContent>
     </Card>

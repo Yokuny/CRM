@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { DefaultLoading } from '@/components/default-loading.js';
-import { Badge } from '@/components/ui/badge.js';
+import { BadgeIndicator } from '@/components/ui/badge.js';
 import { formatDate } from '@/lib/helpers/formatDate.helper.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 import { cn } from '@/lib/utils.js';
@@ -89,7 +89,7 @@ export function ConversationThread({ conversationId, customerId, renderFailedAct
             <p className="text-muted-foreground text-xs">{formatDate(message.createdAt, 'dd/MM HH:mm')}</p>
             {message.status === 'failed' && (
               <div className="mt-1 flex items-center gap-2">
-                <Badge variant="error">{t('inbox.message.failed')}</Badge>
+                <BadgeIndicator variant="error">{t('inbox.message.failed')}</BadgeIndicator>
                 {renderFailedAction?.(message)}
               </div>
             )}

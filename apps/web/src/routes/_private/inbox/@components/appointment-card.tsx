@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Badge } from '@/components/ui/badge.js';
+import { BadgeIndicator } from '@/components/ui/badge.js';
 import { formatDisplayDate, formatDisplayTime } from '@/lib/helpers/displayTime.helper.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 import type { AppointmentStatus } from '@/query/appointment.js';
@@ -29,7 +29,9 @@ export function AppointmentCard({ customerId }: AppointmentCardProps) {
 
   return (
     <div className="flex items-center gap-2 rounded-md border p-2">
-      <Badge variant={badgeVariantForStatus(appointment.status)}>{t(`appointment.status.${appointment.status}`)}</Badge>
+      <BadgeIndicator variant={badgeVariantForStatus(appointment.status)}>
+        {t(`appointment.status.${appointment.status}`)}
+      </BadgeIndicator>
       <span className="text-sm">
         {formatDisplayDate(appointment.start)} · {formatDisplayTime(appointment.start)}
       </span>

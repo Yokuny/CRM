@@ -1,4 +1,4 @@
-import { type FieldDef, NO_STATUS_FILTER_VALUE } from '@crm/contracts';
+import { type FieldDef, NO_STATUS_FILTER_VALUE, type StatusOption } from '@crm/contracts';
 import { queryOptions } from '@tanstack/react-query';
 import { get } from '../lib/api/client.api.js';
 import { t } from '../lib/helpers/translate.helper.js';
@@ -72,15 +72,25 @@ export const customerQuery = (id: string) =>
 
 export type CustomerStatusColumn = { key: string; label: string; color?: string; order: number };
 
-// WEB-02 AC1/AC4: coluna por opção do `status` corrente do template
-// `customer`, ordenada por `StatusOption.order`, mais uma coluna final
-// "sem status" (o sentinel NO_STATUS_FILTER_VALUE, `GET /customers`'s query
-// extension de T4) — nunca omitida, mesmo quando o template não tem nenhum
-// campo `status` definido. Função pura (não um hook): não depende de nenhum
-// estado de React, só da lista de `fields` do template já carregado.
-export const customerStatusColumns = (fields: FieldDef[]): CustomerStatusColumn[] => {
+// Extrai o campo `type:'status'` do template CORRENTE (Customer só suporta
+// um por convenção do próprio field-engine, fieldId `status`) — options já
+// vêm ordenadas por `StatusOption.order`. Função pura (não um hook): não
+// depende de nenhum estado de React, só da lista de `fields` já carregada.
+// Reusada tanto por `customerStatusColumns` (colunas do kanban, com o
+// sentinel "sem status" extra) quanto por `customerColumns`
+// (customers/@utils/columns.tsx, resolve `values.status` -> {label,color}
+// pra badge da tabela/detalhe).
+export const customerStatusOptions = (fields: FieldDef[]): StatusOption[] => {
   const statusField = fields.find((field): field is Extract<FieldDef, { type: 'status' }> => field.type === 'status');
-  const options = statusField ? [...statusField.options].sort((a, b) => a.order - b.order) : [];
+  return statusField ? [...statusField.options].sort((a, b) => a.order - b.order) : [];
+};
+
+// WEB-02 AC1/AC4: coluna por opção do `status` corrente do template
+// `customer`, mais uma coluna final "sem status" (o sentinel
+// NO_STATUS_FILTER_VALUE, `GET /customers`'s query extension de T4) — nunca
+// omitida, mesmo quando o template não tem nenhum campo `status` definido.
+export const customerStatusColumns = (fields: FieldDef[]): CustomerStatusColumn[] => {
+  const options = customerStatusOptions(fields);
 
   return [
     ...options.map((option) => ({ key: option.key, label: option.label, color: option.color, order: option.order })),

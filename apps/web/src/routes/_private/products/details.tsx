@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { DefaultEmptyData } from '@/components/default-empty-data.js';
 import { DefaultFormLayout } from '@/components/default-form-layout.js';
 import { DefaultLoading } from '@/components/default-loading.js';
+import { BadgeIndicator } from '@/components/ui/badge.js';
 import { Button } from '@/components/ui/button.js';
 import { Card, CardAction, CardContent, CardHeader } from '@/components/ui/card.js';
 import { Checkbox } from '@/components/ui/checkbox.js';
@@ -84,7 +85,11 @@ function ProductDetailsView({ product }: ProductDetailsViewProps) {
       <Item>
         <ItemContent>
           <ItemTitle>{t('status')}</ItemTitle>
-          <ItemDescription>{t(product.active ? 'product.status.active' : 'product.status.inactive')}</ItemDescription>
+          <ItemDescription>
+            <BadgeIndicator variant={product.active ? 'active' : 'neutral'}>
+              {t(product.active ? 'product.status.active' : 'product.status.inactive')}
+            </BadgeIndicator>
+          </ItemDescription>
         </ItemContent>
       </Item>
     </ItemGroup>
