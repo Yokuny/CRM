@@ -26,66 +26,84 @@ export function PrivateIndexPage() {
           {t('private.role')}: {data.role.join(', ')}
         </ItemDescription>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          <Item variant="outline" asChild>
-            <Link to="/customers">
-              <ItemMedia variant="icon">
-                <Users className="size-4" />
-              </ItemMedia>
-              <ItemContent>
-                <ItemTitle>{t('customers')}</ItemTitle>
-              </ItemContent>
-            </Link>
-          </Item>
-          <Item variant="outline" asChild>
-            <Link to="/products">
-              <ItemMedia variant="icon">
-                <Package className="size-4" />
-              </ItemMedia>
-              <ItemContent>
-                <ItemTitle>{t('product.list.title')}</ItemTitle>
-              </ItemContent>
-            </Link>
-          </Item>
-          <Item variant="outline" asChild>
-            <Link to="/orders">
-              <ItemMedia variant="icon">
-                <ShoppingCart className="size-4" />
-              </ItemMedia>
-              <ItemContent>
-                <ItemTitle>{t('order.list.title')}</ItemTitle>
-              </ItemContent>
-            </Link>
-          </Item>
-          <Item variant="outline" asChild>
-            <Link to="/inbox">
-              <ItemMedia variant="icon">
-                <Inbox className="size-4" />
-              </ItemMedia>
-              <ItemContent>
-                <ItemTitle>{t('inbox.title')}</ItemTitle>
-              </ItemContent>
-            </Link>
-          </Item>
-          <Item variant="outline" asChild>
-            <Link to="/kanban">
-              <ItemMedia variant="icon">
-                <Kanban className="size-4" />
-              </ItemMedia>
-              <ItemContent>
-                <ItemTitle>{t('kanban.board.list.title')}</ItemTitle>
-              </ItemContent>
-            </Link>
-          </Item>
-          <Item variant="outline" asChild>
-            <Link to="/schedule">
-              <ItemMedia variant="icon">
-                <Calendar className="size-4" />
-              </ItemMedia>
-              <ItemContent>
-                <ItemTitle>{t('schedule')}</ItemTitle>
-              </ItemContent>
-            </Link>
-          </Item>
+          <Item
+            variant="outline"
+            render={
+              <Link to="/customers">
+                <ItemMedia variant="icon">
+                  <Users className="size-4" />
+                </ItemMedia>
+                <ItemContent>
+                  <ItemTitle>{t('customers')}</ItemTitle>
+                </ItemContent>
+              </Link>
+            }
+          />
+          <Item
+            variant="outline"
+            render={
+              <Link to="/products">
+                <ItemMedia variant="icon">
+                  <Package className="size-4" />
+                </ItemMedia>
+                <ItemContent>
+                  <ItemTitle>{t('product.list.title')}</ItemTitle>
+                </ItemContent>
+              </Link>
+            }
+          />
+          <Item
+            variant="outline"
+            render={
+              <Link to="/orders">
+                <ItemMedia variant="icon">
+                  <ShoppingCart className="size-4" />
+                </ItemMedia>
+                <ItemContent>
+                  <ItemTitle>{t('order.list.title')}</ItemTitle>
+                </ItemContent>
+              </Link>
+            }
+          />
+          <Item
+            variant="outline"
+            render={
+              <Link to="/inbox">
+                <ItemMedia variant="icon">
+                  <Inbox className="size-4" />
+                </ItemMedia>
+                <ItemContent>
+                  <ItemTitle>{t('inbox.title')}</ItemTitle>
+                </ItemContent>
+              </Link>
+            }
+          />
+          <Item
+            variant="outline"
+            render={
+              <Link to="/kanban">
+                <ItemMedia variant="icon">
+                  <Kanban className="size-4" />
+                </ItemMedia>
+                <ItemContent>
+                  <ItemTitle>{t('kanban.board.list.title')}</ItemTitle>
+                </ItemContent>
+              </Link>
+            }
+          />
+          <Item
+            variant="outline"
+            render={
+              <Link to="/schedule">
+                <ItemMedia variant="icon">
+                  <Calendar className="size-4" />
+                </ItemMedia>
+                <ItemContent>
+                  <ItemTitle>{t('schedule')}</ItemTitle>
+                </ItemContent>
+              </Link>
+            }
+          />
         </div>
       </CardContent>
     </Card>
