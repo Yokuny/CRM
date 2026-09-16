@@ -1,13 +1,12 @@
-import * as TabsPrimitive from '@radix-ui/react-tabs';
-import type { ComponentProps } from 'react';
+import { Tabs as TabsPrimitive } from '@base-ui/react/tabs';
 
 import { cn } from '@/lib/utils.js';
 
-function Tabs({ className, ...props }: ComponentProps<typeof TabsPrimitive.Root>) {
+function Tabs({ className, ...props }: TabsPrimitive.Root.Props) {
   return <TabsPrimitive.Root data-slot="tabs" className={cn('flex w-full flex-col gap-2', className)} {...props} />;
 }
 
-function TabsList({ className, ...props }: ComponentProps<typeof TabsPrimitive.List>) {
+function TabsList({ className, ...props }: TabsPrimitive.List.Props) {
   return (
     <TabsPrimitive.List
       data-slot="tabs-list"
@@ -20,9 +19,9 @@ function TabsList({ className, ...props }: ComponentProps<typeof TabsPrimitive.L
   );
 }
 
-function TabsTrigger({ className, ...props }: ComponentProps<typeof TabsPrimitive.Trigger>) {
+function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
   return (
-    <TabsPrimitive.Trigger
+    <TabsPrimitive.Tab
       data-slot="tabs-trigger"
       className={cn(
         // Base layout
@@ -38,16 +37,16 @@ function TabsTrigger({ className, ...props }: ComponentProps<typeof TabsPrimitiv
         'before:absolute before:inset-x-0.5 before:inset-y-0.5 before:rounded-xs before:bg-transparent before:transition-all before:duration-200',
         'hover:before:bg-muted/50',
         // Active state — texto visível, remove bg pill, mantém underline via after
-        'data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none',
-        'data-[state=active]:before:bg-transparent',
+        'data-active:bg-transparent data-active:text-foreground data-active:shadow-none',
+        'data-active:before:bg-transparent',
         // Active underline indicator
         'after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full',
         'after:origin-left after:scale-x-0 after:bg-primary after:transition-transform after:duration-300 after:ease-out',
-        'data-[state=active]:after:scale-x-100',
+        'data-active:after:scale-x-100',
         // Focus visible
         'focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0',
         // Disabled
-        'disabled:pointer-events-none disabled:opacity-50',
+        'disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50',
         // SVG inside
         "[&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
         className,
@@ -57,9 +56,9 @@ function TabsTrigger({ className, ...props }: ComponentProps<typeof TabsPrimitiv
   );
 }
 
-function TabsContent({ className, ...props }: ComponentProps<typeof TabsPrimitive.Content>) {
+function TabsContent({ className, ...props }: TabsPrimitive.Panel.Props) {
   return (
-    <TabsPrimitive.Content
+    <TabsPrimitive.Panel
       data-slot="tabs-content"
       className={cn('w-full flex-1 outline-none', 'fade-in-50 animate-in duration-500', className)}
       {...props}
