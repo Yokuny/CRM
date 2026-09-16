@@ -93,9 +93,7 @@ export function CustomersListPage() {
     <Card asPage>
       <CardHeader title={t('customers.list.title')}>
         <CardAction>
-          <Button asChild variant="basic">
-            <Link to="/customers/add">{t('add')}</Link>
-          </Button>
+          <Button variant="basic" render={<Link to="/customers/add">{t('add')}</Link>} />
         </CardAction>
       </CardHeader>
       <CardContent>

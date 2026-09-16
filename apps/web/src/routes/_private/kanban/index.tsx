@@ -19,9 +19,7 @@ export function KanbanIndexPage() {
     <Card asPage>
       <CardHeader title={t('kanban.board.list.title')}>
         <CardAction>
-          <Button asChild variant="basic">
-            <Link to="/kanban/add">{t('add')}</Link>
-          </Button>
+          <Button variant="basic" render={<Link to="/kanban/add">{t('add')}</Link>} />
         </CardAction>
       </CardHeader>
       <CardContent>
@@ -36,19 +34,22 @@ export function KanbanIndexPage() {
           <ItemGroup>
             {query.data.map((board) => (
               // AD-030: search:{id}, nunca um `$id` path segment.
-              <Item key={board.id} asChild>
-                <Link to="/kanban/details" search={{ id: board.id }}>
-                  <ItemContent>
-                    <ItemTitle>{board.name}</ItemTitle>
-                    {board.description && <ItemDescription>{board.description}</ItemDescription>}
-                  </ItemContent>
-                  <ItemContent>
-                    <ItemDescription>
-                      {board.cardCount} {t(board.cardCount === 1 ? 'kanban.card.singular' : 'kanban.card.plural')}
-                    </ItemDescription>
-                  </ItemContent>
-                </Link>
-              </Item>
+              <Item
+                key={board.id}
+                render={
+                  <Link to="/kanban/details" search={{ id: board.id }}>
+                    <ItemContent>
+                      <ItemTitle>{board.name}</ItemTitle>
+                      {board.description && <ItemDescription>{board.description}</ItemDescription>}
+                    </ItemContent>
+                    <ItemContent>
+                      <ItemDescription>
+                        {board.cardCount} {t(board.cardCount === 1 ? 'kanban.card.singular' : 'kanban.card.plural')}
+                      </ItemDescription>
+                    </ItemContent>
+                  </Link>
+                }
+              />
             ))}
           </ItemGroup>
         )}

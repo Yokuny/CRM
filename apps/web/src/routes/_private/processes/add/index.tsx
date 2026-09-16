@@ -63,11 +63,14 @@ export function ProcessAddPage() {
           <div className="grid gap-4">
             <ItemTitle>{t('process.create.success')}</ItemTitle>
             <ItemDescription>{created.stage}</ItemDescription>
-            <Button asChild variant="basic">
-              <Link to="/customers/details" search={{ id: search.customerId }}>
-                {t('back')}
-              </Link>
-            </Button>
+            <Button
+              variant="basic"
+              render={
+                <Link to="/customers/details" search={{ id: search.customerId }}>
+                  {t('back')}
+                </Link>
+              }
+            />
           </div>
         ) : availableTemplates.length === 0 ? (
           // WEB-07 AC2: mensagem explícita, nunca um picker vazio e silencioso
@@ -82,7 +85,11 @@ export function ProcessAddPage() {
                   title: t('process.create.section.template'),
                   description: t('process.create.section.template_description'),
                   fields: [
-                    <Select key="templateKey" value={selectedKey} onValueChange={setSelectedKey}>
+                    <Select
+                      key="templateKey"
+                      value={selectedKey}
+                      onValueChange={(value) => setSelectedKey(value ?? '')}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder={t('process.template.placeholder')} />
                       </SelectTrigger>

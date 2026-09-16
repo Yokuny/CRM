@@ -1,6 +1,7 @@
 import { Link, useLocation, useMatches, useRouter } from '@tanstack/react-router';
+import { cn } from 'cn';
 import { ArrowLeft as ArrowLeftIcon, HelpCircle as HelpIcon, Home as HomeIcon } from 'lucide-react';
-import { type ComponentProps, Fragment } from 'react';
+import * as React from 'react';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -11,7 +12,6 @@ import {
 } from '@/components/ui/breadcrumb.js';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip.js';
 import { t } from '@/lib/helpers/translate.helper.js';
-import { cn } from '@/lib/utils.js';
 import { Button } from './button.js';
 
 function PageBreadcrumb() {
@@ -25,11 +25,13 @@ function PageBreadcrumb() {
     <Breadcrumb>
       <BreadcrumbList>
         <BreadcrumbItem>
-          <BreadcrumbLink asChild>
-            <Link to="/">
-              <HomeIcon className="size-4" />
-            </Link>
-          </BreadcrumbLink>
+          <BreadcrumbLink
+            render={
+              <Link to="/">
+                <HomeIcon className="size-4" />
+              </Link>
+            }
+          />
         </BreadcrumbItem>
         {pathnames.length > 0 && <BreadcrumbSeparator />}
         {pathnames.map((value, index) => {
@@ -46,18 +48,16 @@ function PageBreadcrumb() {
           }
           if (!translatedValue) translatedValue = t(value);
           return (
-            <Fragment key={to}>
+            <React.Fragment key={to}>
               <BreadcrumbItem>
                 {isLast ? (
                   <BreadcrumbPage>{translatedValue}</BreadcrumbPage>
                 ) : (
-                  <BreadcrumbLink asChild>
-                    <Link to={to as string}>{translatedValue}</Link>
-                  </BreadcrumbLink>
+                  <BreadcrumbLink render={<Link to={to as string}>{translatedValue}</Link>} />
                 )}
               </BreadcrumbItem>
               {!isLast && <BreadcrumbSeparator />}
-            </Fragment>
+            </React.Fragment>
           );
         })}
       </BreadcrumbList>
@@ -65,18 +65,25 @@ function PageBreadcrumb() {
   );
 }
 
-function Card({ className, asPage, children, ...props }: ComponentProps<'div'> & { asPage?: boolean }) {
+function Card({
+  className,
+  size = 'default',
+  asPage,
+  children,
+  ...props
+}: React.ComponentProps<'div'> & { size?: 'default' | 'sm'; asPage?: boolean }) {
   return (
     <div
       data-slot="card"
+      data-size={size}
       className={cn(
-        'flex h-full flex-col gap-6 rounded-lg border bg-background py-6 pb-24 text-card-foreground md:py-6',
+        'group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-none bg-card py-(--card-spacing) pb-24 text-xs/relaxed text-card-foreground ring-1 ring-foreground/10 [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-none *:[img:last-child]:rounded-none',
         className,
       )}
       {...props}
     >
       {asPage && (
-        <div className="-mb-2 flex items-center justify-between px-4 md:px-6">
+        <div className="-mb-2 flex items-center justify-between px-(--card-spacing)">
           <PageBreadcrumb />
           <CardDescription />
         </div>
@@ -86,7 +93,7 @@ function Card({ className, asPage, children, ...props }: ComponentProps<'div'> &
   );
 }
 
-function CardHeader({ className, title, children, ...props }: ComponentProps<'div'> & { title?: string }) {
+function CardHeader({ className, title, children, ...props }: React.ComponentProps<'div'> & { title?: string }) {
   const location = useLocation();
   const matches = useMatches();
   const router = useRouter();
@@ -109,11 +116,14 @@ function CardHeader({ className, title, children, ...props }: ComponentProps<'di
   return (
     <div
       data-slot="card-header"
-      className={cn('flex items-start justify-between gap-2 px-4 sm:items-center md:px-6', className)}
+      className={cn(
+        'group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-none px-(--card-spacing) has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-(--card-spacing)',
+        className,
+      )}
       {...props}
     >
       <div className="flex items-center gap-2 md:gap-4">
-        <Button className="md:px-6" onClick={() => router.history.back()}>
+        <Button variant="basic" onClick={() => router.history.back()}>
           <ArrowLeftIcon />
         </Button>
         {resolvedTitle && <CardTitle>{resolvedTitle}</CardTitle>}
@@ -123,17 +133,17 @@ function CardHeader({ className, title, children, ...props }: ComponentProps<'di
   );
 }
 
-function CardTitle({ className, ...props }: ComponentProps<'div'>) {
+function CardTitle({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="card-title"
-      className={cn('font-mono font-semibold text-2xl leading-none tracking-tight md:text-3xl', className)}
+      className={cn('text-sm font-medium group-data-[size=sm]/card:text-sm', className)}
       {...props}
     />
   );
 }
 
-function CardDescription({ className, ...props }: ComponentProps<'div'>) {
+function CardDescription({ className, ...props }: React.ComponentProps<'div'>) {
   const matches = useMatches();
   let description = '';
   for (let i = matches.length - 1; i >= 0; i--) {
@@ -158,40 +168,28 @@ function CardDescription({ className, ...props }: ComponentProps<'div'>) {
   );
 }
 
-function CardAction({ className, ...props }: ComponentProps<'div'>) {
+function CardAction({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="card-action"
-      className={cn(
-        'col-start-2 row-span-2 row-start-1 flex w-full justify-end gap-2 sm:w-auto sm:flex-row',
-        className,
-      )}
+      className={cn('col-start-2 row-span-2 row-start-1 self-start justify-self-end', className)}
       {...props}
     />
   );
 }
 
-function CardContent({ className, ...props }: ComponentProps<'div'>) {
-  return <div data-slot="card-content" className={cn('px-2 md:px-6', className)} {...props} />;
+function CardContent({ className, ...props }: React.ComponentProps<'div'>) {
+  return <div data-slot="card-content" className={cn('px-(--card-spacing)', className)} {...props} />;
 }
 
-function CardFooter({ className, layout = 'simple', ...props }: CardFooterProps) {
+function CardFooter({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="card-footer"
-      className={cn(
-        'flex gap-4 px-4 md:px-6 [.border-t]:pt-6',
-        layout === 'simple' && 'items-center justify-end',
-        layout === 'multi' && 'flex-col items-center justify-between sm:flex-row',
-        className,
-      )}
+      className={cn('flex items-center rounded-none border-t p-(--card-spacing)', className)}
       {...props}
     />
   );
 }
 
 export { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle };
-
-interface CardFooterProps extends ComponentProps<'div'> {
-  layout?: 'simple' | 'multi';
-}

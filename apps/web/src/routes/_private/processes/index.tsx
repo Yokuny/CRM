@@ -14,17 +14,20 @@ export function ProcessesIndexPage() {
     <Card asPage>
       <CardHeader title={t('customer.processes.title')} />
       <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <Item variant="outline" asChild>
-          <Link to="/customers">
-            <ItemMedia variant="icon">
-              <Users className="size-4" />
-            </ItemMedia>
-            <ItemContent>
-              <ItemTitle>{t('customers')}</ItemTitle>
-              <ItemDescription>{t('process.index.hint')}</ItemDescription>
-            </ItemContent>
-          </Link>
-        </Item>
+        <Item
+          variant="outline"
+          render={
+            <Link to="/customers">
+              <ItemMedia variant="icon">
+                <Users className="size-4" />
+              </ItemMedia>
+              <ItemContent>
+                <ItemTitle>{t('customers')}</ItemTitle>
+                <ItemDescription>{t('process.index.hint')}</ItemDescription>
+              </ItemContent>
+            </Link>
+          }
+        />
       </CardContent>
     </Card>
   );

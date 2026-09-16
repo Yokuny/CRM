@@ -88,11 +88,14 @@ function CustomerDetailsView({ customer, statusOptions }: CustomerDetailsViewPro
           {/* WEB-07 AC1: "a partir do detalhe de um Customer" é a entrada
               primária do fluxo de criação de Process (T25) — mesma rota do
               atalho do card do kanban (WEB-10), search:{customerId} (AD-030). */}
-          <Button asChild variant="basic">
-            <Link to="/processes/add" search={{ customerId: customer.id }}>
-              {t('process.new.action')}
-            </Link>
-          </Button>
+          <Button
+            variant="basic"
+            render={
+              <Link to="/processes/add" search={{ customerId: customer.id }}>
+                {t('process.new.action')}
+              </Link>
+            }
+          />
         </div>
         {processesQueryResult.isLoading ? (
           <DefaultLoading />
@@ -104,14 +107,17 @@ function CustomerDetailsView({ customer, statusOptions }: CustomerDetailsViewPro
               // Abre o Process existente (WEB-08, T26/T27) — search:{id,
               // customerId} (AD-030), a mesma dupla que esta própria página
               // já tem em contexto.
-              <Item key={process.id} asChild>
-                <Link to="/processes/details" search={{ id: process.id, customerId: customer.id }}>
-                  <ItemContent>
-                    <ItemTitle>{process.stage}</ItemTitle>
-                    <ItemDescription>{formatDate(process.createdAt)}</ItemDescription>
-                  </ItemContent>
-                </Link>
-              </Item>
+              <Item
+                key={process.id}
+                render={
+                  <Link to="/processes/details" search={{ id: process.id, customerId: customer.id }}>
+                    <ItemContent>
+                      <ItemTitle>{process.stage}</ItemTitle>
+                      <ItemDescription>{formatDate(process.createdAt)}</ItemDescription>
+                    </ItemContent>
+                  </Link>
+                }
+              />
             ))}
           </ItemGroup>
         )}

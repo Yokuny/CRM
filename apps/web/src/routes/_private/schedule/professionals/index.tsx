@@ -68,9 +68,7 @@ export function ProfessionalsIndexPage() {
     <Card asPage>
       <CardHeader title={t('professional.list.title')}>
         <CardAction>
-          <Button asChild variant="basic">
-            <Link to="/schedule/professionals/add">{t('add')}</Link>
-          </Button>
+          <Button variant="basic" render={<Link to="/schedule/professionals/add">{t('add')}</Link>} />
         </CardAction>
       </CardHeader>
       <CardContent>

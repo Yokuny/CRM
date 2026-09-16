@@ -1,6 +1,6 @@
-import type * as LabelPrimitive from '@radix-ui/react-label';
-import { Slot } from '@radix-ui/react-slot';
-import type { ComponentProps } from 'react';
+import { mergeProps } from '@base-ui/react/merge-props';
+import { useRender } from '@base-ui/react/use-render';
+import type { ComponentProps, ReactElement } from 'react';
 import { createContext, useContext, useId } from 'react';
 import {
   Controller,
@@ -78,7 +78,7 @@ function FormItem({ className, ...props }: ComponentProps<'div'>) {
   );
 }
 
-function FormLabel({ className, ...props }: ComponentProps<typeof LabelPrimitive.Root>) {
+function FormLabel({ className, ...props }: ComponentProps<typeof Label>) {
   const { error, formItemId } = useFormField();
 
   return (
@@ -92,18 +92,27 @@ function FormLabel({ className, ...props }: ComponentProps<typeof LabelPrimitive
   );
 }
 
-function FormControl({ ...props }: ComponentProps<typeof Slot>) {
+// Radix's `Slot` unconditionally clones its single child with merged props
+// (no `asChild` toggle — FormControl always behaves like Slot). Base UI has
+// no standalone Slot export; `useRender({ render: children, props })` does
+// the same `React.cloneElement(render, mergedProps)` merge under the hood
+// (verified in `@base-ui/react/internals/useRenderElement.js`), so treating
+// `children` as the `render` target reproduces the exact same behavior.
+function FormControl({ children, ...props }: ComponentProps<'div'> & { children: ReactElement }) {
   const { error, formItemId, formDescriptionId, formMessageId } = useFormField();
 
-  return (
-    <Slot
-      data-slot="form-control"
-      id={formItemId}
-      aria-describedby={!error ? `${formDescriptionId}` : `${formDescriptionId} ${formMessageId}`}
-      aria-invalid={!!error}
-      {...props}
-    />
-  );
+  return useRender({
+    render: children,
+    props: mergeProps<'div'>(
+      {
+        'data-slot': 'form-control',
+        id: formItemId,
+        'aria-describedby': !error ? `${formDescriptionId}` : `${formDescriptionId} ${formMessageId}`,
+        'aria-invalid': !!error,
+      } as ComponentProps<'div'>,
+      props,
+    ),
+  });
 }
 
 function FormDescription({ className, ...props }: ComponentProps<'p'>) {

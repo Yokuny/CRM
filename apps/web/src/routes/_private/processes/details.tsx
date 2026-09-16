@@ -121,8 +121,8 @@ function ProcessStageControl({ process, stages, customerId }: ProcessStageContro
     },
   });
 
-  const onValueChange = (stage: string) => {
-    if (mutation.isPending || stage === process.stage) return;
+  const onValueChange = (stage: string | null) => {
+    if (!stage || mutation.isPending || stage === process.stage) return;
     setErrorMessage(null);
     mutation.mutate(stage, {
       onSuccess: (data) => {

@@ -22,16 +22,20 @@ export function CustomersIndexPage() {
       <CardHeader />
       <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {CUSTOMERS_SECTIONS.map(({ to, titleKey, icon: Icon }) => (
-          <Item key={to} variant="outline" asChild>
-            <Link to={to}>
-              <ItemMedia variant="icon">
-                <Icon className="size-4" />
-              </ItemMedia>
-              <ItemContent>
-                <ItemTitle>{t(titleKey)}</ItemTitle>
-              </ItemContent>
-            </Link>
-          </Item>
+          <Item
+            key={to}
+            variant="outline"
+            render={
+              <Link to={to}>
+                <ItemMedia variant="icon">
+                  <Icon className="size-4" />
+                </ItemMedia>
+                <ItemContent>
+                  <ItemTitle>{t(titleKey)}</ItemTitle>
+                </ItemContent>
+              </Link>
+            }
+          />
         ))}
       </CardContent>
     </Card>

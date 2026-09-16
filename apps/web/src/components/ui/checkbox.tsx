@@ -1,39 +1,9 @@
-import * as CheckboxPrimitive from '@radix-ui/react-checkbox';
+import { Checkbox as CheckboxPrimitive } from '@base-ui/react/checkbox';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { Check } from 'lucide-react';
-import { type ComponentProps, type ReactNode, useId } from 'react';
+import { cn } from 'cn';
+import { CheckIcon } from 'lucide-react';
+import { type ReactNode, useId } from 'react';
 import { Label } from '@/components/ui/label.js';
-import { cn } from '@/lib/utils.js';
-
-const checkboxVariants = cva(
-  [
-    'peer size-4 shrink-0 rounded-[4px]',
-    'cursor-pointer border border-border',
-    'bg-background text-foreground',
-    'hover:bg-accent',
-
-    'outline-none transition-all',
-    'focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50',
-    'disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50',
-    'aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40',
-  ],
-  {
-    variants: {
-      variant: {
-        basic:
-          'data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground',
-        default:
-          'data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground',
-        blue: 'data-[state=checked]:border-sky-500 data-[state=checked]:bg-sky-500 data-[state=checked]:text-white',
-        green:
-          'data-[state=checked]:border-green-600 data-[state=checked]:bg-green-600 data-[state=checked]:text-white',
-      },
-    },
-    defaultVariants: {
-      variant: 'basic',
-    },
-  },
-);
 
 const checkboxWrapperVariants = cva('flex', {
   variants: {
@@ -47,14 +17,13 @@ const checkboxWrapperVariants = cva('flex', {
   },
 });
 
-type CheckboxProps = ComponentProps<typeof CheckboxPrimitive.Root> &
-  VariantProps<typeof checkboxVariants> & {
-    label?: ReactNode;
-    labelClassName?: string;
-    orientation?: VariantProps<typeof checkboxWrapperVariants>['orientation'];
-  };
+type CheckboxProps = CheckboxPrimitive.Root.Props & {
+  label?: ReactNode;
+  labelClassName?: string;
+  orientation?: VariantProps<typeof checkboxWrapperVariants>['orientation'];
+};
 
-function Checkbox({ className, variant = 'basic', label, labelClassName, orientation, id, ...props }: CheckboxProps) {
+function Checkbox({ className, label, labelClassName, orientation, id, ...props }: CheckboxProps) {
   const generatedId = useId();
   const checkboxId = id ?? generatedId;
 
@@ -62,14 +31,17 @@ function Checkbox({ className, variant = 'basic', label, labelClassName, orienta
     <CheckboxPrimitive.Root
       id={checkboxId}
       data-slot="checkbox"
-      className={cn(checkboxVariants({ variant, className }))}
+      className={cn(
+        'peer relative flex size-4 shrink-0 items-center justify-center rounded-none border border-input transition-colors outline-none group-has-disabled/field:opacity-50 group-has-[:focus-visible]/field-label:ring-0 group-has-[:focus-visible]/field-label:not-data-checked:border-input after:absolute after:-inset-x-3 after:-inset-y-2 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-1 aria-invalid:ring-destructive/20 aria-invalid:aria-checked:border-primary dark:bg-input/30 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 data-checked:border-primary data-checked:bg-primary data-checked:text-primary-foreground group-has-[:focus-visible]/field-label:data-checked:border-primary dark:data-checked:bg-primary',
+        className,
+      )}
       {...props}
     >
       <CheckboxPrimitive.Indicator
         data-slot="checkbox-indicator"
-        className="grid place-content-center text-current transition-none"
+        className="grid place-content-center text-current transition-none [&>svg]:size-3.5"
       >
-        <Check className="size-3" />
+        <CheckIcon />
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>
   );
@@ -77,13 +49,7 @@ function Checkbox({ className, variant = 'basic', label, labelClassName, orienta
   if (!label) return checkbox;
 
   return (
-    <div
-      className={
-        variant === 'basic'
-          ? 'flex h-11 flex-row items-center gap-3 rounded-md border border-border bg-background px-4'
-          : cn(checkboxWrapperVariants({ orientation }))
-      }
-    >
+    <div className={cn(checkboxWrapperVariants({ orientation }))}>
       {checkbox}
       <Label htmlFor={checkboxId} className={cn('cursor-pointer text-sm leading-none', labelClassName)}>
         {label}
@@ -92,4 +58,4 @@ function Checkbox({ className, variant = 'basic', label, labelClassName, orienta
   );
 }
 
-export { Checkbox, checkboxVariants };
+export { Checkbox };

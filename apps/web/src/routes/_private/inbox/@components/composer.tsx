@@ -53,11 +53,14 @@ export function Composer({ conversation }: ComposerProps) {
             (customerQuery ainda carregando) o link simplesmente não tem
             `href`, o que já o torna não-navegável, sem precisar de um
             estado "desabilitado" que <a> não suporta nativamente. */}
-        <Button asChild variant="basic">
-          <a href={phone ? `https://wa.me/${phone}` : undefined} target="_blank" rel="noreferrer">
-            {t('inbox.composer.open_whatsapp')}
-          </a>
-        </Button>
+        <Button
+          variant="basic"
+          render={
+            <a href={phone ? `https://wa.me/${phone}` : undefined} target="_blank" rel="noreferrer">
+              {t('inbox.composer.open_whatsapp')}
+            </a>
+          }
+        />
       </div>
     );
   }
