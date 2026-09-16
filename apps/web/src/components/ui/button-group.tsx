@@ -1,27 +1,24 @@
 import { mergeProps } from '@base-ui/react/merge-props';
 import { useRender } from '@base-ui/react/use-render';
 import { cva, type VariantProps } from 'class-variance-authority';
-import type { ComponentProps } from 'react';
-import { cn } from '@/lib/utils.js';
-import { Separator } from './separator.js';
+import { cn } from 'cn';
 
-// Porte do registry oficial shadcn (`pnpm dlx shadcn add button-group`) —
-// só o caminho dos imports muda (`.js` explícito, `@/lib/utils.js` no lugar
-// do pacote npm avulso `cn` que o registry declara como dependência, e
-// `useRender`/`mergeProps` de `@base-ui/react` no lugar do Slot/asChild do
-// Radix, mesmo padrão já usado em button-group.tsx/item.tsx deste projeto).
+import { Separator } from '@/components/ui/separator.js';
+
 const buttonGroupVariants = cva(
-  "flex w-fit items-stretch has-[>[data-slot=button-group]]:gap-2 [&>*]:focus-visible:relative [&>*]:focus-visible:z-10 has-[select[aria-hidden=true]:last-child]:[&>[data-slot=select-trigger]:last-of-type]:rounded-r-md [&>[data-slot=select-trigger]:not([class*='w-'])]:w-fit [&>input]:flex-1",
+  "flex w-fit items-stretch rounded-none *:focus-visible:relative *:focus-visible:z-10 has-[>[data-slot=button-group]]:gap-2 has-[select[aria-hidden=true]:last-child]:[&>[data-slot=select-trigger]:last-of-type]:rounded-none [&>[data-slot=select-trigger]:not([class*='w-'])]:w-fit [&>input]:flex-1",
   {
     variants: {
       orientation: {
         horizontal:
-          '[&>*:not(:first-child)]:rounded-l-none [&>*:not(:first-child)]:border-l-0 [&>*:not(:last-child)]:rounded-r-none',
+          '*:data-slot:rounded-r-none [&>[data-slot]~[data-slot]]:rounded-l-none [&>[data-slot]~[data-slot]]:border-l-0',
         vertical:
-          'flex-col [&>*:not(:first-child)]:rounded-t-none [&>*:not(:first-child)]:border-t-0 [&>*:not(:last-child)]:rounded-b-none',
+          'flex-col *:data-slot:rounded-b-none [&>[data-slot]~[data-slot]]:rounded-t-none [&>[data-slot]~[data-slot]]:border-t-0',
       },
     },
-    defaultVariants: { orientation: 'horizontal' },
+    defaultVariants: {
+      orientation: 'horizontal',
+    },
   },
 );
 
@@ -29,7 +26,7 @@ function ButtonGroup({
   className,
   orientation,
   ...props
-}: ComponentProps<'div'> & VariantProps<typeof buttonGroupVariants>) {
+}: React.ComponentProps<'div'> & VariantProps<typeof buttonGroupVariants>) {
   return (
     // biome-ignore lint/a11y/useSemanticElements: <fieldset> traz estilo/semântica de formulário indesejados aqui — mesmo div+role="group" do registry oficial shadcn.
     <div
@@ -45,26 +42,35 @@ function ButtonGroup({
 function ButtonGroupText({ className, render, ...props }: useRender.ComponentProps<'div'>) {
   return useRender({
     defaultTagName: 'div',
-    render,
     props: mergeProps<'div'>(
       {
         className: cn(
-          "flex items-center gap-2 rounded-md border bg-muted px-4 font-medium text-sm shadow-xs [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4",
+          "flex items-center gap-2 rounded-none border bg-muted px-2.5 text-xs font-medium [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4",
           className,
         ),
       },
       props,
     ),
-    state: { slot: 'button-group-text' },
+    render,
+    state: {
+      slot: 'button-group-text',
+    },
   });
 }
 
-function ButtonGroupSeparator({ className, orientation = 'vertical', ...props }: ComponentProps<typeof Separator>) {
+function ButtonGroupSeparator({
+  className,
+  orientation = 'vertical',
+  ...props
+}: React.ComponentProps<typeof Separator>) {
   return (
     <Separator
       data-slot="button-group-separator"
       orientation={orientation}
-      className={cn('relative m-0! self-stretch bg-input data-[orientation=vertical]:h-auto', className)}
+      className={cn(
+        'relative self-stretch bg-input data-horizontal:mx-px data-horizontal:w-auto data-vertical:my-px data-vertical:h-auto',
+        className,
+      )}
       {...props}
     />
   );

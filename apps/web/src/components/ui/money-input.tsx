@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { type ComponentProps, useEffect, useState } from 'react';
 import { centsToInputDisplay, maskMoneyInput, parseMoneyInput } from '@/lib/helpers/money.helper.js';
 import { cn } from '@/lib/utils.js';
-import { Input, type InputProps } from './input.js';
+import { Input } from './input.js';
 
 function MoneyInput({
   value,
@@ -63,7 +63,7 @@ function MoneyInput({
 
 export { MoneyInput };
 
-type MoneyInputProps = Omit<InputProps, 'type' | 'value' | 'onChange'> & {
+type MoneyInputProps = Omit<ComponentProps<typeof Input>, 'type' | 'value' | 'onChange'> & {
   value: number;
   onChange: (cents: number) => void;
 };

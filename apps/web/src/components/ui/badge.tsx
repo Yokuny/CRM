@@ -1,14 +1,14 @@
 import { mergeProps } from '@base-ui/react/merge-props';
 import { useRender } from '@base-ui/react/use-render';
 import { cva, type VariantProps } from 'class-variance-authority';
+import { cn } from 'cn';
 import { ChevronDown as IconDown, Minus as IconMinus, ChevronUp as IconUp } from 'lucide-react';
 import type { ComponentProps, HTMLAttributes, ReactNode } from 'react';
-import { cn } from '@/lib/utils.js';
 
 // ─── CVA ────────────────────────────────────────────────────────────────────
 
-const badgeVars = cva(
-  'inline-flex w-fit shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-2.5 py-1 font-medium text-xs transition-colors [&>svg]:pointer-events-none [&>svg]:size-3',
+const badgeVariants = cva(
+  'group/badge inline-flex w-fit shrink-0 items-center justify-center gap-1.5 overflow-hidden whitespace-nowrap rounded-none border border-transparent px-2.5 py-0.5 text-xs font-medium transition-all focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&>svg]:pointer-events-none [&>svg]:size-3',
   {
     variants: {
       variant: {
@@ -103,7 +103,7 @@ function Badge({ className, variant, render, ...props }: BadgeProps) {
   return useRender({
     defaultTagName: 'span',
     render,
-    props: mergeProps<'span'>({ className: cn(badgeVars({ variant }), className) }, props),
+    props: mergeProps<'span'>({ className: cn(badgeVariants({ variant }), className) }, props),
     state: { slot: 'badge' },
   });
 }
@@ -170,7 +170,7 @@ function BadgeIndicator({ className, variant, color, pulse = false, render, chil
   const resolvedVariant = color ? undefined : (variant ?? 'pending');
   const hasChildren = Boolean(children);
 
-  // Só a bolinha + o texto do status, sem a caixa/borda de badgeVars — o
+  // Só a bolinha + o texto do status, sem a caixa/borda de badgeVariants — o
   // indicador não é mais um "badge" visual, por instrução explícita do
   // usuário (todo lugar que mostra status usa este componente).
   // `enabled` (não um `if` antes do hook) decide se renderiza o wrapper —
@@ -219,7 +219,7 @@ function BadgeWithDelta({ className, delta, render, children, ...props }: BadgeW
     render,
     props: mergeProps<'span'>(
       {
-        className: cn(badgeVars({ variant: 'muted' }), className),
+        className: cn(badgeVariants({ variant: 'muted' }), className),
         children: (
           <>
             {DeltaIcon}
@@ -257,7 +257,7 @@ const StatusLabel = ({ className, children, ...props }: StatusLabelProps) => (
 
 // ─── Exports ──────────────────────────────────────────────────────────────────
 
-export { Badge, BadgeIndicator, BadgeWithDelta, badgeVars, Status, StatusIndicator, StatusLabel };
+export { Badge, BadgeIndicator, BadgeWithDelta, badgeVariants, Status, StatusIndicator, StatusLabel };
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -282,7 +282,7 @@ export type StatusVariant = 'success' | 'active' | 'warning' | 'pending' | 'erro
 // silencioso em runtime.
 export type IndicatorVariant = SystemStatus | StatusVariant | 'secondary' | 'muted';
 
-type BadgeProps = useRender.ComponentProps<'span'> & VariantProps<typeof badgeVars>;
+type BadgeProps = useRender.ComponentProps<'span'> & VariantProps<typeof badgeVariants>;
 
 export type BadgeIndicatorProps = useRender.ComponentProps<'span'> & {
   variant?: IndicatorVariant;
@@ -294,7 +294,7 @@ export type BadgeIndicatorProps = useRender.ComponentProps<'span'> & {
 };
 
 export type BadgeWithDeltaProps = useRender.ComponentProps<'span'> &
-  VariantProps<typeof badgeVars> & {
+  VariantProps<typeof badgeVariants> & {
     delta: number;
     children: ReactNode;
   };
