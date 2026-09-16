@@ -1,4 +1,5 @@
-import { Slot } from '@radix-ui/react-slot';
+import { mergeProps } from '@base-ui/react/merge-props';
+import { useRender } from '@base-ui/react/use-render';
 import { cva, type VariantProps } from 'class-variance-authority';
 import type { ComponentProps } from 'react';
 import { cn } from '@/lib/utils.js';
@@ -7,8 +8,8 @@ import { Separator } from './separator.js';
 // Porte do registry oficial shadcn (`pnpm dlx shadcn add button-group`) —
 // só o caminho dos imports muda (`.js` explícito, `@/lib/utils.js` no lugar
 // do pacote npm avulso `cn` que o registry declara como dependência, e
-// `@radix-ui/react-slot` direto, mesmo import já usado em button.tsx/
-// item.tsx deste projeto, no lugar do barrel `radix-ui`).
+// `useRender`/`mergeProps` de `@base-ui/react` no lugar do Slot/asChild do
+// Radix, mesmo padrão já usado em button-group.tsx/item.tsx deste projeto).
 const buttonGroupVariants = cva(
   "flex w-fit items-stretch has-[>[data-slot=button-group]]:gap-2 [&>*]:focus-visible:relative [&>*]:focus-visible:z-10 has-[select[aria-hidden=true]:last-child]:[&>[data-slot=select-trigger]:last-of-type]:rounded-r-md [&>[data-slot=select-trigger]:not([class*='w-'])]:w-fit [&>input]:flex-1",
   {
@@ -41,18 +42,21 @@ function ButtonGroup({
   );
 }
 
-function ButtonGroupText({ className, asChild = false, ...props }: ComponentProps<'div'> & { asChild?: boolean }) {
-  const Comp = asChild ? Slot : 'div';
-  return (
-    <Comp
-      data-slot="button-group-text"
-      className={cn(
-        "flex items-center gap-2 rounded-md border bg-muted px-4 font-medium text-sm shadow-xs [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4",
-        className,
-      )}
-      {...props}
-    />
-  );
+function ButtonGroupText({ className, render, ...props }: useRender.ComponentProps<'div'>) {
+  return useRender({
+    defaultTagName: 'div',
+    render,
+    props: mergeProps<'div'>(
+      {
+        className: cn(
+          "flex items-center gap-2 rounded-md border bg-muted px-4 font-medium text-sm shadow-xs [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4",
+          className,
+        ),
+      },
+      props,
+    ),
+    state: { slot: 'button-group-text' },
+  });
 }
 
 function ButtonGroupSeparator({ className, orientation = 'vertical', ...props }: ComponentProps<typeof Separator>) {
