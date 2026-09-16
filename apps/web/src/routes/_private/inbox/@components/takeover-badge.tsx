@@ -86,7 +86,6 @@ export function TakeoverBadge({ conversation }: TakeoverBadgeProps) {
       {assigneeLabel && <span className="text-muted-foreground text-sm">{assigneeLabel}</span>}
       <Button
         type="button"
-        size="sm"
         variant="basic"
         onClick={() => takeoverMutation.mutate()}
         disabled={takeoverMutation.isPending}
@@ -98,7 +97,6 @@ export function TakeoverBadge({ conversation }: TakeoverBadgeProps) {
       {conversation.mode === 'human' && (
         <Button
           type="button"
-          size="sm"
           variant="basic"
           onClick={() => releaseMutation.mutate()}
           disabled={releaseMutation.isPending}

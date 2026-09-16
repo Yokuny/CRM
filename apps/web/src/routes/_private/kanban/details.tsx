@@ -125,10 +125,10 @@ export function KanbanDetailsPage() {
       <CardHeader title={board?.name ?? t('kanban.board.details.title')}>
         {board && (
           <CardAction>
-            <Button type="button" variant="basic" size="sm" onClick={() => setPanel({ type: 'board-edit' })}>
+            <Button type="button" variant="basic" onClick={() => setPanel({ type: 'board-edit' })}>
               {t('edit')}
             </Button>
-            <Button type="button" variant="basic" size="sm" onClick={() => setPanel({ type: 'columns' })}>
+            <Button type="button" variant="basic" onClick={() => setPanel({ type: 'columns' })}>
               {t('kanban.column_manager.action')}
             </Button>
           </CardAction>
@@ -176,7 +176,6 @@ export function KanbanDetailsPage() {
                     </div>
                     <Button
                       type="button"
-                      size="sm"
                       variant="basic"
                       aria-label={`${t('add')} ${column.name}`}
                       onClick={() => setPanel({ type: 'card', columnId: column.id })}

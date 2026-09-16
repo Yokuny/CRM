@@ -178,7 +178,6 @@ export function OrdersIndexPage() {
           <div className="flex gap-2">
             <Button
               type="button"
-              size="sm"
               variant="success"
               onClick={() => handleApprove(row.original.id)}
               disabled={approveMutation.isPending}
@@ -187,7 +186,6 @@ export function OrdersIndexPage() {
             </Button>
             <Button
               type="button"
-              size="sm"
               variant="destructive"
               onClick={() => handleReject(row.original.id)}
               disabled={rejectMutation.isPending}
@@ -208,7 +206,6 @@ export function OrdersIndexPage() {
             <Button
               key={filter.value}
               type="button"
-              size="sm"
               variant={search.status === filter.value ? 'primary' : 'basic'}
               onClick={() => handleStatusChange(filter.value)}
             >

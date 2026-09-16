@@ -94,7 +94,7 @@ export function KanbanAddPage() {
                     <div key="columns" className="grid gap-3 rounded-md border p-3">
                       <div className="flex items-center justify-between">
                         <Label>{t('kanban.board.columns.label')}</Label>
-                        <Button type="button" variant="basic" size="sm" onClick={() => append({ label: '' })}>
+                        <Button type="button" variant="basic" onClick={() => append({ label: '' })}>
                           {t('kanban.board.columns.add')}
                         </Button>
                       </div>
@@ -116,7 +116,7 @@ export function KanbanAddPage() {
                               </FormItem>
                             )}
                           />
-                          <Button type="button" variant="basic" size="sm" onClick={() => remove(index)}>
+                          <Button type="button" variant="basic" onClick={() => remove(index)}>
                             {t('remove')}
                           </Button>
                         </div>

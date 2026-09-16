@@ -41,10 +41,10 @@ export function OrderCard({ conversationId }: OrderCardProps) {
     <div className="flex items-center gap-2 rounded-md border p-2">
       <BadgeIndicator variant="warning">{t('order.status.pending_approval')}</BadgeIndicator>
       <span className="text-sm">{formatMoney(order.totalPrice)}</span>
-      <Button type="button" size="sm" variant="success" onClick={handleApprove} disabled={approveMutation.isPending}>
+      <Button type="button" variant="success" onClick={handleApprove} disabled={approveMutation.isPending}>
         {t('order.approve.action')}
       </Button>
-      <Button type="button" size="sm" variant="destructive" onClick={handleReject} disabled={rejectMutation.isPending}>
+      <Button type="button" variant="destructive" onClick={handleReject} disabled={rejectMutation.isPending}>
         {t('order.reject.action')}
       </Button>
     </div>

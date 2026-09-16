@@ -148,7 +148,26 @@ export function CustomersKanbanPage() {
                         name={item.name}
                         phone={item.phone}
                         createdAt={item.createdAt}
-                        actions={<span data-debug-marker="1">DEBUG-MARKER-TEMP</span>}
+                        actions={
+                          // WEB-10: atalho "novo Process" a partir do card,
+                          // pré-preenchendo `customerId` — mesma rota de
+                          // WEB-07 (T25), search:{customerId} (AD-030).
+                          // stopPropagation em onMouseDown/onTouchStart (não
+                          // onPointerDown — os sensors do KanbanProvider são
+                          // Mouse/Touch/Keyboard, que nunca escutam
+                          // pointerdown) pro clique não ser engolido pela
+                          // supressão de click do dnd-kit após um mousedown
+                          // capturado pelo wrapper de arraste do card.
+                          <Link
+                            to="/processes/add"
+                            search={{ customerId: item.id }}
+                            onMouseDown={(e: ReactMouseEvent) => e.stopPropagation()}
+                            onTouchStart={(e: ReactTouchEvent) => e.stopPropagation()}
+                            className="text-primary text-xs underline underline-offset-4"
+                          >
+                            {t('process.new.action')}
+                          </Link>
+                        }
                       />
                     </KanbanCard>
                   )}

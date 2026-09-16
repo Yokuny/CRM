@@ -136,7 +136,6 @@ function CalendarDayButton({ className, day, modifiers, ...props }: ComponentPro
     <Button
       ref={ref}
       variant="blank"
-      size="icon"
       data-day={formatDate(day.date, 'yyyy-MM-dd')}
       data-selected-single={
         modifiers.selected && !modifiers.range_start && !modifiers.range_end && !modifiers.range_middle

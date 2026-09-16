@@ -64,7 +64,7 @@ function PanelHeader({ title, onClose }: { title: string; onClose: () => void })
   return (
     <div className="flex items-center justify-between gap-2">
       <h2 className="flex w-fit items-center gap-2 font-medium font-mono text-sm leading-snug">{title}</h2>
-      <Button type="button" variant="basic" size="sm" onClick={onClose} aria-label={t('close')}>
+      <Button type="button" variant="basic" onClick={onClose} aria-label={t('close')}>
         <IconClose className="size-4" />
       </Button>
     </div>

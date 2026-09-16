@@ -92,7 +92,7 @@ export function ResendButton({ conversationId, messageId }: ResendButtonProps) {
   });
 
   return (
-    <Button type="button" size="sm" variant="basic" onClick={() => mutation.mutate()} disabled={mutation.isPending}>
+    <Button type="button" variant="basic" onClick={() => mutation.mutate()} disabled={mutation.isPending}>
       {t('inbox.resend.action')}
     </Button>
   );

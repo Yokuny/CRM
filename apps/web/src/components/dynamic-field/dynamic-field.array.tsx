@@ -40,12 +40,12 @@ export function DynamicFieldArray({ node, name, control }: DynamicFieldArrayProp
           <div className="flex-1">
             <DynamicField node={itemNodeAt(index)} name={`${name}.${index}`} control={control} />
           </div>
-          <Button type="button" variant="basic" size="sm" onClick={() => remove(index)}>
+          <Button type="button" variant="basic" onClick={() => remove(index)}>
             {t('remove')}
           </Button>
         </div>
       ))}
-      <Button type="button" variant="basic" size="sm" onClick={() => append(rawEmptyFor(node.of))}>
+      <Button type="button" variant="basic" onClick={() => append(rawEmptyFor(node.of))}>
         {t('add')}
       </Button>
     </div>

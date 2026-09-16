@@ -28,7 +28,7 @@ function PanelHeader({ title, onClose }: { title: string; onClose: () => void })
   return (
     <div className="flex items-center justify-between gap-2">
       <h2 className="flex w-fit items-center gap-2 font-medium font-mono text-sm leading-snug">{title}</h2>
-      <Button type="button" variant="basic" size="sm" onClick={onClose} aria-label={t('close')}>
+      <Button type="button" variant="basic" onClick={onClose} aria-label={t('close')}>
         <IconClose className="size-4" />
       </Button>
     </div>
@@ -121,7 +121,7 @@ function ColumnRow({
               </FormItem>
             )}
           />
-          <Button type="submit" size="sm" disabled={updateMutation.isPending}>
+          <Button type="submit" disabled={updateMutation.isPending}>
             {t('save')}
           </Button>
         </div>
@@ -129,7 +129,6 @@ function ColumnRow({
           <Button
             type="button"
             variant="basic"
-            size="sm"
             aria-label={t('kanban.column_manager.move_up')}
             disabled={!canMoveUp || reorderPending}
             onClick={onMoveUp}
@@ -139,14 +138,13 @@ function ColumnRow({
           <Button
             type="button"
             variant="basic"
-            size="sm"
             aria-label={t('kanban.column_manager.move_down')}
             disabled={!canMoveDown || reorderPending}
             onClick={onMoveDown}
           >
             <ChevronDown className="size-4" />
           </Button>
-          <Button type="button" variant="basic" size="sm" disabled={!canRemove} onClick={handleRemove}>
+          <Button type="button" variant="basic" disabled={!canRemove} onClick={handleRemove}>
             {t('remove')}
           </Button>
         </div>
@@ -241,7 +239,7 @@ export function ColumnManagerPanel({ onClose, boardId, columns }: ColumnManagerP
                       </FormItem>
                     )}
                   />
-                  <Button type="submit" size="sm" disabled={addMutation.isPending}>
+                  <Button type="submit" disabled={addMutation.isPending}>
                     {t('kanban.board.columns.add')}
                   </Button>
                 </form>

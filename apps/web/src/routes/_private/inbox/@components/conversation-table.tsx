@@ -128,7 +128,6 @@ export function ConversationTable({
         <Button
           type="button"
           variant="basic"
-          size="icon-sm"
           onClick={() => onPaginationChange({ pageIndex: pageIndex - 1, pageSize })}
           disabled={pageIndex <= 0}
           aria-label={t('previous.page')}
@@ -138,7 +137,6 @@ export function ConversationTable({
         <Button
           type="button"
           variant="basic"
-          size="icon-sm"
           onClick={() => onPaginationChange({ pageIndex: pageIndex + 1, pageSize })}
           disabled={pageIndex + 1 >= pageCount}
           aria-label={t('next.page')}

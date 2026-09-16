@@ -88,7 +88,7 @@ function CustomerDetailsView({ customer, statusOptions }: CustomerDetailsViewPro
           {/* WEB-07 AC1: "a partir do detalhe de um Customer" é a entrada
               primária do fluxo de criação de Process (T25) — mesma rota do
               atalho do card do kanban (WEB-10), search:{customerId} (AD-030). */}
-          <Button asChild variant="basic" size="sm">
+          <Button asChild variant="basic">
             <Link to="/processes/add" search={{ customerId: customer.id }}>
               {t('process.new.action')}
             </Link>

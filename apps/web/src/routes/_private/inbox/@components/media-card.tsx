@@ -48,7 +48,7 @@ export function MediaCard({ conversationId, message }: MediaCardProps) {
       {message.media?.caption && <p className="text-sm">{message.media.caption}</p>}
 
       {state.status === 'idle' && (
-        <Button type="button" size="sm" variant="basic" onClick={handleFetch}>
+        <Button type="button" variant="basic" onClick={handleFetch}>
           {isImage ? t('inbox.media.view') : t('inbox.media.download')}
         </Button>
       )}

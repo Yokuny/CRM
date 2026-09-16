@@ -113,7 +113,7 @@ function CardHeader({ className, title, children, ...props }: ComponentProps<'di
       {...props}
     >
       <div className="flex items-center gap-2 md:gap-4">
-        <Button size="icon" className="md:px-6" onClick={() => router.history.back()}>
+        <Button className="md:px-6" onClick={() => router.history.back()}>
           <ArrowLeftIcon />
         </Button>
         {resolvedTitle && <CardTitle>{resolvedTitle}</CardTitle>}

@@ -61,7 +61,7 @@ export function WeeklyScheduleEditor({ control, name }: WeeklyScheduleEditorProp
           >
             <div className="flex items-center justify-between">
               <Label>{t(`weekday.${weekday}`)}</Label>
-              <Button type="button" variant="basic" size="sm" onClick={() => handleAdd(weekday)}>
+              <Button type="button" variant="basic" onClick={() => handleAdd(weekday)}>
                 {t('add')}
               </Button>
             </div>
@@ -98,7 +98,7 @@ export function WeeklyScheduleEditor({ control, name }: WeeklyScheduleEditorProp
                     </FormItem>
                   )}
                 />
-                <Button type="button" variant="basic" size="sm" onClick={() => remove(item.index)}>
+                <Button type="button" variant="basic" onClick={() => remove(item.index)}>
                   {t('remove')}
                 </Button>
               </div>

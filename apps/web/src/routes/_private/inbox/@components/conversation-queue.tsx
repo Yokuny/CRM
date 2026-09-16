@@ -63,7 +63,6 @@ export function ConversationQueue({ onSelect }: ConversationQueueProps) {
           <Button
             key={filter.label}
             type="button"
-            size="sm"
             variant={mode === filter.value ? 'primary' : 'basic'}
             onClick={() => handleModeChange(filter.value)}
           >
