@@ -85,7 +85,11 @@ export function ProcessAddPage() {
                   title: t('process.create.section.template'),
                   description: t('process.create.section.template_description'),
                   fields: [
-                    <Select key="templateKey" value={selectedKey} onValueChange={setSelectedKey}>
+                    <Select
+                      key="templateKey"
+                      value={selectedKey}
+                      onValueChange={(value) => setSelectedKey(value ?? '')}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder={t('process.template.placeholder')} />
                       </SelectTrigger>

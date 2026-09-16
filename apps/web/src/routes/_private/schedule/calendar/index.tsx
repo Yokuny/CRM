@@ -84,19 +84,22 @@ export function CalendarIndexPage() {
   const handlePrevious = () => goToWeek(addDaysToDisplayDate(weekStart, -WEEK_DAYS));
   const handleNext = () => goToWeek(addDaysToDisplayDate(weekStart, WEEK_DAYS));
 
-  const handleProfessionalChange = (value: string) => {
+  const handleProfessionalChange = (value: string | null) => {
     navigate({
       search: ((prev: CalendarSearch) => ({
         ...prev,
-        professional: value === ALL_FILTER_VALUE ? undefined : value,
+        professional: !value || value === ALL_FILTER_VALUE ? undefined : value,
       })) as any,
       replace: true,
     } as any);
   };
 
-  const handleSpaceChange = (value: string) => {
+  const handleSpaceChange = (value: string | null) => {
     navigate({
-      search: ((prev: CalendarSearch) => ({ ...prev, space: value === ALL_FILTER_VALUE ? undefined : value })) as any,
+      search: ((prev: CalendarSearch) => ({
+        ...prev,
+        space: !value || value === ALL_FILTER_VALUE ? undefined : value,
+      })) as any,
       replace: true,
     } as any);
   };
