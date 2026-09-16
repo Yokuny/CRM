@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils.js';
 
 function Label({ className, ...props }: ComponentProps<'label'>) {
   return (
-    // biome-ignore lint/a11y/noLabelWithoutControl: htmlFor/children chegam via ...props (era @radix-ui/react-label antes, mesma forma genérica)
+    // biome-ignore lint/a11y/noLabelWithoutControl: htmlFor/children chegam via ...props (mesma forma genérica do wrapper anterior baseado em primitive)
     <label
       data-slot="label"
       className={cn(
