@@ -238,7 +238,7 @@ export const KanbanProvider = <
         sensors={sensors}
         {...props}
       >
-        <ScrollArea className="w-full" type="scroll">
+        <ScrollArea className="w-full">
           <div className={cn('flex h-full min-w-max gap-3 pb-3', className)}>
             {columns.map((column) => children(column))}
           </div>
