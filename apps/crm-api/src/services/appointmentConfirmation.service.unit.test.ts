@@ -42,7 +42,7 @@ const sampleAppointment = (overrides: Partial<Record<string, unknown>> = {}) => 
   status: 'pending',
   source: 'ai',
   confirmationTokenHash: 'hash-of-plain-token',
-  confirmationExpiresAt: new Date('2026-09-15T17:30:00.000Z'),
+  confirmationExpiresAt: new Date(Date.now() + 60 * 60 * 1000),
   ...overrides,
 });
 
