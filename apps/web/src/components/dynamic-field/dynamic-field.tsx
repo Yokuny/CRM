@@ -210,12 +210,14 @@ function DateLeaf({ node, name, control }: DateLeafProps) {
           próprio texto do botão já é o nome acessível correto aqui. */}
       <Label>{node.label}</Label>
       <Popover>
-        <PopoverTrigger asChild>
-          <Button type="button" variant={selected ? undefined : 'primary'} className="justify-start font-normal">
-            <IconCalendar className="mr-4 size-4" />
-            {selected ? <p className="font-mono">{formatDate(selected)}</p> : <span>{t('date.pick')}</span>}
-          </Button>
-        </PopoverTrigger>
+        <PopoverTrigger
+          render={
+            <Button type="button" variant={selected ? undefined : 'primary'} className="justify-start font-normal">
+              <IconCalendar className="mr-4 size-4" />
+              {selected ? <p className="font-mono">{formatDate(selected)}</p> : <span>{t('date.pick')}</span>}
+            </Button>
+          }
+        />
         <PopoverContent className="w-auto p-0">
           {/* defaultMonth: abre já no mês do valor atual em vez de sempre
               "hoje" — melhor UX ao editar uma data existente distante. */}
