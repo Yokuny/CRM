@@ -361,11 +361,15 @@ function AppointmentDetail({ appointment, onClose }: AppointmentDetailProps) {
         onClose={onClose}
       />
       {waMeNotice && (
-        <Button type="button" variant="basic" asChild>
-          <a href={waMeNotice.url} target="_blank" rel="noreferrer">
-            {t('appointment.notice.wa_me_button')}
-          </a>
-        </Button>
+        <Button
+          type="button"
+          variant="basic"
+          render={
+            <a href={waMeNotice.url} target="_blank" rel="noreferrer">
+              {t('appointment.notice.wa_me_button')}
+            </a>
+          }
+        />
       )}
       <div className="grid gap-1" data-testid="appointment-detail-info">
         <ItemDescription>

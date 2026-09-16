@@ -64,9 +64,7 @@ export function ProductsIndexPage() {
     <Card asPage>
       <CardHeader title={t('product.list.title')}>
         <CardAction>
-          <Button asChild variant="basic">
-            <Link to="/products/add">{t('add')}</Link>
-          </Button>
+          <Button variant="basic" render={<Link to="/products/add">{t('add')}</Link>} />
         </CardAction>
       </CardHeader>
       <CardContent>
