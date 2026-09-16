@@ -7,10 +7,8 @@ const inputVariants = cva(
   {
     variants: {
       variant: {
-        basic:
-          'border-input/50 bg-background ring-1 ring-zinc-300 hover:bg-secondary dark:border-input dark:ring-input',
-        default:
-          'border-input/50 border-b-2 bg-background ring-1 ring-zinc-300 hover:bg-secondary dark:border-input dark:ring-input',
+        basic: 'border-input/50 bg-background ring-1 ring-border hover:bg-secondary',
+        default: 'border-input/50 border-b-2 bg-background ring-1 ring-border hover:bg-secondary',
         primary:
           'relative inset-shadow-sm inset-shadow-white border bg-secondary ring-0 duration-150 hover:bg-background dark:inset-shadow-black dark:border-border dark:bg-muted/25 dark:hover:bg-muted/50',
         financial:

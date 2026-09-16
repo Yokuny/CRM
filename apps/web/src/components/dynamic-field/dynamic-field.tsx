@@ -45,7 +45,7 @@ type LeafProps<TType extends FieldDef['type']> = {
 // <textarea> plano com o styling do Input é substituto aceitável quando o
 // primitive não foi portado (fora do escopo desta batch).
 const textareaClassName = cn(
-  'flex min-h-20 w-full rounded-md border-input/50 border-b-2 bg-background px-4 py-2 font-medium font-mono text-sm leading-snug ring-1 ring-zinc-300 outline-none transition-all placeholder:text-muted-foreground hover:bg-secondary focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50',
+  'flex min-h-20 w-full rounded-md border-input/50 border-b-2 bg-background px-4 py-2 font-medium font-mono text-sm leading-snug ring-1 ring-border outline-none transition-all placeholder:text-muted-foreground hover:bg-secondary focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50',
 );
 
 function TextLeaf({ node, name, control }: LeafProps<'text'>) {

@@ -6,6 +6,13 @@ import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Toaster } from './components/ui/sonner.js';
+// Karla (prosa: mensagens do WhatsApp, descrições, empty states) e IBM Plex
+// Mono (estrutura: nav, botões, títulos, dados) — self-hosted via fontsource
+// pra não depender de rede em runtime (Docker/dev sandbox sem internet).
+import '@fontsource-variable/karla';
+import '@fontsource/ibm-plex-mono/400.css';
+import '@fontsource/ibm-plex-mono/500.css';
+import '@fontsource/ibm-plex-mono/600.css';
 import './index.css';
 import { queryClient, router } from './router.js';
 

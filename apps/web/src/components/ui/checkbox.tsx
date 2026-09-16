@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils.js';
 const checkboxVariants = cva(
   [
     'peer size-4 shrink-0 rounded-[4px]',
-    'cursor-pointer border border-zinc-300 dark:border-input',
+    'cursor-pointer border border-border',
     'bg-background text-foreground',
     'hover:bg-accent',
 
@@ -80,7 +80,7 @@ function Checkbox({ className, variant = 'basic', label, labelClassName, orienta
     <div
       className={
         variant === 'basic'
-          ? 'flex h-11 flex-row items-center gap-3 rounded-md border border-zinc-300 bg-background px-4 dark:border-input'
+          ? 'flex h-11 flex-row items-center gap-3 rounded-md border border-border bg-background px-4'
           : cn(checkboxWrapperVariants({ orientation }))
       }
     >

@@ -16,8 +16,9 @@ export type KanbanCardContentProps = {
   // T20: atalho "editar" do details.tsx entra aqui — mesmo slot deliberado
   // de customer-kanban-card-content.tsx (WEB-10), pro chamador nunca
   // precisar reestruturar este componente pra acomodar uma ação clicável
-  // dentro de um card arrastável (precisa de onPointerDown+stopPropagation
-  // pra não ser interpretado como início de um drag pelo dnd-kit).
+  // dentro de um card arrastável (precisa de stopPropagation em
+  // onMouseDown/onTouchStart — os sensors do KanbanProvider — pra não ser
+  // interpretado como início de um drag pelo dnd-kit).
   actions?: ReactNode;
 };
 

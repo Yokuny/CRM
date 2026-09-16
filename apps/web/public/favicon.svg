@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img">
+  <title>CRM</title>
+  <rect width="32" height="32" rx="8" fill="#1e2578"/>
+  <path d="M9 12.5C9 10.567 10.567 9 12.5 9h7C21.433 9 23 10.567 23 12.5v4c0 1.933-1.567 3.5-3.5 3.5h-5.19l-3.02 2.6a.6.6 0 0 1-.99-.455V19.7A3.5 3.5 0 0 1 9 16.5v-4Z" fill="#fafafb"/>
+</svg>

@@ -197,14 +197,17 @@ export function KanbanDetailsPage() {
                           orderStatus={item.orderStatus}
                           assigneeName={item.assigneeName}
                           actions={
-                            // onPointerDown+stopPropagation: o clique não pode
-                            // ser interpretado como início de um drag —
-                            // KanbanCard aplica os listeners de arraste no
-                            // wrapper inteiro do card (mesmo cuidado de
-                            // customers/kanban/index.tsx).
+                            // stopPropagation em onMouseDown/onTouchStart (não
+                            // onPointerDown — os sensors do KanbanProvider são
+                            // Mouse/Touch/Keyboard, que nunca escutam
+                            // pointerdown): sem isso o clique é engolido pela
+                            // supressão de click do dnd-kit após um mousedown
+                            // capturado pelo wrapper de arraste do card (mesmo
+                            // cuidado de customers/kanban/index.tsx).
                             <button
                               type="button"
-                              onPointerDown={(e) => e.stopPropagation()}
+                              onMouseDown={(e) => e.stopPropagation()}
+                              onTouchStart={(e) => e.stopPropagation()}
                               onClick={() => setPanel({ type: 'card', card: item })}
                               className="w-fit text-primary text-xs underline underline-offset-4"
                             >

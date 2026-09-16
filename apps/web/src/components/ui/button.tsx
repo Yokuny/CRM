@@ -8,17 +8,15 @@ const btnVars = cva(
   {
     variants: {
       variant: {
-        default:
-          'relative border-input/50 border-b-2 bg-background ring-1 ring-zinc-300 hover:bg-secondary dark:border-input dark:ring-input',
+        default: 'relative border-input/50 border-b-2 bg-background ring-1 ring-border hover:bg-secondary',
         primary:
           'relative inset-shadow-sm inset-shadow-white flex border bg-secondary ring-0 duration-150 hover:bg-background dark:inset-shadow-black dark:border-border dark:bg-muted/25 dark:hover:bg-muted/50',
-        basic:
-          'relative border border-zinc-300 bg-background text-secondary-foreground duration-150 hover:bg-secondary',
-        info: 'border-none bg-linear-to-r from-blue-600 to-blue-500 text-white transition-all duration-200 hover:scale-[1.02] hover:from-blue-500 hover:to-blue-600 hover:text-white active:scale-[0.98]',
+        basic: 'relative border border-border bg-background text-secondary-foreground duration-150 hover:bg-secondary',
+        info: 'border-none bg-blue-600 text-white transition-colors duration-150 hover:bg-blue-700 active:bg-blue-800',
         success:
-          'border-none bg-linear-to-r from-green-600 to-green-500 text-white transition-all duration-200 hover:scale-[1.02] hover:from-green-500 hover:to-green-600 hover:text-white active:scale-[0.98]',
+          'border-none bg-emerald-600 text-white transition-colors duration-150 hover:bg-emerald-700 active:bg-emerald-800',
         destructive:
-          'relative inset-shadow-2xs inset-shadow-background border border-destructive bg-destructive text-white shadow-zinc-950/10 duration-150 hover:bg-destructive/90 dark:bg-destructive/80',
+          'relative inset-shadow-2xs inset-shadow-background border border-destructive bg-destructive text-white shadow-black/10 duration-150 hover:bg-destructive/90 dark:bg-destructive/80',
         link: 'm-0 h-auto! w-auto! border-0 bg-transparent p-0! underline decoration-dashed underline-offset-4 shadow-none ring-0 hover:bg-transparent',
         blank: 'p-0!',
         financial:
