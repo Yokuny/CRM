@@ -19,8 +19,6 @@ function PageBreadcrumb() {
   const location = useLocation();
   const pathnames = location.pathname.split('/').filter(Boolean);
 
-  if (pathnames.length === 0) return null;
-
   return (
     <Breadcrumb>
       <BreadcrumbList>
