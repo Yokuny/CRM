@@ -1,7 +1,7 @@
-import * as CheckboxPrimitive from '@radix-ui/react-checkbox';
+import { Checkbox as CheckboxPrimitive } from '@base-ui/react/checkbox';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { Check } from 'lucide-react';
-import { type ComponentProps, type ReactNode, useId } from 'react';
+import { type ReactNode, useId } from 'react';
 import { Label } from '@/components/ui/label.js';
 import { cn } from '@/lib/utils.js';
 
@@ -14,19 +14,16 @@ const checkboxVariants = cva(
 
     'outline-none transition-all',
     'focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50',
-    'disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50',
+    'data-disabled:pointer-events-none data-disabled:cursor-not-allowed data-disabled:opacity-50',
     'aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40',
   ],
   {
     variants: {
       variant: {
-        basic:
-          'data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground',
-        default:
-          'data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground',
-        blue: 'data-[state=checked]:border-sky-500 data-[state=checked]:bg-sky-500 data-[state=checked]:text-white',
-        green:
-          'data-[state=checked]:border-green-600 data-[state=checked]:bg-green-600 data-[state=checked]:text-white',
+        basic: 'data-checked:border-primary data-checked:bg-primary data-checked:text-primary-foreground',
+        default: 'data-checked:border-primary data-checked:bg-primary data-checked:text-primary-foreground',
+        blue: 'data-checked:border-sky-500 data-checked:bg-sky-500 data-checked:text-white',
+        green: 'data-checked:border-green-600 data-checked:bg-green-600 data-checked:text-white',
       },
     },
     defaultVariants: {
@@ -47,7 +44,7 @@ const checkboxWrapperVariants = cva('flex', {
   },
 });
 
-type CheckboxProps = ComponentProps<typeof CheckboxPrimitive.Root> &
+type CheckboxProps = CheckboxPrimitive.Root.Props &
   VariantProps<typeof checkboxVariants> & {
     label?: ReactNode;
     labelClassName?: string;
