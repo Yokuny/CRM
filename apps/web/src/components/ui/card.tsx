@@ -25,11 +25,13 @@ function PageBreadcrumb() {
     <Breadcrumb>
       <BreadcrumbList>
         <BreadcrumbItem>
-          <BreadcrumbLink asChild>
-            <Link to="/">
-              <HomeIcon className="size-4" />
-            </Link>
-          </BreadcrumbLink>
+          <BreadcrumbLink
+            render={
+              <Link to="/">
+                <HomeIcon className="size-4" />
+              </Link>
+            }
+          />
         </BreadcrumbItem>
         {pathnames.length > 0 && <BreadcrumbSeparator />}
         {pathnames.map((value, index) => {
@@ -51,9 +53,7 @@ function PageBreadcrumb() {
                 {isLast ? (
                   <BreadcrumbPage>{translatedValue}</BreadcrumbPage>
                 ) : (
-                  <BreadcrumbLink asChild>
-                    <Link to={to as string}>{translatedValue}</Link>
-                  </BreadcrumbLink>
+                  <BreadcrumbLink render={<Link to={to as string}>{translatedValue}</Link>} />
                 )}
               </BreadcrumbItem>
               {!isLast && <BreadcrumbSeparator />}

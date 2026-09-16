@@ -1,4 +1,5 @@
-import { Slot } from '@radix-ui/react-slot';
+import { mergeProps } from '@base-ui/react/merge-props';
+import { useRender } from '@base-ui/react/use-render';
 import { Dot, ChevronRight as Right } from 'lucide-react';
 import type { ComponentProps } from 'react';
 import { t } from '@/lib/helpers/translate.helper.js';
@@ -25,11 +26,13 @@ function BreadcrumbItem({ className, ...props }: ComponentProps<'li'>) {
   return <li data-slot="breadcrumb-item" className={cn('inline-flex items-center gap-1.5', className)} {...props} />;
 }
 
-function BreadcrumbLink({ asChild, className, ...props }: ComponentProps<'a'> & { asChild?: boolean }) {
-  const Comp = asChild ? Slot : 'a';
-  return (
-    <Comp data-slot="breadcrumb-link" className={cn('transition-colors hover:text-foreground', className)} {...props} />
-  );
+function BreadcrumbLink({ className, render, ...props }: useRender.ComponentProps<'a'>) {
+  return useRender({
+    defaultTagName: 'a',
+    render,
+    props: mergeProps<'a'>({ className: cn('transition-colors hover:text-foreground', className) }, props),
+    state: { slot: 'breadcrumb-link' },
+  });
 }
 
 function BreadcrumbPage({ className, ...props }: ComponentProps<'span'>) {
