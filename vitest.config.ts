@@ -10,11 +10,11 @@ import { defineConfig } from 'vitest/config';
 // — ambos validados por Zod no import do módulo (fail-fast, FND-18).
 const crmApiBaseEnv = {
   NODE_ENV: 'test',
-  CRM_API_PORT: '8080',
+  CRM_API_PORT: '18080',
   SESSION_JWT_SECRET: 'test-secret',
-  CORS_ORIGIN: 'http://localhost:5173',
+  CORS_ORIGIN: 'http://localhost:15173',
   MAIL_PROVIDER: 'log',
-  AI_GATEWAY_PORT: '8081',
+  AI_GATEWAY_PORT: '18081',
   // apps/ai-gateway/src/config/env.config.ts (T25) — validado no import do
   // módulo (fail-fast, FND-18), mesmo motivo das vars acima.
   ANTHROPIC_API_KEY: 'sk-ant-test',
@@ -27,16 +27,16 @@ const crmApiBaseEnv = {
   // import do módulo (fail-fast, FND-18), mesmo motivo das vars acima.
   // 32 bytes base64 válidos — Buffer.alloc(32,7).toString('base64').
   ASAAS_ENC_KEY: 'BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc=',
-  ASAAS_WEBHOOK_BASE_URL: 'http://localhost:8080',
+  ASAAS_WEBHOOK_BASE_URL: 'http://localhost:18080',
   // apps/crm-api/src/config/env.config.ts (scheduling T20) — validado no
   // import do módulo (fail-fast, FND-18), mesmo motivo das vars acima.
-  WEB_BASE_URL: 'http://localhost:5173',
+  WEB_BASE_URL: 'http://localhost:15173',
 };
 
 // unit/e2e/structural não têm globalSetup — precisam de um MONGODB_URI
 // estático só para o parse do env não falhar (nenhum desses projects conecta
 // no Mongo de verdade).
-const crmApiTestEnv = { ...crmApiBaseEnv, MONGODB_URI: 'mongodb://localhost:27017/crm-test' };
+const crmApiTestEnv = { ...crmApiBaseEnv, MONGODB_URI: 'mongodb://localhost:37017/crm-test' };
 
 export default defineConfig({
   test: {

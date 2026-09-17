@@ -32,10 +32,10 @@ docker compose logs -f crm-api ai-gateway web
 ## Rodar o `web` fora do Docker (Mongo/crm-api/ai-gateway continuam no compose)
 
 Sem conflito nenhum: `crm-api`/`ai-gateway`/`mongo` publicam a porta no host
-(`8080`/`8081`/`27017`) e o `.env` da raiz já usa `localhost` em todo lugar
+(`18080`/`18081`/`37017`) e o `.env` da raiz já usa `localhost` em todo lugar
 que cruza serviço (`VITE_API_URL`, `CORS_ORIGIN`, `WEB_BASE_URL`) — nunca o
 nome do serviço do compose (`crm-api`/`ai-gateway`) como hostname. O
-navegador acessa `http://localhost:5173` do mesmo jeito rodando o `web` no
+navegador acessa `http://localhost:15173` do mesmo jeito rodando o `web` no
 container ou local, então o `Origin` que o `crm-api` vê pro CORS é idêntico
 nos dois casos.
 
@@ -63,10 +63,10 @@ docker compose up -d web
 
 | Serviço      | URL                          | Healthcheck                    |
 | ------------ | ----------------------------- | ------------------------------- |
-| web (Vite)   | http://localhost:5173         | —                                |
-| crm-api      | http://localhost:8080         | `curl localhost:8080/health`    |
-| ai-gateway   | http://localhost:8081         | `curl localhost:8081/health`    |
-| mongo        | localhost:27017                | container `healthy` no `docker compose ps` |
+| web (Vite)   | http://localhost:15173        | —                                |
+| crm-api      | http://localhost:18080        | `curl localhost:18080/health`   |
+| ai-gateway   | http://localhost:18081        | `curl localhost:18081/health`   |
+| mongo        | localhost:37017                | container `healthy` no `docker compose ps` |
 
 ## Primeiro acesso (bootstrap de tenant)
 
@@ -80,14 +80,14 @@ Não existe usuário/tenant algum numa base nova — é preciso criar via API.
 
 2. **Login como admin de plataforma** e guardar o cookie de sessão:
    ```bash
-   curl -c /tmp/crm.cookies -X POST http://localhost:8080/auth/signin \
+   curl -c /tmp/crm.cookies -X POST http://localhost:18080/auth/signin \
      -H 'Content-Type: application/json' \
      -d '{"email":"admin@platform.local","password":"plataforma123"}'
    ```
 
 3. **Criar um tenant** (`document` = 14 dígitos, precisa ser único):
    ```bash
-   curl -b /tmp/crm.cookies -X POST http://localhost:8080/platform/tenants \
+   curl -b /tmp/crm.cookies -X POST http://localhost:18080/platform/tenants \
      -H 'Content-Type: application/json' \
      -d '{"name":"Empresa Teste","document":"11222333000181"}'
    ```
@@ -95,7 +95,7 @@ Não existe usuário/tenant algum numa base nova — é preciso criar via API.
 
 4. **Convidar um usuário admin do tenant** (`role`: `admin` | `gestor` | `operador`):
    ```bash
-   curl -b /tmp/crm.cookies -X POST http://localhost:8080/platform/tenants/<TENANT_ID>/invites \
+   curl -b /tmp/crm.cookies -X POST http://localhost:18080/platform/tenants/<TENANT_ID>/invites \
      -H 'Content-Type: application/json' \
      -d '{"email":"voce@teste.local","role":"admin"}'
    ```
@@ -105,7 +105,7 @@ Não existe usuário/tenant algum numa base nova — é preciso criar via API.
    ```bash
    docker compose logs crm-api | grep mail.log_send
    ```
-   Abra `http://localhost:5173/invite?token=...` no navegador com o token do
+   Abra `http://localhost:15173/invite?token=...` no navegador com o token do
    log, defina nome/senha e você cai logado como admin do tenant.
 
 ## Comandos úteis

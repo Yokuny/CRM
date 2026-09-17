@@ -25,7 +25,7 @@ services:
     container_name: crm-mongo
     restart: unless-stopped
     ports:
-      - '27017:27017'
+      - '37017:27017'
     volumes:
       - mongo-data:/data/db
     healthcheck:
@@ -44,7 +44,7 @@ services:
     # sqlite do store quando /app é bind mount (Docker Desktop no macOS).
     command: /app/node_modules/.bin/tsx watch src/server.ts
     ports:
-      - '8080:8080'
+      - '18080:18080'
 
   ai-gateway:
     <<: *app
@@ -52,7 +52,7 @@ services:
     working_dir: /app/apps/ai-gateway
     command: /app/node_modules/.bin/tsx watch src/server.ts
     ports:
-      - '8081:8081'
+      - '18081:18081'
 
   web:
     <<: *app
@@ -70,7 +70,7 @@ services:
     depends_on:
       - crm-api
     ports:
-      - '5173:5173'
+      - '15173:15173'
 
 volumes:
   mongo-data:

@@ -70,7 +70,7 @@ const buildTestApp = (mailProvider: MailProvider) => {
   const { validToken } = createAuthMiddleware(buildAuthDeps());
   app.use(
     '/platform',
-    createPlatformRouter({ validToken, mailProvider, inviteBaseUrl: 'http://localhost:5173/invite' }),
+    createPlatformRouter({ validToken, mailProvider, inviteBaseUrl: 'http://localhost:15173/invite' }),
   );
   // Montado no MESMO app da provisão: a prova de FLD-09 é ler o template pela
   // rota real logo após provisionar, sem nenhuma chamada de setup no meio.
