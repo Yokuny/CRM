@@ -96,8 +96,11 @@ export const findById = async (tenantId: string, id: string): Promise<Appointmen
     return toRecord(doc, professional?.name, space?.name, customer?.name);
   });
 
-// Faixa da agenda (SCH-29): agendamento E bloqueio (os dois `kind`), meio
-// aberta `start ∈ [from, to)`. Nomes de cliente/profissional/ambiente
+// Faixa da agenda (SCH-29): agendamento E bloqueio (os dois `kind`) que se
+// SOBREPÕEM à faixa meio aberta [from, to) — `start < to` e `end > from`,
+// não só os que começam nela: um bloqueio de 18/09 00:00 a 19/09 23:59 tem
+// que aparecer na agenda do dia 19. Termina exatamente em `from` = fora.
+// Nomes de cliente/profissional/ambiente
 // resolvidos em TRÊS consultas em lote com `$in` (nunca `.populate()`, que
 // sobrescreveria a referência com `null` e perderia o id original quando o
 // documento referenciado foi apagado — mesmo padrão de
@@ -115,7 +118,8 @@ export const listByRange = async (
     const spaceFilter = spaceId ? { space: spaceId } : {};
     const filter = tenantScoped({
       Tenant: tenantId,
-      start: { $gte: fromUtc, $lt: toUtc },
+      start: { $lt: toUtc },
+      end: { $gt: fromUtc },
       ...professionalFilter,
       ...spaceFilter,
     });

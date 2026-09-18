@@ -174,7 +174,7 @@ describe('Appointment model', () => {
   });
 
   describe('demais índices', () => {
-    it('declares {Tenant,start} and {Tenant,customer,start}', async () => {
+    it('declares {Tenant,start}, {Tenant,customer,start} and {Tenant,end,start}', async () => {
       await Appointment.init();
 
       const indexes = await Appointment.collection.indexes();
@@ -182,6 +182,7 @@ describe('Appointment model', () => {
 
       expect(keys).toContain(JSON.stringify({ Tenant: 1, start: 1 }));
       expect(keys).toContain(JSON.stringify({ Tenant: 1, customer: 1, start: 1 }));
+      expect(keys).toContain(JSON.stringify({ Tenant: 1, end: 1, start: 1 }));
     });
 
     it('declares confirmationTokenHash as unique and sparse', async () => {

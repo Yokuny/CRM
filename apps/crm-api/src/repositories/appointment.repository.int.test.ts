@@ -122,10 +122,16 @@ describe('appointment.repository', () => {
       expect(result.find((item) => item.id === inRangeBlock._id.toString())?.kind).toBe('block');
     });
 
-    it('excludes an appointment starting exactly at `to` (exclusive upper bound) and one before `from`', async () => {
+    it('excludes an appointment starting exactly at `to` (exclusive upper bound) and one that ends exactly at `from`', async () => {
       const tenantId = randomId();
-      await seedAppointment(tenantId, { start: new Date('2026-09-16T00:00:00.000Z') }); // == to, excluded
-      await seedAppointment(tenantId, { start: new Date('2026-09-14T23:59:59.000Z') }); // < from, excluded
+      await seedAppointment(tenantId, {
+        start: new Date('2026-09-16T00:00:00.000Z'), // == to, excluded
+        end: new Date('2026-09-16T00:30:00.000Z'),
+      });
+      await seedAppointment(tenantId, {
+        start: new Date('2026-09-14T23:30:00.000Z'),
+        end: new Date('2026-09-15T00:00:00.000Z'), // == from, excluded (não sobrepõe)
+      });
       const included = await seedAppointment(tenantId, { start: new Date('2026-09-15T10:00:00.000Z') });
 
       const result = await appointmentRepository.listByRange(
@@ -135,6 +141,39 @@ describe('appointment.repository', () => {
       );
 
       expect(result.map((item) => item.id)).toEqual([included._id.toString()]);
+    });
+
+    it('includes a multi-day block that started before `from` but is still running inside the range', async () => {
+      const tenantId = randomId();
+      // 18/09 00:00 -> 19/09 23:59 em America/Sao_Paulo; a faixa é o dia 19.
+      const twoDayBlock = await seedBlock(tenantId, {
+        start: new Date('2026-09-18T03:00:00.000Z'),
+        end: new Date('2026-09-20T02:59:00.000Z'),
+      });
+
+      const result = await appointmentRepository.listByRange(
+        tenantId,
+        new Date('2026-09-19T03:00:00.000Z'),
+        new Date('2026-09-20T03:00:00.000Z'),
+      );
+
+      expect(result.map((item) => item.id)).toEqual([twoDayBlock._id.toString()]);
+    });
+
+    it('includes a block that covers the whole range (starts before `from`, ends after `to`)', async () => {
+      const tenantId = randomId();
+      const longBlock = await seedBlock(tenantId, {
+        start: new Date('2026-09-10T00:00:00.000Z'),
+        end: new Date('2026-09-20T00:00:00.000Z'),
+      });
+
+      const result = await appointmentRepository.listByRange(
+        tenantId,
+        new Date('2026-09-15T00:00:00.000Z'),
+        new Date('2026-09-16T00:00:00.000Z'),
+      );
+
+      expect(result.map((item) => item.id)).toEqual([longBlock._id.toString()]);
     });
 
     it('filters by professionalId and spaceId when given', async () => {

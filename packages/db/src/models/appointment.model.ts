@@ -89,6 +89,11 @@ appointmentSchema.index(
 );
 // Faixa da semana (tela de Agenda) e varredura de ocupação do dia.
 appointmentSchema.index({ Tenant: 1, start: 1 });
+// Agenda por SOBREPOSIÇÃO (listByRange: `end > from` e `start < to`): sem
+// este índice o `start < to` sozinho varreria todo o histórico do tenant;
+// começando por `end`, a varredura para nos itens que terminam depois do
+// início da faixa, e `start` fica na chave pra filtrar sem buscar o documento.
+appointmentSchema.index({ Tenant: 1, end: 1, start: 1 });
 // Agendamentos futuros do cliente (SCH-14/SCH-18/SCH-38).
 appointmentSchema.index({ Tenant: 1, customer: 1, start: 1 });
 // sparse: vários documentos sem token (bloqueio, ou ainda não emitido) não colidem.

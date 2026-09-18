@@ -204,12 +204,17 @@ function BlockRemoveForm({ block, onClose }: BlockRemoveFormProps) {
     );
   };
 
+  const startDate = formatDisplayDate(block.start);
+  const endDate = formatDisplayDate(block.end);
+
   return (
     <>
       <div className="grid gap-1">
         <p className="font-medium text-sm">{block.title ?? t('block')}</p>
         <p className="text-muted-foreground text-sm">
-          {formatDisplayDate(block.start)} · {formatDisplayTime(block.start)}–{formatDisplayTime(block.end)}
+          {startDate === endDate
+            ? `${startDate} · ${formatDisplayTime(block.start)}–${formatDisplayTime(block.end)}`
+            : `${startDate} · ${formatDisplayTime(block.start)} – ${endDate} · ${formatDisplayTime(block.end)}`}
         </p>
         {block.professionalName && <p className="text-muted-foreground text-sm">{block.professionalName}</p>}
       </div>

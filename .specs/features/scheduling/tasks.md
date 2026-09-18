@@ -487,7 +487,7 @@ Salvo indicação na task: **Tools** — MCP: NONE / Skill: NONE (ver seção MC
 **Requirement**: SCH-29, SCH-35, SCH-38
 
 **Done when**:
-- [x] `listByRange(tenant, fromUtc, toUtc, professional?, space?)` devolve só `start ∈ [from, to)`, agendamentos e bloqueios, com nomes de cliente/profissional/ambiente resolvidos em lote; um `Customer` apagado não some da lista (volta sem nome)
+- [x] `listByRange(tenant, fromUtc, toUtc, professional?, space?)` devolve os itens que se sobrepõem a `[from, to)` (`start < to` e `end > from` — um bloqueio de vários dias aparece em todos os dias que cobre, não só no primeiro; índice `{Tenant,end,start}`), agendamentos e bloqueios, com nomes de cliente/profissional/ambiente resolvidos em lote; um `Customer` apagado não some da lista (volta sem nome)
 - [x] Agendamento vencido em `pending` volta com o status gravado — leitura nunca transforma (SCH-35)
 - [x] `findById`; `findNextActiveByCustomer(tenant, customer, now)`; outro tenant nunca aparece
 

@@ -192,6 +192,15 @@ describe('BlockPanel — existing block mode (T41, spec.md SCH-33)', () => {
     expect(screen.getByText('Dra. Ana')).toBeInTheDocument();
   });
 
+  it('shows the end date too when the block spans more than one day', () => {
+    mockLookups();
+
+    // 18/09 00:00 -> 19/09 23:59 em America/Sao_Paulo (UTC-3).
+    renderPanel({ block: { ...existingBlock, start: '2026-09-18T03:00:00.000Z', end: '2026-09-20T02:59:00.000Z' } });
+
+    expect(screen.getByText('2026-09-18 · 00:00 – 2026-09-19 · 23:59')).toBeInTheDocument();
+  });
+
   it('removes the block via deleteBlockMutation (DELETE /appointments/blocks/:id)', async () => {
     mockLookups();
     delMock.mockResolvedValue({ success: true, data: { deleted: true } });

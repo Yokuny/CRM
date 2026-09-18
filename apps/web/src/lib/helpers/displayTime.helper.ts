@@ -52,12 +52,43 @@ export const weekdayIndexOfDisplayDate = (date: string): number => {
 };
 
 // Segunda-feira (convenção deste projeto pro início da semana, SCH-29) da
-// semana corrente, calculada a partir de "hoje" NO FUSO DE EXIBIÇÃO — nunca
-// no fuso do navegador/CI.
-export const currentDisplayWeekStart = (now: Date = new Date()): string => {
-  const today = formatDisplayDate(now);
-  const offsetFromMonday = (weekdayIndexOfDisplayDate(today) + 6) % 7; // domingo(0)->6 ... segunda(1)->0
-  return addDaysToDisplayDate(today, -offsetFromMonday);
+// semana que contém uma data de parede qualquer — mesma aritmética de
+// calendário pura de addDaysToDisplayDate, generalizada pra qualquer `date`
+// (não só "hoje"), usada pelas visões de dia/semana/mês do calendário.
+export const displayWeekStartOf = (date: string): string => {
+  const offsetFromMonday = (weekdayIndexOfDisplayDate(date) + 6) % 7; // domingo(0)->6 ... segunda(1)->0
+  return addDaysToDisplayDate(date, -offsetFromMonday);
+};
+
+// Segunda-feira da semana corrente, calculada a partir de "hoje" NO FUSO DE
+// EXIBIÇÃO — nunca no fuso do navegador/CI.
+export const currentDisplayWeekStart = (now: Date = new Date()): string => displayWeekStartOf(formatDisplayDate(now));
+
+// Dia 1 do mês que contém uma data de parede — aritmética de calendário pura
+// (mesmo raciocínio de addDaysToDisplayDate).
+export const startOfDisplayMonth = (date: string): string => {
+  const [year, month] = date.split('-').map(Number) as [number, number, number];
+  return new Date(Date.UTC(year, month - 1, 1)).toISOString().slice(0, 10);
+};
+
+// Quantos dias tem o mês que contém `date` (dia 0 do mês seguinte = último
+// dia do mês atual, truque padrão de Date.UTC) — usado pra montar a grade da
+// visão de mês.
+export const daysInDisplayMonth = (date: string): number => {
+  const [year, month] = date.split('-').map(Number) as [number, number, number];
+  return new Date(Date.UTC(year, month, 0)).getUTCDate();
+};
+
+// Soma/subtrai meses a uma data de parede, preservando o dia quando possível
+// e "encaixando" (clamp) pro último dia do mês de destino quando ele não
+// existir (ex.: 31/01 + 1 mês -> 28/02, nunca 03/03 por overflow de
+// Date.UTC) — mesma semântica de addMonths do date-fns, implementada sem a
+// dependência (este arquivo nunca usa date-fns, ver cabeçalho).
+export const addMonthsToDisplayDate = (date: string, months: number): string => {
+  const [year, month, day] = date.split('-').map(Number) as [number, number, number];
+  const targetIndex = month - 1 + months;
+  const daysInTargetMonth = new Date(Date.UTC(year, targetIndex + 1, 0)).getUTCDate();
+  return new Date(Date.UTC(year, targetIndex, Math.min(day, daysInTargetMonth))).toISOString().slice(0, 10);
 };
 
 // SCH-35: "o horário passou sem nenhuma marcação" — comparação de INSTANTE
