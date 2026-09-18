@@ -14,15 +14,15 @@ import {
 // aceita por este router (nunca `req.params.id`, SCH-27).
 const handleServiceError = (e: unknown, next: NextFunction): void => {
   if (e instanceof AppointmentConfirmationNotFoundError) {
-    next(new CustomError(e.message, 404));
+    next(new CustomError(e.message, 404, e.detail));
     return;
   }
   if (e instanceof AppointmentConfirmationExpiredError) {
-    next(new CustomError(e.message, 410));
+    next(new CustomError(e.message, 410, e.detail));
     return;
   }
   if (e instanceof AppointmentConfirmationTerminalError) {
-    next(new CustomError(e.message, 409));
+    next(new CustomError(e.message, 409, e.detail));
     return;
   }
   next(e);

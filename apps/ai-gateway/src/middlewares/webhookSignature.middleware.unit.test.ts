@@ -82,7 +82,7 @@ describe('createWebhookSignatureMiddleware', () => {
     middleware(buildReq(BODY, undefined), res, next as unknown as NextFunction);
 
     expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.json).toHaveBeenCalledWith({ success: false, message: 'Assinatura do webhook inválida' });
+    expect(res.json).toHaveBeenCalledWith({ success: false, message: 'invalid_access' });
     expect(next).not.toHaveBeenCalled();
   });
 

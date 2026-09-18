@@ -55,7 +55,7 @@ export const createIntegration = async (
   const environment = detectEnvironment(data.apiKey);
 
   const isValid = await asaasClient.validateApiKey(data.apiKey, environment);
-  if (!isValid) throw new CustomError('Chave Asaas inválida ou revogada', 422);
+  if (!isValid) throw new CustomError('invalid_asaas_key', 422);
 
   const webhookToken = crypto.randomBytes(WEBHOOK_TOKEN_BYTES).toString('hex');
   const authToken = crypto.randomBytes(AUTH_TOKEN_BYTES).toString('hex');
@@ -77,6 +77,6 @@ export const createIntegration = async (
 // channel.service.ts.getCurrentChannel.
 export const getCurrentIntegration = async (tenantId: string): Promise<AsaasIntegrationPublicRecord> => {
   const integration = await asaasIntegrationRepository.findByTenant(tenantId);
-  if (!integration) throw new CustomError('Integração Asaas não encontrada', 404);
+  if (!integration) throw new CustomError('not_found', 404);
   return toPublicRecord(integration);
 };

@@ -37,7 +37,7 @@ export const createWebhookSignatureMiddleware = (appSecret: string) => {
     const rawBody = req.rawBody ?? Buffer.alloc(0);
 
     if (!verifyWebhookSignature(rawBody, signature, appSecret)) {
-      res.status(401).json(badRespObj({ message: 'Assinatura do webhook inválida' }));
+      res.status(401).json(badRespObj({ message: 'invalid_access' }));
       return;
     }
 

@@ -23,7 +23,7 @@ export const getSpaceById = async (req: Request, res: Response, next: NextFuncti
     res.json(respObj({ data: result }));
   } catch (e) {
     if (e instanceof SpaceNotFoundError) {
-      next(new CustomError(e.message, 404));
+      next(new CustomError(e.message, 404, e.detail));
       return;
     }
     next(e);
@@ -48,7 +48,7 @@ export const updateSpace = async (req: Request, res: Response, next: NextFunctio
     res.json(respObj({ data: result }));
   } catch (e) {
     if (e instanceof SpaceNotFoundError) {
-      next(new CustomError(e.message, 404));
+      next(new CustomError(e.message, 404, e.detail));
       return;
     }
     next(e);

@@ -84,7 +84,7 @@ describe('auth routes', () => {
         .send({ email: 'login@empresa.com', password: 'senhaCorreta123' });
 
       expect(res.status).toBe(200);
-      expect(res.body).toEqual({ success: true, data: undefined, message: expect.stringMatching(/sucesso/i) });
+      expect(res.body).toEqual({ success: true, data: undefined, message: 'signed_in_successfully' });
 
       const setCookie = res.headers['set-cookie'] as unknown as string[];
       expect(setCookie?.[0]).toMatch(/refreshToken=/);
@@ -175,7 +175,7 @@ describe('auth routes', () => {
       const res = await request(app).post('/auth/signout').set('Cookie', cookie).set('User-Agent', DEVICE);
 
       expect(res.status).toBe(200);
-      expect(res.body).toEqual({ success: true, data: undefined, message: expect.stringMatching(/sucesso/i) });
+      expect(res.body).toEqual({ success: true, data: undefined, message: 'signed_out_successfully' });
 
       const setCookie = res.headers['set-cookie'] as unknown as string[];
       expect(setCookie?.[0]).toMatch(/refreshToken=;/);

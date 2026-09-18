@@ -19,17 +19,45 @@ describe('errorHandler', () => {
 
     expect(res.status).toHaveBeenCalledWith(500);
     const body = (res.json as ReturnType<typeof vi.fn>).mock.calls[0][0];
-    expect(body).toEqual({ success: false, message: 'Erro interno do servidor' });
+    expect(body).toEqual({ success: false, message: 'internal_error' });
     expect(body).not.toHaveProperty('stack');
   });
 
-  it('responds with the CustomError status and its own message for a known error', () => {
+  it('responds with the CustomError status and its own message key for a known error', () => {
     const res = buildRes();
 
-    errorHandler(new CustomError('campo inválido', 400), buildReq(), res, vi.fn() as unknown as NextFunction);
+    errorHandler(new CustomError('invalid_data', 400), buildReq(), res, vi.fn() as unknown as NextFunction);
 
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({ success: false, message: 'campo inválido' });
+    expect(res.json).toHaveBeenCalledWith({ success: false, message: 'invalid_data' });
+  });
+
+  it('never sends raw text: a 4xx whose message is not a contract key falls back to invalid_data', () => {
+    const res = buildRes();
+    const err = Object.assign(new Error('Unexpected token } in JSON at position 1'), { status: 400 });
+
+    errorHandler(err, buildReq(), res, vi.fn() as unknown as NextFunction);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ success: false, message: 'invalid_data' });
+  });
+
+  it('logs the technical detail of a CustomError without sending it in the response body', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const res = buildRes();
+
+    errorHandler(
+      new CustomError('invalid_data', 400, 'status: Invalid option'),
+      buildReq(),
+      res,
+      vi.fn() as unknown as NextFunction,
+    );
+
+    const logged = JSON.parse(spy.mock.calls[0][0] as string);
+    expect(logged.detail).toBe('status: Invalid option');
+    expect(res.json).toHaveBeenCalledWith({ success: false, message: 'invalid_data' });
+
+    spy.mockRestore();
   });
 
   it('logs a structured event carrying a requestId for the error, without the response body', () => {

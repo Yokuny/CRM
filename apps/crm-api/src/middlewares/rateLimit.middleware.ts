@@ -16,7 +16,9 @@ const tenantAndIpKeyGenerator = (req: Request): string => {
   return `${tenant}:${ipKeyGenerator(req.ip ?? 'unknown')}`;
 };
 
-const rejectWithTooManyRequests = (message: string, keyGenerator = emailAndIpKeyGenerator) => {
+// O cliente sempre recebe a mesma chave (`too_many_attempts`); `scope` só
+// identifica o limitador no log do errorHandler.
+const rejectWithTooManyRequests = (scope: string, keyGenerator = emailAndIpKeyGenerator) => {
   return rateLimit({
     windowMs: 15 * 60 * 1000,
     limit: 5,
@@ -24,18 +26,14 @@ const rejectWithTooManyRequests = (message: string, keyGenerator = emailAndIpKey
     legacyHeaders: false,
     keyGenerator,
     handler: (_req, _res, next) => {
-      next(new CustomError(message, 429));
+      next(new CustomError('too_many_attempts', 429, scope));
     },
   });
 };
 
 // FND-14: só protege login e convite; ambos por e-mail normalizado + IP.
-export const signinRateLimit = rejectWithTooManyRequests(
-  'Muitas tentativas de login. Tente novamente em alguns minutos.',
-);
-export const inviteRateLimit = rejectWithTooManyRequests(
-  'Muitos convites enviados. Tente novamente em alguns minutos.',
-);
+export const signinRateLimit = rejectWithTooManyRequests('signin');
+export const inviteRateLimit = rejectWithTooManyRequests('invite');
 
 // Rota pública de confirmação de agendamento (SCH-27): anônima, identificada
 // só pelo token na URL — sem e-mail nem tenant na requisição, diferença
@@ -43,27 +41,18 @@ export const inviteRateLimit = rejectWithTooManyRequests(
 const ipOnlyKeyGenerator = (req: Request): string => ipKeyGenerator(req.ip ?? 'unknown');
 
 // FLD-16: mutação estrutural de template, por tenant + IP.
-export const fieldTemplateRateLimit = rejectWithTooManyRequests(
-  'Muitas alterações de template. Tente novamente em alguns minutos.',
-  tenantAndIpKeyGenerator,
-);
+export const fieldTemplateRateLimit = rejectWithTooManyRequests('field_template', tenantAndIpKeyGenerator);
 
 // CORE-14: mutação de Customer, por tenant + IP — mesmo molde de fieldTemplateRateLimit.
-export const customerRateLimit = rejectWithTooManyRequests(
-  'Muitas alterações de cliente. Tente novamente em alguns minutos.',
-  tenantAndIpKeyGenerator,
-);
+export const customerRateLimit = rejectWithTooManyRequests('customer', tenantAndIpKeyGenerator);
 
 // CORE-14: mutação de Process, por tenant + IP — mesmo molde de customerRateLimit.
-export const processRateLimit = rejectWithTooManyRequests(
-  'Muitas alterações de processo. Tente novamente em alguns minutos.',
-  tenantAndIpKeyGenerator,
-);
+export const processRateLimit = rejectWithTooManyRequests('process', tenantAndIpKeyGenerator);
 
 // spec.md Assumptions ("Rate limit da rota pública de confirmação"): a rota
 // é anônima e recebe token na URL — sem limite, vira alvo de varredura
 // (SCH-27).
 export const appointmentConfirmationRateLimit = rejectWithTooManyRequests(
-  'Muitas tentativas de confirmação. Tente novamente em alguns minutos.',
+  'appointment_confirmation',
   ipOnlyKeyGenerator,
 );

@@ -11,6 +11,14 @@ type Method = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 
 const CONNECTION_ERROR_MESSAGE = t('connection_error');
 
+// `message` da API é sempre uma CHAVE de tradução (`ApiMessageKey`,
+// @crm/contracts response/messages.ts), nunca texto pronto — traduzida aqui,
+// na única porta de entrada das respostas, para que toast, erro de formulário
+// e `Error` de query recebam o texto pt-BR sem nenhuma tela chamar `t()` de
+// novo sobre `res.message`. `''` (sucesso sem mensagem) passa intacto.
+const translateMessage = <T>(body: ApiResponse<T>): ApiResponse<T> =>
+  body.message ? { ...body, message: t(body.message) } : body;
+
 // Nunca lança: falha de rede vira um ApiResponse com success:false, para que
 // toda tela leia `message` sem precisar de try/catch (FND-10/AC4).
 export const request = async <T>(path: string, method: Method, body?: unknown): Promise<ApiResponse<T>> => {
@@ -21,7 +29,7 @@ export const request = async <T>(path: string, method: Method, body?: unknown): 
       headers: body !== undefined ? { 'Content-Type': 'application/json' } : undefined,
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
-    return (await res.json()) as ApiResponse<T>;
+    return translateMessage((await res.json()) as ApiResponse<T>);
   } catch {
     return { success: false, message: CONNECTION_ERROR_MESSAGE };
   }
@@ -54,7 +62,7 @@ export type ApiResponseWithStatus<T> = ApiResponse<T> & { status: number };
 export const getWithStatus = async <T>(path: string): Promise<ApiResponseWithStatus<T>> => {
   try {
     const res = await fetch(`${BASE_URL}${path}`, { method: 'GET', credentials: 'include' });
-    const body = (await res.json()) as ApiResponse<T>;
+    const body = translateMessage((await res.json()) as ApiResponse<T>);
     return { ...body, status: res.status };
   } catch {
     return { success: false, message: CONNECTION_ERROR_MESSAGE, status: 0 };

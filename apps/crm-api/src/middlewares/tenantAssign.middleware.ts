@@ -5,7 +5,7 @@ import { CustomError } from './errorHandler.middleware.js';
 // orienta o usuário a concluir o vínculo, sem revelar detalhe interno.
 export const tenantAssignmentCheck = (req: Request, _res: Response, next: NextFunction): void => {
   if (!req.tenantUser?.tenant) {
-    next(new CustomError('Conclua o vínculo com uma empresa antes de continuar.', 424));
+    next(new CustomError('company_link_required', 424));
     return;
   }
 

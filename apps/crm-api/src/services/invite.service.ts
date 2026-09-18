@@ -17,10 +17,10 @@ export type InvitePeek = { tenantName: string; email: string };
 export const peekInvite = async (token: string): Promise<InvitePeek> => {
   const invite = await inviteRepository.findInviteWithTenantByHash(hashToken(token));
 
-  if (!invite) throw new CustomError('Convite inválido.', 410);
-  if (invite.status === 'accepted') throw new CustomError('Este convite já foi utilizado.', 410);
-  if (invite.expiresAt.getTime() < Date.now()) throw new CustomError('Este convite expirou.', 410);
-  if (invite.status !== 'pending') throw new CustomError('Convite inválido.', 410);
+  if (!invite) throw new CustomError('invalid_link', 410);
+  if (invite.status === 'accepted') throw new CustomError('used_link', 410);
+  if (invite.expiresAt.getTime() < Date.now()) throw new CustomError('expired_link', 410);
+  if (invite.status !== 'pending') throw new CustomError('invalid_link', 410);
 
   return { tenantName: invite.tenantName, email: invite.email };
 };
@@ -31,7 +31,7 @@ export const acceptInvite = async (
   deviceInfo: string,
 ): Promise<{ sessionToken: string }> => {
   const invite = await inviteRepository.acceptInviteAtomic(hashToken(token));
-  if (!invite) throw new CustomError('Convite inválido ou expirado.', 410);
+  if (!invite) throw new CustomError('invalid_link', 410, 'convite inválido ou expirado');
 
   const hashedPassword = await bcrypt.hash(data.password, BCRYPT_COST);
   const user = await inviteRepository.createUserFromInvite({

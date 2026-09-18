@@ -5,7 +5,7 @@ import { z } from 'zod';
 import * as conversationController from '../controllers/conversation.controller.js';
 import { checkRole } from '../middlewares/authorization.middleware.js';
 import { tenantAssignmentCheck } from '../middlewares/tenantAssign.middleware.js';
-import { validBody, validParams } from '../middlewares/validation.middleware.js';
+import { invalidDataError, validBody, validParams } from '../middlewares/validation.middleware.js';
 
 const conversationIdParamSchema = z.object({ id: idSchema }).strict();
 const resendMessageParamSchema = z.object({ id: idSchema, messageId: idSchema }).strict();
@@ -32,10 +32,7 @@ const listConversationsQuerySchema = z
 const validListConversationsQuery: RequestHandler = (req, _res, next) => {
   const result = listConversationsQuerySchema.safeParse(req.query);
   if (!result.success) {
-    const message = result.error.issues
-      .map((issue) => `${issue.path.join('.') || 'query'}: ${issue.message}`)
-      .join('; ');
-    next(Object.assign(new Error(message), { status: 400 }));
+    next(invalidDataError(result.error, 'query'));
     return;
   }
   Object.defineProperty(req, 'query', { value: result.data, configurable: true, enumerable: true, writable: true });
@@ -54,10 +51,7 @@ const getMessagesQuerySchema = z
 const validGetMessagesQuery: RequestHandler = (req, _res, next) => {
   const result = getMessagesQuerySchema.safeParse(req.query);
   if (!result.success) {
-    const message = result.error.issues
-      .map((issue) => `${issue.path.join('.') || 'query'}: ${issue.message}`)
-      .join('; ');
-    next(Object.assign(new Error(message), { status: 400 }));
+    next(invalidDataError(result.error, 'query'));
     return;
   }
   Object.defineProperty(req, 'query', { value: result.data, configurable: true, enumerable: true, writable: true });

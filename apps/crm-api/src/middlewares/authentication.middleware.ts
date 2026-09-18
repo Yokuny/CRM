@@ -75,7 +75,7 @@ export const authenticateSession = async (
   deviceInfo: string,
   deps: AuthDeps,
 ): Promise<TenantUser> => {
-  if (!token) throw new CustomError('Acesso inválido', 401);
+  if (!token) throw new CustomError('invalid_session', 401);
 
   let userIdFromToken: string;
   try {
@@ -83,24 +83,24 @@ export const authenticateSession = async (
     if (typeof decoded === 'string' || !decoded.user) throw new Error('payload inválido');
     userIdFromToken = decoded.user as string;
   } catch {
-    throw new CustomError('Acesso inválido ou expirado', 401);
+    throw new CustomError('invalid_session', 401, 'token inválido ou expirado');
   }
 
   const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
   const session = await deps.findSessionByHash(tokenHash);
   if (!session) {
     console.error(JSON.stringify({ event: 'session.replay', userId: userIdFromToken }));
-    throw new CustomError('Acesso inválido', 401);
+    throw new CustomError('invalid_session', 401);
   }
 
   if (session.deviceInfo !== deviceInfo) {
     await deps.revokeAllSessions(session.user);
     console.error(JSON.stringify({ event: 'session.device_mismatch', userId: session.user }));
-    throw new CustomError('Acesso inválido', 401);
+    throw new CustomError('invalid_session', 401);
   }
 
   const user = await deps.getUserById(session.user);
-  if (!user?.active) throw new CustomError('Acesso inválido', 401);
+  if (!user?.active) throw new CustomError('invalid_session', 401);
 
   const tenant = user.tenant ? await deps.getTenantById(user.tenant) : undefined;
 

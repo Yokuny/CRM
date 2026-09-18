@@ -1,7 +1,7 @@
 import type { SendMessage } from '@crm/contracts';
 import type { ConversationMode } from '@crm/db';
 import { env } from '../config/env.config.js';
-import { CustomError } from '../middlewares/errorHandler.middleware.js';
+import { CustomError, KeyedError } from '../middlewares/errorHandler.middleware.js';
 import { findUserView } from '../repositories/auth.repository.js';
 import type {
   ConversationListItem,
@@ -96,17 +96,18 @@ export const getMessages = async (
     page: clampPage(query.page),
     limit: clampLimit(query.limit),
   });
-  if (!result) throw new CustomError('Conversation não encontrada', 404);
+  if (!result) throw new CustomError('not_found', 404);
   return result;
 };
 
 // INBOX-08/09: lançado quando o claim condicional (T11) falha porque a
 // Conversation já está com um assignee DIFERENTE — nunca para "não existe"
 // (esse caso é 404 direto, ver takeoverConversation). O controller traduz
-// para 409 (design.md, Componente 4/Error Handling Strategy).
-export class ConversationAlreadyAssignedError extends Error {
+// para 409 (design.md, Componente 4/Error Handling Strategy). O nome do
+// assignee atual só vai pro log (`detail`): a mensagem é uma chave fixa.
+export class ConversationAlreadyAssignedError extends KeyedError {
   constructor(assigneeName: string) {
-    super(`Conversa já assumida por ${assigneeName}`);
+    super('conversation_already_assigned', `assumida por ${assigneeName}`);
   }
 }
 
@@ -116,7 +117,8 @@ export class ConversationAlreadyAssignedError extends Error {
 // precisam ser distinguidas aqui, refazendo uma leitura só quando o claim
 // falhou. "Não existe" mantém o mesmo idioma 404 de customer.service.ts (id
 // ausente e id de outro tenant caem no mesmo erro, por design); "já
-// assumida" carrega o nome do assignee atual (context.md decisão #6).
+// assumida" leva o nome do assignee atual no `detail` do erro (context.md
+// decisão #6) — o cliente recebe só a chave `conversation_already_assigned`.
 export const takeoverConversation = async (
   id: string,
   tenantId: string,
@@ -126,7 +128,7 @@ export const takeoverConversation = async (
   if (result) return { ...result, assigneeName: await resolveAssigneeName(result.assignee) };
 
   const existing = await conversationRepository.findConversationById(id, tenantId);
-  if (!existing) throw new CustomError('Conversation não encontrada', 404);
+  if (!existing) throw new CustomError('not_found', 404);
 
   const assigneeUser = existing.assignee ? await findUserView(existing.assignee) : null;
   throw new ConversationAlreadyAssignedError(assigneeUser?.name ?? 'outro operador');
@@ -134,7 +136,7 @@ export const takeoverConversation = async (
 
 export const releaseConversation = async (id: string, tenantId: string): Promise<ConversationRecord> => {
   const result = await conversationRepository.release(id, tenantId);
-  if (!result) throw new CustomError('Conversation não encontrada', 404);
+  if (!result) throw new CustomError('not_found', 404);
   return { ...result, assigneeName: await resolveAssigneeName(result.assignee) };
 };
 
@@ -144,8 +146,8 @@ export const sendManualMessage = async (id: string, tenantId: string, dto: SendM
   try {
     return await conversationRepository.createOutboundMessage(id, tenantId, dto);
   } catch (e) {
-    if (e instanceof ConversationNotFoundError) throw new CustomError(e.message, 404);
-    if (e instanceof OutsideWindowError) throw new CustomError(e.message, 400);
+    if (e instanceof ConversationNotFoundError) throw new CustomError(e.message, 404, e.detail);
+    if (e instanceof OutsideWindowError) throw new CustomError(e.message, 400, e.detail);
     throw e;
   }
 };
@@ -159,8 +161,8 @@ export const resendMessage = async (id: string, tenantId: string, messageId: str
   try {
     return await conversationRepository.resendMessage(tenantId, id, messageId);
   } catch (e) {
-    if (e instanceof MessageNotFoundError) throw new CustomError(e.message, 404);
-    if (e instanceof MessageNotFailedError) throw new CustomError(e.message, 400);
+    if (e instanceof MessageNotFoundError) throw new CustomError(e.message, 404, e.detail);
+    if (e instanceof MessageNotFailedError) throw new CustomError(e.message, 400, e.detail);
     throw e;
   }
 };
@@ -169,7 +171,7 @@ export const resendMessage = async (id: string, tenantId: string, messageId: str
 // channel.service.ts), nunca do corpo/query da requisição. Mídia
 // indisponível/expirada na Meta emite um log estruturado (INBOX-19, mesmo
 // formato JSON.stringify({event...}) já usado no projeto) ANTES de traduzir
-// para 502 — o controller (T17) devolve esse erro com a mensagem legível de
+// para 502 — o controller (T17) devolve esse erro com a chave de
 // MetaMediaUnavailableError no corpo, nunca a mensagem genérica do
 // errorHandler global (que mascara qualquer status >= 500).
 export const getMessageMedia = async (
@@ -180,12 +182,12 @@ export const getMessageMedia = async (
   try {
     return await conversationRepository.getMessageMedia(tenantId, id, messageId, env.CHANNEL_ENC_KEY);
   } catch (e) {
-    if (e instanceof MessageNotFoundError) throw new CustomError(e.message, 404);
+    if (e instanceof MessageNotFoundError) throw new CustomError(e.message, 404, e.detail);
     if (e instanceof MetaMediaUnavailableError) {
       console.error(
         JSON.stringify({ event: 'inbox.media_fetch_failed', conversationId: id, messageId, message: e.message }),
       );
-      throw new CustomError(e.message, 502);
+      throw new CustomError(e.message, 502, e.detail);
     }
     throw e;
   }

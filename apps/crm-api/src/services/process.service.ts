@@ -6,8 +6,8 @@ import * as fieldTemplateRepository from '../repositories/fieldTemplate.reposito
 import type { ProcessRecord } from '../repositories/process.repository.js';
 import * as processRepository from '../repositories/process.repository.js';
 
-// Mesma convenção de customer.service.ts para condensar erros de campo num
-// único CustomError.message legível (badRespObj só carrega `message`).
+// Mesma convenção de customer.service.ts: o detalhe por campo só vai pro log
+// (`detail`), o cliente recebe a chave `invalid_data`.
 const formatValidationErrors = (errors: Record<string, string[]>): string =>
   Object.entries(errors)
     .map(([field, messages]) => `${field}: ${messages.join(', ')}`)
@@ -21,21 +21,21 @@ const formatValidationErrors = (errors: Record<string, string[]>): string =>
 // resolvida, persistida como snapshot permanente (nunca re-resolvida depois).
 export const createProcess = async (tenantId: string, data: CreateProcess): Promise<ProcessRecord> => {
   const template = await fieldTemplateRepository.findTemplateByTargetKey(tenantId, 'process', data.templateKey);
-  if (!template) throw new CustomError('Template de processo não encontrado', 404);
-  if (template.archived) throw new CustomError('Template arquivado', 400);
+  if (!template) throw new CustomError('template_not_found', 404);
+  if (template.archived) throw new CustomError('archived_template', 400);
 
   const customer = await customerRepository.findById(tenantId, data.customerId);
-  if (!customer) throw new CustomError('Cliente não encontrado', 404);
+  if (!customer) throw new CustomError('not_found', 404);
 
   const version = await fieldTemplateRepository.findCurrentVersion(tenantId, template.id, template.currentVersion);
-  if (!version) throw new CustomError('Template de processo não encontrado', 404);
+  if (!version) throw new CustomError('template_not_found', 404);
 
   const firstStage = version.stages?.[0];
-  if (!firstStage) throw new CustomError('Template de processo sem stages configuradas', 400);
+  if (!firstStage) throw new CustomError('template_without_stages', 400);
 
   const values = data.values ?? {};
   const result = validate(version.fields, values);
-  if (!result.valid) throw new CustomError(formatValidationErrors(result.errors), 400);
+  if (!result.valid) throw new CustomError('invalid_data', 400, formatValidationErrors(result.errors));
 
   return processRepository.createProcess({
     tenant: tenantId,
@@ -58,16 +58,16 @@ export const updateProcessValues = async (
   values: Record<string, unknown>,
 ): Promise<ProcessRecord> => {
   const process = await processRepository.findById(tenantId, id);
-  if (!process) throw new CustomError('Processo não encontrado', 404);
+  if (!process) throw new CustomError('not_found', 404);
 
   const version = await fieldTemplateRepository.findCurrentVersion(tenantId, process.template, process.templateVersion);
-  if (!version) throw new CustomError('Versão de template do processo não encontrada', 404);
+  if (!version) throw new CustomError('template_not_found', 404);
 
   const result = validate(version.fields, values);
-  if (!result.valid) throw new CustomError(formatValidationErrors(result.errors), 400);
+  if (!result.valid) throw new CustomError('invalid_data', 400, formatValidationErrors(result.errors));
 
   const updated = await processRepository.updateValues(tenantId, id, values);
-  if (!updated) throw new CustomError('Processo não encontrado', 404);
+  if (!updated) throw new CustomError('not_found', 404);
   return updated;
 };
 
@@ -76,17 +76,17 @@ export const updateProcessValues = async (
 // updateProcessValues) — a guarda roda antes de qualquer escrita.
 export const updateProcessStage = async (tenantId: string, id: string, stage: string): Promise<ProcessRecord> => {
   const process = await processRepository.findById(tenantId, id);
-  if (!process) throw new CustomError('Processo não encontrado', 404);
+  if (!process) throw new CustomError('not_found', 404);
 
   const version = await fieldTemplateRepository.findCurrentVersion(tenantId, process.template, process.templateVersion);
-  if (!version) throw new CustomError('Versão de template do processo não encontrada', 404);
+  if (!version) throw new CustomError('template_not_found', 404);
 
   if (!version.stages?.includes(stage)) {
-    throw new CustomError('stage inválido para este template', 400);
+    throw new CustomError('invalid_stage', 400);
   }
 
   const updated = await processRepository.updateStage(tenantId, id, stage);
-  if (!updated) throw new CustomError('Processo não encontrado', 404);
+  if (!updated) throw new CustomError('not_found', 404);
   return updated;
 };
 

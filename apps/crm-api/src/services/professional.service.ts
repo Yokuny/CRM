@@ -1,11 +1,12 @@
 import type { CreateProfessional, UpdateProfessional } from '@crm/contracts';
+import { KeyedError } from '../middlewares/errorHandler.middleware.js';
 import type { ProfessionalRecord } from '../repositories/professional.repository.js';
 import * as professionalRepository from '../repositories/professional.repository.js';
 
 // AD-010: findById/updateProfessional (professional.repository, T13) já são
 // tenant-scoped — um id de outro tenant simplesmente não existe para esta
 // sessão, mesmo idioma 404 de product.service.ts's ProductNotFoundError.
-export class ProfessionalNotFoundError extends Error {}
+export class ProfessionalNotFoundError extends KeyedError {}
 
 // createProfessionalSchema/updateProfessionalSchema (contracts, T10) já
 // cobrem integralmente SCH-02 (end<=start, weekday fora de 0..6, formato
@@ -24,7 +25,7 @@ export const createProfessional = async (tenantId: string, data: CreateProfessio
 
 export const getProfessionalById = async (tenantId: string, id: string): Promise<ProfessionalRecord> => {
   const professional = await professionalRepository.findById(tenantId, id);
-  if (!professional) throw new ProfessionalNotFoundError('Profissional não encontrado');
+  if (!professional) throw new ProfessionalNotFoundError('not_found');
   return professional;
 };
 
@@ -34,7 +35,7 @@ export const updateProfessional = async (
   data: UpdateProfessional,
 ): Promise<ProfessionalRecord> => {
   const updated = await professionalRepository.updateProfessional(tenantId, id, data);
-  if (!updated) throw new ProfessionalNotFoundError('Profissional não encontrado');
+  if (!updated) throw new ProfessionalNotFoundError('not_found');
   return updated;
 };
 

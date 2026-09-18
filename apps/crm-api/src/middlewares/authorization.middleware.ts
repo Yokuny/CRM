@@ -10,7 +10,7 @@ export const checkRole = (allowedRoles: Role[]) => {
     const hasPermission = userRoles.some((role) => allowedRoles.includes(role));
 
     if (!hasPermission) {
-      next(new CustomError('Você não tem permissão para realizar esta ação', 403));
+      next(new CustomError('no_permission', 403));
       return;
     }
 
@@ -27,7 +27,7 @@ export const isOperador = checkRole(['operador']);
 // isPlatformAdmin já resolvida por createAuthMiddleware decide, nunca o body.
 export const platformAdminOnly = (req: Request, _res: Response, next: NextFunction): void => {
   if (!req.tenantUser?.isPlatformAdmin) {
-    next(new CustomError('Acesso restrito a administradores da plataforma', 403));
+    next(new CustomError('no_permission', 403, 'restrito a administradores da plataforma'));
     return;
   }
 

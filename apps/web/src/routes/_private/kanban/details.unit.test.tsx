@@ -195,9 +195,13 @@ describe('KanbanDetailsPage (T20, spec.md KAN-03/KAN-06/KAN-18/KAN-19/KAN-20/KAN
     await waitFor(() => expect(capturedProps.data.find((item: any) => item.id === 'card1')?.column).toBe('col-b'));
   });
 
-  it('reverts the card to its origin column and shows a toast when the move fails (KAN-20)', async () => {
+  it('reverts the card to its origin column and toasts the server message when the move fails (KAN-20)', async () => {
     mockBoardAndCards();
-    patchMock.mockResolvedValue({ success: false, message: 'Coluna não existe neste board' });
+    // `patch` mockado já devolve o texto traduzido (client.api traduz a chave).
+    patchMock.mockResolvedValue({
+      success: false,
+      message: 'Dados inválidos. Revise as informações e tente novamente.',
+    });
     renderPage();
     await waitFor(() => expect(capturedProps?.data?.length).toBe(1));
 
@@ -205,7 +209,9 @@ describe('KanbanDetailsPage (T20, spec.md KAN-03/KAN-06/KAN-18/KAN-19/KAN-20/KAN
       capturedProps.onDragEnd({ active: { id: 'card1' }, over: { id: 'col-b' } });
     });
 
-    await waitFor(() => expect(toastErrorMock).toHaveBeenCalledWith('Não foi possível mover o card. Tente novamente.'));
+    await waitFor(() =>
+      expect(toastErrorMock).toHaveBeenCalledWith('Dados inválidos. Revise as informações e tente novamente.'),
+    );
     // biome-ignore lint/suspicious/noExplicitAny: mock de teste
     expect(capturedProps.data.find((item: any) => item.id === 'card1')?.column).toBe('col-a');
   });

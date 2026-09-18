@@ -237,7 +237,7 @@ describe('createAuthMiddleware', () => {
   // Todas as branches replicam exatamente o comportamento já provado acima
   // via HTTP, confirmando que a extração não mudou nada observável.
   describe('authenticateSession (called directly, outside Express)', () => {
-    it('throws CustomError(401, "Acesso inválido") when no token is provided', async () => {
+    it('throws CustomError(401, "invalid_session") when no token is provided', async () => {
       let caught: unknown;
       try {
         await authenticateSession(undefined, 'agent-1', buildDeps());
@@ -245,12 +245,12 @@ describe('createAuthMiddleware', () => {
         caught = e;
       }
       expect(caught).toBeInstanceOf(CustomError);
-      expect(caught).toMatchObject({ message: 'Acesso inválido', status: 401 });
+      expect(caught).toMatchObject({ message: 'invalid_session', status: 401 });
     });
 
-    it('throws CustomError(401, "Acesso inválido ou expirado") for a malformed/invalid JWT', async () => {
+    it('throws CustomError(401, "invalid_session") for a malformed/invalid JWT', async () => {
       await expect(authenticateSession('not-a-valid-jwt', 'agent-1', buildDeps())).rejects.toMatchObject({
-        message: 'Acesso inválido ou expirado',
+        message: 'invalid_session',
         status: 401,
       });
     });
@@ -268,7 +268,7 @@ describe('createAuthMiddleware', () => {
       const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
       await expect(authenticateSession(rawToken, 'agent-1', buildDeps())).rejects.toMatchObject({
-        message: 'Acesso inválido',
+        message: 'invalid_session',
         status: 401,
       });
       const logged = JSON.parse(errorSpy.mock.calls[0][0] as string);
@@ -290,7 +290,7 @@ describe('createAuthMiddleware', () => {
       const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
       await expect(authenticateSession(rawToken, 'agent-attacker', buildDeps())).rejects.toMatchObject({
-        message: 'Acesso inválido',
+        message: 'invalid_session',
         status: 401,
       });
       expect(await Session.countDocuments({ user: user.id })).toBe(0);
@@ -300,7 +300,7 @@ describe('createAuthMiddleware', () => {
       errorSpy.mockRestore();
     });
 
-    it('throws CustomError(401, "Acesso inválido") when the User is inactive', async () => {
+    it('throws CustomError(401, "invalid_session") when the User is inactive', async () => {
       const tenant = await Tenant.create({ name: 'Empresa G', document: '77777777000107', status: 'active' });
       const user = await User.create({
         name: 'Gabriela',
@@ -313,7 +313,7 @@ describe('createAuthMiddleware', () => {
       const rawToken = await issueSession({ userId: user.id, deviceInfo: 'agent-1' });
 
       await expect(authenticateSession(rawToken, 'agent-1', buildDeps())).rejects.toMatchObject({
-        message: 'Acesso inválido',
+        message: 'invalid_session',
         status: 401,
       });
     });

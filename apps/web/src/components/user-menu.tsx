@@ -43,7 +43,7 @@ function UserMenuContent() {
       queryClient.clear();
       navigate({ to: '/auth' });
     },
-    onError: () => toast.error(t('action_error')),
+    onError: (error: Error) => toast.error(error.message),
   });
 
   return (

@@ -48,6 +48,6 @@ export const createChannel = async (tenantId: string, data: CreateChannel): Prom
 // customer.service.ts.getCustomerById.
 export const getCurrentChannel = async (tenantId: string): Promise<ChannelPublicRecord> => {
   const channel = await channelRepository.findByTenant(tenantId);
-  if (!channel) throw new CustomError('Channel não encontrado', 404);
+  if (!channel) throw new CustomError('not_found', 404);
   return toPublicRecord(channel);
 };

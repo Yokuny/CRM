@@ -9,6 +9,7 @@ import {
   tenantScoped,
 } from '@crm/db';
 import { withDbTiming } from '../metrics/db.metric.js';
+import { KeyedError } from '../middlewares/errorHandler.middleware.js';
 import { createMetaMediaClient, type MetaMediaClient } from '../providers/metaMediaClient.js';
 
 export type ConversationRecord = {
@@ -142,15 +143,16 @@ export const listConversations = async (
 
 // Erros tipados (não CustomError/HTTP-aware) — o service (T38) é quem
 // traduz cada um para o código HTTP certo, o repository nunca decide isso.
-export class ConversationNotFoundError extends Error {
+// KeyedError só fixa a chave de tradução que o cliente vai receber.
+export class ConversationNotFoundError extends KeyedError {
   constructor() {
-    super('Conversation não encontrada');
+    super('not_found');
   }
 }
 
-export class OutsideWindowError extends Error {
+export class OutsideWindowError extends KeyedError {
   constructor() {
-    super('Fora da janela de 24 horas — só um template aprovado pode ser enviado agora');
+    super('whatsapp_window_closed', 'fora da janela de 24 horas — só um template aprovado pode ser enviado agora');
   }
 }
 
@@ -269,15 +271,15 @@ export const getMessages = async (
     return { items: docs.map(toMessageListItem), total };
   });
 
-export class MessageNotFoundError extends Error {
+export class MessageNotFoundError extends KeyedError {
   constructor() {
-    super('Mensagem não encontrada');
+    super('not_found');
   }
 }
 
-export class MessageNotFailedError extends Error {
+export class MessageNotFailedError extends KeyedError {
   constructor() {
-    super('Só é possível reenviar uma mensagem com status failed');
+    super('only_failed_messages_can_be_resent');
   }
 }
 
@@ -332,9 +334,9 @@ export const resendMessage = async (
 // qualquer outra falha do metaMediaClient injetado) — erro tipado, nunca um
 // erro genérico; o service (T17) traduz para 502 (design.md Error Handling
 // Strategy).
-export class MetaMediaUnavailableError extends Error {
+export class MetaMediaUnavailableError extends KeyedError {
   constructor() {
-    super('Não foi possível carregar essa mídia agora');
+    super('load_error', 'mídia indisponível na Meta');
   }
 }
 

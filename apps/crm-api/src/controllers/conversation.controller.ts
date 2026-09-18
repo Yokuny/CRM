@@ -50,7 +50,7 @@ export const takeoverConversation = async (req: Request, res: Response, next: Ne
     res.json(respObj({ data: result }));
   } catch (e) {
     if (e instanceof ConversationAlreadyAssignedError) {
-      next(new CustomError(e.message, 409));
+      next(new CustomError(e.message, 409, e.detail));
       return;
     }
     next(e);
@@ -101,8 +101,8 @@ export const resendMessage = async (req: Request, res: Response, next: NextFunct
 // Tech Decisions, "response passthrough"). Erros conhecidos (CustomError, já
 // traduzidos pelo service: 404/502) são respondidos AQUI, nunca via
 // next(e)/errorHandler global — o errorHandler mascara toda mensagem de
-// status >= 500 ("Erro interno do servidor"), o que apagaria a mensagem
-// legível de MetaMediaUnavailableError exigida pelo spec.md (P2/AC3). Um
+// status >= 500 (`internal_error`), o que apagaria a chave específica de
+// MetaMediaUnavailableError exigida pelo spec.md (P2/AC3). Um
 // erro desconhecido (bug real, não um CustomError) ainda segue para
 // next(e)/errorHandler, mesmo caminho de qualquer outra rota.
 export const getMessageMedia = async (req: Request, res: Response, next: NextFunction): Promise<void> => {

@@ -26,7 +26,7 @@ export const getProfessionalById = async (req: Request, res: Response, next: Nex
     res.json(respObj({ data: result }));
   } catch (e) {
     if (e instanceof ProfessionalNotFoundError) {
-      next(new CustomError(e.message, 404));
+      next(new CustomError(e.message, 404, e.detail));
       return;
     }
     next(e);
@@ -55,7 +55,7 @@ export const updateProfessional = async (req: Request, res: Response, next: Next
     res.json(respObj({ data: result }));
   } catch (e) {
     if (e instanceof ProfessionalNotFoundError) {
-      next(new CustomError(e.message, 404));
+      next(new CustomError(e.message, 404, e.detail));
       return;
     }
     next(e);

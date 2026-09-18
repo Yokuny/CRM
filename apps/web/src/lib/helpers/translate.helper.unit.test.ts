@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
+import { API_MESSAGE_KEYS } from '@crm/contracts';
 import { describe, expect, it } from 'vitest';
 import { t, translationKeys, WEEKDAY_KEYS } from './translate.helper.js';
 
@@ -40,6 +41,11 @@ describe('translate.helper — regras de chave (apps/web/CLAUDE.md)', () => {
 
   it('todo item de WEEKDAY_KEYS existe no dicionário', () => {
     const missing = WEEKDAY_KEYS.filter((key) => !translationKeys.has(key));
+    expect(missing).toEqual([]);
+  });
+
+  it('toda chave que a API pode devolver em `message` (API_MESSAGE_KEYS) existe no dicionário', () => {
+    const missing = API_MESSAGE_KEYS.filter((key) => !translationKeys.has(key));
     expect(missing).toEqual([]);
   });
 

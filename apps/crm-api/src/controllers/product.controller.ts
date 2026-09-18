@@ -15,7 +15,7 @@ export const createProduct = async (req: Request, res: Response, next: NextFunct
     res.status(201).json(respObj({ data: result }));
   } catch (e) {
     if (e instanceof ProductValidationError) {
-      next(new CustomError(e.message, 400));
+      next(new CustomError(e.message, 400, e.detail));
       return;
     }
     next(e);
@@ -44,11 +44,11 @@ export const updateProduct = async (req: Request, res: Response, next: NextFunct
     res.json(respObj({ data: result }));
   } catch (e) {
     if (e instanceof ProductValidationError) {
-      next(new CustomError(e.message, 400));
+      next(new CustomError(e.message, 400, e.detail));
       return;
     }
     if (e instanceof ProductNotFoundError) {
-      next(new CustomError(e.message, 404));
+      next(new CustomError(e.message, 404, e.detail));
       return;
     }
     next(e);

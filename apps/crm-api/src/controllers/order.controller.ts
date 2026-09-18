@@ -36,11 +36,11 @@ export const approveOrder = async (req: Request, res: Response, next: NextFuncti
     res.json(respObj({ data: result }));
   } catch (e) {
     if (e instanceof OrderNotFoundError) {
-      next(new CustomError(e.message, 404));
+      next(new CustomError(e.message, 404, e.detail));
       return;
     }
     if (e instanceof OrderAlreadyTerminalError) {
-      next(new CustomError(e.message, 409));
+      next(new CustomError(e.message, 409, e.detail));
       return;
     }
     next(e);
@@ -59,11 +59,11 @@ export const rejectOrder = async (req: Request, res: Response, next: NextFunctio
     res.json(respObj({ data: result }));
   } catch (e) {
     if (e instanceof OrderNotFoundError) {
-      next(new CustomError(e.message, 404));
+      next(new CustomError(e.message, 404, e.detail));
       return;
     }
     if (e instanceof OrderAlreadyTerminalError) {
-      next(new CustomError(e.message, 409));
+      next(new CustomError(e.message, 409, e.detail));
       return;
     }
     next(e);

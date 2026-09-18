@@ -46,7 +46,7 @@ export const appointmentConfirmationQuery = (token: string) =>
         `/appointment-confirmations/${encodeURIComponent(token)}`,
       );
       if (!res.success || !res.data) {
-        throw new AppointmentConfirmationError(res.message ?? 'Não foi possível carregar o agendamento.', res.status);
+        throw new AppointmentConfirmationError(res.message ?? t('load_error'), res.status);
       }
       return res.data;
     },

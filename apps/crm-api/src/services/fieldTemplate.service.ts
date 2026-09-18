@@ -39,7 +39,7 @@ export const createFieldTemplate = async (
     });
   } catch (e) {
     if (isDuplicateKeyError(e)) {
-      throw new CustomError('Já existe um template para este tipo de entidade e chave', 409);
+      throw new CustomError('already_exists', 409);
     }
     throw e;
   }
@@ -116,19 +116,19 @@ export const bumpFieldTemplateVersion = async (
   stores: FieldValueStores,
 ): Promise<{ currentVersion: number }> => {
   const template = await fieldTemplateRepository.findTemplateById(tenantId, templateId);
-  if (!template) throw new CustomError('Template não encontrado', 404);
+  if (!template) throw new CustomError('template_not_found', 404);
 
   // AD-023: o schema (bumpFieldTemplateSchema) não tem `targetType` para
   // exigir `stages` estaticamente — mesmo split já usado em `resolveKey` para
   // customer/process em createFieldTemplate. Roda ANTES de reivindicar
   // qualquer slot, para nunca deixar uma versão órfã no índice único.
   if (template.targetType === 'process' && !data.stages) {
-    throw new CustomError('stages é obrigatório para bump de template process', 400);
+    throw new CustomError('invalid_data', 400, 'stages é obrigatório para bump de template process');
   }
 
   const base = await fieldTemplateRepository.findCurrentVersion(tenantId, template.id, data.expectedVersion);
   if (!base) {
-    throw new CustomError('Versão informada não existe neste template. Recarregue a versão corrente.', 409);
+    throw new CustomError('outdated_version', 409, 'versão informada não existe neste template');
   }
 
   const diff = diffFields(base.fields, data.fields);
@@ -139,8 +139,9 @@ export const bumpFieldTemplateVersion = async (
     const uncovered = diff.changes.filter((change) => !(change.fieldId in migration));
     if (uncovered.length > 0) {
       throw new CustomError(
-        `Mudança destrutiva exige plano de migração para: ${uncovered.map((change) => change.fieldId).join(', ')}`,
+        'migration_plan_required',
         400,
+        `sem plano de migração para: ${uncovered.map((change) => change.fieldId).join(', ')}`,
       );
     }
   }
@@ -156,7 +157,7 @@ export const bumpFieldTemplateVersion = async (
     });
   } catch (e) {
     if (isDuplicateKeyError(e)) {
-      throw new CustomError('Outro bump já avançou este template. Recarregue a versão corrente.', 409);
+      throw new CustomError('outdated_version', 409, 'outro bump já avançou este template');
     }
     throw e;
   }
@@ -208,7 +209,7 @@ export const archiveFieldTemplate = async (
   templateId: string,
 ): Promise<{ id: string; archived: boolean }> => {
   const template = await fieldTemplateRepository.findTemplateById(tenantId, templateId);
-  if (!template) throw new CustomError('Template não encontrado', 404);
+  if (!template) throw new CustomError('template_not_found', 404);
 
   await fieldTemplateRepository.archiveTemplate(template.id);
 

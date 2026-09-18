@@ -29,7 +29,7 @@ export const createFieldTemplateController = (deps: FieldTemplateControllerDeps)
         req.query.targetType as FieldTemplateTargetType,
         req.query.key as string,
       );
-      if (!result) throw new CustomError('Template não encontrado', 404);
+      if (!result) throw new CustomError('template_not_found', 404);
       res.json(respObj({ data: result }));
     } catch (e) {
       next(e);
@@ -59,7 +59,7 @@ export const createFieldTemplateController = (deps: FieldTemplateControllerDeps)
         req.params.id as string,
         req.params.version as unknown as number,
       );
-      if (!result) throw new CustomError('Versão de template não encontrada', 404);
+      if (!result) throw new CustomError('template_not_found', 404);
       res.json(respObj({ data: result }));
     } catch (e) {
       next(e);

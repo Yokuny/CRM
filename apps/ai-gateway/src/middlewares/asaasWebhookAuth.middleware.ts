@@ -18,13 +18,13 @@ export const createAsaasWebhookAuthMiddleware = () => {
   return async (req: AsaasWebhookRequest, res: Response, next: NextFunction): Promise<void> => {
     const integration = await AsaasIntegration.findOne({ webhookToken: req.params.webhookToken }).lean();
     if (!integration) {
-      res.status(401).json(badRespObj({ message: 'Token de webhook Asaas desconhecido' }));
+      res.status(401).json(badRespObj({ message: 'invalid_access' }));
       return;
     }
 
     const header = req.header('asaas-access-token');
     if (!header || sha256(header) !== integration.webhookAuthTokenHash) {
-      res.status(401).json(badRespObj({ message: 'Header asaas-access-token ausente ou inválido' }));
+      res.status(401).json(badRespObj({ message: 'invalid_access' }));
       return;
     }
 

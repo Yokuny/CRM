@@ -5,7 +5,7 @@ import { z } from 'zod';
 import * as customerController from '../controllers/customer.controller.js';
 import { customerRateLimit } from '../middlewares/rateLimit.middleware.js';
 import { tenantAssignmentCheck } from '../middlewares/tenantAssign.middleware.js';
-import { validBody, validParams } from '../middlewares/validation.middleware.js';
+import { invalidDataError, validBody, validParams } from '../middlewares/validation.middleware.js';
 
 // Mesmo padrão de templateIdParamSchema em fieldTemplate.router.ts.
 const customerIdParamSchema = z.object({ id: idSchema }).strict();
@@ -37,10 +37,7 @@ const listCustomersQuerySchema = z
 const validListCustomersQuery: RequestHandler = (req, _res, next) => {
   const result = listCustomersQuerySchema.safeParse(req.query);
   if (!result.success) {
-    const message = result.error.issues
-      .map((issue) => `${issue.path.join('.') || 'query'}: ${issue.message}`)
-      .join('; ');
-    next(Object.assign(new Error(message), { status: 400 }));
+    next(invalidDataError(result.error, 'query'));
     return;
   }
   Object.defineProperty(req, 'query', { value: result.data, configurable: true, enumerable: true, writable: true });

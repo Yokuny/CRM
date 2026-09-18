@@ -12,10 +12,9 @@ export const MAX_PAGE_SIZE = 100;
 const normalizePhone = (phone: string): string => phone.replace(/\D/g, '');
 const normalizeDocument = (document: string): string => document.replace(/[^a-zA-Z0-9]/g, '');
 
-// Mesma convenção já usada em validation.middleware.ts/fieldTemplate.service.ts
-// para condensar erros de campo num único CustomError.message legível — o
-// envelope de resposta do projeto (badRespObj) só carrega `message`, nunca um
-// objeto estruturado à parte.
+// Condensa os erros de campo do field-engine num único texto para o `detail`
+// do CustomError (só log) — o cliente recebe só a chave `invalid_data`, mesma
+// convenção de validation.middleware.ts.
 const formatValidationErrors = (errors: Record<string, string[]>): string =>
   Object.entries(errors)
     .map(([field, messages]) => `${field}: ${messages.join(', ')}`)
@@ -30,16 +29,16 @@ export const createCustomer = async (tenantId: string, data: CreateCustomer): Pr
     'customer',
     DEFAULT_CUSTOMER_TEMPLATE_KEY,
   );
-  if (!template) throw new CustomError('Template de cliente não encontrado', 404);
-  if (template.archived) throw new CustomError('Template arquivado', 400);
+  if (!template) throw new CustomError('template_not_found', 404);
+  if (template.archived) throw new CustomError('archived_template', 400);
 
   const version = await fieldTemplateRepository.findCurrentVersion(tenantId, template.id, template.currentVersion);
-  if (!version) throw new CustomError('Template de cliente não encontrado', 404);
+  if (!version) throw new CustomError('template_not_found', 404);
 
   const values = data.values ?? {};
   const result = validate(version.fields, values);
   if (!result.valid) {
-    throw new CustomError(formatValidationErrors(result.errors), 400);
+    throw new CustomError('invalid_data', 400, formatValidationErrors(result.errors));
   }
 
   return customerRepository.createCustomer({
@@ -59,7 +58,7 @@ export const createCustomer = async (tenantId: string, data: CreateCustomer): Pr
 // existência).
 export const getCustomerById = async (tenantId: string, id: string): Promise<CustomerRecord> => {
   const customer = await customerRepository.findById(tenantId, id);
-  if (!customer) throw new CustomError('Customer não encontrado', 404);
+  if (!customer) throw new CustomError('not_found', 404);
   return customer;
 };
 
@@ -72,22 +71,22 @@ export const getCustomerById = async (tenantId: string, id: string): Promise<Cus
 // contrário de createCustomer, não há checagem de `template.archived` aqui.
 export const updateCustomer = async (tenantId: string, id: string, data: UpdateCustomer): Promise<CustomerRecord> => {
   const existing = await customerRepository.findById(tenantId, id);
-  if (!existing) throw new CustomError('Customer não encontrado', 404);
+  if (!existing) throw new CustomError('not_found', 404);
 
   const template = await fieldTemplateRepository.findTemplateByTargetKey(
     tenantId,
     'customer',
     DEFAULT_CUSTOMER_TEMPLATE_KEY,
   );
-  if (!template) throw new CustomError('Template de cliente não encontrado', 404);
+  if (!template) throw new CustomError('template_not_found', 404);
 
   const version = await fieldTemplateRepository.findCurrentVersion(tenantId, template.id, template.currentVersion);
-  if (!version) throw new CustomError('Template de cliente não encontrado', 404);
+  if (!version) throw new CustomError('template_not_found', 404);
 
   const mergedValues = data.values ? { ...existing.values, ...data.values } : existing.values;
   const result = validate(version.fields, mergedValues);
   if (!result.valid) {
-    throw new CustomError(formatValidationErrors(result.errors), 400);
+    throw new CustomError('invalid_data', 400, formatValidationErrors(result.errors));
   }
 
   const updated = await customerRepository.updateCustomer(tenantId, id, {
@@ -98,7 +97,7 @@ export const updateCustomer = async (tenantId: string, id: string, data: UpdateC
     template: template.id,
     templateVersion: template.currentVersion,
   });
-  if (!updated) throw new CustomError('Customer não encontrado', 404);
+  if (!updated) throw new CustomError('not_found', 404);
   return updated;
 };
 

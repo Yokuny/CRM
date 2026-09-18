@@ -1,5 +1,6 @@
 import type { CreateCard, MoveCard, UpdateCard } from '@crm/contracts';
 import { Customer, Order, Process, tenantScoped, User } from '@crm/db';
+import { KeyedError } from '../middlewares/errorHandler.middleware.js';
 import * as boardRepository from '../repositories/board.repository.js';
 import type { CardRecord } from '../repositories/card.repository.js';
 import * as cardRepository from '../repositories/card.repository.js';
@@ -7,18 +8,18 @@ import * as cardRepository from '../repositories/card.repository.js';
 // AD-010: findById/updateCard/moveCard/deleteCard (card.repository, T7) já
 // são tenant+board-scoped — um cardId de outro tenant/board simplesmente não
 // existe para esta sessão.
-export class CardNotFoundError extends Error {}
+export class CardNotFoundError extends KeyedError {}
 
 // KAN-15/KAN-21: `column` precisa ser um dos Board.columns[]._id — nunca
 // revela se o problema é "board não existe" ou "coluna não existe nele"
 // (mesmo board+coluna são ambos internos ao tenant, sem necessidade de
 // distinguir 404 de 400 aqui — o controller, T11, decide o código HTTP).
-export class InvalidColumnError extends Error {}
+export class InvalidColumnError extends KeyedError {}
 
 // KAN-14: customer/process/order/assignee inexistente OU de outro tenant —
 // sempre 400 (nunca 404, não revela que o id existe em outro tenant, mesmo
 // cuidado do AD-010).
-export class InvalidReferenceError extends Error {}
+export class InvalidReferenceError extends KeyedError {}
 
 type CardReferences = { customer?: string; process?: string; order?: string; assignee?: string };
 
@@ -32,28 +33,28 @@ const assertReferencesExist = async (tenantId: string, refs: CardReferences): Pr
   if (refs.customer !== undefined) {
     checks.push(
       Customer.exists(tenantScoped({ Tenant: tenantId, _id: refs.customer })).then((found) => {
-        if (!found) throw new InvalidReferenceError('customer não encontrado ou de outro tenant');
+        if (!found) throw new InvalidReferenceError('invalid_data', 'customer não encontrado ou de outro tenant');
       }),
     );
   }
   if (refs.process !== undefined) {
     checks.push(
       Process.exists(tenantScoped({ Tenant: tenantId, _id: refs.process })).then((found) => {
-        if (!found) throw new InvalidReferenceError('process não encontrado ou de outro tenant');
+        if (!found) throw new InvalidReferenceError('invalid_data', 'process não encontrado ou de outro tenant');
       }),
     );
   }
   if (refs.order !== undefined) {
     checks.push(
       Order.exists(tenantScoped({ Tenant: tenantId, _id: refs.order })).then((found) => {
-        if (!found) throw new InvalidReferenceError('order não encontrado ou de outro tenant');
+        if (!found) throw new InvalidReferenceError('invalid_data', 'order não encontrado ou de outro tenant');
       }),
     );
   }
   if (refs.assignee !== undefined) {
     checks.push(
       User.exists(tenantScoped({ Tenant: tenantId, _id: refs.assignee })).then((found) => {
-        if (!found) throw new InvalidReferenceError('assignee não encontrado ou de outro tenant');
+        if (!found) throw new InvalidReferenceError('invalid_data', 'assignee não encontrado ou de outro tenant');
       }),
     );
   }
@@ -66,9 +67,9 @@ const assertReferencesExist = async (tenantId: string, refs: CardReferences): Pr
 // `column` é válido, sempre chamada ANTES de qualquer escrita de column.
 const assertColumnExists = async (tenantId: string, boardId: string, columnId: string): Promise<void> => {
   const board = await boardRepository.findById(tenantId, boardId);
-  if (!board) throw new InvalidColumnError('Board não encontrado');
+  if (!board) throw new InvalidColumnError('invalid_data', 'board não encontrado');
   const exists = board.columns.some((column) => column.id === columnId);
-  if (!exists) throw new InvalidColumnError('Coluna não existe neste board');
+  if (!exists) throw new InvalidColumnError('invalid_data', 'coluna não existe neste board');
 };
 
 // KAN-13: card 100% livre, só título+coluna obrigatórios. `position` sempre
@@ -130,7 +131,7 @@ export const updateCard = async (
     order: data.order,
     assignee: data.assignee,
   });
-  if (!updated) throw new CardNotFoundError('Card não encontrado');
+  if (!updated) throw new CardNotFoundError('not_found');
   return updated;
 };
 
@@ -145,11 +146,11 @@ export const moveCard = async (
   await assertColumnExists(tenantId, boardId, data.column);
 
   const moved = await cardRepository.moveCard(tenantId, boardId, cardId, data.column, data.position);
-  if (!moved) throw new CardNotFoundError('Card não encontrado');
+  if (!moved) throw new CardNotFoundError('not_found');
   return moved;
 };
 
 export const deleteCard = async (tenantId: string, boardId: string, cardId: string): Promise<void> => {
   const result = await cardRepository.deleteCard(tenantId, boardId, cardId);
-  if (result.deletedCount === 0) throw new CardNotFoundError('Card não encontrado');
+  if (result.deletedCount === 0) throw new CardNotFoundError('not_found');
 };

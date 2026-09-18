@@ -13,6 +13,7 @@ import {
   wallClockToUtc,
 } from '@crm/db';
 import { env } from '../config/env.config.js';
+import { KeyedError } from '../middlewares/errorHandler.middleware.js';
 import type { AppointmentRecord } from '../repositories/appointment.repository.js';
 import * as appointmentRepository from '../repositories/appointment.repository.js';
 import * as conversationRepository from '../repositories/conversation.repository.js';
@@ -26,9 +27,9 @@ import * as professionalRepository from '../repositories/professional.repository
 // parede) e traduz o `code` tipado das transições (packages/db,
 // appointmentTransitions.ts) para um erro tipado, mesmo idioma de
 // order.service.ts (erro tipado aqui, status HTTP só no controller, T24/T25).
-export class AppointmentNotFoundError extends Error {}
-export class AppointmentConflictError extends Error {}
-export class AppointmentTerminalError extends Error {}
+export class AppointmentNotFoundError extends KeyedError {}
+export class AppointmentConflictError extends KeyedError {}
+export class AppointmentTerminalError extends KeyedError {}
 
 // `invalid` (professionalId/spaceId que não pertence ao tenant) se comporta,
 // da perspectiva do operador, como "recurso não encontrado" — mesmo
@@ -36,9 +37,11 @@ export class AppointmentTerminalError extends Error {}
 // service (só confirmByToken/cancelByToken, T22, na rota pública) — fallback
 // apenas para exaustividade de tipo, nunca esperado de fato.
 const translateTransitionError = (result: AppointmentTransitionError): Error => {
-  if (result.code === 'not_found' || result.code === 'invalid') return new AppointmentNotFoundError(result.error);
-  if (result.code === 'conflict') return new AppointmentConflictError(result.error);
-  if (result.code === 'terminal') return new AppointmentTerminalError(result.error);
+  if (result.code === 'not_found' || result.code === 'invalid') {
+    return new AppointmentNotFoundError('not_found', result.error);
+  }
+  if (result.code === 'conflict') return new AppointmentConflictError('unavailable_time', result.error);
+  if (result.code === 'terminal') return new AppointmentTerminalError('already_finalized', result.error);
   return new Error(result.error);
 };
 
@@ -48,7 +51,7 @@ const translateTransitionError = (result: AppointmentTransitionError): Error => 
 // leitura tenant-scoped/resolvida em lote em vez de duplicá-la aqui.
 const requireAppointmentRecord = async (tenantId: string, appointmentId: string): Promise<AppointmentRecord> => {
   const record = await appointmentRepository.findById(tenantId, appointmentId);
-  if (!record) throw new AppointmentNotFoundError('Appointment não encontrado');
+  if (!record) throw new AppointmentNotFoundError('not_found');
   return record;
 };
 
@@ -87,7 +90,7 @@ export const createManualAppointment = async (
   input: CreateAppointment,
 ): Promise<AppointmentRecord> => {
   const professional = await professionalRepository.findById(tenantId, input.professionalId);
-  if (!professional) throw new AppointmentNotFoundError('Profissional não encontrado');
+  if (!professional) throw new AppointmentNotFoundError('not_found');
 
   const start = wallClockToUtc(input.date, input.time);
   const end = new Date(start.getTime() + professional.slotDurationMinutes * 60_000);
@@ -110,7 +113,7 @@ export const createManualAppointment = async (
 // de parede), sem cálculo de duração.
 export const createBlock = async (tenantId: string, input: CreateBlock): Promise<AppointmentRecord> => {
   const professional = await professionalRepository.findById(tenantId, input.professionalId);
-  if (!professional) throw new AppointmentNotFoundError('Profissional não encontrado');
+  if (!professional) throw new AppointmentNotFoundError('not_found');
 
   const start = wallClockToUtc(input.startDate, input.startTime);
   const end = wallClockToUtc(input.endDate, input.endTime);
@@ -243,10 +246,10 @@ export const requestConfirmationLink = async (tenantId: string, appointmentId: s
   if ('error' in issued) throw translateTransitionError(issued);
 
   const appointment = await requireAppointmentRecord(tenantId, appointmentId);
-  if (!appointment.customer) throw new AppointmentNotFoundError('Appointment sem cliente vinculado');
+  if (!appointment.customer) throw new AppointmentNotFoundError('no_linked_customer');
 
   const customer = await customerRepository.findById(tenantId, appointment.customer);
-  if (!customer) throw new AppointmentNotFoundError('Cliente não encontrado');
+  if (!customer) throw new AppointmentNotFoundError('not_found');
 
   const confirmationUrl = `${env.WEB_BASE_URL}/appointment?token=${issued.confirmationToken}`;
   const text = `Olá! Confirme ou cancele seu agendamento de ${dateInDisplayTz(appointment.start)} às ${timeInDisplayTz(appointment.start)} pelo link: ${confirmationUrl}`;

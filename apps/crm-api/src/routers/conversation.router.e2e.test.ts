@@ -219,7 +219,7 @@ describe('conversation routes', () => {
       expect(persisted?.assignee?.toString()).toBe(user.id);
     });
 
-    it('responds 409 naming the current assignee when a DIFFERENT operator tries to take over (spec.md INBOX-08/AC3, context.md decision #6)', async () => {
+    it('responds 409 with the conversation_already_assigned key when a DIFFERENT operator tries to take over (spec.md INBOX-08/AC3)', async () => {
       const { tenant, user: currentAssignee } = await seedTenantUser(['operador']);
       const { conversation } = await seedConversationFixture(tenant._id.toString(), {
         mode: 'human',
@@ -243,7 +243,7 @@ describe('conversation routes', () => {
         .set('User-Agent', DEVICE);
 
       expect(res.status).toBe(409);
-      expect(res.body.message).toContain(currentAssignee.name);
+      expect(res.body.message).toBe('conversation_already_assigned');
       const persisted = await Conversation.findById(conversation._id).lean();
       expect(persisted?.assignee?.toString()).toBe(currentAssignee.id);
     });
@@ -810,7 +810,7 @@ describe('conversation routes', () => {
         .set('User-Agent', DEVICE);
 
       expect(res.status).toBe(502);
-      expect(res.body.message).toBe('Não foi possível carregar essa mídia agora');
+      expect(res.body.message).toBe('load_error');
       expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('inbox.media_fetch_failed'));
       errorSpy.mockRestore();
     });

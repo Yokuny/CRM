@@ -12,7 +12,7 @@ import { z } from 'zod';
 import * as appointmentController from '../controllers/appointment.controller.js';
 import { checkRole } from '../middlewares/authorization.middleware.js';
 import { tenantAssignmentCheck } from '../middlewares/tenantAssign.middleware.js';
-import { validBody, validParams } from '../middlewares/validation.middleware.js';
+import { invalidDataError, validBody, validParams } from '../middlewares/validation.middleware.js';
 
 // spec.md SCH-07: mesmo canOperate já usado em product.router.ts/order.router.ts.
 const canOperate = checkRole(['admin', 'gestor', 'operador']);
@@ -53,10 +53,7 @@ const buildValidQuery = (schema: z.ZodType): RequestHandler => {
   return (req, _res, next) => {
     const result = schema.safeParse(req.query);
     if (!result.success) {
-      const message = result.error.issues
-        .map((issue) => `${issue.path.join('.') || 'query'}: ${issue.message}`)
-        .join('; ');
-      next(Object.assign(new Error(message), { status: 400 }));
+      next(invalidDataError(result.error, 'query'));
       return;
     }
     Object.defineProperty(req, 'query', { value: result.data, configurable: true, enumerable: true, writable: true });

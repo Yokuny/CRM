@@ -22,15 +22,15 @@ describe('client.api', () => {
       );
     });
 
-    it('passes through a backend error ApiResponse (success:false, message set) without throwing', async () => {
+    it('passes through a backend error ApiResponse (success:false) without throwing, translating its message key', async () => {
       const fetchMock = vi.fn().mockResolvedValue({
-        json: () => Promise.resolve({ success: false, message: 'Convite inválido.' }),
+        json: () => Promise.resolve({ success: false, message: 'invalid_link' }),
       });
       vi.stubGlobal('fetch', fetchMock);
 
       const result = await get('/invites/bad-token');
 
-      expect(result).toEqual({ success: false, message: 'Convite inválido.' });
+      expect(result).toEqual({ success: false, message: 'Link inválido.' });
     });
 
     it('never throws on a network failure — returns an ApiResponse with success:false and a readable message (FND-10/AC4)', async () => {
@@ -46,7 +46,7 @@ describe('client.api', () => {
   describe('post', () => {
     it('sends a JSON body with Content-Type and credentials:"include"', async () => {
       const fetchMock = vi.fn().mockResolvedValue({
-        json: () => Promise.resolve({ success: true, message: 'Login realizado com sucesso.' }),
+        json: () => Promise.resolve({ success: true, message: 'signed_in_successfully' }),
       });
       vi.stubGlobal('fetch', fetchMock);
 
@@ -173,7 +173,7 @@ describe('client.api', () => {
     it('carries a 404 status through on a not-found response (never collapsed into the generic error message)', async () => {
       const fetchMock = vi.fn().mockResolvedValue({
         status: 404,
-        json: () => Promise.resolve({ success: false, message: 'Link de confirmação não encontrado' }),
+        json: () => Promise.resolve({ success: false, message: 'invalid_link' }),
       });
       vi.stubGlobal('fetch', fetchMock);
 
@@ -181,12 +181,13 @@ describe('client.api', () => {
 
       expect(result.status).toBe(404);
       expect(result.success).toBe(false);
+      expect(result.message).toBe('Link inválido.');
     });
 
     it('carries a 410 status through on an expired-token response', async () => {
       const fetchMock = vi.fn().mockResolvedValue({
         status: 410,
-        json: () => Promise.resolve({ success: false, message: 'Link de confirmação expirado' }),
+        json: () => Promise.resolve({ success: false, message: 'expired_link' }),
       });
       vi.stubGlobal('fetch', fetchMock);
 

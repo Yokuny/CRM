@@ -23,7 +23,7 @@ describe('signinRateLimit (FND-14)', () => {
     }
 
     expect(last?.status).toBe(429);
-    expect(last?.body).toEqual({ success: false, message: expect.stringMatching(/login/i) });
+    expect(last?.body).toEqual({ success: false, message: 'too_many_attempts' });
   });
 });
 
@@ -42,6 +42,6 @@ describe('inviteRateLimit (FND-14)', () => {
     }
 
     expect(last?.status).toBe(429);
-    expect(last?.body).toEqual({ success: false, message: expect.stringMatching(/convite/i) });
+    expect(last?.body).toEqual({ success: false, message: 'too_many_attempts' });
   });
 });

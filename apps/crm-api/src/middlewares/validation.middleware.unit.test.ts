@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
+import { CustomError } from './errorHandler.middleware.js';
 import { validBody, validParams, validQuery } from './validation.middleware.js';
 
 const testSchema = z
@@ -21,11 +22,12 @@ describe('validBody', () => {
     validBody(testSchema)(req, {} as Response, next);
 
     expect(next).toHaveBeenCalledTimes(1);
-    const err = (next as unknown as ReturnType<typeof vi.fn>).mock.calls[0][0] as Error & { status: number };
-    expect(err).toBeInstanceOf(Error);
+    const err = (next as unknown as ReturnType<typeof vi.fn>).mock.calls[0][0] as CustomError;
+    expect(err).toBeInstanceOf(CustomError);
     expect(err.status).toBe(400);
-    expect(err.message).toContain('name');
-    expect(err.message).toContain('age');
+    expect(err.message).toBe('invalid_data');
+    expect(err.detail).toContain('name');
+    expect(err.detail).toContain('age');
   });
 
   it('calls next with no arguments when the body matches the schema', () => {

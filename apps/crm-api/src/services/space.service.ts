@@ -1,11 +1,12 @@
 import type { CreateSpace, UpdateSpace } from '@crm/contracts';
+import { KeyedError } from '../middlewares/errorHandler.middleware.js';
 import type { SpaceRecord } from '../repositories/space.repository.js';
 import * as spaceRepository from '../repositories/space.repository.js';
 
 // AD-010: findById/updateSpace (space.repository, T16) já são tenant-scoped
 // — um id de outro tenant simplesmente não existe para esta sessão, mesmo
 // idioma 404 de product.service.ts's ProductNotFoundError.
-export class SpaceNotFoundError extends Error {}
+export class SpaceNotFoundError extends KeyedError {}
 
 // createSpaceSchema/updateSpaceSchema (contracts, T11) já cobrem
 // integralmente a única regra de SCH-04 (name obrigatório/não vazio) — sem
@@ -15,13 +16,13 @@ export const createSpace = async (tenantId: string, data: CreateSpace): Promise<
 
 export const getSpaceById = async (tenantId: string, id: string): Promise<SpaceRecord> => {
   const space = await spaceRepository.findById(tenantId, id);
-  if (!space) throw new SpaceNotFoundError('Ambiente não encontrado');
+  if (!space) throw new SpaceNotFoundError('not_found');
   return space;
 };
 
 export const updateSpace = async (tenantId: string, id: string, data: UpdateSpace): Promise<SpaceRecord> => {
   const updated = await spaceRepository.updateSpace(tenantId, id, data);
-  if (!updated) throw new SpaceNotFoundError('Ambiente não encontrado');
+  if (!updated) throw new SpaceNotFoundError('not_found');
   return updated;
 };
 

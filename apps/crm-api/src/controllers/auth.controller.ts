@@ -9,7 +9,7 @@ export const signin = async (req: Request, res: Response, next: NextFunction): P
     const deviceInfo = (req.headers['user-agent'] as string | undefined) ?? 'unknown';
     const sessionToken = await authService.signin(req.body, deviceInfo);
     res.cookie('refreshToken', sessionToken, cookieOptions);
-    res.json(respObj({ message: 'Login realizado com sucesso.' }));
+    res.json(respObj({ message: 'signed_in_successfully' }));
   } catch (e) {
     next(e);
   }
@@ -19,7 +19,7 @@ export const signout = async (req: Request, res: Response, next: NextFunction): 
   try {
     await authService.signout(extractToken(req));
     res.clearCookie('refreshToken', clearCookieOptions);
-    res.json(respObj({ message: 'Logout realizado com sucesso.' }));
+    res.json(respObj({ message: 'signed_out_successfully' }));
   } catch (e) {
     next(e);
   }

@@ -7,7 +7,6 @@ import { CustomError } from '../middlewares/errorHandler.middleware.js';
 import * as authRepository from '../repositories/auth.repository.js';
 
 const SESSION_TTL_MS = 4 * 24 * 60 * 60 * 1000;
-const INVALID_CREDENTIALS_MESSAGE = 'E-mail ou senha inválidos.';
 
 // Tudo que grava sessão é AWAITADO antes de devolver o token para o
 // controller montar o cookie — corrige o `saveRefreshToken(...)` sem await
@@ -16,7 +15,7 @@ const INVALID_CREDENTIALS_MESSAGE = 'E-mail ou senha inválidos.';
 export const signin = async (data: SignIn, deviceInfo: string): Promise<string> => {
   const user = await authRepository.findUserByEmail(data.email);
   if (!user?.active || !(await bcrypt.compare(data.password, user.password))) {
-    throw new CustomError(INVALID_CREDENTIALS_MESSAGE, 401);
+    throw new CustomError('invalid_credentials', 401);
   }
 
   const sessionToken = jwt.sign({ user: user.id }, env.SESSION_JWT_SECRET, { expiresIn: '4d' });
@@ -51,7 +50,7 @@ export type SessionView = {
 // mínimo de TenantUser não carrega — outra leitura do banco, nunca do token.
 export const getSessionView = async (tenantUser: TenantUser): Promise<SessionView> => {
   const user = await authRepository.findUserView(tenantUser.user);
-  if (!user) throw new CustomError('Usuário não encontrado.', 401);
+  if (!user) throw new CustomError('invalid_session', 401, 'usuário não encontrado');
 
   const tenant = tenantUser.tenant ? await authRepository.findTenantView(tenantUser.tenant) : undefined;
 

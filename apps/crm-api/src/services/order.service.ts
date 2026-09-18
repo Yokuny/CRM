@@ -1,5 +1,6 @@
 import type { OrderStatus } from '@crm/db';
 import { rejectOrder as rejectOrderTransition, setOperatorApproved } from '@crm/db';
+import { KeyedError } from '../middlewares/errorHandler.middleware.js';
 import type { OrderRecord } from '../repositories/order.repository.js';
 import * as orderRepository from '../repositories/order.repository.js';
 
@@ -10,12 +11,12 @@ export const MAX_PAGE_SIZE = 100;
 // um id de outro tenant simplesmente não existe para esta sessão. Mesmo
 // idioma 404 de customer.service.ts/conversation.service.ts (spec.md Edge
 // Cases: "id ausente e id de outro tenant são indistinguíveis").
-export class OrderNotFoundError extends Error {}
+export class OrderNotFoundError extends KeyedError {}
 
 // spec.md AC7 ("approve/reject sobre Order já terminal"): ação sobre um Order
 // confirmed/rejected responde erro sem mudar nada — o controller (T10)
 // traduz para 409.
-export class OrderAlreadyTerminalError extends Error {}
+export class OrderAlreadyTerminalError extends KeyedError {}
 
 // Mesmo clamp de page/limit de product.service.ts/customer.service.ts
 // (CORE-12) — o repository (T8) confia neles como já corretos.
@@ -57,8 +58,8 @@ export const listOrders = async (
 // aqui, já que não existe delete de Order nesta feature.
 const requirePendingOrder = async (tenantId: string, orderId: string): Promise<OrderRecord> => {
   const existing = await orderRepository.findById(tenantId, orderId);
-  if (!existing) throw new OrderNotFoundError('Order não encontrado');
-  if (existing.status !== 'pending_approval') throw new OrderAlreadyTerminalError('Order já está em estado terminal');
+  if (!existing) throw new OrderNotFoundError('not_found');
+  if (existing.status !== 'pending_approval') throw new OrderAlreadyTerminalError('already_finalized');
   return existing;
 };
 
@@ -71,7 +72,7 @@ const requirePendingOrder = async (tenantId: string, orderId: string): Promise<O
 export const approveOrder = async (tenantId: string, orderId: string, userId: string) => {
   await requirePendingOrder(tenantId, orderId);
   const result = await setOperatorApproved(tenantId, orderId, userId);
-  if ('error' in result) throw new OrderAlreadyTerminalError(result.error);
+  if ('error' in result) throw new OrderAlreadyTerminalError('already_finalized', result.error);
   return result;
 };
 
@@ -80,6 +81,6 @@ export const approveOrder = async (tenantId: string, orderId: string, userId: st
 export const rejectOrder = async (tenantId: string, orderId: string, userId: string, reason?: string) => {
   await requirePendingOrder(tenantId, orderId);
   const result = await rejectOrderTransition(tenantId, orderId, userId, reason);
-  if ('error' in result) throw new OrderAlreadyTerminalError(result.error);
+  if ('error' in result) throw new OrderAlreadyTerminalError('already_finalized', result.error);
   return result;
 };

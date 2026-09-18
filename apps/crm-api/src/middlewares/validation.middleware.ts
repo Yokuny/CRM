@@ -1,7 +1,19 @@
 import type { NextFunction, Request, Response } from 'express';
-import type { ZodType } from 'zod';
+import type { ZodError, ZodType } from 'zod';
+import { CustomError } from './errorHandler.middleware.js';
 
 type ValidationTarget = 'body' | 'params' | 'query';
+
+// O cliente só recebe a chave genérica `invalid_data`; o detalhe por campo
+// (`path: mensagem do Zod`) vai em `detail`, que só o log do errorHandler lê.
+// Reusado pelas validações de query feitas à mão nos routers (workaround do
+// getter de `req.query` do Express 5).
+export const invalidDataError = (error: ZodError, target: string): CustomError =>
+  new CustomError(
+    'invalid_data',
+    400,
+    error.issues.map((issue) => `${issue.path.join('.') || target}: ${issue.message}`).join('; '),
+  );
 
 // safeParse (nunca parse/try-catch): elimina de raiz o bug da referência —
 // `next()` chamado dentro de um `for` sobre os erros (Risk: ERR_HTTP_HEADERS_SENT
@@ -12,10 +24,7 @@ const validate = (schema: ZodType, target: ValidationTarget) => {
     const result = schema.safeParse(req[target]);
 
     if (!result.success) {
-      const message = result.error.issues
-        .map((issue) => `${issue.path.join('.') || target}: ${issue.message}`)
-        .join('; ');
-      next(Object.assign(new Error(message), { status: 400 }));
+      next(invalidDataError(result.error, target));
       return;
     }
 

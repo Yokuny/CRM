@@ -597,7 +597,7 @@ describe('field-template routes', () => {
       const crossTenant = await getTemplateVersion(app, tenantB.cookie, created.body.data.id, 1);
 
       expect(missing.status).toBe(404);
-      expect(missing.body.message).toBe('Versão de template não encontrada');
+      expect(missing.body.message).toBe('template_not_found');
       expect(crossTenant.status).toBe(404);
     });
 
@@ -615,7 +615,7 @@ describe('field-template routes', () => {
       const res = await getTemplateVersion(app, cookie, created.body.data.id, 99);
 
       expect(res.status).toBe(404);
-      expect(res.body.message).toBe('Versão de template não encontrada');
+      expect(res.body.message).toBe('template_not_found');
     });
 
     it('is open to any authenticated role, with no isAdmin gate (WEB-14)', async () => {
@@ -688,7 +688,7 @@ describe('field-template routes', () => {
       });
 
       expect(res.status).toBe(400);
-      expect(res.body.message).toContain('obs');
+      expect(res.body.message).toBe('migration_plan_required');
       expect(store.calls).toHaveLength(0);
 
       const template = await FieldTemplate.findById(id).lean();

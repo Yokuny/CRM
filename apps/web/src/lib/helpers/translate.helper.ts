@@ -1,5 +1,7 @@
 // Dicionário fixo pt-BR: toda string voltada ao usuário do app passa
-// por `t(key)` — sem biblioteca de i18n nem seletor de idioma.
+// por `t(key)` — sem biblioteca de i18n nem seletor de idioma. Inclui as
+// chaves que a API devolve em `message` (API_MESSAGE_KEYS de
+// @crm/contracts), traduzidas por lib/api/client.api.ts.
 // Regras de uso e criação de chave: ver apps/web/CLAUDE.md
 // ("Tradução (t()) e datas"). Resumo: chave plana, snake_case, nomeia
 // O TEXTO (nunca a tela/feature/papel); busca e reaproveita uma chave
@@ -201,8 +203,13 @@ const translations: Record<string, string> = {
   whatsapp_window_closed: 'A janela de 24h está fechada. Continue a conversa pelo seu WhatsApp.',
   customer_notified: 'Cliente avisado.',
   created_successfully: 'Criado com sucesso.',
+  removed_successfully: 'Removido com sucesso.',
+  signed_in_successfully: 'Login realizado com sucesso.',
+  signed_out_successfully: 'Logout realizado com sucesso.',
+  invite_email_failed: 'Convite criado, mas o envio do e-mail falhou.',
   invalid_link: 'Link inválido.',
   expired_link: 'Link expirado.',
+  used_link: 'Link já utilizado.',
   custom_fields: 'Campos extras configurados pela sua empresa.',
   basic_contact_data: 'Dados básicos para identificar e contatar o cliente.',
   enter_email_and_password: 'Informe seu e-mail e senha cadastrados.',
@@ -232,6 +239,31 @@ const translations: Record<string, string> = {
   action_error: 'Não foi possível concluir a ação. Tente novamente.',
   invalid_session: 'Sessão inválida.',
   connection_error: 'Não foi possível conectar ao servidor. Tente novamente.',
+  internal_error: 'Erro interno do servidor. Tente novamente.',
+  invalid_data: 'Dados inválidos. Revise as informações e tente novamente.',
+  status_required: 'O status é obrigatório.',
+  invalid_credentials: 'E-mail ou senha inválidos.',
+  invalid_access: 'Acesso inválido.',
+  no_permission: 'Você não tem permissão para realizar esta ação.',
+  company_link_required: 'Conclua o vínculo com uma empresa antes de continuar.',
+  too_many_attempts: 'Muitas tentativas. Tente novamente em alguns minutos.',
+  already_exists: 'Registro já existente.',
+  already_finalized: 'Este registro já foi finalizado.',
+  email_already_registered: 'Este e-mail já pertence a um usuário.',
+  pending_invite_exists: 'Já existe um convite pendente para este e-mail.',
+  template_not_found: 'Modelo de campos não encontrado.',
+  archived_template: 'Modelo de campos arquivado.',
+  template_without_stages: 'O modelo não tem etapas configuradas.',
+  invalid_stage: 'Etapa inválida.',
+  outdated_version: 'Versão desatualizada. Recarregue a página e tente novamente.',
+  migration_plan_required: 'Mudança destrutiva exige um plano de migração.',
+  unavailable_time: 'Horário indisponível.',
+  no_linked_customer: 'Nenhum cliente vinculado.',
+  at_least_one_column: 'É necessário ao menos uma coluna.',
+  column_not_empty: 'A coluna precisa estar vazia para ser removida.',
+  conversation_already_assigned: 'Conversa já assumida por outro operador.',
+  only_failed_messages_can_be_resent: 'Só mensagens com falha podem ser reenviadas.',
+  invalid_asaas_key: 'Chave Asaas inválida ou revogada.',
 };
 
 // Índice 0=domingo..6=sábado (Date#getUTCDay), mesma faixa de

@@ -11,14 +11,15 @@ import {
   tenantScoped,
   timeInDisplayTz,
 } from '@crm/db';
+import { KeyedError } from '../middlewares/errorHandler.middleware.js';
 
 // spec.md SCH-22/SCH-27: a única rota anônima da feature — identificada
 // EXCLUSIVAMENTE pelo token (nunca id de agendamento). Erros tipados aqui,
 // traduzidos pro HTTP certo no controller (mesmo idioma de
 // order.service.ts): not_found->404, expired->410, terminal->409.
-export class AppointmentConfirmationNotFoundError extends Error {}
-export class AppointmentConfirmationExpiredError extends Error {}
-export class AppointmentConfirmationTerminalError extends Error {}
+export class AppointmentConfirmationNotFoundError extends KeyedError {}
+export class AppointmentConfirmationExpiredError extends KeyedError {}
+export class AppointmentConfirmationTerminalError extends KeyedError {}
 
 // SCH-22: "nunca dados de outro agendamento" — o formato da resposta em si
 // impede o cruzamento mesmo que um id vaze por outro canal: zero ids
@@ -77,9 +78,9 @@ const translateTransitionResult = async (
   result: AppointmentDocument | AppointmentTransitionError,
 ): Promise<AppointmentConfirmationPublicView> => {
   if (isTransitionError(result)) {
-    if (result.code === 'not_found') throw new AppointmentConfirmationNotFoundError(result.error);
-    if (result.code === 'expired') throw new AppointmentConfirmationExpiredError(result.error);
-    throw new AppointmentConfirmationTerminalError(result.error);
+    if (result.code === 'not_found') throw new AppointmentConfirmationNotFoundError('invalid_link', result.error);
+    if (result.code === 'expired') throw new AppointmentConfirmationExpiredError('expired_link', result.error);
+    throw new AppointmentConfirmationTerminalError('already_finalized', result.error);
   }
   return toPublicView(result);
 };
@@ -90,9 +91,9 @@ const translateTransitionResult = async (
 export const getByToken = async (token: string): Promise<AppointmentConfirmationPublicView> => {
   const tokenHash = hashToken(token);
   const appointment = await Appointment.findOne({ confirmationTokenHash: tokenHash }).lean();
-  if (!appointment) throw new AppointmentConfirmationNotFoundError('Link de confirmação não encontrado');
+  if (!appointment) throw new AppointmentConfirmationNotFoundError('invalid_link');
   if (appointment.confirmationExpiresAt && appointment.confirmationExpiresAt.getTime() < Date.now()) {
-    throw new AppointmentConfirmationExpiredError('Link de confirmação expirado');
+    throw new AppointmentConfirmationExpiredError('expired_link');
   }
   return toPublicView(appointment);
 };

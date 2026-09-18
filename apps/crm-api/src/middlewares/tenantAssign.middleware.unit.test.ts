@@ -20,6 +20,6 @@ describe('tenantAssignmentCheck (FND-05/AC4)', () => {
 
     const err = next.mock.calls[0][0] as { status: number; message: string };
     expect(err.status).toBe(424);
-    expect(err.message.length).toBeGreaterThan(0);
+    expect(err.message).toBe('company_link_required');
   });
 });

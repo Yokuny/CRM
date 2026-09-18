@@ -75,7 +75,7 @@ describe('invite routes (public)', () => {
       const res = await request(buildTestApp()).get('/invites/token-expirado');
 
       expect(res.status).toBe(410);
-      expect(res.body.message).toMatch(/expir/i);
+      expect(res.body.message).toBe('expired_link');
       expect(JSON.stringify(res.body)).not.toContain('segredo@empresa.com');
     });
 
@@ -86,7 +86,7 @@ describe('invite routes (public)', () => {
       const res = await request(buildTestApp()).get('/invites/token-aceito');
 
       expect(res.status).toBe(410);
-      expect(res.body.message).toMatch(/já foi utilizado/i);
+      expect(res.body.message).toBe('used_link');
       expect(JSON.stringify(res.body)).not.toContain('segredo2@empresa.com');
     });
 
@@ -94,7 +94,7 @@ describe('invite routes (public)', () => {
       const res = await request(buildTestApp()).get('/invites/token-que-nunca-existiu');
 
       expect(res.status).toBe(410);
-      expect(res.body.message).toMatch(/inválido/i);
+      expect(res.body.message).toBe('invalid_link');
     });
 
     it('uses 3 pairwise-distinct 410 messages across expired/accepted/nonexistent', async () => {

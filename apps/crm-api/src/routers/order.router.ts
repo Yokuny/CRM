@@ -5,7 +5,7 @@ import { z } from 'zod';
 import * as orderController from '../controllers/order.controller.js';
 import { checkRole } from '../middlewares/authorization.middleware.js';
 import { tenantAssignmentCheck } from '../middlewares/tenantAssign.middleware.js';
-import { validBody, validParams } from '../middlewares/validation.middleware.js';
+import { invalidDataError, validBody, validParams } from '../middlewares/validation.middleware.js';
 
 // spec.md Assumptions ("Papel exigido... aprovar/rejeitar"): qualquer
 // operador do tenant (canOperate), não só o assignee da conversa — mesmo
@@ -34,10 +34,7 @@ const listOrdersQuerySchema = z
 const validListOrdersQuery: RequestHandler = (req, _res, next) => {
   const result = listOrdersQuerySchema.safeParse(req.query);
   if (!result.success) {
-    const message = result.error.issues
-      .map((issue) => `${issue.path.join('.') || 'query'}: ${issue.message}`)
-      .join('; ');
-    next(Object.assign(new Error(message), { status: 400 }));
+    next(invalidDataError(result.error, 'query'));
     return;
   }
   Object.defineProperty(req, 'query', { value: result.data, configurable: true, enumerable: true, writable: true });

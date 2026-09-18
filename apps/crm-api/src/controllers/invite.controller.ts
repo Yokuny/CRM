@@ -17,7 +17,7 @@ export const acceptInvite = async (req: Request, res: Response, next: NextFuncti
     const deviceInfo = (req.headers['user-agent'] as string | undefined) ?? 'unknown';
     const { sessionToken } = await inviteService.acceptInvite(req.params.token as string, req.body, deviceInfo);
     res.cookie('refreshToken', sessionToken, cookieOptions);
-    res.status(201).json(respObj({ message: 'Conta criada com sucesso.' }));
+    res.status(201).json(respObj({ message: 'created_successfully' }));
   } catch (e) {
     next(e);
   }

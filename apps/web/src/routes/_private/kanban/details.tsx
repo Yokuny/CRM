@@ -112,9 +112,9 @@ export function KanbanDetailsPage() {
           await queryClient.invalidateQueries({ queryKey: boardCardsQuery(search.id).queryKey });
           clearPending();
         },
-        onError: () => {
+        onError: (error: Error) => {
           clearPending();
-          toast.error(t('move_error'));
+          toast.error(error.message);
         },
       },
     );

@@ -270,7 +270,7 @@ describe('platform routes', () => {
         .send({ email: 'semenvio@empresa.com', role: 'admin' });
 
       expect(res.status).toBe(202);
-      expect(res.body.message).toMatch(/falhou/i);
+      expect(res.body.message).toBe('invite_email_failed');
 
       const invite = await Invite.findById(res.body.data.id).lean();
       expect(invite).not.toBeNull();

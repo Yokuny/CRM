@@ -1,4 +1,5 @@
 import type { CreateProduct, UpdateProduct } from '@crm/contracts';
+import { KeyedError } from '../middlewares/errorHandler.middleware.js';
 import type { ProductRecord } from '../repositories/product.repository.js';
 import * as productRepository from '../repositories/product.repository.js';
 
@@ -10,22 +11,22 @@ export const MAX_PAGE_SIZE = 100;
 // Zod já faz na borda HTTP (createProduct/updateProduct.schema.ts) é
 // reafirmada aqui — o service não confia em nenhum chamador upstream para
 // impor essa regra de negócio.
-export class ProductValidationError extends Error {}
+export class ProductValidationError extends KeyedError {}
 
 // AD-010: findById/updateProduct (product.repository, T5) já são
 // tenant-scoped — um id de outro tenant simplesmente não existe para esta
 // sessão, mesmo idioma 404 de customer.service.ts.
-export class ProductNotFoundError extends Error {}
+export class ProductNotFoundError extends KeyedError {}
 
 const validateProductInput = (data: { name?: string; price?: number; stock?: number }): void => {
   if (data.name !== undefined && data.name.trim().length === 0) {
-    throw new ProductValidationError('name é obrigatório');
+    throw new ProductValidationError('invalid_data', 'name é obrigatório');
   }
   if (data.price !== undefined && data.price < 0) {
-    throw new ProductValidationError('price não pode ser negativo');
+    throw new ProductValidationError('invalid_data', 'price não pode ser negativo');
   }
   if (data.stock !== undefined && data.stock < 0) {
-    throw new ProductValidationError('stock não pode ser negativo');
+    throw new ProductValidationError('invalid_data', 'stock não pode ser negativo');
   }
 };
 
@@ -45,7 +46,7 @@ export const createProduct = async (tenantId: string, data: CreateProduct): Prom
 export const updateProduct = async (tenantId: string, id: string, data: UpdateProduct): Promise<ProductRecord> => {
   validateProductInput(data);
   const updated = await productRepository.updateProduct(tenantId, id, data);
-  if (!updated) throw new ProductNotFoundError('Produto não encontrado');
+  if (!updated) throw new ProductNotFoundError('not_found');
   return updated;
 };
 

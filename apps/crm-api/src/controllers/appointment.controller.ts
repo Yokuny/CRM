@@ -14,15 +14,15 @@ import {
 // req.tenantUser (AD-010), nunca do corpo/query.
 const handleServiceError = (e: unknown, next: NextFunction): void => {
   if (e instanceof AppointmentNotFoundError) {
-    next(new CustomError(e.message, 404));
+    next(new CustomError(e.message, 404, e.detail));
     return;
   }
   if (e instanceof AppointmentConflictError) {
-    next(new CustomError(e.message, 409));
+    next(new CustomError(e.message, 409, e.detail));
     return;
   }
   if (e instanceof AppointmentTerminalError) {
-    next(new CustomError(e.message, 409));
+    next(new CustomError(e.message, 409, e.detail));
     return;
   }
   next(e);

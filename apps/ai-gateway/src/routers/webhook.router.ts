@@ -97,7 +97,7 @@ const handleVerify = (verifyToken: string) => {
       return;
     }
 
-    res.status(403).json(badRespObj({ message: 'hub.verify_token inválido' }));
+    res.status(403).json(badRespObj({ message: 'invalid_access' }));
   };
 };
 

@@ -20,7 +20,7 @@ export const createChannel = async (req: Request, res: Response, next: NextFunct
   } catch (e) {
     // AIG-02: phoneNumberId duplicado vira 409 aqui — o repository (T33)
     // só propaga o erro bruto do Mongo, nunca decide o código HTTP.
-    next(isDuplicateKeyError(e) ? new CustomError('phoneNumberId já está em uso', 409) : e);
+    next(isDuplicateKeyError(e) ? new CustomError('already_exists', 409, 'phoneNumberId já está em uso') : e);
   }
 };
 

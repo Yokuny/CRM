@@ -1,3 +1,4 @@
+import { NO_STATUS_FILTER_VALUE } from '@crm/contracts';
 import { DEFAULT_CUSTOMER_TEMPLATE_KEY } from '@crm/field-engine';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -43,6 +44,10 @@ export function CustomersKanbanPage() {
 
   const templateQuery = useQuery(currentCustomerTemplateQuery(DEFAULT_CUSTOMER_TEMPLATE_KEY));
   const columns = useMemo(() => customerStatusColumns(templateQuery.data?.fields ?? []), [templateQuery.data]);
+  // Com `status` obrigatório no template, "sem status" só LISTA quem ficou
+  // sem valor válido (opção removida) — nunca é destino de um arraste, que o
+  // back-end recusaria de qualquer forma (`invalid_data`).
+  const isStatusRequired = templateQuery.data?.fields.some((field) => field.type === 'status' && field.required);
 
   const columnQueries = useQueries({
     queries: columns.map((column) => customersQuery({ status: column.key, limit: 100 })),
@@ -67,7 +72,11 @@ export function CustomersKanbanPage() {
 
   const mutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const res = await patch(`/customers/${encodeURIComponent(id)}`, { values: { status } });
+      // A coluna "sem status" é só o sentinel de FILTRO do GET (`__none__`),
+      // nunca um valor válido do campo `status` — soltar o card nela limpa o
+      // valor (`null`, o vazio de `status` no field-engine).
+      const value = status === NO_STATUS_FILTER_VALUE ? null : status;
+      const res = await patch(`/customers/${encodeURIComponent(id)}`, { values: { status: value } });
       if (!res.success) throw new Error(res.message ?? t('move_error'));
       return res.data;
     },
@@ -82,6 +91,11 @@ export function CustomersKanbanPage() {
 
     const card = data.find((item) => item.id === active.id);
     if (!card || card.column === targetColumn) return;
+
+    if (targetColumn === NO_STATUS_FILTER_VALUE && isStatusRequired) {
+      toast.error(t('status_required'));
+      return;
+    }
 
     setPendingMoves((prev) => ({ ...prev, [card.id]: targetColumn }));
 
@@ -101,13 +115,13 @@ export function CustomersKanbanPage() {
             return next;
           });
         },
-        onError: () => {
+        onError: (error: Error) => {
           setPendingMoves((prev) => {
             const next = { ...prev };
             delete next[card.id];
             return next;
           });
-          toast.error(t('move_error'));
+          toast.error(error.message);
         },
       },
     );

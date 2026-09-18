@@ -33,7 +33,7 @@ export const createPlatformController = (deps: PlatformControllerDeps) => {
       res.status(status).json(
         respObj({
           data: { id: result.id },
-          message: result.sent ? undefined : 'Convite criado, mas o envio do e-mail falhou',
+          message: result.sent ? undefined : 'invite_email_failed',
         }),
       );
     } catch (e) {

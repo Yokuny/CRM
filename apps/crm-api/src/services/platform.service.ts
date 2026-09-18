@@ -34,7 +34,7 @@ export const inviteToTenant = async (
 ): Promise<InviteResult> => {
   const existingUser = await platformRepository.findUserByEmailInTenant(tenantId, data.email);
   if (existingUser) {
-    throw new CustomError('Este e-mail já pertence a um usuário desta empresa', 409);
+    throw new CustomError('email_already_registered', 409);
   }
 
   const token = crypto.randomBytes(32).toString('hex');
@@ -63,7 +63,7 @@ export const inviteToTenant = async (
     });
   } catch (e) {
     if (isDuplicateKeyError(e)) {
-      throw new CustomError('Já existe um convite pendente para este e-mail nesta empresa', 409);
+      throw new CustomError('pending_invite_exists', 409);
     }
     throw e;
   }

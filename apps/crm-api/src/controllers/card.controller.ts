@@ -12,11 +12,11 @@ import { CardNotFoundError, InvalidColumnError, InvalidReferenceError } from '..
 // appointment.controller.ts (handleServiceError).
 const handleServiceError = (e: unknown, next: NextFunction): void => {
   if (e instanceof CardNotFoundError) {
-    next(new CustomError(e.message, 404));
+    next(new CustomError(e.message, 404, e.detail));
     return;
   }
   if (e instanceof InvalidColumnError || e instanceof InvalidReferenceError) {
-    next(new CustomError(e.message, 400));
+    next(new CustomError(e.message, 400, e.detail));
     return;
   }
   next(e);
@@ -75,7 +75,7 @@ export const moveCard = async (req: Request, res: Response, next: NextFunction):
 export const deleteCard = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     await cardService.deleteCard(req.tenantUser.tenant as string, req.params.id as string, req.params.cardId as string);
-    res.json(respObj({ message: 'Card removido com sucesso.' }));
+    res.json(respObj({ message: 'removed_successfully' }));
   } catch (e) {
     handleServiceError(e, next);
   }

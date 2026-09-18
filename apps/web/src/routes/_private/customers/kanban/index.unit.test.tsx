@@ -183,6 +183,43 @@ describe('CustomersKanbanPage (T20 — WEB-03)', () => {
     await waitFor(() => expect(patchMock).toHaveBeenCalledWith('/customers/c1', { values: { status: 'closed' } }));
   });
 
+  it('dropping a card in the "sem status" column clears the status (null), never sends the __none__ filter sentinel', async () => {
+    mockColumnFetches();
+    mockSuccessfulPatch();
+    renderPage();
+
+    await waitFor(() => expect(capturedProps?.data?.length).toBe(1));
+
+    await act(async () => {
+      capturedProps.onDragEnd({ active: { id: 'c1' }, over: { id: NO_STATUS_FILTER_VALUE } });
+    });
+
+    await waitFor(() => expect(patchMock).toHaveBeenCalledWith('/customers/c1', { values: { status: null } }));
+  });
+
+  it('with a required status field, dropping in "sem status" never calls the API and toasts status_required', async () => {
+    mockColumnFetches();
+    const listResponse = getMock.getMockImplementation();
+    getMock.mockImplementation(async (path: string) => {
+      if (!path.startsWith('/field-templates/current')) return listResponse?.(path);
+      const [statusField] = templateResponse.data.fields;
+      return { ...templateResponse, data: { ...templateResponse.data, fields: [{ ...statusField, required: true }] } };
+    });
+    mockSuccessfulPatch();
+    renderPage();
+
+    await waitFor(() => expect(capturedProps?.data?.length).toBe(1));
+
+    await act(async () => {
+      capturedProps.onDragEnd({ active: { id: 'c1' }, over: { id: NO_STATUS_FILTER_VALUE } });
+    });
+
+    expect(toastErrorMock).toHaveBeenCalledWith('O status é obrigatório.');
+    expect(patchMock).not.toHaveBeenCalled();
+    // biome-ignore lint/suspicious/noExplicitAny: mock de teste
+    expect(capturedProps.data.find((item: any) => item.id === 'c1').column).toBe('open');
+  });
+
   it('WEB-03 AC2: on success, the card stays in the new column and both columns refetch (invalidateQueries called)', async () => {
     mockColumnFetches();
     mockSuccessfulPatch();
@@ -199,9 +236,12 @@ describe('CustomersKanbanPage (T20 — WEB-03)', () => {
     await waitFor(() => expect(capturedProps.data.find((item: any) => item.id === 'c1')?.column).toBe('closed'));
   });
 
-  it('WEB-03 AC3: on failure, the card visually returns to its origin column and toast.error fires (never stuck in the rejected column)', async () => {
+  it('WEB-03 AC3: on failure, the card visually returns to its origin column and toast.error shows the server message (already translated by client.api)', async () => {
     mockColumnFetches();
-    patchMock.mockResolvedValue({ success: false, message: 'Falha ao mover.' });
+    patchMock.mockResolvedValue({
+      success: false,
+      message: 'Dados inválidos. Revise as informações e tente novamente.',
+    });
     renderPage();
 
     await waitFor(() => expect(capturedProps?.data?.length).toBe(1));
@@ -210,7 +250,9 @@ describe('CustomersKanbanPage (T20 — WEB-03)', () => {
       capturedProps.onDragEnd({ active: { id: 'c1' }, over: { id: 'closed' } });
     });
 
-    await waitFor(() => expect(toastErrorMock).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(toastErrorMock).toHaveBeenCalledWith('Dados inválidos. Revise as informações e tente novamente.'),
+    );
     // biome-ignore lint/suspicious/noExplicitAny: mock de teste
     expect(capturedProps.data.find((item: any) => item.id === 'c1').column).toBe('open');
   });

@@ -18,11 +18,11 @@ import {
 // nunca do corpo/query.
 const handleServiceError = (e: unknown, next: NextFunction): void => {
   if (e instanceof BoardNotFoundError) {
-    next(new CustomError(e.message, 404));
+    next(new CustomError(e.message, 404, e.detail));
     return;
   }
   if (e instanceof EmptyColumnsError || e instanceof LastColumnError || e instanceof ColumnNotEmptyError) {
-    next(new CustomError(e.message, 400));
+    next(new CustomError(e.message, 400, e.detail));
     return;
   }
   next(e);
@@ -73,7 +73,7 @@ export const updateBoard = async (req: Request, res: Response, next: NextFunctio
 export const deleteBoard = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     await boardService.deleteBoard(req.tenantUser.tenant as string, req.params.id as string);
-    res.json(respObj({ message: 'Board removido com sucesso.' }));
+    res.json(respObj({ message: 'removed_successfully' }));
   } catch (e) {
     handleServiceError(e, next);
   }

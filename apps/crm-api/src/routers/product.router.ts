@@ -5,7 +5,7 @@ import { z } from 'zod';
 import * as productController from '../controllers/product.controller.js';
 import { checkRole } from '../middlewares/authorization.middleware.js';
 import { tenantAssignmentCheck } from '../middlewares/tenantAssign.middleware.js';
-import { validBody, validParams } from '../middlewares/validation.middleware.js';
+import { invalidDataError, validBody, validParams } from '../middlewares/validation.middleware.js';
 
 // spec.md Assumptions ("Papel exigido nos novos endpoints"): mesmo canOperate
 // já usado em conversation.router.ts/process.router.ts.
@@ -35,10 +35,7 @@ const listProductsQuerySchema = z
 const validListProductsQuery: RequestHandler = (req, _res, next) => {
   const result = listProductsQuerySchema.safeParse(req.query);
   if (!result.success) {
-    const message = result.error.issues
-      .map((issue) => `${issue.path.join('.') || 'query'}: ${issue.message}`)
-      .join('; ');
-    next(Object.assign(new Error(message), { status: 400 }));
+    next(invalidDataError(result.error, 'query'));
     return;
   }
   Object.defineProperty(req, 'query', { value: result.data, configurable: true, enumerable: true, writable: true });

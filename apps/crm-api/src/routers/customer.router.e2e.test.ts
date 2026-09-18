@@ -484,7 +484,7 @@ describe('customer routes', () => {
       const res = await getCustomerReq(app, cookie, randomId());
 
       expect(res.status).toBe(404);
-      expect(res.body).toEqual({ success: false, message: 'Customer não encontrado' });
+      expect(res.body).toEqual({ success: false, message: 'not_found' });
     });
 
     it("responds 404 for another tenant's id, never leaking its data (AD-010, WEB-05 AC2)", async () => {
@@ -501,7 +501,7 @@ describe('customer routes', () => {
       const res = await getCustomerReq(app, tenantB.cookie, created.body.data.id);
 
       expect(res.status).toBe(404);
-      expect(res.body).toEqual({ success: false, message: 'Customer não encontrado' });
+      expect(res.body).toEqual({ success: false, message: 'not_found' });
     });
   });
 
