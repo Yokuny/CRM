@@ -102,7 +102,4 @@ pnpm run check                   # tsc --noEmit + biome check + vitest
 
 `check` não pega import quebrado que só o Rollup do build resolve de forma
 estrita — o dev server (esbuild) e o type-check passam batido. `build` é
-silencioso no sucesso (`--logLevel error`) e imprime o erro completo na
-falha; se ficar verboso mesmo passando, é o `@tanstack/router-plugin`
-avisando sobre arquivo sem `Route` — cobrir o padrão em
-`routeFileIgnorePattern` (`vite.config.ts`).
+silencioso no sucesso (`--logLevel error`) e imprime o erro completo na falha; se ficar verboso mesmo passando, é o `@tanstack/router-plugin` avisando sobre arquivo sem `Route` — cobrir o padrão em `routeFileIgnorePattern` (`vite.config.ts`).
