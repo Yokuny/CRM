@@ -8,6 +8,7 @@ import type {
 import type { QueryClient, UseMutationOptions } from '@tanstack/react-query';
 import { queryOptions } from '@tanstack/react-query';
 import { del, get, post } from '../lib/api/client.api.js';
+import { t } from '../lib/helpers/translate.helper.js';
 
 // Espelha AppointmentRecord de
 // apps/crm-api/src/repositories/appointment.repository.ts — a verdade fica
@@ -87,7 +88,7 @@ export const appointmentsQuery = (params: AppointmentsQueryParams) =>
     queryKey: appointmentKeys.list(params),
     queryFn: async (): Promise<AppointmentRecord[]> => {
       const res = await get<AppointmentRecord[]>(`/appointments${buildQueryString(params)}`);
-      if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível carregar a agenda.');
+      if (!res.success || !res.data) throw new Error(res.message ?? t('load_error'));
       return res.data;
     },
   });
@@ -102,7 +103,7 @@ export const upcomingAppointmentQuery = (customerId: string) =>
       const res = await get<AppointmentRecord | null>(
         `/appointments/upcoming?customer=${encodeURIComponent(customerId)}`,
       );
-      if (!res.success) throw new Error(res.message ?? 'Não foi possível carregar o próximo agendamento.');
+      if (!res.success) throw new Error(res.message ?? t('load_error'));
       return res.data ?? null;
     },
   });
@@ -115,7 +116,7 @@ export const createAppointmentMutation = (
 ): UseMutationOptions<AppointmentRecord, Error, CreateAppointment> => ({
   mutationFn: async (data) => {
     const res = await post<AppointmentRecord>('/appointments', data);
-    if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível criar o agendamento.');
+    if (!res.success || !res.data) throw new Error(res.message ?? t('create_error'));
     return res.data;
   },
   onSuccess: () => {
@@ -130,7 +131,7 @@ export const createBlockMutation = (
 ): UseMutationOptions<AppointmentRecord, Error, CreateBlock> => ({
   mutationFn: async (data) => {
     const res = await post<AppointmentRecord>('/appointments/blocks', data);
-    if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível criar o bloqueio.');
+    if (!res.success || !res.data) throw new Error(res.message ?? t('create_error'));
     return res.data;
   },
   onSuccess: () => {
@@ -147,7 +148,7 @@ export const deleteBlockMutation = (
 ): UseMutationOptions<DeleteBlockResult, Error, { id: string }> => ({
   mutationFn: async ({ id }) => {
     const res = await del<DeleteBlockResult>(`/appointments/blocks/${encodeURIComponent(id)}`);
-    if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível remover o bloqueio.');
+    if (!res.success || !res.data) throw new Error(res.message ?? t('remove_error'));
     return res.data;
   },
   onSuccess: () => {
@@ -171,7 +172,7 @@ export const cancelAppointmentMutation = (
 ): UseMutationOptions<AppointmentActionResult, Error, { id: string; data: CancelAppointment }> => ({
   mutationFn: async ({ id, data }) => {
     const res = await post<AppointmentActionResult>(`/appointments/${encodeURIComponent(id)}/cancel`, data);
-    if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível cancelar o agendamento.');
+    if (!res.success || !res.data) throw new Error(res.message ?? t('action_error'));
     return res.data;
   },
   onSuccess: (result) => {
@@ -190,7 +191,7 @@ export const rescheduleAppointmentMutation = (
 ): UseMutationOptions<AppointmentActionResult, Error, { id: string; data: RescheduleAppointment }> => ({
   mutationFn: async ({ id, data }) => {
     const res = await post<AppointmentActionResult>(`/appointments/${encodeURIComponent(id)}/reschedule`, data);
-    if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível remarcar o agendamento.');
+    if (!res.success || !res.data) throw new Error(res.message ?? t('action_error'));
     return res.data;
   },
   onSuccess: (result) => {
@@ -208,7 +209,7 @@ export const markAttendanceMutation = (
 ): UseMutationOptions<AppointmentRecord, Error, { id: string; data: MarkAttendance }> => ({
   mutationFn: async ({ id, data }) => {
     const res = await post<AppointmentRecord>(`/appointments/${encodeURIComponent(id)}/attendance`, data);
-    if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível marcar o comparecimento.');
+    if (!res.success || !res.data) throw new Error(res.message ?? t('action_error'));
     return res.data;
   },
   onSuccess: (updated) => {
@@ -229,7 +230,7 @@ export const requestConfirmationLinkMutation = (
 ): UseMutationOptions<ConfirmationLinkResult, Error, { id: string }> => ({
   mutationFn: async ({ id }) => {
     const res = await post<ConfirmationLinkResult>(`/appointments/${encodeURIComponent(id)}/confirmation-link`);
-    if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível gerar o link de confirmação.');
+    if (!res.success || !res.data) throw new Error(res.message ?? t('action_error'));
     return res.data;
   },
   onSuccess: () => {

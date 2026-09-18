@@ -68,7 +68,7 @@ describe('ConversationQueue (T22 — INBOX-01/03/10)', () => {
     // botão de filtro.
     expect(screen.getByRole('cell', { name: 'Bot' })).toBeInTheDocument();
     expect(screen.getByText('Aberta')).toBeInTheDocument();
-    expect(screen.getByText('Nova')).toBeInTheDocument();
+    expect(screen.getByText('Sim')).toBeInTheDocument();
     expect(getMock).toHaveBeenCalledWith('/conversations?page=1&limit=20');
   });
 

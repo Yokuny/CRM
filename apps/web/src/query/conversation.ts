@@ -1,5 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
 import { get } from '../lib/api/client.api.js';
+import { t } from '../lib/helpers/translate.helper.js';
 
 // Espelha ConversationListItem de
 // apps/crm-api/src/repositories/conversation.repository.ts (`listConversations`)
@@ -67,7 +68,7 @@ export const conversationsQuery = (params: ConversationsQueryParams = {}) =>
     queryKey: conversationKeys.list(params),
     queryFn: async (): Promise<ConversationsListResult> => {
       const res = await get<ConversationsListResult>(`/conversations${buildQueryString(params)}`);
-      if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível carregar as conversas.');
+      if (!res.success || !res.data) throw new Error(res.message ?? t('load_error'));
       return res.data;
     },
   });

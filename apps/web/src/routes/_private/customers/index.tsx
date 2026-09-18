@@ -11,9 +11,9 @@ type CustomersSection = { to: string; titleKey: string; icon: ComponentType<{ cl
 // de uma seção com mais de um destino real vira um menu de cards, nunca um
 // redirect automático — o usuário escolhe pra onde ir.
 const CUSTOMERS_SECTIONS: CustomersSection[] = [
-  { to: '/customers/list', titleKey: 'customers.list.title', icon: List },
-  { to: '/customers/kanban', titleKey: 'customers.view.kanban', icon: Kanban },
-  { to: '/customers/add', titleKey: 'customer.create.title', icon: Plus },
+  { to: '/customers/list', titleKey: 'list', icon: List },
+  { to: '/customers/kanban', titleKey: 'kanban', icon: Kanban },
+  { to: '/customers/add', titleKey: 'new_customer', icon: Plus },
 ];
 
 export function CustomersIndexPage() {

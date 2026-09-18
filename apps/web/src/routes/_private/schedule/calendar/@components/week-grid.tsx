@@ -6,7 +6,7 @@ import {
   isPastInstant,
   weekdayIndexOfDisplayDate,
 } from '@/lib/helpers/displayTime.helper.js';
-import { t } from '@/lib/helpers/translate.helper.js';
+import { t, WEEKDAY_KEYS } from '@/lib/helpers/translate.helper.js';
 import { cn } from '@/lib/utils.js';
 import type { AppointmentRecord } from '@/query/appointment.js';
 
@@ -60,7 +60,7 @@ export function WeekGrid({ weekStart, items, onSelect }: WeekGridProps) {
         return (
           <Panel key={day} data-testid={`week-grid-day-${day}`} size="xs">
             <div className="text-center">
-              <div className="font-medium text-sm">{t(`weekday.${weekdayIndexOfDisplayDate(day)}`)}</div>
+              <div className="font-medium text-sm">{t(WEEKDAY_KEYS[weekdayIndexOfDisplayDate(day)])}</div>
               <div className="text-muted-foreground text-xs">{day}</div>
             </div>
             <div className="flex flex-col gap-1.5">

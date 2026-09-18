@@ -30,9 +30,7 @@ export function AppointmentCard({ customerId }: AppointmentCardProps) {
 
   return (
     <Panel size="xs" className="flex-row items-center">
-      <BadgeIndicator variant={badgeVariantForStatus(appointment.status)}>
-        {t(`appointment.status.${appointment.status}`)}
-      </BadgeIndicator>
+      <BadgeIndicator variant={badgeVariantForStatus(appointment.status)}>{t(appointment.status)}</BadgeIndicator>
       <span className="text-sm">
         {formatDisplayDate(appointment.start)} · {formatDisplayTime(appointment.start)}
       </span>

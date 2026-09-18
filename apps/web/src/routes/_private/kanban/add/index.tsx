@@ -44,15 +44,15 @@ export function KanbanAddPage() {
 
   return (
     <Card asPage>
-      <CardHeader title={t('kanban.board.create.title')} />
+      <CardHeader title={t('new_board')} />
       <CardContent>
         <Form {...form}>
           <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6">
             <DefaultFormLayout
               sections={[
                 {
-                  title: t('kanban.board.create.section.info'),
-                  description: t('kanban.board.create.section.info_description'),
+                  title: t('information'),
+                  description: t('name_and_description'),
                   fields: [
                     <FormField
                       key="name"
@@ -62,7 +62,7 @@ export function KanbanAddPage() {
                         <FormItem>
                           <FormLabel>{t('name')}</FormLabel>
                           <FormControl>
-                            <Input placeholder={t('kanban.board.create.field.name_placeholder')} {...field} />
+                            <Input placeholder={t('example_board_name')} {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -74,13 +74,9 @@ export function KanbanAddPage() {
                       name="description"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t('kanban.board.field.description')}</FormLabel>
+                          <FormLabel>{t('description')}</FormLabel>
                           <FormControl>
-                            <Input
-                              placeholder={t('kanban.board.field.description_placeholder')}
-                              {...field}
-                              value={field.value ?? ''}
-                            />
+                            <Input placeholder={t('example_description')} {...field} value={field.value ?? ''} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -89,14 +85,14 @@ export function KanbanAddPage() {
                   ],
                 },
                 {
-                  title: t('kanban.board.create.section.columns'),
-                  description: t('kanban.board.create.section.columns_description'),
+                  title: t('columns'),
+                  description: t('set_initial_columns'),
                   fields: [
                     <Panel key="columns" className="grid gap-3">
                       <div className="flex items-center justify-between">
-                        <Label>{t('kanban.board.columns.label')}</Label>
+                        <Label>{t('columns')}</Label>
                         <Button type="button" variant="basic" onClick={() => append({ label: '' })}>
-                          {t('kanban.board.columns.add')}
+                          {t('add_column')}
                         </Button>
                       </div>
                       {fields.map((field, index) => (
@@ -106,12 +102,9 @@ export function KanbanAddPage() {
                             name={`columns.${index}.label`}
                             render={({ field: labelField }) => (
                               <FormItem className="flex-1">
-                                <FormLabel>{t('kanban.board.columns.column_label')}</FormLabel>
+                                <FormLabel>{t('column_name')}</FormLabel>
                                 <FormControl>
-                                  <Input
-                                    placeholder={t('kanban.board.columns.column_label_placeholder')}
-                                    {...labelField}
-                                  />
+                                  <Input placeholder={t('example_column_name')} {...labelField} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -162,5 +155,5 @@ export function KanbanAddPage() {
 
 export const Route = createFileRoute('/_private/kanban/add/')({
   component: KanbanAddPage,
-  staticData: { title: t('kanban.board.create.title') },
+  staticData: { title: t('new_board') },
 });

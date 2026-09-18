@@ -101,7 +101,7 @@ function ColumnRow({
             name="label"
             render={({ field }) => (
               <FormItem className="flex-1">
-                <FormLabel>{t('kanban.board.columns.column_label')}</FormLabel>
+                <FormLabel>{t('column_name')}</FormLabel>
                 <FormControl>
                   <Input {...field} />
                 </FormControl>
@@ -114,7 +114,7 @@ function ColumnRow({
             name="color"
             render={({ field }) => (
               <FormItem className="w-28">
-                <FormLabel>{t('kanban.column.field.color')}</FormLabel>
+                <FormLabel>{t('color')}</FormLabel>
                 <FormControl>
                   <Input placeholder="#RRGGBB" {...field} />
                 </FormControl>
@@ -130,7 +130,7 @@ function ColumnRow({
           <Button
             type="button"
             variant="basic"
-            aria-label={t('kanban.column_manager.move_up')}
+            aria-label={t('move_up')}
             disabled={!canMoveUp || reorderPending}
             onClick={onMoveUp}
           >
@@ -139,7 +139,7 @@ function ColumnRow({
           <Button
             type="button"
             variant="basic"
-            aria-label={t('kanban.column_manager.move_down')}
+            aria-label={t('move_down')}
             disabled={!canMoveDown || reorderPending}
             onClick={onMoveDown}
           >
@@ -201,12 +201,12 @@ export function ColumnManagerPanel({ onClose, boardId, columns }: ColumnManagerP
 
   return (
     <Panel className="grid gap-4">
-      <PanelHeader title={t('kanban.column_manager.title')} onClose={onClose} />
+      <PanelHeader title={t('manage_columns')} onClose={onClose} />
       <DefaultFormLayout
         sections={[
           {
-            title: t('kanban.column_manager.section_title'),
-            description: t('kanban.column_manager.section_description'),
+            title: t('columns'),
+            description: t('customize_columns'),
             layout: 'vertical',
             fields: [
               <div key="columns" className="grid gap-2">
@@ -232,7 +232,7 @@ export function ColumnManagerPanel({ onClose, boardId, columns }: ColumnManagerP
                     name="label"
                     render={({ field }) => (
                       <FormItem className="flex-1">
-                        <FormLabel>{t('kanban.board.columns.column_label')}</FormLabel>
+                        <FormLabel>{t('column_name')}</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -241,7 +241,7 @@ export function ColumnManagerPanel({ onClose, boardId, columns }: ColumnManagerP
                     )}
                   />
                   <Button type="submit" disabled={addMutation.isPending}>
-                    {t('kanban.board.columns.add')}
+                    {t('add_column')}
                   </Button>
                 </form>
               </Form>,

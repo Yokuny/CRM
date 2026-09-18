@@ -48,7 +48,7 @@ function CustomerCreateForm({ fields }: CustomerCreateFormProps) {
         document: input.document || undefined,
         values: input.values,
       });
-      if (!res.success || !res.data) throw new Error(res.message ?? t('customer.create.error'));
+      if (!res.success || !res.data) throw new Error(res.message ?? t('create_error'));
       return res.data;
     },
   });
@@ -70,8 +70,8 @@ function CustomerCreateForm({ fields }: CustomerCreateFormProps) {
 
   const sections: FormSection[] = [
     {
-      title: t('customer.create.section.identification'),
-      description: t('customer.create.section.identification_description'),
+      title: t('identification'),
+      description: t('basic_contact_data'),
       fields: [
         <div key="customer-identification" className="grid gap-4 sm:grid-cols-3">
           <div className="grid gap-2">
@@ -79,26 +79,17 @@ function CustomerCreateForm({ fields }: CustomerCreateFormProps) {
             <Input
               id="name"
               required
-              placeholder={t('customer.create.field.name_placeholder')}
+              placeholder={t('example_person_name')}
               {...register('name', { required: true })}
             />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="phone">{t('phone')}</Label>
-            <Input
-              id="phone"
-              required
-              placeholder={t('customer.create.field.phone_placeholder')}
-              {...register('phone', { required: true })}
-            />
+            <Input id="phone" required placeholder={t('example_phone')} {...register('phone', { required: true })} />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="document">{t('document')}</Label>
-            <Input
-              id="document"
-              placeholder={t('customer.create.field.document_placeholder')}
-              {...register('document')}
-            />
+            <Input id="document" placeholder={t('example_document')} {...register('document')} />
           </div>
         </div>,
       ],
@@ -111,8 +102,8 @@ function CustomerCreateForm({ fields }: CustomerCreateFormProps) {
   // default, mas templates customizados podem zerar `fields`).
   if (nodes.length > 0) {
     sections.push({
-      title: t('customer.create.section.details'),
-      description: t('customer.create.section.details_description'),
+      title: t('additional_details'),
+      description: t('custom_fields'),
       fields: nodes.map((node) => (
         <DynamicField key={node.fieldId} node={node} name={`values.${node.fieldId}`} control={control} />
       )),
@@ -141,7 +132,7 @@ export function CustomerCreatePage() {
 
   return (
     <Card asPage>
-      <CardHeader title={t('customer.create.title')} />
+      <CardHeader title={t('new_customer')} />
       <CardContent>
         {templateQuery.isLoading ? (
           <DefaultLoading />
@@ -155,5 +146,5 @@ export function CustomerCreatePage() {
 
 export const Route = createFileRoute('/_private/customers/add/')({
   component: CustomerCreatePage,
-  staticData: { title: t('customer.create.title') },
+  staticData: { title: t('new_customer') },
 });

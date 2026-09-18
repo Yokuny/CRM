@@ -44,15 +44,15 @@ export function ProfessionalAddPage() {
 
   return (
     <Card asPage>
-      <CardHeader title={t('professional.create.title')} />
+      <CardHeader title={t('new_professional')} />
       <CardContent>
         <Form {...form}>
           <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6">
             <DefaultFormLayout
               sections={[
                 {
-                  title: t('professional.create.section.info'),
-                  description: t('professional.create.section.info_description'),
+                  title: t('information'),
+                  description: t('name_and_slot_duration'),
                   fields: [
                     <div key="professional-fields" className="grid gap-4 sm:grid-cols-2">
                       <FormField
@@ -62,7 +62,7 @@ export function ProfessionalAddPage() {
                           <FormItem>
                             <FormLabel>{t('name')}</FormLabel>
                             <FormControl>
-                              <Input placeholder={t('professional.create.field.name_placeholder')} {...field} />
+                              <Input placeholder={t('example_person_name')} {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -73,7 +73,7 @@ export function ProfessionalAddPage() {
                         name="slotDurationMinutes"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t('professional.slot_duration')}</FormLabel>
+                            <FormLabel>{t('slot_duration')}</FormLabel>
                             <FormControl>
                               <Input
                                 type="number"
@@ -81,7 +81,7 @@ export function ProfessionalAddPage() {
                                 min={5}
                                 max={480}
                                 step={5}
-                                placeholder={t('professional.slot_duration_placeholder')}
+                                placeholder={t('example_number')}
                                 value={field.value}
                                 onChange={(e) => field.onChange(e.target.value === '' ? 0 : Number(e.target.value))}
                                 onBlur={field.onBlur}
@@ -95,8 +95,8 @@ export function ProfessionalAddPage() {
                   ],
                 },
                 {
-                  title: t('professional.create.section.schedule'),
-                  description: t('professional.create.section.schedule_description'),
+                  title: t('weekly_schedule'),
+                  description: t('set_available_hours'),
                   fields: [
                     <WeeklyScheduleEditor
                       key="weeklySchedule"
@@ -126,5 +126,5 @@ export function ProfessionalAddPage() {
 
 export const Route = createFileRoute('/_private/schedule/professionals/add/')({
   component: ProfessionalAddPage,
-  staticData: { title: t('professional.create.title') },
+  staticData: { title: t('new_professional') },
 });

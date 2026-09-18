@@ -74,8 +74,8 @@ describe('KanbanIndexPage (T15, spec.md KAN-03)', () => {
     expect(firstBoardIndex).toBeGreaterThanOrEqual(0);
     expect(secondBoardIndex).toBeGreaterThan(firstBoardIndex);
     expect(screen.getByText('Quadro de cobranças')).toBeInTheDocument();
-    expect(screen.getByText('3 cards')).toBeInTheDocument();
-    expect(screen.getByText('0 cards')).toBeInTheDocument();
+    expect(screen.getByText('3 Cards')).toBeInTheDocument();
+    expect(screen.getByText('0 Cards')).toBeInTheDocument();
   });
 
   it('each board links to /kanban/details with search:{id} (AD-030, never a $id path segment)', async () => {

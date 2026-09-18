@@ -40,13 +40,13 @@ export function OrderCard({ conversationId }: OrderCardProps) {
 
   return (
     <Panel size="xs" className="flex-row items-center">
-      <BadgeIndicator variant="warning">{t('order.status.pending_approval')}</BadgeIndicator>
+      <BadgeIndicator variant="warning">{t('pending_approval')}</BadgeIndicator>
       <span className="text-sm">{formatMoney(order.totalPrice)}</span>
       <Button type="button" variant="success" onClick={handleApprove} disabled={approveMutation.isPending}>
-        {t('order.approve.action')}
+        {t('approve')}
       </Button>
       <Button type="button" variant="destructive" onClick={handleReject} disabled={rejectMutation.isPending}>
-        {t('order.reject.action')}
+        {t('reject')}
       </Button>
     </Panel>
   );

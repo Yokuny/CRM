@@ -23,7 +23,7 @@ export function PrivateIndexPage() {
       <CardHeader title={data.tenant?.name ?? ''} />
       <CardContent>
         <ItemDescription>
-          {t('private.role')}: {data.role.join(', ')}
+          {t('role')}: {data.role.join(', ')}
         </ItemDescription>
         <ItemGroup variant="grid">
           <Item
@@ -45,7 +45,7 @@ export function PrivateIndexPage() {
                   <Package className="size-4" />
                 </ItemMedia>
                 <ItemContent>
-                  <ItemTitle>{t('product.list.title')}</ItemTitle>
+                  <ItemTitle>{t('catalog')}</ItemTitle>
                 </ItemContent>
               </Link>
             }
@@ -57,7 +57,7 @@ export function PrivateIndexPage() {
                   <ShoppingCart className="size-4" />
                 </ItemMedia>
                 <ItemContent>
-                  <ItemTitle>{t('order.list.title')}</ItemTitle>
+                  <ItemTitle>{t('orders')}</ItemTitle>
                 </ItemContent>
               </Link>
             }
@@ -69,7 +69,7 @@ export function PrivateIndexPage() {
                   <Inbox className="size-4" />
                 </ItemMedia>
                 <ItemContent>
-                  <ItemTitle>{t('inbox.title')}</ItemTitle>
+                  <ItemTitle>{t('inbox')}</ItemTitle>
                 </ItemContent>
               </Link>
             }
@@ -81,7 +81,7 @@ export function PrivateIndexPage() {
                   <Kanban className="size-4" />
                 </ItemMedia>
                 <ItemContent>
-                  <ItemTitle>{t('kanban.board.list.title')}</ItemTitle>
+                  <ItemTitle>{t('boards')}</ItemTitle>
                 </ItemContent>
               </Link>
             }

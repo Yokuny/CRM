@@ -1,6 +1,7 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { queryOptions } from '@tanstack/react-query';
 import { get, post } from '../lib/api/client.api.js';
+import { t } from '../lib/helpers/translate.helper.js';
 
 // Espelha MessageListItem/MessageRecord de
 // apps/crm-api/src/repositories/conversation.repository.ts — a verdade fica
@@ -57,7 +58,7 @@ export const messagesQuery = (conversationId: string, params: MessagesQueryParam
       const res = await get<MessagesListResult>(
         `/conversations/${encodeURIComponent(conversationId)}/messages${buildQueryString(params)}`,
       );
-      if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível carregar as mensagens.');
+      if (!res.success || !res.data) throw new Error(res.message ?? t('load_error'));
       return res.data;
     },
   });
@@ -78,7 +79,7 @@ export const resendMessage = async (
   const res = await post<MessageRecord>(
     `/conversations/${encodeURIComponent(conversationId)}/messages/${encodeURIComponent(messageId)}/resend`,
   );
-  if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível reenviar a mensagem.');
+  if (!res.success || !res.data) throw new Error(res.message ?? t('send_error'));
   await queryClient.invalidateQueries({ queryKey: messageKeys.listsForConversation(conversationId) });
   return res.data;
 };

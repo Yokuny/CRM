@@ -62,7 +62,7 @@ export function SpacesIndexPage() {
 
   return (
     <Card asPage>
-      <CardHeader title={t('space.list.title')}>
+      <CardHeader title={t('spaces')}>
         <CardAction>
           <Button variant="basic" render={<Link to="/schedule/spaces/add">{t('add')}</Link>} />
         </CardAction>
@@ -70,7 +70,7 @@ export function SpacesIndexPage() {
       <CardContent>
         <div className="mb-3">
           <Checkbox
-            label={t('space.filter.show_inactive')}
+            label={t('show_inactive')}
             checked={search.showInactive}
             onCheckedChange={(checked) => handleShowInactiveChange(checked === true)}
           />
@@ -96,6 +96,6 @@ export function SpacesIndexPage() {
 
 export const Route = createFileRoute('/_private/schedule/spaces/')({
   component: SpacesIndexPage,
-  staticData: { title: t('space.list.title') },
+  staticData: { title: t('spaces') },
   validateSearch: (search: Record<string, unknown>): SpacesSearch => spacesSearchSchema.parse(search),
 });

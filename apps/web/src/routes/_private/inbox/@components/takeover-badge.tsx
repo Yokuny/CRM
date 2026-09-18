@@ -54,7 +54,7 @@ export function TakeoverBadge({ conversation }: TakeoverBadgeProps) {
       // `res.message` (conversation.service.ts: ConversationAlreadyAssignedError
       // resolve o User.name no back-end) — o toast repassa essa mensagem tal
       // como veio, sem reconstruir o texto no front.
-      if (!res.success || !res.data) throw new Error(res.message ?? t('inbox.takeover.error'));
+      if (!res.success || !res.data) throw new Error(res.message ?? t('action_error'));
       return res.data;
     },
     onSuccess: applyUpdate,
@@ -64,7 +64,7 @@ export function TakeoverBadge({ conversation }: TakeoverBadgeProps) {
   const releaseMutation = useMutation({
     mutationFn: async (): Promise<TakeoverResponse> => {
       const res = await post<TakeoverResponse>(`/conversations/${encodeURIComponent(conversation.id)}/release`);
-      if (!res.success || !res.data) throw new Error(res.message ?? t('inbox.release.error'));
+      if (!res.success || !res.data) throw new Error(res.message ?? t('action_error'));
       return res.data;
     },
     onSuccess: applyUpdate,
@@ -81,7 +81,7 @@ export function TakeoverBadge({ conversation }: TakeoverBadgeProps) {
   return (
     <div className="flex items-center gap-2">
       <BadgeIndicator variant={conversation.mode === 'human' ? 'success' : 'secondary'}>
-        {t(conversation.mode === 'human' ? 'inbox.mode.human' : 'inbox.mode.bot')}
+        {t(conversation.mode === 'human' ? 'human' : 'bot')}
       </BadgeIndicator>
       {assigneeLabel && <span className="text-muted-foreground text-sm">{assigneeLabel}</span>}
       <Button
@@ -90,7 +90,7 @@ export function TakeoverBadge({ conversation }: TakeoverBadgeProps) {
         onClick={() => takeoverMutation.mutate()}
         disabled={takeoverMutation.isPending}
       >
-        {t('inbox.takeover.action')}
+        {t('take_over')}
       </Button>
       {/* INBOX-09: "Liberar" funciona pra qualquer operador (regressão) —
           incondicional, nunca checa se `selfId === conversation.assignee`. */}
@@ -101,7 +101,7 @@ export function TakeoverBadge({ conversation }: TakeoverBadgeProps) {
           onClick={() => releaseMutation.mutate()}
           disabled={releaseMutation.isPending}
         >
-          {t('inbox.release.action')}
+          {t('release')}
         </Button>
       )}
     </div>

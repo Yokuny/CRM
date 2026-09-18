@@ -36,7 +36,7 @@ function renderMessageBody(message: MessageRecord, conversationId: string): Reac
   if (message.type === 'image' || message.type === 'document') {
     return <MediaCard conversationId={conversationId} message={message} />;
   }
-  return <p className="text-muted-foreground text-sm italic">{t('inbox.message.unsupported')}</p>;
+  return <p className="text-muted-foreground text-sm italic">{t('unsupported_message')}</p>;
 }
 
 type ThreadProps = {
@@ -78,7 +78,7 @@ export function ConversationThread({ conversationId, customerId, renderFailedAct
       <OrderCard conversationId={conversationId} />
       <AppointmentCard customerId={customerId} />
       {items.length === 0 ? (
-        <p className="text-muted-foreground text-sm">{t('inbox.thread.empty')}</p>
+        <p className="text-muted-foreground text-sm">{t('no_messages')}</p>
       ) : (
         items.map((message) => (
           <div
@@ -89,7 +89,7 @@ export function ConversationThread({ conversationId, customerId, renderFailedAct
             <p className="text-muted-foreground text-xs">{formatDate(message.createdAt, 'dd/MM HH:mm')}</p>
             {message.status === 'failed' && (
               <div className="mt-1 flex items-center gap-2">
-                <BadgeIndicator variant="error">{t('inbox.message.failed')}</BadgeIndicator>
+                <BadgeIndicator variant="error">{t('failed')}</BadgeIndicator>
                 {renderFailedAction?.(message)}
               </div>
             )}

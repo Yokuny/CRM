@@ -200,7 +200,7 @@ describe('BlockPanel — existing block mode (T41, spec.md SCH-33)', () => {
 
     renderPanel({ block: existingBlock, onClose });
 
-    await user.click(screen.getByRole('button', { name: 'Remover bloqueio' }));
+    await user.click(screen.getByRole('button', { name: 'Remover' }));
 
     await waitFor(() => expect(delMock).toHaveBeenCalledWith('/appointments/blocks/b1'));
     await waitFor(() => expect(onClose).toHaveBeenCalled());
@@ -213,7 +213,7 @@ describe('BlockPanel — existing block mode (T41, spec.md SCH-33)', () => {
 
     renderPanel({ block: existingBlock });
 
-    await user.click(screen.getByRole('button', { name: 'Remover bloqueio' }));
+    await user.click(screen.getByRole('button', { name: 'Remover' }));
 
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Bloqueio não encontrado'));
   });

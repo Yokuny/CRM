@@ -12,7 +12,7 @@ import { t } from '@/lib/helpers/translate.helper.js';
 export function ProcessesIndexPage() {
   return (
     <Card asPage>
-      <CardHeader title={t('customer.processes.title')} />
+      <CardHeader title={t('processes')} />
       <CardContent>
         <ItemGroup variant="grid">
           <Item
@@ -23,7 +23,7 @@ export function ProcessesIndexPage() {
                 </ItemMedia>
                 <ItemContent>
                   <ItemTitle>{t('customers')}</ItemTitle>
-                  <ItemDescription>{t('process.index.hint')}</ItemDescription>
+                  <ItemDescription>{t('select_customer_for_processes')}</ItemDescription>
                 </ItemContent>
               </Link>
             }
@@ -36,5 +36,5 @@ export function ProcessesIndexPage() {
 
 export const Route = createFileRoute('/_private/processes/')({
   component: ProcessesIndexPage,
-  staticData: { title: t('customer.processes.title') },
+  staticData: { title: t('processes') },
 });

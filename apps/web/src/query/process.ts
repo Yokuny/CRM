@@ -1,5 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
 import { get } from '../lib/api/client.api.js';
+import { t } from '../lib/helpers/translate.helper.js';
 
 // Espelha ProcessRecord de apps/crm-api/src/repositories/process.repository.ts
 // — mesma convenção de "espelho local" já usada em query/customer.ts
@@ -33,7 +34,7 @@ export const processesQuery = (customerId: string) =>
     queryKey: processKeys.list(customerId),
     queryFn: async (): Promise<ProcessesListResult> => {
       const res = await get<ProcessesListResult>(`/processes?customerId=${encodeURIComponent(customerId)}`);
-      if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível carregar os processos.');
+      if (!res.success || !res.data) throw new Error(res.message ?? t('load_error'));
       return res.data;
     },
   });

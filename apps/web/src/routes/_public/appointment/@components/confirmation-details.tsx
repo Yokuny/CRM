@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button.js';
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item.js';
 import { weekdayIndexOfDisplayDate } from '@/lib/helpers/displayTime.helper.js';
-import { t } from '@/lib/helpers/translate.helper.js';
+import { t, WEEKDAY_KEYS } from '@/lib/helpers/translate.helper.js';
 import type { AppointmentConfirmationRecord } from '@/query/appointmentConfirmation.js';
 
 export type ConfirmationDetailsProps = {
@@ -47,28 +47,28 @@ export function ConfirmationDetails({
   isCanceling,
 }: ConfirmationDetailsProps) {
   const isActionable = ACTIONABLE_STATUSES.includes(record.status);
-  const weekday = t(`weekday.${weekdayIndexOfDisplayDate(record.date)}`);
+  const weekday = t(WEEKDAY_KEYS[weekdayIndexOfDisplayDate(record.date)]);
 
   return (
     <div className="w-full max-w-sm space-y-6">
       <div>
-        <ItemTitle className="text-lg">{t('appointment_confirmation.title')}</ItemTitle>
-        <ItemDescription>{t('appointment_confirmation.description')}</ItemDescription>
+        <ItemTitle className="text-lg">{t('appointment_confirmation')}</ItemTitle>
+        <ItemDescription>{t('review_and_confirm_attendance')}</ItemDescription>
       </div>
 
       <ItemGroup>
-        <Row label={t('appointment.field.date')} value={`${weekday}, ${record.date}`} />
-        <Row label={t('appointment.field.time')} value={record.time} />
-        {record.professionalName && <Row label={t('appointment.field.professional')} value={record.professionalName} />}
-        {record.spaceName && <Row label={t('appointment.field.space')} value={record.spaceName} />}
-        {record.customerName && <Row label={t('appointment.field.customer')} value={record.customerName} />}
-        <Row label={t('status')} value={t(`appointment.status.${record.status}`)} />
+        <Row label={t('date')} value={`${weekday}, ${record.date}`} />
+        <Row label={t('time')} value={record.time} />
+        {record.professionalName && <Row label={t('professional')} value={record.professionalName} />}
+        {record.spaceName && <Row label={t('space')} value={record.spaceName} />}
+        {record.customerName && <Row label={t('customer')} value={record.customerName} />}
+        <Row label={t('status')} value={t(record.status)} />
       </ItemGroup>
 
       {isActionable && (
         <div className="flex gap-3">
           <Button type="button" className="flex-1" onClick={onConfirm} disabled={isConfirming || isCanceling}>
-            {t('appointment_confirmation.confirm_action')}
+            {t('confirm_attendance')}
           </Button>
           <Button
             type="button"
@@ -77,12 +77,12 @@ export function ConfirmationDetails({
             onClick={onCancel}
             disabled={isConfirming || isCanceling}
           >
-            {t('appointment_confirmation.cancel_action')}
+            {t('will_not_attend')}
           </Button>
         </div>
       )}
 
-      <ItemDescription className="text-center text-xs">{t('appointment_confirmation.footer_note')}</ItemDescription>
+      <ItemDescription className="text-center text-xs">{t('contact_for_questions')}</ItemDescription>
     </div>
   );
 }

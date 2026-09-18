@@ -109,11 +109,14 @@ describe('InboxPage (T21 — esqueleto da rota)', () => {
 
     renderPage();
 
-    expect(screen.getByText('Caixa de entrada')).toBeInTheDocument();
+    // Título aparece 2x (breadcrumb + CardHeader) — useMatches:()=>[] faz o
+    // fallback de breadcrumb (t(segmento)) resolver pra mesma chave `inbox`
+    // do title explícito do CardHeader (comportamento real da página).
+    expect(screen.getAllByText('Caixa de entrada').length).toBeGreaterThan(0);
     // ConversationQueue (T22) montada de verdade — filtro de mode é prova de
     // que a fila renderizou, sem duplicar a cobertura de
     // conversation-queue.unit.test.tsx aqui.
-    expect(screen.getByRole('button', { name: 'Todas' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Todos' })).toBeInTheDocument();
     expect(screen.queryByTestId('inbox-selected-conversation')).not.toBeInTheDocument();
   });
 

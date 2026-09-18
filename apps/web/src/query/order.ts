@@ -1,6 +1,7 @@
 import type { QueryClient, UseMutationOptions } from '@tanstack/react-query';
 import { queryOptions } from '@tanstack/react-query';
 import { get, post } from '../lib/api/client.api.js';
+import { t } from '../lib/helpers/translate.helper.js';
 
 // Espelha OrderRecord/OrderItemRecord de
 // apps/crm-api/src/repositories/order.repository.ts — a verdade fica no
@@ -83,7 +84,7 @@ export const ordersQuery = (params: OrdersQueryParams = {}) =>
     queryKey: orderKeys.list(params),
     queryFn: async (): Promise<OrdersListResult> => {
       const res = await get<OrdersListResult>(`/orders${buildQueryString(params)}`);
-      if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível carregar os pedidos.');
+      if (!res.success || !res.data) throw new Error(res.message ?? t('load_error'));
       return res.data;
     },
   });
@@ -100,7 +101,7 @@ export const approveOrderMutation = (
 ): UseMutationOptions<OrderRecord, Error, { id: string }> => ({
   mutationFn: async ({ id }) => {
     const res = await post<OrderRecord>(`/orders/${encodeURIComponent(id)}/approve`);
-    if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível aprovar o pedido.');
+    if (!res.success || !res.data) throw new Error(res.message ?? t('action_error'));
     return res.data;
   },
   onSuccess: () => {
@@ -116,7 +117,7 @@ export const rejectOrderMutation = (
 ): UseMutationOptions<OrderRecord, Error, { id: string; reason?: string }> => ({
   mutationFn: async ({ id, reason }) => {
     const res = await post<OrderRecord>(`/orders/${encodeURIComponent(id)}/reject`, { reason });
-    if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível rejeitar o pedido.');
+    if (!res.success || !res.data) throw new Error(res.message ?? t('action_error'));
     return res.data;
   },
   onSuccess: () => {

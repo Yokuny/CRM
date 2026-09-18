@@ -39,15 +39,15 @@ export function SpaceAddPage() {
 
   return (
     <Card asPage>
-      <CardHeader title={t('space.create.title')} />
+      <CardHeader title={t('new_space')} />
       <CardContent>
         <Form {...form}>
           <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6">
             <DefaultFormLayout
               sections={[
                 {
-                  title: t('space.create.section.info'),
-                  description: t('space.create.section.info_description'),
+                  title: t('information'),
+                  description: t('space_name_for_appointments'),
                   fields: [
                     <FormField
                       key="name"
@@ -57,7 +57,7 @@ export function SpaceAddPage() {
                         <FormItem>
                           <FormLabel>{t('name')}</FormLabel>
                           <FormControl>
-                            <Input placeholder={t('space.create.field.name_placeholder')} {...field} />
+                            <Input placeholder={t('example_space_name')} {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -86,5 +86,5 @@ export function SpaceAddPage() {
 
 export const Route = createFileRoute('/_private/schedule/spaces/add/')({
   component: SpaceAddPage,
-  staticData: { title: t('space.create.title') },
+  staticData: { title: t('new_space') },
 });

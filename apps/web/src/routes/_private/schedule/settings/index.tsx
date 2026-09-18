@@ -50,8 +50,8 @@ function SchedulingSettingsForm({ settings }: SchedulingSettingsFormProps) {
         <DefaultFormLayout
           sections={[
             {
-              title: t('scheduling_settings.section.info'),
-              description: t('scheduling_settings.section.info_description'),
+              title: t('values'),
+              description: t('max_suggested_slots'),
               fields: [
                 <FormField
                   key="maxSlotsPerResponse"
@@ -59,7 +59,7 @@ function SchedulingSettingsForm({ settings }: SchedulingSettingsFormProps) {
                   name="maxSlotsPerResponse"
                   render={({ field }) => (
                     <FormItem className="max-w-xs">
-                      <FormLabel>{t('scheduling_settings.max_slots')}</FormLabel>
+                      <FormLabel>{t('max_slots_per_reply')}</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -67,7 +67,7 @@ function SchedulingSettingsForm({ settings }: SchedulingSettingsFormProps) {
                           min={1}
                           max={50}
                           step={1}
-                          placeholder={t('scheduling_settings.max_slots_placeholder')}
+                          placeholder={t('example_number')}
                           value={field.value ?? 0}
                           onChange={(e) => field.onChange(e.target.value === '' ? 0 : Number(e.target.value))}
                           onBlur={field.onBlur}
@@ -105,7 +105,7 @@ export function SchedulingSettingsPage() {
 
   return (
     <Card asPage>
-      <CardHeader title={t('scheduling_settings.title')} />
+      <CardHeader title={t('settings')} />
       <CardContent>
         {query.isLoading || !query.data ? <DefaultLoading /> : <SchedulingSettingsForm settings={query.data} />}
       </CardContent>
@@ -115,5 +115,5 @@ export function SchedulingSettingsPage() {
 
 export const Route = createFileRoute('/_private/schedule/settings/')({
   component: SchedulingSettingsPage,
-  staticData: { title: t('scheduling_settings.title') },
+  staticData: { title: t('settings') },
 });

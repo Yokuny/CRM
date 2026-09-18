@@ -68,7 +68,7 @@ export function CustomersKanbanPage() {
   const mutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const res = await patch(`/customers/${encodeURIComponent(id)}`, { values: { status } });
-      if (!res.success) throw new Error(res.message ?? t('kanban.move.error'));
+      if (!res.success) throw new Error(res.message ?? t('move_error'));
       return res.data;
     },
   });
@@ -107,7 +107,7 @@ export function CustomersKanbanPage() {
             delete next[card.id];
             return next;
           });
-          toast.error(t('kanban.move.error'));
+          toast.error(t('move_error'));
         },
       },
     );
@@ -119,7 +119,7 @@ export function CustomersKanbanPage() {
         <CardAction>
           <Button
             variant="basic"
-            aria-label={t('customers.view.table')}
+            aria-label={t('table')}
             render={
               <Link to="/customers/list">
                 <List />
@@ -178,7 +178,7 @@ export function CustomersKanbanPage() {
                             onTouchStart={(e: ReactTouchEvent) => e.stopPropagation()}
                             className="text-primary text-xs underline underline-offset-4"
                           >
-                            {t('process.new.action')}
+                            {t('new_process')}
                           </Link>
                         }
                       />
@@ -196,5 +196,5 @@ export function CustomersKanbanPage() {
 
 export const Route = createFileRoute('/_private/customers/kanban/')({
   component: CustomersKanbanPage,
-  staticData: { title: t('customers.view.kanban') },
+  staticData: { title: t('kanban') },
 });

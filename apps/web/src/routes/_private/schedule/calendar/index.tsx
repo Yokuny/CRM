@@ -114,23 +114,23 @@ export function CalendarIndexPage() {
 
   return (
     <Card asPage>
-      <CardHeader title={t('calendar.title')} />
+      <CardHeader title={t('calendar')} />
       <CardContent>
         <div className="flex flex-wrap items-center gap-2">
           <ButtonGroup>
             <Button type="button" variant="basic" onClick={handlePrevious}>
-              {t('calendar.previous_week')}
+              {t('previous_week')}
             </Button>
             <Button type="button" variant="basic" onClick={handleNext}>
-              {t('calendar.next_week')}
+              {t('next_week')}
             </Button>
           </ButtonGroup>
           <Select value={search.professional ?? ALL_FILTER_VALUE} onValueChange={handleProfessionalChange}>
             <SelectTrigger>
-              <SelectValue placeholder={t('calendar.filter.professional')} />
+              <SelectValue placeholder={t('professional')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL_FILTER_VALUE}>{t('calendar.filter.all_professionals')}</SelectItem>
+              <SelectItem value={ALL_FILTER_VALUE}>{t('all')}</SelectItem>
               {(professionalsQueryResult.data?.items ?? []).map((professional) => (
                 <SelectItem key={professional.id} value={professional.id}>
                   {professional.name}
@@ -140,10 +140,10 @@ export function CalendarIndexPage() {
           </Select>
           <Select value={search.space ?? ALL_FILTER_VALUE} onValueChange={handleSpaceChange}>
             <SelectTrigger>
-              <SelectValue placeholder={t('calendar.filter.space')} />
+              <SelectValue placeholder={t('space')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL_FILTER_VALUE}>{t('calendar.filter.all_spaces')}</SelectItem>
+              <SelectItem value={ALL_FILTER_VALUE}>{t('all')}</SelectItem>
               {(spacesQueryResult.data?.items ?? []).map((space) => (
                 <SelectItem key={space.id} value={space.id}>
                   {space.name}
@@ -155,10 +155,10 @@ export function CalendarIndexPage() {
               modal (feedback do usuário), só trocam `panel`, que é renderizado
               INLINE logo abaixo, empurrando o WeekGrid pra baixo dele. */}
           <Button type="button" onClick={() => setPanel({ kind: 'appointment-create' })}>
-            {t('calendar.new_appointment')}
+            {t('new_appointment')}
           </Button>
           <Button type="button" variant="basic" onClick={() => setPanel({ kind: 'block-create' })}>
-            {t('calendar.new_block')}
+            {t('new_block')}
           </Button>
         </div>
         {panel?.kind === 'appointment-create' && <AppointmentPanel onClose={closePanel} />}
@@ -181,6 +181,6 @@ export function CalendarIndexPage() {
 
 export const Route = createFileRoute('/_private/schedule/calendar/')({
   component: CalendarIndexPage,
-  staticData: { title: t('calendar.title') },
+  staticData: { title: t('calendar') },
   validateSearch: (search: Record<string, unknown>): CalendarSearch => calendarSearchSchema.parse(search),
 });

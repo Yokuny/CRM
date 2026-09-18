@@ -52,26 +52,26 @@ export function KanbanCardContent({
         <div className="flex flex-wrap gap-1">
           {/* KAN-24: nome do cliente. */}
           {customerName && (
-            <Badge variant="outline" title={t('kanban.card.field.customer')}>
+            <Badge variant="outline" title={t('customer')}>
               {customerName}
             </Badge>
           )}
           {/* KAN-25: identificador amigável do processo (nome do template +
               estágio atual). */}
           {processStage && (
-            <Badge variant="secondary" title={t('kanban.card.field.process')}>
+            <Badge variant="secondary" title={t('process')}>
               {processTemplateName ? `${processTemplateName} · ${processStage}` : processStage}
             </Badge>
           )}
           {/* KAN-26: identificador amigável do pedido (valor total + status). */}
           {orderStatus && (
-            <Badge variant="outline" title={t('kanban.card.field.order')}>
-              {formatMoney(orderTotalPrice)} · {t(`order.status.${orderStatus}`)}
+            <Badge variant="outline" title={t('order')}>
+              {formatMoney(orderTotalPrice)} · {t(orderStatus)}
             </Badge>
           )}
           {/* KAN-27: nome do usuário responsável. */}
           {assigneeName && (
-            <Badge variant="muted" title={t('kanban.card.field.assignee')}>
+            <Badge variant="muted" title={t('assignee')}>
               {assigneeName}
             </Badge>
           )}

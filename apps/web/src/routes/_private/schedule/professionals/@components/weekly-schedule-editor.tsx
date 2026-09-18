@@ -5,7 +5,7 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/comp
 import { Input } from '@/components/ui/input.js';
 import { Panel } from '@/components/ui/item.js';
 import { Label } from '@/components/ui/label.js';
-import { t } from '@/lib/helpers/translate.helper.js';
+import { t, WEEKDAY_KEYS } from '@/lib/helpers/translate.helper.js';
 
 export type WeeklyScheduleEditorProps = {
   // `Control` (= `Control<FieldValues>`), mesmo padrão de DynamicFieldArray
@@ -57,7 +57,7 @@ export function WeeklyScheduleEditor({ control, name }: WeeklyScheduleEditorProp
         return (
           <Panel key={weekday} data-testid={`weekly-schedule-weekday-${weekday}`} className="grid gap-3">
             <div className="flex items-center justify-between">
-              <Label>{t(`weekday.${weekday}`)}</Label>
+              <Label>{t(WEEKDAY_KEYS[weekday])}</Label>
               <Button type="button" variant="basic" onClick={() => handleAdd(weekday)}>
                 {t('add')}
               </Button>
@@ -69,7 +69,7 @@ export function WeeklyScheduleEditor({ control, name }: WeeklyScheduleEditorProp
                   name={`${name}.${item.index}.start`}
                   render={({ field }) => (
                     <FormItem className="flex-1">
-                      <FormLabel>{t('schedule.window.start')}</FormLabel>
+                      <FormLabel>{t('start')}</FormLabel>
                       <FormControl>
                         {/* `value={field.value ?? ''}` (não só `{...field}`): um item
                             recém-adicionado via `append` pode renderizar uma primeira
@@ -87,7 +87,7 @@ export function WeeklyScheduleEditor({ control, name }: WeeklyScheduleEditorProp
                   name={`${name}.${item.index}.end`}
                   render={({ field }) => (
                     <FormItem className="flex-1">
-                      <FormLabel>{t('schedule.window.end')}</FormLabel>
+                      <FormLabel>{t('end')}</FormLabel>
                       <FormControl>
                         <Input type="time" {...field} value={field.value ?? ''} />
                       </FormControl>

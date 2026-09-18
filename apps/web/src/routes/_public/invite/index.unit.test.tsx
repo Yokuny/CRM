@@ -51,7 +51,7 @@ describe('InvitePage', () => {
 
     renderInvitePage();
 
-    expect(screen.getByText('Link de convite inválido.')).toBeInTheDocument();
+    expect(screen.getByText('Link inválido.')).toBeInTheDocument();
     expect(getMock).not.toHaveBeenCalled();
   });
 

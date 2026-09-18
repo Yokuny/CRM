@@ -127,14 +127,14 @@ function CardCreateForm({ boardId, columnId, onClose }: CardCreateFormProps) {
 
   return (
     <>
-      <PanelHeader title={t('kanban.card.create.title')} onClose={onClose} />
+      <PanelHeader title={t('new_card')} onClose={onClose} />
       <Form {...form}>
         <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
           <DefaultFormLayout
             sections={[
               {
-                title: t('kanban.card.section.info'),
-                description: t('kanban.card.section.info_description'),
+                title: t('details'),
+                description: t('title_description_and_references'),
                 layout: 'vertical',
                 fields: [
                   <FormField
@@ -143,7 +143,7 @@ function CardCreateForm({ boardId, columnId, onClose }: CardCreateFormProps) {
                     name="title"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t('kanban.card.field.title')}</FormLabel>
+                        <FormLabel>{t('title')}</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -157,7 +157,7 @@ function CardCreateForm({ boardId, columnId, onClose }: CardCreateFormProps) {
                     name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t('kanban.card.field.description')}</FormLabel>
+                        <FormLabel>{t('description')}</FormLabel>
                         <FormControl>
                           <Input {...field} value={field.value ?? ''} />
                         </FormControl>
@@ -171,18 +171,18 @@ function CardCreateForm({ boardId, columnId, onClose }: CardCreateFormProps) {
                     name="customer"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t('kanban.card.field.customer')}</FormLabel>
+                        <FormLabel>{t('customer')}</FormLabel>
                         <Select
                           value={field.value ?? UNSET_VALUE}
                           onValueChange={(value) => field.onChange(value === UNSET_VALUE ? undefined : value)}
                         >
                           <FormControl>
                             <SelectTrigger className="w-full">
-                              <SelectValue placeholder={t('kanban.card.field.customer')} />
+                              <SelectValue placeholder={t('customer')} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value={UNSET_VALUE}>{t('kanban.card.field.none')}</SelectItem>
+                            <SelectItem value={UNSET_VALUE}>{t('none')}</SelectItem>
                             {(customersQueryResult.data?.items ?? []).map((customer) => (
                               <SelectItem key={customer.id} value={customer.id}>
                                 {customer.name}
@@ -200,7 +200,7 @@ function CardCreateForm({ boardId, columnId, onClose }: CardCreateFormProps) {
                     name="process"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t('kanban.card.field.process')}</FormLabel>
+                        <FormLabel>{t('process')}</FormLabel>
                         <FormControl>
                           <Input {...field} value={field.value ?? ''} />
                         </FormControl>
@@ -214,7 +214,7 @@ function CardCreateForm({ boardId, columnId, onClose }: CardCreateFormProps) {
                     name="order"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t('kanban.card.field.order')}</FormLabel>
+                        <FormLabel>{t('order')}</FormLabel>
                         <FormControl>
                           <Input {...field} value={field.value ?? ''} />
                         </FormControl>
@@ -228,7 +228,7 @@ function CardCreateForm({ boardId, columnId, onClose }: CardCreateFormProps) {
                     name="assignee"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t('kanban.card.field.assignee')}</FormLabel>
+                        <FormLabel>{t('assignee')}</FormLabel>
                         <FormControl>
                           <Input {...field} value={field.value ?? ''} />
                         </FormControl>
@@ -291,14 +291,14 @@ function CardEditForm({ boardId, card, onClose }: CardEditFormProps) {
 
   return (
     <>
-      <PanelHeader title={card.title || t('kanban.card.detail.title')} onClose={onClose} />
+      <PanelHeader title={card.title || t('card')} onClose={onClose} />
       <Form {...form}>
         <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
           <DefaultFormLayout
             sections={[
               {
-                title: t('kanban.card.section.info'),
-                description: t('kanban.card.section.info_description'),
+                title: t('details'),
+                description: t('title_description_and_references'),
                 layout: 'vertical',
                 fields: [
                   <FormField
@@ -307,7 +307,7 @@ function CardEditForm({ boardId, card, onClose }: CardEditFormProps) {
                     name="title"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t('kanban.card.field.title')}</FormLabel>
+                        <FormLabel>{t('title')}</FormLabel>
                         <FormControl>
                           <Input {...field} value={field.value ?? ''} />
                         </FormControl>
@@ -321,7 +321,7 @@ function CardEditForm({ boardId, card, onClose }: CardEditFormProps) {
                     name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t('kanban.card.field.description')}</FormLabel>
+                        <FormLabel>{t('description')}</FormLabel>
                         <FormControl>
                           <Input {...field} value={field.value ?? ''} />
                         </FormControl>
@@ -335,18 +335,18 @@ function CardEditForm({ boardId, card, onClose }: CardEditFormProps) {
                     name="customer"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t('kanban.card.field.customer')}</FormLabel>
+                        <FormLabel>{t('customer')}</FormLabel>
                         <Select
                           value={field.value ?? UNSET_VALUE}
                           onValueChange={(value) => field.onChange(value === UNSET_VALUE ? undefined : value)}
                         >
                           <FormControl>
                             <SelectTrigger className="w-full">
-                              <SelectValue placeholder={t('kanban.card.field.customer')} />
+                              <SelectValue placeholder={t('customer')} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value={UNSET_VALUE}>{t('kanban.card.field.none')}</SelectItem>
+                            <SelectItem value={UNSET_VALUE}>{t('none')}</SelectItem>
                             {(customersQueryResult.data?.items ?? []).map((customer) => (
                               <SelectItem key={customer.id} value={customer.id}>
                                 {customer.name}
@@ -364,7 +364,7 @@ function CardEditForm({ boardId, card, onClose }: CardEditFormProps) {
                     name="process"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t('kanban.card.field.process')}</FormLabel>
+                        <FormLabel>{t('process')}</FormLabel>
                         <FormControl>
                           <Input {...field} value={field.value ?? ''} />
                         </FormControl>
@@ -378,7 +378,7 @@ function CardEditForm({ boardId, card, onClose }: CardEditFormProps) {
                     name="order"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t('kanban.card.field.order')}</FormLabel>
+                        <FormLabel>{t('order')}</FormLabel>
                         <FormControl>
                           <Input {...field} value={field.value ?? ''} />
                         </FormControl>
@@ -392,7 +392,7 @@ function CardEditForm({ boardId, card, onClose }: CardEditFormProps) {
                     name="assignee"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t('kanban.card.field.assignee')}</FormLabel>
+                        <FormLabel>{t('assignee')}</FormLabel>
                         <FormControl>
                           <Input {...field} value={field.value ?? ''} />
                         </FormControl>
@@ -409,7 +409,7 @@ function CardEditForm({ boardId, card, onClose }: CardEditFormProps) {
               {t('save')}
             </Button>
             <Button type="button" variant="basic" disabled={deleteMutation.isPending} onClick={handleDelete}>
-              {t('kanban.card.delete.action')}
+              {t('remove')}
             </Button>
           </div>
         </form>

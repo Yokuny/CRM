@@ -15,14 +15,14 @@ import type { ProfessionalRecord } from '@/query/professional.js';
 
 const professionalColumns: ColumnDef<ProfessionalRecord, unknown>[] = [
   { accessorKey: 'name', header: t('name'), enableSorting: false },
-  { accessorKey: 'slotDurationMinutes', header: t('professional.slot_duration'), enableSorting: false },
+  { accessorKey: 'slotDurationMinutes', header: t('slot_duration'), enableSorting: false },
   {
     id: 'active',
     header: t('status'),
     enableSorting: false,
     cell: ({ row }) => (
       <BadgeIndicator variant={row.original.active ? 'active' : 'neutral'}>
-        {t(row.original.active ? 'professional.status.active' : 'professional.status.inactive')}
+        {t(row.original.active ? 'active' : 'inactive')}
       </BadgeIndicator>
     ),
   },

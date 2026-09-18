@@ -16,7 +16,7 @@ import { Checkbox } from '@/components/ui/checkbox.js';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form.js';
 import { Input } from '@/components/ui/input.js';
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item.js';
-import { t } from '@/lib/helpers/translate.helper.js';
+import { t, WEEKDAY_KEYS } from '@/lib/helpers/translate.helper.js';
 import {
   type ProfessionalRecord,
   professionalKeys,
@@ -41,7 +41,7 @@ function WeeklyScheduleSummary({ weeklySchedule }: { weeklySchedule: Professiona
     <div className="grid gap-1">
       {days.map((day) => (
         <ItemDescription key={day.weekday}>
-          {t(`weekday.${day.weekday}`)}: {day.windows.map((window) => `${window.start}–${window.end}`).join(', ')}
+          {t(WEEKDAY_KEYS[day.weekday])}: {day.windows.map((window) => `${window.start}–${window.end}`).join(', ')}
         </ItemDescription>
       ))}
     </div>
@@ -67,13 +67,13 @@ function ProfessionalDetailsView({ professional }: ProfessionalDetailsViewProps)
       </Item>
       <Item>
         <ItemContent>
-          <ItemTitle>{t('professional.slot_duration')}</ItemTitle>
+          <ItemTitle>{t('slot_duration')}</ItemTitle>
           <ItemDescription>{professional.slotDurationMinutes}</ItemDescription>
         </ItemContent>
       </Item>
       <Item>
         <ItemContent>
-          <ItemTitle>{t('professional.weekly_schedule')}</ItemTitle>
+          <ItemTitle>{t('weekly_schedule')}</ItemTitle>
           <WeeklyScheduleSummary weeklySchedule={professional.weeklySchedule} />
         </ItemContent>
       </Item>
@@ -82,7 +82,7 @@ function ProfessionalDetailsView({ professional }: ProfessionalDetailsViewProps)
           <ItemTitle>{t('status')}</ItemTitle>
           <ItemDescription>
             <BadgeIndicator variant={professional.active ? 'active' : 'neutral'}>
-              {t(professional.active ? 'professional.status.active' : 'professional.status.inactive')}
+              {t(professional.active ? 'active' : 'inactive')}
             </BadgeIndicator>
           </ItemDescription>
         </ItemContent>
@@ -137,8 +137,8 @@ function ProfessionalEditForm({ professional, onSaved, onCancel }: ProfessionalE
         <DefaultFormLayout
           sections={[
             {
-              title: t('professional.create.section.info'),
-              description: t('professional.create.section.info_description'),
+              title: t('information'),
+              description: t('name_and_slot_duration'),
               fields: [
                 <div key="professional-fields" className="grid gap-4 sm:grid-cols-2">
                   <FormField
@@ -148,11 +148,7 @@ function ProfessionalEditForm({ professional, onSaved, onCancel }: ProfessionalE
                       <FormItem>
                         <FormLabel>{t('name')}</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder={t('professional.create.field.name_placeholder')}
-                            {...field}
-                            value={field.value ?? ''}
-                          />
+                          <Input placeholder={t('example_person_name')} {...field} value={field.value ?? ''} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -163,7 +159,7 @@ function ProfessionalEditForm({ professional, onSaved, onCancel }: ProfessionalE
                     name="slotDurationMinutes"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t('professional.slot_duration')}</FormLabel>
+                        <FormLabel>{t('slot_duration')}</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -171,7 +167,7 @@ function ProfessionalEditForm({ professional, onSaved, onCancel }: ProfessionalE
                             min={5}
                             max={480}
                             step={5}
-                            placeholder={t('professional.slot_duration_placeholder')}
+                            placeholder={t('example_number')}
                             value={field.value ?? 0}
                             onChange={(e) => field.onChange(e.target.value === '' ? 0 : Number(e.target.value))}
                             onBlur={field.onBlur}
@@ -190,7 +186,7 @@ function ProfessionalEditForm({ professional, onSaved, onCancel }: ProfessionalE
                     <FormItem>
                       <FormControl>
                         <Checkbox
-                          label={t('professional.status.active')}
+                          label={t('active')}
                           checked={field.value ?? true}
                           onCheckedChange={(checked) => field.onChange(checked === true)}
                         />
@@ -202,8 +198,8 @@ function ProfessionalEditForm({ professional, onSaved, onCancel }: ProfessionalE
               ],
             },
             {
-              title: t('professional.create.section.schedule'),
-              description: t('professional.create.section.schedule_description'),
+              title: t('weekly_schedule'),
+              description: t('set_available_hours'),
               fields: [
                 <WeeklyScheduleEditor
                   key="weeklySchedule"
@@ -243,7 +239,7 @@ export function ProfessionalDetailsPage() {
 
   return (
     <Card asPage>
-      <CardHeader title={t('professional.details.title')}>
+      <CardHeader title={t('details')}>
         {professional && !isEditing && (
           <CardAction>
             <Button variant="basic" onClick={() => setIsEditing(true)}>
@@ -277,7 +273,7 @@ export function ProfessionalDetailsPage() {
 
 export const Route = createFileRoute('/_private/schedule/professionals/details')({
   component: ProfessionalDetailsPage,
-  staticData: { title: t('professional.details.title') },
+  staticData: { title: t('details') },
   validateSearch: (search: Record<string, unknown>): ProfessionalDetailsSearch =>
     professionalDetailsSearchSchema.parse(search),
 });

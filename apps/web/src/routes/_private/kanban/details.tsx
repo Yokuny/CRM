@@ -114,7 +114,7 @@ export function KanbanDetailsPage() {
         },
         onError: () => {
           clearPending();
-          toast.error(t('kanban.card.move.error'));
+          toast.error(t('move_error'));
         },
       },
     );
@@ -122,14 +122,14 @@ export function KanbanDetailsPage() {
 
   return (
     <Card asPage>
-      <CardHeader title={board?.name ?? t('kanban.board.details.title')}>
+      <CardHeader title={board?.name ?? t('details')}>
         {board && (
           <CardAction>
             <Button type="button" variant="basic" onClick={() => setPanel({ type: 'board-edit' })}>
               {t('edit')}
             </Button>
             <Button type="button" variant="basic" onClick={() => setPanel({ type: 'columns' })}>
-              {t('kanban.column_manager.action')}
+              {t('columns')}
             </Button>
           </CardAction>
         )}
@@ -229,6 +229,6 @@ export function KanbanDetailsPage() {
 
 export const Route = createFileRoute('/_private/kanban/details')({
   component: KanbanDetailsPage,
-  staticData: { title: t('kanban.board.details.title') },
+  staticData: { title: t('details') },
   validateSearch: (search: Record<string, unknown>): KanbanDetailsSearch => kanbanDetailsSearchSchema.parse(search),
 });

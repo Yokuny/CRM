@@ -34,8 +34,8 @@ export function AppointmentConfirmationPage() {
   if (!token) {
     return (
       <div className="w-full max-w-sm">
-        <ItemTitle className="mb-1 text-lg">{t('appointment_confirmation.title')}</ItemTitle>
-        <ItemDescription role="alert">{t('appointment_confirmation.missing_token')}</ItemDescription>
+        <ItemTitle className="mb-1 text-lg">{t('appointment_confirmation')}</ItemTitle>
+        <ItemDescription role="alert">{t('invalid_link')}</ItemDescription>
       </div>
     );
   }
@@ -49,15 +49,10 @@ export function AppointmentConfirmationPage() {
   // (AppointmentConfirmationError, query/appointmentConfirmation.ts).
   if (query.isError) {
     const status = query.error instanceof AppointmentConfirmationError ? query.error.status : undefined;
-    const message =
-      status === 404
-        ? t('appointment_confirmation.not_found')
-        : status === 410
-          ? t('appointment_confirmation.expired')
-          : t('appointment_confirmation.error');
+    const message = status === 404 ? t('invalid_link') : status === 410 ? t('expired_link') : t('load_error');
     return (
       <div className="w-full max-w-sm">
-        <ItemTitle className="mb-1 text-lg">{t('appointment_confirmation.title')}</ItemTitle>
+        <ItemTitle className="mb-1 text-lg">{t('appointment_confirmation')}</ItemTitle>
         <ItemDescription role="alert">{message}</ItemDescription>
       </div>
     );

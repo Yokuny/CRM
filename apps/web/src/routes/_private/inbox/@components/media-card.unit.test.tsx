@@ -96,6 +96,6 @@ describe('MediaCard (T24 — INBOX-17/18)', () => {
     render(<MediaCard conversationId="c1" message={IMAGE_MESSAGE} />);
     await user.click(screen.getByRole('button', { name: 'Ver' }));
 
-    expect(await screen.findByText('Não foi possível carregar essa mídia agora.')).toBeInTheDocument();
+    expect(await screen.findByText('Não foi possível carregar os dados.')).toBeInTheDocument();
   });
 });

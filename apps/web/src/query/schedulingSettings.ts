@@ -2,6 +2,7 @@ import type { UpdateSchedulingSettings } from '@crm/contracts';
 import type { QueryClient, UseMutationOptions } from '@tanstack/react-query';
 import { queryOptions } from '@tanstack/react-query';
 import { get, put } from '../lib/api/client.api.js';
+import { t } from '../lib/helpers/translate.helper.js';
 
 // Espelha SchedulingSettingsView de
 // apps/crm-api/src/services/schedulingSettings.service.ts — um único
@@ -26,8 +27,7 @@ export const schedulingSettingsQuery = () =>
     queryKey: schedulingSettingsKeys.detail(),
     queryFn: async (): Promise<SchedulingSettingsRecord> => {
       const res = await get<SchedulingSettingsRecord>('/scheduling-settings');
-      if (!res.success || !res.data)
-        throw new Error(res.message ?? 'Não foi possível carregar a configuração da agenda.');
+      if (!res.success || !res.data) throw new Error(res.message ?? t('load_error'));
       return res.data;
     },
   });
@@ -40,7 +40,7 @@ export const updateSchedulingSettingsMutation = (
 ): UseMutationOptions<SchedulingSettingsRecord, Error, UpdateSchedulingSettings> => ({
   mutationFn: async (data) => {
     const res = await put<SchedulingSettingsRecord>('/scheduling-settings', data);
-    if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível salvar a configuração da agenda.');
+    if (!res.success || !res.data) throw new Error(res.message ?? t('save_error'));
     return res.data;
   },
   onSuccess: () => {

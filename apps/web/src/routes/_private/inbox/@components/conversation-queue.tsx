@@ -14,9 +14,9 @@ import { ConversationTable } from './conversation-table.js';
 const PAGE_SIZE = 20;
 
 const MODE_FILTERS: { value: ConversationMode | undefined; label: string }[] = [
-  { value: undefined, label: t('inbox.filter.mode.all') },
-  { value: 'bot', label: t('inbox.mode.bot') },
-  { value: 'human', label: t('inbox.mode.human') },
+  { value: undefined, label: t('all') },
+  { value: 'bot', label: t('bot') },
+  { value: 'human', label: t('human') },
 ];
 
 type ConversationQueueProps = { onSelect: (id: string) => void };
@@ -70,11 +70,7 @@ export function ConversationQueue({ onSelect }: ConversationQueueProps) {
           </Button>
         ))}
       </ButtonGroup>
-      <Input
-        placeholder={t('search.placeholder')}
-        value={searchInput}
-        onChange={(e) => handleSearchInput(e.target.value)}
-      />
+      <Input placeholder={t('search')} value={searchInput} onChange={(e) => handleSearchInput(e.target.value)} />
       {query.isLoading ? (
         <DefaultLoading />
       ) : (query.data?.items.length ?? 0) === 0 ? (

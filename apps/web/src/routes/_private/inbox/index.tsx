@@ -48,15 +48,15 @@ export function InboxPage() {
 
   return (
     <Card asPage>
-      <CardHeader title={t('inbox.title')} />
+      <CardHeader title={t('inbox')} />
       <CardContent className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
         <ConversationQueue onSelect={handleSelect} />
         <Panel data-testid="inbox-thread-panel">
           {!search.id ? (
-            <p className="text-muted-foreground text-sm">{t('inbox.thread.select_hint')}</p>
+            <p className="text-muted-foreground text-sm">{t('select_conversation')}</p>
           ) : !conversation ? (
             conversationLookup.isLoading ? null : (
-              <p className="text-muted-foreground text-sm">{t('inbox.thread.not_found')}</p>
+              <p className="text-muted-foreground text-sm">{t('conversation_not_found')}</p>
             )
           ) : (
             <>
@@ -79,6 +79,6 @@ export function InboxPage() {
 
 export const Route = createFileRoute('/_private/inbox/')({
   component: InboxPage,
-  staticData: { title: t('inbox.title') },
+  staticData: { title: t('inbox') },
   validateSearch: (search: Record<string, unknown>): InboxSearch => inboxSearchSchema.parse(search),
 });

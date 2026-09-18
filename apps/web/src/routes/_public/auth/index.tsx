@@ -25,7 +25,7 @@ export function AuthPage() {
     setErrorMessage(undefined);
     const res = await post('/auth/signin', data);
     if (!res.success) {
-      setErrorMessage(res.message || t('auth.signin.error'));
+      setErrorMessage(res.message || t('action_error'));
       return;
     }
     navigate({ to: '/' });
@@ -33,14 +33,14 @@ export function AuthPage() {
 
   return (
     <div className="w-full max-w-sm">
-      <ItemTitle className="mb-1 text-lg">{t('auth.signin.title')}</ItemTitle>
+      <ItemTitle className="mb-1 text-lg">{t('sign_in')}</ItemTitle>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
           <DefaultFormLayout
             sections={[
               {
-                title: t('auth.signin.section_info'),
-                description: t('auth.signin.section_info_description'),
+                title: t('credentials'),
+                description: t('enter_email_and_password'),
                 layout: 'vertical',
                 fields: [
                   <FormField
@@ -77,7 +77,7 @@ export function AuthPage() {
           />
           {errorMessage && <ItemDescription role="alert">{errorMessage}</ItemDescription>}
           <Button type="submit" disabled={form.formState.isSubmitting}>
-            {t('auth.signin.submit')}
+            {t('sign_in')}
           </Button>
         </form>
       </Form>

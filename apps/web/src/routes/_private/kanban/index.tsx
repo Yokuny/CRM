@@ -17,7 +17,7 @@ export function KanbanIndexPage() {
 
   return (
     <Card asPage>
-      <CardHeader title={t('kanban.board.list.title')}>
+      <CardHeader title={t('boards')}>
         <CardAction>
           <Button variant="basic" render={<Link to="/kanban/add">{t('add')}</Link>} />
         </CardAction>
@@ -44,7 +44,7 @@ export function KanbanIndexPage() {
                     </ItemContent>
                     <ItemContent>
                       <ItemDescription>
-                        {board.cardCount} {t(board.cardCount === 1 ? 'kanban.card.singular' : 'kanban.card.plural')}
+                        {board.cardCount} {t(board.cardCount === 1 ? 'card' : 'cards')}
                       </ItemDescription>
                     </ItemContent>
                   </Link>
@@ -60,5 +60,5 @@ export function KanbanIndexPage() {
 
 export const Route = createFileRoute('/_private/kanban/')({
   component: KanbanIndexPage,
-  staticData: { title: t('kanban.board.list.title') },
+  staticData: { title: t('boards') },
 });

@@ -62,7 +62,7 @@ export function ProductsIndexPage() {
 
   return (
     <Card asPage>
-      <CardHeader title={t('product.list.title')}>
+      <CardHeader title={t('catalog')}>
         <CardAction>
           <Button variant="basic" render={<Link to="/products/add">{t('add')}</Link>} />
         </CardAction>
@@ -72,11 +72,7 @@ export function ProductsIndexPage() {
           <DefaultLoading />
         ) : (
           <>
-            <Input
-              placeholder={t('search.placeholder')}
-              value={searchInput}
-              onChange={(e) => handleSearchInput(e.target.value)}
-            />
+            <Input placeholder={t('search')} value={searchInput} onChange={(e) => handleSearchInput(e.target.value)} />
             {(query.data?.items.length ?? 0) === 0 ? (
               <DefaultEmptyData />
             ) : (
@@ -98,6 +94,6 @@ export function ProductsIndexPage() {
 
 export const Route = createFileRoute('/_private/products/')({
   component: ProductsIndexPage,
-  staticData: { title: t('product.list.title') },
+  staticData: { title: t('catalog') },
   validateSearch: (search: Record<string, unknown>): ProductsSearch => productsSearchSchema.parse(search),
 });

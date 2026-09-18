@@ -23,47 +23,47 @@ const assigneeLabel = (conversation: ConversationRecord): string =>
   conversation.mode === 'human' && conversation.assigneeName ? conversation.assigneeName : '-';
 
 const conversationColumns: ColumnDef<ConversationRecord, unknown>[] = [
-  { accessorKey: 'customer', header: t('inbox.column.customer'), enableSorting: false },
+  { accessorKey: 'customer', header: t('customer'), enableSorting: false },
   {
     id: 'mode',
-    header: t('inbox.column.mode'),
+    header: t('mode'),
     enableSorting: false,
     cell: ({ row }) => (
       <BadgeIndicator variant={row.original.mode === 'human' ? 'success' : 'secondary'}>
-        {t(row.original.mode === 'human' ? 'inbox.mode.human' : 'inbox.mode.bot')}
+        {t(row.original.mode === 'human' ? 'human' : 'bot')}
       </BadgeIndicator>
     ),
   },
   {
     id: 'assignee',
-    header: t('inbox.column.assignee'),
+    header: t('assignee'),
     enableSorting: false,
     cell: ({ row }) => assigneeLabel(row.original),
   },
   {
     id: 'lastActivityAt',
-    header: t('inbox.column.last_activity'),
+    header: t('last_activity'),
     enableSorting: false,
     cell: ({ row }) => formatDistanceToNow(row.original.lastActivityAt, { addSuffix: true }),
   },
   {
     id: 'unread',
-    header: t('inbox.column.unread'),
+    header: t('unread'),
     enableSorting: false,
     cell: ({ row }) =>
       row.original.unread ? (
         <BadgeIndicator variant="warning" pulse>
-          {t('inbox.unread.yes')}
+          {t('yes')}
         </BadgeIndicator>
       ) : null,
   },
   {
     id: 'window',
-    header: t('inbox.column.window'),
+    header: t('window_24h'),
     enableSorting: false,
     cell: ({ row }) => (
       <BadgeIndicator variant={row.original.windowOpen ? 'success' : 'muted'}>
-        {t(row.original.windowOpen ? 'inbox.window.open' : 'inbox.window.closed')}
+        {t(row.original.windowOpen ? 'open' : 'closed')}
       </BadgeIndicator>
     ),
   },

@@ -2,6 +2,7 @@ import type { CreateProduct, UpdateProduct } from '@crm/contracts';
 import type { QueryClient, UseMutationOptions } from '@tanstack/react-query';
 import { queryOptions } from '@tanstack/react-query';
 import { get, patch, post } from '../lib/api/client.api.js';
+import { t } from '../lib/helpers/translate.helper.js';
 
 // Espelha ProductRecord de apps/crm-api/src/repositories/product.repository.ts
 // — a verdade fica no back-end; este tipo só descreve o que a tela consome
@@ -54,7 +55,7 @@ export const productsQuery = (params: ProductsQueryParams = {}) =>
     queryKey: productKeys.list(params),
     queryFn: async (): Promise<ProductsListResult> => {
       const res = await get<ProductsListResult>(`/products${buildQueryString(params)}`);
-      if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível carregar os produtos.');
+      if (!res.success || !res.data) throw new Error(res.message ?? t('load_error'));
       return res.data;
     },
   });
@@ -69,7 +70,7 @@ export const createProductMutation = (
 ): UseMutationOptions<ProductRecord, Error, CreateProduct> => ({
   mutationFn: async (data) => {
     const res = await post<ProductRecord>('/products', data);
-    if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível criar o produto.');
+    if (!res.success || !res.data) throw new Error(res.message ?? t('create_error'));
     return res.data;
   },
   onSuccess: () => {
@@ -85,7 +86,7 @@ export const updateProductMutation = (
 ): UseMutationOptions<ProductRecord, Error, { id: string; data: UpdateProduct }> => ({
   mutationFn: async ({ id, data }) => {
     const res = await patch<ProductRecord>(`/products/${encodeURIComponent(id)}`, data);
-    if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível atualizar o produto.');
+    if (!res.success || !res.data) throw new Error(res.message ?? t('save_error'));
     return res.data;
   },
   onSuccess: () => {

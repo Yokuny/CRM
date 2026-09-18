@@ -60,25 +60,25 @@ function ProductDetailsView({ product }: ProductDetailsViewProps) {
       </Item>
       <Item>
         <ItemContent>
-          <ItemTitle>{t('product.sku')}</ItemTitle>
+          <ItemTitle>{t('sku')}</ItemTitle>
           <ItemDescription>{product.sku || '-'}</ItemDescription>
         </ItemContent>
       </Item>
       <Item>
         <ItemContent>
-          <ItemTitle>{t('product.price')}</ItemTitle>
+          <ItemTitle>{t('price')}</ItemTitle>
           <ItemDescription>{formatMoney(product.price)}</ItemDescription>
         </ItemContent>
       </Item>
       <Item>
         <ItemContent>
-          <ItemTitle>{t('product.stock')}</ItemTitle>
+          <ItemTitle>{t('stock')}</ItemTitle>
           <ItemDescription>{product.stock}</ItemDescription>
         </ItemContent>
       </Item>
       <Item>
         <ItemContent>
-          <ItemTitle>{t('product.description')}</ItemTitle>
+          <ItemTitle>{t('description')}</ItemTitle>
           <ItemDescription>{product.description || '-'}</ItemDescription>
         </ItemContent>
       </Item>
@@ -87,7 +87,7 @@ function ProductDetailsView({ product }: ProductDetailsViewProps) {
           <ItemTitle>{t('status')}</ItemTitle>
           <ItemDescription>
             <BadgeIndicator variant={product.active ? 'active' : 'neutral'}>
-              {t(product.active ? 'product.status.active' : 'product.status.inactive')}
+              {t(product.active ? 'active' : 'inactive')}
             </BadgeIndicator>
           </ItemDescription>
         </ItemContent>
@@ -146,8 +146,8 @@ function ProductEditForm({ product, onSaved, onCancel }: ProductEditFormProps) {
         <DefaultFormLayout
           sections={[
             {
-              title: t('product.create.section.info'),
-              description: t('product.create.section.info_description'),
+              title: t('information'),
+              description: t('catalog_and_stock_data'),
               fields: [
                 <div key="product-fields" className="grid gap-4 sm:grid-cols-2">
                   <FormField
@@ -157,7 +157,7 @@ function ProductEditForm({ product, onSaved, onCancel }: ProductEditFormProps) {
                       <FormItem>
                         <FormLabel>{t('name')}</FormLabel>
                         <FormControl>
-                          <Input placeholder={t('product.create.field.name_placeholder')} {...field} />
+                          <Input placeholder={t('example_product_name')} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -168,9 +168,9 @@ function ProductEditForm({ product, onSaved, onCancel }: ProductEditFormProps) {
                     name="sku"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t('product.sku')}</FormLabel>
+                        <FormLabel>{t('sku')}</FormLabel>
                         <FormControl>
-                          <Input placeholder={t('product.create.field.sku_placeholder')} {...field} />
+                          <Input placeholder={t('example_sku')} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -181,7 +181,7 @@ function ProductEditForm({ product, onSaved, onCancel }: ProductEditFormProps) {
                     name="price"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t('product.price')}</FormLabel>
+                        <FormLabel>{t('price')}</FormLabel>
                         <FormControl>
                           <MoneyInput value={field.value ?? 0} onChange={field.onChange} onBlur={field.onBlur} />
                         </FormControl>
@@ -194,14 +194,14 @@ function ProductEditForm({ product, onSaved, onCancel }: ProductEditFormProps) {
                     name="stock"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t('product.stock')}</FormLabel>
+                        <FormLabel>{t('stock')}</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
                             inputMode="numeric"
                             min={0}
                             step={1}
-                            placeholder={t('product.create.field.stock_placeholder')}
+                            placeholder={t('example_number')}
                             value={field.value ?? 0}
                             onChange={(e) => field.onChange(e.target.value === '' ? 0 : Number(e.target.value))}
                             onBlur={field.onBlur}
@@ -218,9 +218,9 @@ function ProductEditForm({ product, onSaved, onCancel }: ProductEditFormProps) {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('product.description')}</FormLabel>
+                      <FormLabel>{t('description')}</FormLabel>
                       <FormControl>
-                        <Input placeholder={t('product.create.field.description_placeholder')} {...field} />
+                        <Input placeholder={t('example_description')} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -234,7 +234,7 @@ function ProductEditForm({ product, onSaved, onCancel }: ProductEditFormProps) {
                     <FormItem>
                       <FormControl>
                         <Checkbox
-                          label={t('product.status.active')}
+                          label={t('active')}
                           checked={field.value ?? true}
                           onCheckedChange={(checked) => field.onChange(checked === true)}
                         />
@@ -276,7 +276,7 @@ export function ProductDetailsPage() {
 
   return (
     <Card asPage>
-      <CardHeader title={t('product.details.title')}>
+      <CardHeader title={t('details')}>
         {product && !isEditing && (
           <CardAction>
             <Button variant="basic" onClick={() => setIsEditing(true)}>
@@ -306,6 +306,6 @@ export function ProductDetailsPage() {
 
 export const Route = createFileRoute('/_private/products/details')({
   component: ProductDetailsPage,
-  staticData: { title: t('product.details.title') },
+  staticData: { title: t('details') },
   validateSearch: (search: Record<string, unknown>): ProductDetailsSearch => productDetailsSearchSchema.parse(search),
 });

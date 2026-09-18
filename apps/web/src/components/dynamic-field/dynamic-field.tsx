@@ -214,7 +214,7 @@ function DateLeaf({ node, name, control }: DateLeafProps) {
           render={
             <Button type="button" variant={selected ? undefined : 'primary'} className="justify-start font-normal">
               <IconCalendar className="mr-4 size-4" />
-              {selected ? <p className="font-mono">{formatDate(selected)}</p> : <span>{t('date.pick')}</span>}
+              {selected ? <p className="font-mono">{formatDate(selected)}</p> : <span>{t('choose_day')}</span>}
             </Button>
           }
         />

@@ -18,15 +18,15 @@ import type { ProductRecord } from '@/query/product.js';
 // raciocínio de inbox/@components/conversation-table.tsx.
 const productColumns: ColumnDef<ProductRecord, unknown>[] = [
   { accessorKey: 'name', header: t('name'), enableSorting: false },
-  { id: 'price', header: t('product.price'), enableSorting: false, cell: ({ row }) => formatMoney(row.original.price) },
-  { accessorKey: 'stock', header: t('product.stock'), enableSorting: false },
+  { id: 'price', header: t('price'), enableSorting: false, cell: ({ row }) => formatMoney(row.original.price) },
+  { accessorKey: 'stock', header: t('stock'), enableSorting: false },
   {
     id: 'active',
     header: t('status'),
     enableSorting: false,
     cell: ({ row }) => (
       <BadgeIndicator variant={row.original.active ? 'active' : 'neutral'}>
-        {t(row.original.active ? 'product.status.active' : 'product.status.inactive')}
+        {t(row.original.active ? 'active' : 'inactive')}
       </BadgeIndicator>
     ),
   },

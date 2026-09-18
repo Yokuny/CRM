@@ -1,6 +1,7 @@
 import type { UseMutationOptions } from '@tanstack/react-query';
 import { queryOptions } from '@tanstack/react-query';
 import { getWithStatus, post } from '../lib/api/client.api.js';
+import { t } from '../lib/helpers/translate.helper.js';
 
 // Espelha AppointmentConfirmationPublicView de
 // apps/crm-api/src/services/appointmentConfirmation.service.ts — SEM ids
@@ -58,7 +59,7 @@ export const confirmAppointmentMutation = (): UseMutationOptions<AppointmentConf
     const res = await post<AppointmentConfirmationRecord>(
       `/appointment-confirmations/${encodeURIComponent(token)}/confirm`,
     );
-    if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível confirmar sua presença.');
+    if (!res.success || !res.data) throw new Error(res.message ?? t('action_error'));
     return res.data;
   },
 });
@@ -72,7 +73,7 @@ export const confirmationCancelMutation = (): UseMutationOptions<AppointmentConf
     const res = await post<AppointmentConfirmationRecord>(
       `/appointment-confirmations/${encodeURIComponent(token)}/cancel`,
     );
-    if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível cancelar seu agendamento.');
+    if (!res.success || !res.data) throw new Error(res.message ?? t('action_error'));
     return res.data;
   },
 });

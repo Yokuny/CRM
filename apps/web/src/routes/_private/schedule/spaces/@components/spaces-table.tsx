@@ -21,7 +21,7 @@ const spaceColumns: ColumnDef<SpaceRecord, unknown>[] = [
     enableSorting: false,
     cell: ({ row }) => (
       <BadgeIndicator variant={row.original.active ? 'active' : 'neutral'}>
-        {t(row.original.active ? 'space.status.active' : 'space.status.inactive')}
+        {t(row.original.active ? 'active' : 'inactive')}
       </BadgeIndicator>
     ),
   },

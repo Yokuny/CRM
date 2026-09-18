@@ -2,6 +2,7 @@ import type { CreateSpace, UpdateSpace } from '@crm/contracts';
 import type { QueryClient, UseMutationOptions } from '@tanstack/react-query';
 import { queryOptions } from '@tanstack/react-query';
 import { get, patch, post } from '../lib/api/client.api.js';
+import { t } from '../lib/helpers/translate.helper.js';
 
 // Espelha SpaceRecord de apps/crm-api/src/repositories/space.repository.ts —
 // a verdade fica no back-end; este tipo só descreve o que a tela consome
@@ -46,7 +47,7 @@ export const spacesQuery = (params: SpacesQueryParams = {}) =>
     queryKey: spaceKeys.list(params),
     queryFn: async (): Promise<SpacesListResult> => {
       const res = await get<SpacesListResult>(`/spaces${buildQueryString(params)}`);
-      if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível carregar os ambientes.');
+      if (!res.success || !res.data) throw new Error(res.message ?? t('load_error'));
       return res.data;
     },
   });
@@ -58,7 +59,7 @@ export const spaceQuery = (id: string) =>
     queryKey: spaceKeys.detail(id),
     queryFn: async (): Promise<SpaceRecord> => {
       const res = await get<SpaceRecord>(`/spaces/${encodeURIComponent(id)}`);
-      if (!res.success || !res.data) throw new Error(res.message ?? 'Ambiente não encontrado.');
+      if (!res.success || !res.data) throw new Error(res.message ?? t('not_found'));
       return res.data;
     },
   });
@@ -68,7 +69,7 @@ export const spaceQuery = (id: string) =>
 export const createSpaceMutation = (queryClient: QueryClient): UseMutationOptions<SpaceRecord, Error, CreateSpace> => ({
   mutationFn: async (data) => {
     const res = await post<SpaceRecord>('/spaces', data);
-    if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível criar o ambiente.');
+    if (!res.success || !res.data) throw new Error(res.message ?? t('create_error'));
     return res.data;
   },
   onSuccess: () => {
@@ -84,7 +85,7 @@ export const updateSpaceMutation = (
 ): UseMutationOptions<SpaceRecord, Error, { id: string; data: UpdateSpace }> => ({
   mutationFn: async ({ id, data }) => {
     const res = await patch<SpaceRecord>(`/spaces/${encodeURIComponent(id)}`, data);
-    if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível atualizar o ambiente.');
+    if (!res.success || !res.data) throw new Error(res.message ?? t('save_error'));
     return res.data;
   },
   onSuccess: (_updated, variables) => {

@@ -40,7 +40,7 @@ function SpaceDetailsView({ space }: SpaceDetailsViewProps) {
           <ItemTitle>{t('status')}</ItemTitle>
           <ItemDescription>
             <BadgeIndicator variant={space.active ? 'active' : 'neutral'}>
-              {t(space.active ? 'space.status.active' : 'space.status.inactive')}
+              {t(space.active ? 'active' : 'inactive')}
             </BadgeIndicator>
           </ItemDescription>
         </ItemContent>
@@ -86,8 +86,8 @@ function SpaceEditForm({ space, onSaved, onCancel }: SpaceEditFormProps) {
         <DefaultFormLayout
           sections={[
             {
-              title: t('space.create.section.info'),
-              description: t('space.create.section.info_description'),
+              title: t('information'),
+              description: t('space_name_for_appointments'),
               fields: [
                 <FormField
                   key="name"
@@ -97,11 +97,7 @@ function SpaceEditForm({ space, onSaved, onCancel }: SpaceEditFormProps) {
                     <FormItem>
                       <FormLabel>{t('name')}</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder={t('space.create.field.name_placeholder')}
-                          {...field}
-                          value={field.value ?? ''}
-                        />
+                        <Input placeholder={t('example_space_name')} {...field} value={field.value ?? ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -115,7 +111,7 @@ function SpaceEditForm({ space, onSaved, onCancel }: SpaceEditFormProps) {
                     <FormItem>
                       <FormControl>
                         <Checkbox
-                          label={t('space.status.active')}
+                          label={t('active')}
                           checked={field.value ?? true}
                           onCheckedChange={(checked) => field.onChange(checked === true)}
                         />
@@ -157,7 +153,7 @@ export function SpaceDetailsPage() {
 
   return (
     <Card asPage>
-      <CardHeader title={t('space.details.title')}>
+      <CardHeader title={t('details')}>
         {space && !isEditing && (
           <CardAction>
             <Button variant="basic" onClick={() => setIsEditing(true)}>
@@ -187,6 +183,6 @@ export function SpaceDetailsPage() {
 
 export const Route = createFileRoute('/_private/schedule/spaces/details')({
   component: SpaceDetailsPage,
-  staticData: { title: t('space.details.title') },
+  staticData: { title: t('details') },
   validateSearch: (search: Record<string, unknown>): SpaceDetailsSearch => spaceDetailsSearchSchema.parse(search),
 });

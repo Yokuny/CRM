@@ -30,7 +30,7 @@ export function InvitePage() {
     queryKey: ['invite', 'peek', token],
     queryFn: async (): Promise<InvitePeek> => {
       const res = await get<InvitePeek>(`/invites/${encodeURIComponent(token as string)}`);
-      if (!res.success || !res.data) throw new Error(res.message || t('invite.accept.invalid'));
+      if (!res.success || !res.data) throw new Error(res.message || t('invalid_link'));
       return res.data;
     },
     enabled: Boolean(token),
@@ -43,7 +43,7 @@ export function InvitePage() {
     setSubmitError(undefined);
     const res = await post(`/invites/${encodeURIComponent(token as string)}/accept`, data);
     if (!res.success) {
-      setSubmitError(res.message || t('invite.accept.error'));
+      setSubmitError(res.message || t('action_error'));
       return;
     }
     navigate({ to: '/' });
@@ -51,19 +51,19 @@ export function InvitePage() {
 
   return (
     <div className="w-full max-w-sm">
-      <ItemTitle className="mb-1 text-lg">{t('invite.accept.title')}</ItemTitle>
+      <ItemTitle className="mb-1 text-lg">{t('accept_invite')}</ItemTitle>
       {!token ? (
-        <ItemDescription role="alert">{t('invite.accept.missing_token')}</ItemDescription>
+        <ItemDescription role="alert">{t('invalid_link')}</ItemDescription>
       ) : peekQuery.isPending ? (
         <DefaultLoading />
       ) : peekQuery.isError ? (
         <ItemDescription role="alert">
-          {peekQuery.error instanceof Error ? peekQuery.error.message : t('invite.accept.invalid')}
+          {peekQuery.error instanceof Error ? peekQuery.error.message : t('invalid_link')}
         </ItemDescription>
       ) : (
         <>
           <ItemDescription>
-            {t('invite.accept.invited_to')}: {peekQuery.data.tenantName}
+            {t('invite_to')}: {peekQuery.data.tenantName}
           </ItemDescription>
           <ItemDescription>{peekQuery.data.email}</ItemDescription>
           <Form {...form}>
@@ -71,8 +71,8 @@ export function InvitePage() {
               <DefaultFormLayout
                 sections={[
                   {
-                    title: t('invite.accept.section_info'),
-                    description: t('invite.accept.section_info_description'),
+                    title: t('your_data'),
+                    description: t('set_name_and_password'),
                     layout: 'vertical',
                     fields: [
                       <FormField
@@ -109,7 +109,7 @@ export function InvitePage() {
               />
               {submitError && <ItemDescription role="alert">{submitError}</ItemDescription>}
               <Button type="submit" disabled={form.formState.isSubmitting}>
-                {t('invite.accept.submit')}
+                {t('create_account')}
               </Button>
             </form>
           </Form>

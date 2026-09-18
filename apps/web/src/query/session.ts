@@ -1,6 +1,7 @@
 import type { Role } from '@crm/contracts';
 import { queryOptions } from '@tanstack/react-query';
 import { get } from '../lib/api/client.api.js';
+import { t } from '../lib/helpers/translate.helper.js';
 
 // Espelha SessionView de apps/crm-api/src/services/auth.service.ts — a
 // verdade fica no back-end; este tipo só descreve o que a tela consome.
@@ -25,7 +26,7 @@ export const sessionQuery = queryOptions({
   queryFn: async (): Promise<SessionView> => {
     const res = await get<SessionView>('/auth/session');
     if (!res.success || !res.data) {
-      throw new Error(res.message ?? 'Sessão inválida.');
+      throw new Error(res.message ?? t('invalid_session'));
     }
     return res.data;
   },

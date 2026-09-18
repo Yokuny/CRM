@@ -1,6 +1,7 @@
 import type { FieldDef, FieldTemplateTargetType } from '@crm/contracts';
 import { queryOptions } from '@tanstack/react-query';
 import { get } from '../lib/api/client.api.js';
+import { t } from '../lib/helpers/translate.helper.js';
 
 // Espelha CurrentTemplate de apps/crm-api/src/services/fieldTemplate.service.ts
 // — mesma convenção de "espelho local" já usada em query/customer.ts
@@ -31,7 +32,7 @@ export const fieldTemplatesQuery = (targetType: FieldTemplateTargetType) =>
     queryKey: fieldTemplateKeys.list(targetType),
     queryFn: async (): Promise<TemplateListResult> => {
       const res = await get<TemplateListResult>(`/field-templates?targetType=${encodeURIComponent(targetType)}`);
-      if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível carregar os templates.');
+      if (!res.success || !res.data) throw new Error(res.message ?? t('load_error'));
       return res.data;
     },
   });
@@ -50,7 +51,7 @@ export const processTemplateVersionQuery = (templateId: string, version: number)
       const res = await get<TemplateVersionSnapshot>(
         `/field-templates/${encodeURIComponent(templateId)}/versions/${version}`,
       );
-      if (!res.success || !res.data) throw new Error(res.message ?? 'Versão de template não encontrada.');
+      if (!res.success || !res.data) throw new Error(res.message ?? t('not_found'));
       return res.data;
     },
   });
@@ -65,7 +66,7 @@ export const currentCustomerTemplateQuery = (key: string) =>
       const res = await get<CurrentFieldTemplate>(
         `/field-templates/current?targetType=customer&key=${encodeURIComponent(key)}`,
       );
-      if (!res.success || !res.data) throw new Error(res.message ?? 'Template não encontrado.');
+      if (!res.success || !res.data) throw new Error(res.message ?? t('not_found'));
       return res.data;
     },
   });

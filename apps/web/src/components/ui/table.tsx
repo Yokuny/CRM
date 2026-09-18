@@ -102,14 +102,14 @@ function TablePagination({ pageIndex, pageSize, pageCount, onPaginationChange }:
   return (
     <div data-slot="table-pagination" className="flex items-center justify-end gap-2">
       <span className="text-muted-foreground text-sm">
-        {t('table.page')} {pageIndex + 1} / {Math.max(pageCount, 1)}
+        {t('page')} {pageIndex + 1} / {Math.max(pageCount, 1)}
       </span>
       <Button
         type="button"
         variant="basic"
         onClick={() => onPaginationChange({ pageIndex: pageIndex - 1, pageSize })}
         disabled={pageIndex <= 0}
-        aria-label={t('previous.page')}
+        aria-label={t('previous_page')}
       >
         <IconLeft className="size-4" />
       </Button>
@@ -118,7 +118,7 @@ function TablePagination({ pageIndex, pageSize, pageCount, onPaginationChange }:
         variant="basic"
         onClick={() => onPaginationChange({ pageIndex: pageIndex + 1, pageSize })}
         disabled={pageIndex + 1 >= pageCount}
-        aria-label={t('next.page')}
+        aria-label={t('next_page')}
       >
         <IconRight className="size-4" />
       </Button>

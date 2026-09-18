@@ -30,6 +30,6 @@ describe('ScheduleIndexPage (T43, spec.md SCH-08/SCH-29)', () => {
     expect(screen.getByRole('link', { name: /Calendário/ })).toHaveAttribute('href', '/schedule/calendar');
     expect(screen.getByRole('link', { name: /Profissionais/ })).toHaveAttribute('href', '/schedule/professionals');
     expect(screen.getByRole('link', { name: /Ambientes/ })).toHaveAttribute('href', '/schedule/spaces');
-    expect(screen.getByRole('link', { name: /Configuração da agenda/ })).toHaveAttribute('href', '/schedule/settings');
+    expect(screen.getByRole('link', { name: /Configurações/ })).toHaveAttribute('href', '/schedule/settings');
   });
 });

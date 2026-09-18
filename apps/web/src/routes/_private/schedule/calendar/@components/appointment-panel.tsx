@@ -120,14 +120,14 @@ function AppointmentCreateForm({ onClose }: WithOnClose) {
 
   return (
     <>
-      <PanelHeader title={t('appointment.create.title')} onClose={onClose} />
+      <PanelHeader title={t('new_appointment')} onClose={onClose} />
       <Form {...form}>
         <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
           <DefaultFormLayout
             sections={[
               {
-                title: t('appointment.create.section.info'),
-                description: t('appointment.create.section.info_description'),
+                title: t('details'),
+                description: t('choose_appointment_details'),
                 layout: 'vertical',
                 fields: [
                   <FormField
@@ -136,11 +136,11 @@ function AppointmentCreateForm({ onClose }: WithOnClose) {
                     name="customerId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t('appointment.field.customer')}</FormLabel>
+                        <FormLabel>{t('customer')}</FormLabel>
                         <Select value={field.value} onValueChange={field.onChange}>
                           <FormControl>
                             <SelectTrigger className="w-full">
-                              <SelectValue placeholder={t('appointment.field.customer')} />
+                              <SelectValue placeholder={t('customer')} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -161,11 +161,11 @@ function AppointmentCreateForm({ onClose }: WithOnClose) {
                     name="professionalId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t('appointment.field.professional')}</FormLabel>
+                        <FormLabel>{t('professional')}</FormLabel>
                         <Select value={field.value} onValueChange={field.onChange}>
                           <FormControl>
                             <SelectTrigger className="w-full">
-                              <SelectValue placeholder={t('appointment.field.professional')} />
+                              <SelectValue placeholder={t('professional')} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -186,7 +186,7 @@ function AppointmentCreateForm({ onClose }: WithOnClose) {
                       name="date"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t('appointment.field.date')}</FormLabel>
+                          <FormLabel>{t('date')}</FormLabel>
                           <FormControl>
                             <Input type="date" {...field} />
                           </FormControl>
@@ -199,7 +199,7 @@ function AppointmentCreateForm({ onClose }: WithOnClose) {
                       name="time"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t('appointment.field.time')}</FormLabel>
+                          <FormLabel>{t('time')}</FormLabel>
                           <FormControl>
                             <Input type="time" {...field} />
                           </FormControl>
@@ -214,18 +214,18 @@ function AppointmentCreateForm({ onClose }: WithOnClose) {
                     name="spaceId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t('appointment.field.space')}</FormLabel>
+                        <FormLabel>{t('space')}</FormLabel>
                         <Select
                           value={field.value ?? UNSET_VALUE}
                           onValueChange={(value) => field.onChange(value === UNSET_VALUE ? undefined : value)}
                         >
                           <FormControl>
                             <SelectTrigger className="w-full">
-                              <SelectValue placeholder={t('appointment.field.space')} />
+                              <SelectValue placeholder={t('space')} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value={UNSET_VALUE}>{t('appointment.field.space_none')}</SelectItem>
+                            <SelectItem value={UNSET_VALUE}>{t('none')}</SelectItem>
                             {(spacesQueryResult.data?.items ?? []).map((space) => (
                               <SelectItem key={space.id} value={space.id}>
                                 {space.name}
@@ -243,7 +243,7 @@ function AppointmentCreateForm({ onClose }: WithOnClose) {
                     name="notes"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t('appointment.field.notes')}</FormLabel>
+                        <FormLabel>{t('notes')}</FormLabel>
                         <FormControl>
                           <Input {...field} value={field.value ?? ''} />
                         </FormControl>
@@ -286,7 +286,7 @@ function AppointmentDetail({ appointment, onClose }: AppointmentDetailProps) {
       setWaMeNotice(notice);
       return;
     }
-    if (notice?.kind === 'queued') toast.success(t('appointment.notice.queued'));
+    if (notice?.kind === 'queued') toast.success(t('customer_notified'));
     onClose();
   };
 
@@ -356,17 +356,14 @@ function AppointmentDetail({ appointment, onClose }: AppointmentDetailProps) {
 
   return (
     <>
-      <PanelHeader
-        title={appointment.customerName ?? appointment.title ?? t('appointment.detail.title')}
-        onClose={onClose}
-      />
+      <PanelHeader title={appointment.customerName ?? appointment.title ?? t('appointment')} onClose={onClose} />
       {waMeNotice && (
         <Button
           type="button"
           variant="basic"
           render={
             <a href={waMeNotice.url} target="_blank" rel="noreferrer">
-              {t('appointment.notice.wa_me_button')}
+              {t('notify_via_whatsapp')}
             </a>
           }
         />
@@ -378,7 +375,7 @@ function AppointmentDetail({ appointment, onClose }: AppointmentDetailProps) {
         </ItemDescription>
         {appointment.professionalName && <ItemDescription>{appointment.professionalName}</ItemDescription>}
         {appointment.spaceName && <ItemDescription>{appointment.spaceName}</ItemDescription>}
-        <ItemDescription>{t(`appointment.status.${appointment.status}`)}</ItemDescription>
+        <ItemDescription>{t(appointment.status)}</ItemDescription>
       </Panel>
 
       <Form {...rescheduleForm}>
@@ -386,8 +383,8 @@ function AppointmentDetail({ appointment, onClose }: AppointmentDetailProps) {
           <DefaultFormLayout
             sections={[
               {
-                title: t('appointment.action.reschedule'),
-                description: t('appointment.reschedule.section_description'),
+                title: t('reschedule'),
+                description: t('choose_new_date_and_time'),
                 layout: 'vertical',
                 fields: [
                   <div key="date-time" className="grid grid-cols-2 gap-4">
@@ -396,7 +393,7 @@ function AppointmentDetail({ appointment, onClose }: AppointmentDetailProps) {
                       name="date"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t('appointment.field.date')}</FormLabel>
+                          <FormLabel>{t('date')}</FormLabel>
                           <FormControl>
                             <Input type="date" {...field} />
                           </FormControl>
@@ -409,7 +406,7 @@ function AppointmentDetail({ appointment, onClose }: AppointmentDetailProps) {
                       name="time"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t('appointment.field.time')}</FormLabel>
+                          <FormLabel>{t('time')}</FormLabel>
                           <FormControl>
                             <Input type="time" {...field} />
                           </FormControl>
@@ -424,21 +421,19 @@ function AppointmentDetail({ appointment, onClose }: AppointmentDetailProps) {
                     name="professionalId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t('appointment.field.professional')}</FormLabel>
+                        <FormLabel>{t('professional')}</FormLabel>
                         <Select
                           value={field.value ?? UNSET_VALUE}
                           onValueChange={(value) => field.onChange(value === UNSET_VALUE ? undefined : value)}
                         >
                           <FormControl>
                             <SelectTrigger className="w-full">
-                              <SelectValue
-                                placeholder={appointment.professionalName ?? t('appointment.field.professional')}
-                              />
+                              <SelectValue placeholder={appointment.professionalName ?? t('professional')} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
                             <SelectItem value={UNSET_VALUE}>
-                              {appointment.professionalName ?? t('appointment.field.professional')}
+                              {appointment.professionalName ?? t('professional')}
                             </SelectItem>
                             {(professionalsQueryResult.data?.items ?? []).map((professional) => (
                               <SelectItem key={professional.id} value={professional.id}>
@@ -464,15 +459,11 @@ function AppointmentDetail({ appointment, onClose }: AppointmentDetailProps) {
       </Form>
 
       <Panel size="sm" className="grid gap-2">
-        <ItemDescription>{t('appointment.action.cancel')}</ItemDescription>
-        <Input
-          placeholder={t('appointment.cancel.reason_placeholder')}
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-        />
+        <ItemDescription>{t('cancel_appointment')}</ItemDescription>
+        <Input placeholder={t('optional_reason')} value={reason} onChange={(e) => setReason(e.target.value)} />
         <div>
           <Button type="button" variant="basic" disabled={cancelMutation.isPending} onClick={handleCancel}>
-            {t('appointment.action.cancel')}
+            {t('cancel_appointment')}
           </Button>
         </div>
       </Panel>
@@ -484,7 +475,7 @@ function AppointmentDetail({ appointment, onClose }: AppointmentDetailProps) {
           disabled={!canMarkAttendance || attendanceMutation.isPending}
           onClick={() => handleAttendance('completed')}
         >
-          {t('appointment.attendance.completed')}
+          {t('attended')}
         </Button>
         <Button
           type="button"
@@ -492,10 +483,10 @@ function AppointmentDetail({ appointment, onClose }: AppointmentDetailProps) {
           disabled={!canMarkAttendance || attendanceMutation.isPending}
           onClick={() => handleAttendance('no_show')}
         >
-          {t('appointment.attendance.no_show')}
+          {t('no_show')}
         </Button>
         <Button type="button" disabled={confirmationMutation.isPending} onClick={handleRequestConfirmation}>
-          {t('appointment.action.request_confirmation')}
+          {t('request_confirmation')}
         </Button>
       </div>
     </>

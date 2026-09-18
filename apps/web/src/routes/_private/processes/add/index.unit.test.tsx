@@ -109,7 +109,7 @@ describe('ProcessAddPage (T25 — WEB-07)', () => {
       expect(postMock).toHaveBeenCalledWith('/processes', { templateKey: 'compra', customerId: 'c1' }),
     );
     expect(await screen.findByText('aberto')).toBeInTheDocument();
-    expect(await screen.findByText('Processo criado com sucesso.')).toBeInTheDocument();
+    expect(await screen.findByText('Criado com sucesso.')).toBeInTheDocument();
   });
 
   it('WEB-07 AC4: a server rejection shows the error and never navigates/renders as if the Process had been created', async () => {
@@ -127,7 +127,7 @@ describe('ProcessAddPage (T25 — WEB-07)', () => {
     await user.click(screen.getByRole('button', { name: 'Confirmar' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Template arquivado');
-    expect(screen.queryByText('Processo criado com sucesso.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Criado com sucesso.')).not.toBeInTheDocument();
     expect(screen.getByRole('combobox')).toBeInTheDocument();
   });
 });

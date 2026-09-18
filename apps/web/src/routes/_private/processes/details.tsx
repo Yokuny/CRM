@@ -47,7 +47,7 @@ function ProcessValuesForm({ process, fields, customerId }: ProcessValuesFormPro
   const mutation = useMutation({
     mutationFn: async (values: FieldValues) => {
       const res = await patch<ProcessRecord>(`/processes/${encodeURIComponent(process.id)}/values`, { values });
-      if (!res.success || !res.data) throw new Error(res.message ?? t('process.values.error'));
+      if (!res.success || !res.data) throw new Error(res.message ?? t('save_error'));
       return res.data;
     },
   });
@@ -77,8 +77,8 @@ function ProcessValuesForm({ process, fields, customerId }: ProcessValuesFormPro
       <DefaultFormLayout
         sections={[
           {
-            title: t('process.details.section.values'),
-            description: t('process.details.section.values_description'),
+            title: t('values'),
+            description: t('custom_fields'),
             fields: nodes.map((node) => (
               <DynamicField key={node.fieldId} node={node} name={node.fieldId} control={control} />
             )),
@@ -116,7 +116,7 @@ function ProcessStageControl({ process, stages, customerId }: ProcessStageContro
   const mutation = useMutation({
     mutationFn: async (stage: string) => {
       const res = await patch<ProcessRecord>(`/processes/${encodeURIComponent(process.id)}/stage`, { stage });
-      if (!res.success || !res.data) throw new Error(res.message ?? t('process.stage.error'));
+      if (!res.success || !res.data) throw new Error(res.message ?? t('action_error'));
       return res.data;
     },
   });
@@ -138,7 +138,7 @@ function ProcessStageControl({ process, stages, customerId }: ProcessStageContro
 
   return (
     <div className="grid gap-2">
-      <Label>{t('process.stage.label')}</Label>
+      <Label>{t('stage')}</Label>
       <Select value={process.stage} onValueChange={onValueChange} disabled={mutation.isPending}>
         <SelectTrigger>
           <SelectValue />
@@ -179,7 +179,7 @@ export function ProcessDetailsPage() {
 
   return (
     <Card asPage>
-      <CardHeader title={t('process.details.title')} />
+      <CardHeader title={t('details')} />
       <CardContent>
         {isLoading ? (
           <DefaultLoading />
@@ -202,6 +202,6 @@ export function ProcessDetailsPage() {
 
 export const Route = createFileRoute('/_private/processes/details')({
   component: ProcessDetailsPage,
-  staticData: { title: t('process.details.title') },
+  staticData: { title: t('details') },
   validateSearch: (search: Record<string, unknown>): ProcessDetailsSearch => processDetailsSearchSchema.parse(search),
 });

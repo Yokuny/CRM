@@ -30,13 +30,13 @@ export function MediaCard({ conversationId, message }: MediaCardProps) {
       const res = await fetch(mediaUrl(conversationId, message.id), { credentials: 'include' });
       if (!res.ok) {
         const body = (await res.json().catch(() => undefined)) as { message?: string } | undefined;
-        setState({ status: 'error', message: body?.message ?? t('inbox.media.error') });
+        setState({ status: 'error', message: body?.message ?? t('load_error') });
         return;
       }
       const blob = await res.blob();
       setState({ status: 'loaded', objectUrl: URL.createObjectURL(blob) });
     } catch {
-      setState({ status: 'error', message: t('inbox.media.error') });
+      setState({ status: 'error', message: t('load_error') });
     }
   };
 
@@ -50,17 +50,17 @@ export function MediaCard({ conversationId, message }: MediaCardProps) {
 
       {state.status === 'idle' && (
         <Button type="button" variant="basic" onClick={handleFetch}>
-          {isImage ? t('inbox.media.view') : t('inbox.media.download')}
+          {isImage ? t('view') : t('download')}
         </Button>
       )}
-      {state.status === 'loading' && <p className="text-muted-foreground text-xs">{t('inbox.media.loading')}</p>}
+      {state.status === 'loading' && <p className="text-muted-foreground text-xs">{t('loading')}</p>}
       {state.status === 'error' && <p className="text-destructive text-xs">{state.message}</p>}
       {state.status === 'loaded' &&
         (isImage ? (
           <img src={state.objectUrl} alt={message.media?.caption ?? ''} className="max-h-64 rounded-md" />
         ) : (
           <a href={state.objectUrl} download className="text-sm underline">
-            {t('inbox.media.download')}
+            {t('download')}
           </a>
         ))}
     </Panel>

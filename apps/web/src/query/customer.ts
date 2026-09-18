@@ -55,7 +55,7 @@ export const customersQuery = (params: CustomersQueryParams = {}) =>
     queryKey: customerKeys.list(params),
     queryFn: async (): Promise<CustomersListResult> => {
       const res = await get<CustomersListResult>(`/customers${buildQueryString(params)}`);
-      if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível carregar os clientes.');
+      if (!res.success || !res.data) throw new Error(res.message ?? t('load_error'));
       return res.data;
     },
   });
@@ -65,7 +65,7 @@ export const customerQuery = (id: string) =>
     queryKey: customerKeys.detail(id),
     queryFn: async (): Promise<CustomerRecord> => {
       const res = await get<CustomerRecord>(`/customers/${encodeURIComponent(id)}`);
-      if (!res.success || !res.data) throw new Error(res.message ?? 'Customer não encontrado.');
+      if (!res.success || !res.data) throw new Error(res.message ?? t('not_found'));
       return res.data;
     },
   });
@@ -94,6 +94,6 @@ export const customerStatusColumns = (fields: FieldDef[]): CustomerStatusColumn[
 
   return [
     ...options.map((option) => ({ key: option.key, label: option.label, color: option.color, order: option.order })),
-    { key: NO_STATUS_FILTER_VALUE, label: t('customer.status.none'), order: options.length },
+    { key: NO_STATUS_FILTER_VALUE, label: t('no_status'), order: options.length },
   ];
 };

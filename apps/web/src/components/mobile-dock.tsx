@@ -16,7 +16,7 @@ const tileClassName = cn(
 export function MobileDock() {
   return (
     <nav
-      aria-label={t('nav.primary')}
+      aria-label={t('main_navigation')}
       className="fixed inset-x-0 bottom-0 z-50 flex h-16 items-stretch justify-around border-t border-dashed border-border/60 bg-background md:hidden [&>*:not(:first-child)]:border-l [&>*:not(:first-child)]:border-dashed [&>*:not(:first-child)]:border-border/60"
     >
       <Link to="/" activeOptions={{ exact: true }} className={tileClassName}>
@@ -29,7 +29,7 @@ export function MobileDock() {
       </Link>
       <Link to="/customers/kanban" className={tileClassName}>
         <Kanban className="size-5" />
-        {t('customers.view.kanban')}
+        {t('kanban')}
       </Link>
     </nav>
   );

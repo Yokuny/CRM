@@ -1,4 +1,5 @@
 import type { ApiResponse } from '@crm/contracts';
+import { t } from '../helpers/translate.helper.js';
 
 // Sem access token/Zustand (AD-014) — a única credencial é o cookie httpOnly
 // que o próprio navegador anexa via credentials:'include'. Porte simplificado
@@ -8,7 +9,7 @@ const BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
 
 type Method = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 
-const CONNECTION_ERROR_MESSAGE = 'Não foi possível conectar ao servidor. Tente novamente.';
+const CONNECTION_ERROR_MESSAGE = t('connection_error');
 
 // Nunca lança: falha de rede vira um ApiResponse com success:false, para que
 // toda tela leia `message` sem precisar de try/catch (FND-10/AC4).

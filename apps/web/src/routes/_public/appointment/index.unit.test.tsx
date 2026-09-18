@@ -60,7 +60,7 @@ describe('AppointmentConfirmationPage (T42, spec.md SCH-22/SCH-23/SCH-24/SCH-25/
 
     renderPage();
 
-    expect(screen.getByText('Link de confirmação inválido.')).toBeInTheDocument();
+    expect(screen.getByText('Link inválido.')).toBeInTheDocument();
     expect(getWithStatusMock).not.toHaveBeenCalled();
   });
 
@@ -79,7 +79,9 @@ describe('AppointmentConfirmationPage (T42, spec.md SCH-22/SCH-23/SCH-24/SCH-25/
 
     renderPage();
 
-    expect(await screen.findByText('Link de confirmação não encontrado.')).toBeInTheDocument();
+    // O componente ignora `message` do backend pra 404/410 — deriva o texto
+    // só do `status` (t('invalid_link')/t('expired_link')), sempre distintos.
+    expect(await screen.findByText('Link inválido.')).toBeInTheDocument();
     expect(getWithStatusMock).toHaveBeenCalledWith('/appointment-confirmations/missing-token');
   });
 
@@ -89,8 +91,8 @@ describe('AppointmentConfirmationPage (T42, spec.md SCH-22/SCH-23/SCH-24/SCH-25/
 
     renderPage();
 
-    expect(await screen.findByText('Link de confirmação expirado.')).toBeInTheDocument();
-    expect(screen.queryByText('Link de confirmação não encontrado.')).not.toBeInTheDocument();
+    expect(await screen.findByText('Link expirado.')).toBeInTheDocument();
+    expect(screen.queryByText('Link inválido.')).not.toBeInTheDocument();
   });
 
   it('shows the public fields (date/time/professional/space/customer/status) for a valid token', async () => {

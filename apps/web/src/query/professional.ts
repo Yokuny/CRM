@@ -2,6 +2,7 @@ import type { CreateProfessional, UpdateProfessional } from '@crm/contracts';
 import type { QueryClient, UseMutationOptions } from '@tanstack/react-query';
 import { queryOptions } from '@tanstack/react-query';
 import { get, patch, post } from '../lib/api/client.api.js';
+import { t } from '../lib/helpers/translate.helper.js';
 
 // Espelha ProfessionalRecord de
 // apps/crm-api/src/repositories/professional.repository.ts — a verdade fica
@@ -50,7 +51,7 @@ export const professionalsQuery = (params: ProfessionalsQueryParams = {}) =>
     queryKey: professionalKeys.list(params),
     queryFn: async (): Promise<ProfessionalsListResult> => {
       const res = await get<ProfessionalsListResult>(`/professionals${buildQueryString(params)}`);
-      if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível carregar os profissionais.');
+      if (!res.success || !res.data) throw new Error(res.message ?? t('load_error'));
       return res.data;
     },
   });
@@ -63,7 +64,7 @@ export const professionalQuery = (id: string) =>
     queryKey: professionalKeys.detail(id),
     queryFn: async (): Promise<ProfessionalRecord> => {
       const res = await get<ProfessionalRecord>(`/professionals/${encodeURIComponent(id)}`);
-      if (!res.success || !res.data) throw new Error(res.message ?? 'Profissional não encontrado.');
+      if (!res.success || !res.data) throw new Error(res.message ?? t('not_found'));
       return res.data;
     },
   });
@@ -76,7 +77,7 @@ export const createProfessionalMutation = (
 ): UseMutationOptions<ProfessionalRecord, Error, CreateProfessional> => ({
   mutationFn: async (data) => {
     const res = await post<ProfessionalRecord>('/professionals', data);
-    if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível criar o profissional.');
+    if (!res.success || !res.data) throw new Error(res.message ?? t('create_error'));
     return res.data;
   },
   onSuccess: () => {
@@ -93,7 +94,7 @@ export const updateProfessionalMutation = (
 ): UseMutationOptions<ProfessionalRecord, Error, { id: string; data: UpdateProfessional }> => ({
   mutationFn: async ({ id, data }) => {
     const res = await patch<ProfessionalRecord>(`/professionals/${encodeURIComponent(id)}`, data);
-    if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível atualizar o profissional.');
+    if (!res.success || !res.data) throw new Error(res.message ?? t('save_error'));
     return res.data;
   },
   onSuccess: (_updated, variables) => {

@@ -66,7 +66,7 @@ export function ProfessionalsIndexPage() {
 
   return (
     <Card asPage>
-      <CardHeader title={t('professional.list.title')}>
+      <CardHeader title={t('professionals')}>
         <CardAction>
           <Button variant="basic" render={<Link to="/schedule/professionals/add">{t('add')}</Link>} />
         </CardAction>
@@ -74,7 +74,7 @@ export function ProfessionalsIndexPage() {
       <CardContent>
         <div className="mb-3">
           <Checkbox
-            label={t('professional.filter.show_inactive')}
+            label={t('show_inactive')}
             checked={search.showInactive}
             onCheckedChange={(checked) => handleShowInactiveChange(checked === true)}
           />
@@ -100,6 +100,6 @@ export function ProfessionalsIndexPage() {
 
 export const Route = createFileRoute('/_private/schedule/professionals/')({
   component: ProfessionalsIndexPage,
-  staticData: { title: t('professional.list.title') },
+  staticData: { title: t('professionals') },
   validateSearch: (search: Record<string, unknown>): ProfessionalsSearch => professionalsSearchSchema.parse(search),
 });

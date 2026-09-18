@@ -44,7 +44,7 @@ export const addDaysToDisplayDate = (date: string, days: number): string => {
 };
 
 // Dia da semana (0=domingo..6=sábado, mesma faixa de `weeklySchedule`/
-// `t('weekday.N')`) de uma data de parede — cálculo de calendário puro
+// `t(WEEKDAY_KEYS[N])`) de uma data de parede — cálculo de calendário puro
 // (o dia da semana de uma data não depende de fuso horário nenhum).
 export const weekdayIndexOfDisplayDate = (date: string): number => {
   const [year, month, day] = date.split('-').map(Number) as [number, number, number];

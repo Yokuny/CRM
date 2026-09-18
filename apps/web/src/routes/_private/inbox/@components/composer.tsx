@@ -30,7 +30,7 @@ export function Composer({ conversation }: ComposerProps) {
       const res = await post<MessageRecord>(`/conversations/${encodeURIComponent(conversation.id)}/messages`, {
         text: value,
       });
-      if (!res.success || !res.data) throw new Error(res.message ?? t('inbox.composer.error'));
+      if (!res.success || !res.data) throw new Error(res.message ?? t('send_error'));
       return res.data;
     },
     onSuccess: () => {
@@ -49,7 +49,7 @@ export function Composer({ conversation }: ComposerProps) {
     const phone = customerQueryResult.data?.phone;
     return (
       <Panel size="sm" className="flex-row items-center justify-between">
-        <p className="text-muted-foreground text-sm">{t('inbox.composer.window_closed')}</p>
+        <p className="text-muted-foreground text-sm">{t('whatsapp_window_closed')}</p>
         {/* `disabled` não é um atributo HTML válido em <a> — sem `phone`
             (customerQuery ainda carregando) o link simplesmente não tem
             `href`, o que já o torna não-navegável, sem precisar de um
@@ -58,7 +58,7 @@ export function Composer({ conversation }: ComposerProps) {
           variant="basic"
           render={
             <a href={phone ? `https://wa.me/${phone}` : undefined} target="_blank" rel="noreferrer">
-              {t('inbox.composer.open_whatsapp')}
+              {t('open_in_whatsapp')}
             </a>
           }
         />
@@ -71,11 +71,11 @@ export function Composer({ conversation }: ComposerProps) {
       <Input
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder={t('inbox.composer.placeholder')}
+        placeholder={t('write_message')}
         disabled={sendMutation.isPending}
       />
       <Button type="button" onClick={handleSend} disabled={sendMutation.isPending}>
-        {t('inbox.composer.send')}
+        {t('send')}
       </Button>
     </div>
   );
@@ -97,7 +97,7 @@ export function ResendButton({ conversationId, messageId }: ResendButtonProps) {
 
   return (
     <Button type="button" variant="basic" onClick={() => mutation.mutate()} disabled={mutation.isPending}>
-      {t('inbox.resend.action')}
+      {t('resend')}
     </Button>
   );
 }

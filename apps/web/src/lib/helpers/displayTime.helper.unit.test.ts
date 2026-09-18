@@ -49,7 +49,7 @@ describe('addDaysToDisplayDate (T38)', () => {
 });
 
 describe('weekdayIndexOfDisplayDate (T38)', () => {
-  it('returns 0..6 (domingo..sábado, mesma faixa de weeklySchedule/t("weekday.N"))', () => {
+  it('returns 0..6 (domingo..sábado, mesma faixa de weeklySchedule/t(WEEKDAY_KEYS[N]))', () => {
     // 2026-09-15 é uma terça-feira.
     expect(weekdayIndexOfDisplayDate('2026-09-15')).toBe(2);
     // 2026-09-14 é uma segunda-feira.

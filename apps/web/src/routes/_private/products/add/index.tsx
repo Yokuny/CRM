@@ -42,15 +42,15 @@ export function ProductAddPage() {
 
   return (
     <Card asPage>
-      <CardHeader title={t('product.create.title')} />
+      <CardHeader title={t('new_product')} />
       <CardContent>
         <Form {...form}>
           <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6">
             <DefaultFormLayout
               sections={[
                 {
-                  title: t('product.create.section.info'),
-                  description: t('product.create.section.info_description'),
+                  title: t('information'),
+                  description: t('catalog_and_stock_data'),
                   fields: [
                     <div key="product-fields" className="grid gap-4 sm:grid-cols-2">
                       <FormField
@@ -60,7 +60,7 @@ export function ProductAddPage() {
                           <FormItem>
                             <FormLabel>{t('name')}</FormLabel>
                             <FormControl>
-                              <Input placeholder={t('product.create.field.name_placeholder')} {...field} />
+                              <Input placeholder={t('example_product_name')} {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -71,9 +71,9 @@ export function ProductAddPage() {
                         name="sku"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t('product.sku')}</FormLabel>
+                            <FormLabel>{t('sku')}</FormLabel>
                             <FormControl>
-                              <Input placeholder={t('product.create.field.sku_placeholder')} {...field} />
+                              <Input placeholder={t('example_sku')} {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -84,7 +84,7 @@ export function ProductAddPage() {
                         name="price"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t('product.price')}</FormLabel>
+                            <FormLabel>{t('price')}</FormLabel>
                             <FormControl>
                               <MoneyInput value={field.value} onChange={field.onChange} onBlur={field.onBlur} />
                             </FormControl>
@@ -97,14 +97,14 @@ export function ProductAddPage() {
                         name="stock"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t('product.stock')}</FormLabel>
+                            <FormLabel>{t('stock')}</FormLabel>
                             <FormControl>
                               <Input
                                 type="number"
                                 inputMode="numeric"
                                 min={0}
                                 step={1}
-                                placeholder={t('product.create.field.stock_placeholder')}
+                                placeholder={t('example_number')}
                                 value={field.value}
                                 onChange={(e) => field.onChange(e.target.value === '' ? 0 : Number(e.target.value))}
                                 onBlur={field.onBlur}
@@ -121,9 +121,9 @@ export function ProductAddPage() {
                       name="description"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t('product.description')}</FormLabel>
+                          <FormLabel>{t('description')}</FormLabel>
                           <FormControl>
-                            <Input placeholder={t('product.create.field.description_placeholder')} {...field} />
+                            <Input placeholder={t('example_description')} {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -152,5 +152,5 @@ export function ProductAddPage() {
 
 export const Route = createFileRoute('/_private/products/add/')({
   component: ProductAddPage,
-  staticData: { title: t('product.create.title') },
+  staticData: { title: t('new_product') },
 });

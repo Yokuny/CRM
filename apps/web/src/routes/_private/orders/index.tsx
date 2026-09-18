@@ -43,10 +43,10 @@ export const ordersSearchSchema = z.object({
 export type OrdersSearch = z.infer<typeof ordersSearchSchema>;
 
 const STATUS_FILTERS: { value: OrderStatus; label: string }[] = [
-  { value: 'pending_approval', label: t('order.status.pending_approval') },
-  { value: 'confirmed', label: t('order.status.confirmed') },
-  { value: 'rejected', label: t('order.status.rejected') },
-  { value: 'payment_expired', label: t('order.status.payment_expired') },
+  { value: 'pending_approval', label: t('pending_approval') },
+  { value: 'confirmed', label: t('confirmed') },
+  { value: 'rejected', label: t('rejected') },
+  { value: 'payment_expired', label: t('payment_expired') },
 ];
 
 const STATUS_BADGE_VARIANT: Record<OrderStatus, 'warning' | 'success' | 'error'> = {
@@ -130,19 +130,19 @@ export function OrdersIndexPage() {
   const columns: ColumnDef<OrderRecord, unknown>[] = [
     {
       id: 'customer',
-      header: t('order.column.customer'),
+      header: t('customer'),
       enableSorting: false,
       cell: ({ row }) => row.original.customerName ?? '-',
     },
     {
       id: 'items',
-      header: t('order.column.items'),
+      header: t('items'),
       enableSorting: false,
       cell: ({ row }) => row.original.items.length,
     },
     {
       id: 'total',
-      header: t('order.column.total'),
+      header: t('total'),
       enableSorting: false,
       cell: ({ row }) => formatMoney(row.original.totalPrice),
     },
@@ -151,21 +151,19 @@ export function OrdersIndexPage() {
       header: t('status'),
       enableSorting: false,
       cell: ({ row }) => (
-        <BadgeIndicator variant={STATUS_BADGE_VARIANT[row.original.status]}>
-          {t(`order.status.${row.original.status}`)}
-        </BadgeIndicator>
+        <BadgeIndicator variant={STATUS_BADGE_VARIANT[row.original.status]}>{t(row.original.status)}</BadgeIndicator>
       ),
     },
     {
       id: 'payment',
-      header: t('order.column.payment'),
+      header: t('payment'),
       enableSorting: false,
       // spec.md P2 AC1: sem Payment associado, a célula não mostra nada (nem
       // um badge vazio) — só renderiza quando paymentStatus está presente.
       cell: ({ row }) =>
         row.original.paymentStatus ? (
           <BadgeIndicator variant={PAYMENT_BADGE_VARIANT[row.original.paymentStatus]}>
-            {t(`order.payment.${row.original.paymentStatus}`)}
+            {t(row.original.paymentStatus)}
           </BadgeIndicator>
         ) : null,
     },
@@ -182,7 +180,7 @@ export function OrdersIndexPage() {
               onClick={() => handleApprove(row.original.id)}
               disabled={approveMutation.isPending}
             >
-              {t('order.approve.action')}
+              {t('approve')}
             </Button>
             <Button
               type="button"
@@ -190,7 +188,7 @@ export function OrdersIndexPage() {
               onClick={() => handleReject(row.original.id)}
               disabled={rejectMutation.isPending}
             >
-              {t('order.reject.action')}
+              {t('reject')}
             </Button>
           </div>
         ) : null,
@@ -199,7 +197,7 @@ export function OrdersIndexPage() {
 
   return (
     <Card asPage>
-      <CardHeader title={t('order.list.title')} />
+      <CardHeader title={t('orders')} />
       <CardContent>
         <ButtonGroup className="mb-3">
           {STATUS_FILTERS.map((filter) => (
@@ -217,11 +215,7 @@ export function OrdersIndexPage() {
           <DefaultLoading />
         ) : (
           <div className="flex flex-col gap-4">
-            <Input
-              placeholder={t('search.placeholder')}
-              value={searchInput}
-              onChange={(e) => handleSearchInput(e.target.value)}
-            />
+            <Input placeholder={t('search')} value={searchInput} onChange={(e) => handleSearchInput(e.target.value)} />
             {(query.data?.items.length ?? 0) === 0 ? (
               <DefaultEmptyData />
             ) : (
@@ -243,6 +237,6 @@ export function OrdersIndexPage() {
 
 export const Route = createFileRoute('/_private/orders/')({
   component: OrdersIndexPage,
-  staticData: { title: t('order.list.title') },
+  staticData: { title: t('orders') },
   validateSearch: (search: Record<string, unknown>): OrdersSearch => ordersSearchSchema.parse(search),
 });

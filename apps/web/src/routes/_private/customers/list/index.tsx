@@ -92,11 +92,11 @@ export function CustomersListPage() {
 
   return (
     <Card asPage>
-      <CardHeader title={t('customers.list.title')}>
+      <CardHeader title={t('list')}>
         <CardAction className="flex gap-2">
           <Button
             variant="basic"
-            aria-label={t('customers.view.kanban')}
+            aria-label={t('kanban')}
             render={
               <Link to="/customers/kanban">
                 <Kanban />
@@ -111,11 +111,7 @@ export function CustomersListPage() {
           <DefaultLoading />
         ) : (
           <>
-            <Input
-              placeholder={t('search.placeholder')}
-              value={searchInput}
-              onChange={(e) => handleSearchInput(e.target.value)}
-            />
+            <Input placeholder={t('search')} value={searchInput} onChange={(e) => handleSearchInput(e.target.value)} />
             {(query.data?.items.length ?? 0) === 0 ? (
               <DefaultEmptyData />
             ) : (
@@ -138,6 +134,6 @@ export function CustomersListPage() {
 
 export const Route = createFileRoute('/_private/customers/list/')({
   component: CustomersListPage,
-  staticData: { title: t('customers.list.title') },
+  staticData: { title: t('list') },
   validateSearch: (search: Record<string, unknown>): CustomersSearch => customersSearchSchema.parse(search),
 });

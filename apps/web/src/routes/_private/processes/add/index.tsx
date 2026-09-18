@@ -36,7 +36,7 @@ export function ProcessAddPage() {
   const mutation = useMutation({
     mutationFn: async (templateKey: string) => {
       const res = await post<ProcessRecord>('/processes', { templateKey, customerId: search.customerId });
-      if (!res.success || !res.data) throw new Error(res.message ?? t('process.create.error'));
+      if (!res.success || !res.data) throw new Error(res.message ?? t('create_error'));
       return res.data;
     },
   });
@@ -55,13 +55,13 @@ export function ProcessAddPage() {
 
   return (
     <Card asPage>
-      <CardHeader title={t('process.create.title')} />
+      <CardHeader title={t('new_process')} />
       <CardContent>
         {templatesQuery.isLoading ? (
           <DefaultLoading />
         ) : created ? (
           <div className="grid gap-4">
-            <ItemTitle>{t('process.create.success')}</ItemTitle>
+            <ItemTitle>{t('created_successfully')}</ItemTitle>
             <ItemDescription>{created.stage}</ItemDescription>
             <Button
               variant="basic"
@@ -82,8 +82,8 @@ export function ProcessAddPage() {
             <DefaultFormLayout
               sections={[
                 {
-                  title: t('process.create.section.template'),
-                  description: t('process.create.section.template_description'),
+                  title: t('process_type'),
+                  description: t('choose_process_type'),
                   fields: [
                     <Select
                       key="templateKey"
@@ -91,7 +91,7 @@ export function ProcessAddPage() {
                       onValueChange={(value) => setSelectedKey(value ?? '')}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder={t('process.template.placeholder')} />
+                        <SelectValue placeholder={t('choose_process_type')} />
                       </SelectTrigger>
                       <SelectContent>
                         {availableTemplates.map((template) => (
@@ -124,6 +124,6 @@ export function ProcessAddPage() {
 
 export const Route = createFileRoute('/_private/processes/add/')({
   component: ProcessAddPage,
-  staticData: { title: t('process.create.title') },
+  staticData: { title: t('new_process') },
   validateSearch: (search: Record<string, unknown>): ProcessesAddSearch => processesAddSearchSchema.parse(search),
 });

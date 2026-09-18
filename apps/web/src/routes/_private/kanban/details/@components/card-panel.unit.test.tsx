@@ -206,7 +206,7 @@ describe('CardPanel — edit mode (T18, spec.md KAN-16/KAN-17)', () => {
     const user = userEvent.setup();
     const { onClose } = renderPanel({ boardId: 'b1', card: existingCard });
 
-    await user.click(await screen.findByRole('button', { name: 'Remover card' }));
+    await user.click(await screen.findByRole('button', { name: 'Remover' }));
 
     await waitFor(() => expect(delMock).toHaveBeenCalledWith('/boards/b1/cards/card1'));
     await waitFor(() => expect(onClose).toHaveBeenCalled());
@@ -218,7 +218,7 @@ describe('CardPanel — edit mode (T18, spec.md KAN-16/KAN-17)', () => {
     const user = userEvent.setup();
     renderPanel({ boardId: 'b1', card: existingCard });
 
-    await user.click(await screen.findByRole('button', { name: 'Remover card' }));
+    await user.click(await screen.findByRole('button', { name: 'Remover' }));
 
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Card não encontrado'));
   });

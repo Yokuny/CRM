@@ -10,8 +10,8 @@ export function DefaultEmptyData() {
   return (
     <Item variant="muted" className="justify-center text-center">
       <ItemContent className="items-center">
-        <ItemTitle>{t('not.found')}</ItemTitle>
-        <ItemDescription className="text-center">{t('not.found.description')}</ItemDescription>
+        <ItemTitle>{t('not_found')}</ItemTitle>
+        <ItemDescription className="text-center">{t('adjust_filters')}</ItemDescription>
       </ItemContent>
     </Item>
   );

@@ -73,8 +73,8 @@ function BlockCreateForm({ onClose }: WithOnClose) {
         <DefaultFormLayout
           sections={[
             {
-              title: t('block.create.section.info'),
-              description: t('block.create.section.info_description'),
+              title: t('block'),
+              description: t('blocks_new_appointments'),
               fields: [
                 <FormField
                   key="professionalId"
@@ -82,11 +82,11 @@ function BlockCreateForm({ onClose }: WithOnClose) {
                   name="professionalId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('appointment.field.professional')}</FormLabel>
+                      <FormLabel>{t('professional')}</FormLabel>
                       <Select value={field.value} onValueChange={field.onChange}>
                         <FormControl>
                           <SelectTrigger className="w-full">
-                            <SelectValue placeholder={t('appointment.field.professional')} />
+                            <SelectValue placeholder={t('professional')} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -107,9 +107,9 @@ function BlockCreateForm({ onClose }: WithOnClose) {
                   name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('block.field.title')}</FormLabel>
+                      <FormLabel>{t('title')}</FormLabel>
                       <FormControl>
-                        <Input placeholder={t('block.field.title_placeholder')} {...field} />
+                        <Input placeholder={t('example_block_title')} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -121,9 +121,9 @@ function BlockCreateForm({ onClose }: WithOnClose) {
                     name="startDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t('block.field.start_date')}</FormLabel>
+                        <FormLabel>{t('start_date')}</FormLabel>
                         <FormControl>
-                          <Input type="date" placeholder={t('block.field.start_date_placeholder')} {...field} />
+                          <Input type="date" placeholder={t('date_format')} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -134,9 +134,9 @@ function BlockCreateForm({ onClose }: WithOnClose) {
                     name="startTime"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t('block.field.start_time')}</FormLabel>
+                        <FormLabel>{t('start_time')}</FormLabel>
                         <FormControl>
-                          <Input type="time" placeholder={t('block.field.start_time_placeholder')} {...field} />
+                          <Input type="time" placeholder={t('time_format')} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -149,9 +149,9 @@ function BlockCreateForm({ onClose }: WithOnClose) {
                     name="endDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t('block.field.end_date')}</FormLabel>
+                        <FormLabel>{t('end_date')}</FormLabel>
                         <FormControl>
-                          <Input type="date" placeholder={t('block.field.end_date_placeholder')} {...field} />
+                          <Input type="date" placeholder={t('date_format')} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -162,9 +162,9 @@ function BlockCreateForm({ onClose }: WithOnClose) {
                     name="endTime"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t('block.field.end_time')}</FormLabel>
+                        <FormLabel>{t('end_time')}</FormLabel>
                         <FormControl>
-                          <Input type="time" placeholder={t('block.field.end_time_placeholder')} {...field} />
+                          <Input type="time" placeholder={t('time_format')} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -207,7 +207,7 @@ function BlockRemoveForm({ block, onClose }: BlockRemoveFormProps) {
   return (
     <>
       <div className="grid gap-1">
-        <p className="font-medium text-sm">{block.title ?? t('block.detail.title')}</p>
+        <p className="font-medium text-sm">{block.title ?? t('block')}</p>
         <p className="text-muted-foreground text-sm">
           {formatDisplayDate(block.start)} · {formatDisplayTime(block.start)}–{formatDisplayTime(block.end)}
         </p>
@@ -215,7 +215,7 @@ function BlockRemoveForm({ block, onClose }: BlockRemoveFormProps) {
       </div>
       <div className="flex flex-wrap gap-2">
         <Button type="button" variant="basic" disabled={mutation.isPending} onClick={handleDelete}>
-          {t('block.action.remove')}
+          {t('remove')}
         </Button>
         <Button type="button" variant="basic" onClick={onClose} disabled={mutation.isPending}>
           {t('cancel')}

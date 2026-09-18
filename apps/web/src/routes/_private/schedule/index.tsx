@@ -13,10 +13,10 @@ type ScheduleSection = { to: string; titleKey: string; icon: ComponentType<{ cla
 // os quatro destinos já existentes (calendário, T39; profissionais/ambientes/
 // configuração, Fase 7).
 const SCHEDULE_SECTIONS: ScheduleSection[] = [
-  { to: '/schedule/calendar', titleKey: 'calendar.title', icon: Calendar },
-  { to: '/schedule/professionals', titleKey: 'professional.list.title', icon: UserRound },
-  { to: '/schedule/spaces', titleKey: 'space.list.title', icon: DoorOpen },
-  { to: '/schedule/settings', titleKey: 'scheduling_settings.title', icon: Settings },
+  { to: '/schedule/calendar', titleKey: 'calendar', icon: Calendar },
+  { to: '/schedule/professionals', titleKey: 'professionals', icon: UserRound },
+  { to: '/schedule/spaces', titleKey: 'spaces', icon: DoorOpen },
+  { to: '/schedule/settings', titleKey: 'settings', icon: Settings },
 ];
 
 export function ScheduleIndexPage() {

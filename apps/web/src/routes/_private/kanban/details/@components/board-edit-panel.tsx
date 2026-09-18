@@ -38,7 +38,7 @@ export function BoardEditPanel({ board, onClose }: BoardEditPanelProps) {
       { id: board.id, data },
       {
         onSuccess: onClose,
-        onError: (error: Error) => setErrorMessage(error.message || t('kanban.board.edit.error')),
+        onError: (error: Error) => setErrorMessage(error.message || t('save_error')),
       },
     );
   };
@@ -50,8 +50,8 @@ export function BoardEditPanel({ board, onClose }: BoardEditPanelProps) {
           <DefaultFormLayout
             sections={[
               {
-                title: t('kanban.board.create.section.info'),
-                description: t('kanban.board.create.section.info_description'),
+                title: t('information'),
+                description: t('name_and_description'),
                 fields: [
                   <FormField
                     key="name"
@@ -61,7 +61,7 @@ export function BoardEditPanel({ board, onClose }: BoardEditPanelProps) {
                       <FormItem>
                         <FormLabel>{t('name')}</FormLabel>
                         <FormControl>
-                          <Input placeholder={t('kanban.board.create.field.name_placeholder')} {...field} />
+                          <Input placeholder={t('example_board_name')} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -73,13 +73,9 @@ export function BoardEditPanel({ board, onClose }: BoardEditPanelProps) {
                     name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t('kanban.board.field.description')}</FormLabel>
+                        <FormLabel>{t('description')}</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder={t('kanban.board.field.description_placeholder')}
-                            {...field}
-                            value={field.value ?? ''}
-                          />
+                          <Input placeholder={t('example_description')} {...field} value={field.value ?? ''} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

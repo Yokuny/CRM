@@ -10,6 +10,7 @@ import type {
 import type { QueryClient, UseMutationOptions } from '@tanstack/react-query';
 import { queryOptions } from '@tanstack/react-query';
 import { del, get, patch, post } from '../lib/api/client.api.js';
+import { t } from '../lib/helpers/translate.helper.js';
 
 // Espelham board.repository.ts/card.repository.ts (apps/crm-api) — a
 // verdade fica no back-end; este tipo só descreve o que a tela consome
@@ -65,7 +66,7 @@ export const boardsQuery = () =>
     queryKey: boardKeys.lists(),
     queryFn: async (): Promise<BoardWithCardCount[]> => {
       const res = await get<BoardWithCardCount[]>('/boards');
-      if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível carregar os boards.');
+      if (!res.success || !res.data) throw new Error(res.message ?? t('load_error'));
       return res.data;
     },
   });
@@ -75,7 +76,7 @@ export const boardQuery = (id: string) =>
     queryKey: boardKeys.detail(id),
     queryFn: async (): Promise<BoardRecord> => {
       const res = await get<BoardRecord>(`/boards/${encodeURIComponent(id)}`);
-      if (!res.success || !res.data) throw new Error(res.message ?? 'Board não encontrado.');
+      if (!res.success || !res.data) throw new Error(res.message ?? t('not_found'));
       return res.data;
     },
   });
@@ -85,7 +86,7 @@ export const boardCardsQuery = (boardId: string) =>
     queryKey: boardKeys.cardsList(boardId),
     queryFn: async (): Promise<CardRecord[]> => {
       const res = await get<CardRecord[]>(`/boards/${encodeURIComponent(boardId)}/cards`);
-      if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível carregar os cards.');
+      if (!res.success || !res.data) throw new Error(res.message ?? t('load_error'));
       return res.data;
     },
   });
@@ -95,7 +96,7 @@ export const boardCardsQuery = (boardId: string) =>
 export const createBoardMutation = (queryClient: QueryClient): UseMutationOptions<BoardRecord, Error, CreateBoard> => ({
   mutationFn: async (data) => {
     const res = await post<BoardRecord>('/boards', data);
-    if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível criar o board.');
+    if (!res.success || !res.data) throw new Error(res.message ?? t('create_error'));
     return res.data;
   },
   onSuccess: () => {
@@ -109,7 +110,7 @@ export const updateBoardMutation = (
 ): UseMutationOptions<BoardRecord, Error, { id: string; data: UpdateBoard }> => ({
   mutationFn: async ({ id, data }) => {
     const res = await patch<BoardRecord>(`/boards/${encodeURIComponent(id)}`, data);
-    if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível atualizar o board.');
+    if (!res.success || !res.data) throw new Error(res.message ?? t('save_error'));
     return res.data;
   },
   onSuccess: (_updated, variables) => {
@@ -123,7 +124,7 @@ export const updateBoardMutation = (
 export const deleteBoardMutation = (queryClient: QueryClient): UseMutationOptions<void, Error, { id: string }> => ({
   mutationFn: async ({ id }) => {
     const res = await del<never>(`/boards/${encodeURIComponent(id)}`);
-    if (!res.success) throw new Error(res.message ?? 'Não foi possível remover o board.');
+    if (!res.success) throw new Error(res.message ?? t('remove_error'));
   },
   onSuccess: (_data, variables) => {
     queryClient.invalidateQueries({ queryKey: boardKeys.lists() });
@@ -137,7 +138,7 @@ export const addColumnMutation = (
 ): UseMutationOptions<BoardRecord, Error, { boardId: string; data: CreateColumn }> => ({
   mutationFn: async ({ boardId, data }) => {
     const res = await post<BoardRecord>(`/boards/${encodeURIComponent(boardId)}/columns`, data);
-    if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível adicionar a coluna.');
+    if (!res.success || !res.data) throw new Error(res.message ?? t('create_error'));
     return res.data;
   },
   onSuccess: (_updated, variables) => {
@@ -155,7 +156,7 @@ export const updateColumnMutation = (
       `/boards/${encodeURIComponent(boardId)}/columns/${encodeURIComponent(columnId)}`,
       data,
     );
-    if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível atualizar a coluna.');
+    if (!res.success || !res.data) throw new Error(res.message ?? t('save_error'));
     return res.data;
   },
   onSuccess: (_updated, variables) => {
@@ -170,7 +171,7 @@ export const reorderColumnsMutation = (
 ): UseMutationOptions<BoardRecord, Error, { boardId: string; columnIds: string[] }> => ({
   mutationFn: async ({ boardId, columnIds }) => {
     const res = await patch<BoardRecord>(`/boards/${encodeURIComponent(boardId)}/columns/reorder`, { columnIds });
-    if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível reordenar as colunas.');
+    if (!res.success || !res.data) throw new Error(res.message ?? t('save_error'));
     return res.data;
   },
   onSuccess: (_updated, variables) => {
@@ -187,7 +188,7 @@ export const removeColumnMutation = (
     const res = await del<BoardRecord>(
       `/boards/${encodeURIComponent(boardId)}/columns/${encodeURIComponent(columnId)}`,
     );
-    if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível remover a coluna.');
+    if (!res.success || !res.data) throw new Error(res.message ?? t('remove_error'));
     return res.data;
   },
   onSuccess: (_updated, variables) => {
@@ -202,7 +203,7 @@ export const createCardMutation = (
 ): UseMutationOptions<CardRecord, Error, { boardId: string; data: CreateCard }> => ({
   mutationFn: async ({ boardId, data }) => {
     const res = await post<CardRecord>(`/boards/${encodeURIComponent(boardId)}/cards`, data);
-    if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível criar o card.');
+    if (!res.success || !res.data) throw new Error(res.message ?? t('create_error'));
     return res.data;
   },
   onSuccess: (_created, variables) => {
@@ -221,7 +222,7 @@ export const updateCardMutation = (
       `/boards/${encodeURIComponent(boardId)}/cards/${encodeURIComponent(cardId)}`,
       data,
     );
-    if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível atualizar o card.');
+    if (!res.success || !res.data) throw new Error(res.message ?? t('save_error'));
     return res.data;
   },
   onSuccess: (_updated, variables) => {
@@ -241,7 +242,7 @@ export const moveCardMutation = (
       `/boards/${encodeURIComponent(boardId)}/cards/${encodeURIComponent(cardId)}/move`,
       data,
     );
-    if (!res.success || !res.data) throw new Error(res.message ?? 'Não foi possível mover o card.');
+    if (!res.success || !res.data) throw new Error(res.message ?? t('move_error'));
     return res.data;
   },
   onSuccess: (_moved, variables) => {
@@ -256,7 +257,7 @@ export const deleteCardMutation = (
 ): UseMutationOptions<void, Error, { boardId: string; cardId: string }> => ({
   mutationFn: async ({ boardId, cardId }) => {
     const res = await del<never>(`/boards/${encodeURIComponent(boardId)}/cards/${encodeURIComponent(cardId)}`);
-    if (!res.success) throw new Error(res.message ?? 'Não foi possível remover o card.');
+    if (!res.success) throw new Error(res.message ?? t('remove_error'));
   },
   onSuccess: (_data, variables) => {
     queryClient.invalidateQueries({ queryKey: boardKeys.cardsList(variables.boardId) });

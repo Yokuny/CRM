@@ -84,7 +84,7 @@ function CustomerDetailsView({ customer, statusOptions }: CustomerDetailsViewPro
 
       <div className="grid gap-2">
         <div className="flex items-center justify-between">
-          <ItemTitle>{t('customer.processes.title')}</ItemTitle>
+          <ItemTitle>{t('processes')}</ItemTitle>
           {/* WEB-07 AC1: "a partir do detalhe de um Customer" é a entrada
               primária do fluxo de criação de Process (T25) — mesma rota do
               atalho do card do kanban (WEB-10), search:{customerId} (AD-030). */}
@@ -92,7 +92,7 @@ function CustomerDetailsView({ customer, statusOptions }: CustomerDetailsViewPro
             variant="basic"
             render={
               <Link to="/processes/add" search={{ customerId: customer.id }}>
-                {t('process.new.action')}
+                {t('new_process')}
               </Link>
             }
           />
@@ -160,7 +160,7 @@ function CustomerEditForm({ customer, fields, onSaved, onCancel }: CustomerEditF
         document: input.document || undefined,
         values: input.values,
       });
-      if (!res.success || !res.data) throw new Error(res.message ?? t('customer.edit.error'));
+      if (!res.success || !res.data) throw new Error(res.message ?? t('save_error'));
       return res.data;
     },
   });
@@ -186,8 +186,8 @@ function CustomerEditForm({ customer, fields, onSaved, onCancel }: CustomerEditF
 
   const sections: FormSection[] = [
     {
-      title: t('customer.create.section.identification'),
-      description: t('customer.create.section.identification_description'),
+      title: t('identification'),
+      description: t('basic_contact_data'),
       fields: [
         <div key="customer-identification" className="grid gap-4 sm:grid-cols-3">
           <div className="grid gap-2">
@@ -195,26 +195,17 @@ function CustomerEditForm({ customer, fields, onSaved, onCancel }: CustomerEditF
             <Input
               id="name"
               required
-              placeholder={t('customer.create.field.name_placeholder')}
+              placeholder={t('example_person_name')}
               {...register('name', { required: true })}
             />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="phone">{t('phone')}</Label>
-            <Input
-              id="phone"
-              required
-              placeholder={t('customer.create.field.phone_placeholder')}
-              {...register('phone', { required: true })}
-            />
+            <Input id="phone" required placeholder={t('example_phone')} {...register('phone', { required: true })} />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="document">{t('document')}</Label>
-            <Input
-              id="document"
-              placeholder={t('customer.create.field.document_placeholder')}
-              {...register('document')}
-            />
+            <Input id="document" placeholder={t('example_document')} {...register('document')} />
           </div>
         </div>,
       ],
@@ -225,8 +216,8 @@ function CustomerEditForm({ customer, fields, onSaved, onCancel }: CustomerEditF
   // adicionais" quando o template de fato tem campos configurados.
   if (nodes.length > 0) {
     sections.push({
-      title: t('customer.create.section.details'),
-      description: t('customer.create.section.details_description'),
+      title: t('additional_details'),
+      description: t('custom_fields'),
       fields: nodes.map((node) => (
         <DynamicField key={node.fieldId} node={node} name={`values.${node.fieldId}`} control={control} />
       )),
@@ -272,7 +263,7 @@ export function CustomerDetailsPage() {
 
   return (
     <Card asPage>
-      <CardHeader title={t('customer.details.title')}>
+      <CardHeader title={t('details')}>
         {customer && !isEditing && (
           <CardAction>
             <Button variant="basic" onClick={() => setIsEditing(true)}>
@@ -311,6 +302,6 @@ export function CustomerDetailsPage() {
 
 export const Route = createFileRoute('/_private/customers/details')({
   component: CustomerDetailsPage,
-  staticData: { title: t('customer.details.title') },
+  staticData: { title: t('details') },
   validateSearch: (search: Record<string, unknown>): CustomerDetailsSearch => customerDetailsSearchSchema.parse(search),
 });

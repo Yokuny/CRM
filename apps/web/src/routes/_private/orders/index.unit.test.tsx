@@ -155,7 +155,7 @@ describe('OrdersIndexPage (T23, spec.md P1 "Operador aprova ou rejeita um pedido
 
       renderPage();
 
-      expect(await screen.findByText('Pagamento pendente')).toBeInTheDocument();
+      expect(await screen.findByText('Pendente')).toBeInTheDocument();
     });
 
     it('renders a distinct badge for a paid Payment', async () => {
@@ -173,7 +173,7 @@ describe('OrdersIndexPage (T23, spec.md P1 "Operador aprova ou rejeita um pedido
 
       renderPage();
 
-      expect(await screen.findByText('Cobrança expirada')).toBeInTheDocument();
+      expect(await screen.findByText('Expirado')).toBeInTheDocument();
     });
 
     it('renders nothing in the payment column (no empty badge) when the Order has no Payment', async () => {
@@ -183,9 +183,14 @@ describe('OrdersIndexPage (T23, spec.md P1 "Operador aprova ou rejeita um pedido
       renderPage();
 
       await screen.findByText('Ana');
-      expect(screen.queryByText('Pagamento pendente')).not.toBeInTheDocument();
+      // PENDING_ORDER.status já é 'pending_approval' (badge "Pendente" na
+      // célula de status, mesmo texto do botão de filtro "Pendente" acima da
+      // tabela) — sem Payment, a célula de pagamento não pode renderizar
+      // nenhum badge, nem reaproveitando esse mesmo texto "Pendente". Escopo
+      // por `role: 'cell'` pra não contar o botão de filtro.
+      expect(screen.getAllByRole('cell', { name: 'Pendente' })).toHaveLength(1);
       expect(screen.queryByText('Pago')).not.toBeInTheDocument();
-      expect(screen.queryByText('Cobrança expirada')).not.toBeInTheDocument();
+      expect(screen.queryByText('Expirado')).not.toBeInTheDocument();
     });
   });
 

@@ -34,7 +34,7 @@ function UserMenuContent() {
   const signoutMutation = useMutation({
     mutationFn: async () => {
       const res = await post('/auth/signout');
-      if (!res.success) throw new Error(res.message ?? t('auth.signout.error'));
+      if (!res.success) throw new Error(res.message ?? t('action_error'));
     },
     onSuccess: () => {
       // Limpa tudo — dados do tenant/usuário anterior não podem sobreviver
@@ -43,7 +43,7 @@ function UserMenuContent() {
       queryClient.clear();
       navigate({ to: '/auth' });
     },
-    onError: () => toast.error(t('auth.signout.error')),
+    onError: () => toast.error(t('action_error')),
   });
 
   return (
@@ -64,35 +64,35 @@ function UserMenuContent() {
           Menu.Group/Menu.RadioGroup (MenuGroupContext) — por isso o label
           entra DENTRO do RadioGroup, não antes dele. */}
       <DropdownMenuRadioGroup value={theme} onValueChange={setTheme}>
-        <DropdownMenuLabel>{t('theme.label')}</DropdownMenuLabel>
+        <DropdownMenuLabel>{t('theme')}</DropdownMenuLabel>
         <DropdownMenuRadioItem value="light">
           <Sun />
-          {t('theme.light')}
+          {t('light')}
         </DropdownMenuRadioItem>
         <DropdownMenuRadioItem value="dark">
           <Moon />
-          {t('theme.dark')}
+          {t('dark')}
         </DropdownMenuRadioItem>
         <DropdownMenuRadioItem value="system">
           <Monitor />
-          {t('theme.system')}
+          {t('system')}
         </DropdownMenuRadioItem>
       </DropdownMenuRadioGroup>
 
       <DropdownMenuSeparator />
 
       <DropdownMenuRadioGroup value={textSize} onValueChange={(value) => setTextSize(value as TextSize)}>
-        <DropdownMenuLabel>{t('text_size.label')}</DropdownMenuLabel>
-        <DropdownMenuRadioItem value="sm">{t('text_size.sm')}</DropdownMenuRadioItem>
-        <DropdownMenuRadioItem value="md">{t('text_size.md')}</DropdownMenuRadioItem>
-        <DropdownMenuRadioItem value="lg">{t('text_size.lg')}</DropdownMenuRadioItem>
+        <DropdownMenuLabel>{t('text_size')}</DropdownMenuLabel>
+        <DropdownMenuRadioItem value="sm">{t('small')}</DropdownMenuRadioItem>
+        <DropdownMenuRadioItem value="md">{t('medium')}</DropdownMenuRadioItem>
+        <DropdownMenuRadioItem value="lg">{t('large')}</DropdownMenuRadioItem>
       </DropdownMenuRadioGroup>
 
       <DropdownMenuSeparator />
 
       <DropdownMenuItem variant="destructive" onClick={() => signoutMutation.mutate()}>
         <LogOut />
-        {t('auth.signout')}
+        {t('sign_out')}
       </DropdownMenuItem>
     </>
   );
@@ -110,7 +110,7 @@ export function UserMenu() {
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger render={<Button variant="basic" aria-label={t('user_menu.open')} />}>
+      <DropdownMenuTrigger render={<Button variant="basic" aria-label={t('user_menu')} />}>
         <UserRound />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">{open && <UserMenuContent />}</DropdownMenuContent>
