@@ -5,6 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>CRM</title>
+    <!-- Aplica tema e tamanho do texto (menu do usuário, src/components/
+         user-menu.tsx) ANTES do primeiro paint do React: o ThemeProvider
+         do next-themes (montado em src/main.tsx) só resolve a classe .dark
+         num efeito client-side, e este é um app 100% CSR (sem SSR/hidratação)
+         — sem este script, quem escolheu "Escuro" veria um flash claro a
+         cada carregamento. Espelha a mesma lógica que o próprio next-themes
+         injetaria num app SSR (storageKey "theme", default "system"). */ -->
+    <script>
+      (() => {
+        try {
+          const theme = localStorage.getItem('theme');
+          const resolved =
+            !theme || theme === 'system'
+              ? window.matchMedia('(prefers-color-scheme: dark)').matches
+                ? 'dark'
+                : 'light'
+              : theme;
+          document.documentElement.classList.add(resolved);
+
+          const textSize = localStorage.getItem('text-size');
+          if (textSize === 'sm' || textSize === 'lg') document.documentElement.setAttribute('data-text-size', textSize);
+        } catch {
+          // Sem storage (private mode / cleared site data): fica no default
+          // (claro, sem atributo de tamanho) até o React montar.
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

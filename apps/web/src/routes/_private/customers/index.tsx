@@ -2,7 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { Kanban, List, Plus } from 'lucide-react';
 import type { ComponentType } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card.js';
-import { Item, ItemContent, ItemMedia, ItemTitle } from '@/components/ui/item.js';
+import { Item, ItemContent, ItemGroup, ItemMedia, ItemTitle } from '@/components/ui/item.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 
 type CustomersSection = { to: string; titleKey: string; icon: ComponentType<{ className?: string }> };
@@ -20,23 +20,24 @@ export function CustomersIndexPage() {
   return (
     <Card asPage>
       <CardHeader />
-      <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {CUSTOMERS_SECTIONS.map(({ to, titleKey, icon: Icon }) => (
-          <Item
-            key={to}
-            variant="outline"
-            render={
-              <Link to={to}>
-                <ItemMedia variant="icon">
-                  <Icon className="size-4" />
-                </ItemMedia>
-                <ItemContent>
-                  <ItemTitle>{t(titleKey)}</ItemTitle>
-                </ItemContent>
-              </Link>
-            }
-          />
-        ))}
+      <CardContent>
+        <ItemGroup variant="grid">
+          {CUSTOMERS_SECTIONS.map(({ to, titleKey, icon: Icon }) => (
+            <Item
+              key={to}
+              render={
+                <Link to={to}>
+                  <ItemMedia variant="icon">
+                    <Icon className="size-4" />
+                  </ItemMedia>
+                  <ItemContent>
+                    <ItemTitle>{t(titleKey)}</ItemTitle>
+                  </ItemContent>
+                </Link>
+              }
+            />
+          ))}
+        </ItemGroup>
       </CardContent>
     </Card>
   );

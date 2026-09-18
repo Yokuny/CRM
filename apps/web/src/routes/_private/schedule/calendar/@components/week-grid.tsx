@@ -1,3 +1,4 @@
+import { Panel } from '@/components/ui/item.js';
 import {
   addDaysToDisplayDate,
   formatDisplayDate,
@@ -57,7 +58,7 @@ export function WeekGrid({ weekStart, items, onSelect }: WeekGridProps) {
           .sort((a, b) => a.start.localeCompare(b.start));
 
         return (
-          <div key={day} data-testid={`week-grid-day-${day}`} className="flex flex-col gap-2 rounded-md border p-2">
+          <Panel key={day} data-testid={`week-grid-day-${day}`} size="xs">
             <div className="text-center">
               <div className="font-medium text-sm">{t(`weekday.${weekdayIndexOfDisplayDate(day)}`)}</div>
               <div className="text-muted-foreground text-xs">{day}</div>
@@ -88,7 +89,7 @@ export function WeekGrid({ weekStart, items, onSelect }: WeekGridProps) {
                 );
               })}
             </div>
-          </div>
+          </Panel>
         );
       })}
     </div>

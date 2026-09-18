@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { BadgeIndicator } from '@/components/ui/badge.js';
 import { Button } from '@/components/ui/button.js';
+import { Panel } from '@/components/ui/item.js';
 import { formatMoney } from '@/lib/helpers/money.helper.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 import { approveOrderMutation, ordersQuery, rejectOrderMutation } from '@/query/order.js';
@@ -38,7 +39,7 @@ export function OrderCard({ conversationId }: OrderCardProps) {
   };
 
   return (
-    <div className="flex items-center gap-2 rounded-md border p-2">
+    <Panel size="xs" className="flex-row items-center">
       <BadgeIndicator variant="warning">{t('order.status.pending_approval')}</BadgeIndicator>
       <span className="text-sm">{formatMoney(order.totalPrice)}</span>
       <Button type="button" variant="success" onClick={handleApprove} disabled={approveMutation.isPending}>
@@ -47,6 +48,6 @@ export function OrderCard({ conversationId }: OrderCardProps) {
       <Button type="button" variant="destructive" onClick={handleReject} disabled={rejectMutation.isPending}>
         {t('order.reject.action')}
       </Button>
-    </div>
+    </Panel>
   );
 }

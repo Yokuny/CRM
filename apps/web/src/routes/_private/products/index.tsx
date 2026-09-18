@@ -71,7 +71,7 @@ export function ProductsIndexPage() {
         {query.isLoading ? (
           <DefaultLoading />
         ) : (
-          <div className="flex flex-col gap-4">
+          <>
             <Input
               placeholder={t('search.placeholder')}
               value={searchInput}
@@ -89,7 +89,7 @@ export function ProductsIndexPage() {
                 onRowClick={handleRowClick}
               />
             )}
-          </div>
+          </>
         )}
       </CardContent>
     </Card>

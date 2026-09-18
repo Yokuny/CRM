@@ -6,17 +6,84 @@ import type * as React from 'react';
 
 import { Separator } from '@/components/ui/separator.js';
 
-function ItemGroup({ className, ...props }: React.ComponentProps<'ul'>) {
+// O container tracejado é o que apresenta onde os Items estão sendo
+// renderizados (apps/web/CLAUDE.md: Item/ItemGroup é o agrupador padrão) —
+// mesma linguagem da moldura de página em routes/_private.tsx. Sem `gap`: as
+// linhas divisórias só encostam nos itens se eles forem adjacentes. As
+// divisórias não usam `divide-*`: o Tailwind 4 emite essas regras dentro de
+// `:where()` (especificidade 0) e qualquer `border-*` no filho as venceria.
+//
+// As linhas são SEMPRE responsabilidade do grupo, nunca da página: por isso o
+// Item não traz utilitário de borda nenhum (nem `border`, nem `border-0`) —
+// sem utilitário no filho não há empate de especificidade com estes seletores
+// `[&>*]`, e a ordem das regras no CSS deixa de importar.
+const itemGroupVariants = cva('group/item-group w-full border border-dashed border-border/60', {
+  variants: {
+    variant: {
+      // Pilha vertical: divisória tracejada entre itens adjacentes.
+      stack:
+        'flex flex-col [&>*:not(:first-child)]:border-t [&>*:not(:first-child)]:border-dashed [&>*:not(:first-child)]:border-border/60',
+      // Grade de navegação (hubs de seção). Cada célula desenha só as linhas
+      // internas (direita/baixo); o -mr/-mb-px faz a borda da última coluna/
+      // linha cair em cima da moldura do container em vez de dobrar com ela.
+      grid: 'grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 [&>*]:-mr-px [&>*]:-mb-px [&>*]:border-r [&>*]:border-b [&>*]:border-dashed [&>*]:border-border/60',
+    },
+  },
+  defaultVariants: {
+    variant: 'stack',
+  },
+});
+
+function ItemGroup({
+  className,
+  variant = 'stack',
+  ...props
+}: React.ComponentProps<'ul'> & VariantProps<typeof itemGroupVariants>) {
   return (
     <ul
       data-slot="item-group"
-      className={cn(
-        'group/item-group flex w-full flex-col gap-4 has-data-[size=sm]:gap-2.5 has-data-[size=xs]:gap-2',
-        className,
-      )}
+      data-variant={variant}
+      className={cn(itemGroupVariants({ variant, className }))}
       {...props}
     />
   );
+}
+
+// Bloco de conteúdo dentro de uma página (painel do inbox, painel de
+// agendamento/bloqueio, editor de horários, blocos do kanban). Mesma moldura
+// tracejada do ItemGroup, mas com padding e sem divisórias — é um contêiner de
+// composição livre, não uma lista. Existe pra que nenhuma rota precise
+// escrever `<div className="rounded-md border p-4">` à mão.
+//
+// O Panel cuida só da moldura e da densidade; o arranjo interno (grid, linha,
+// alinhamento) continua sendo className do caller — isso é layout local, não
+// identidade visual. `render` (mesma API do Item) cobre os casos em que o
+// painel é outro elemento, tipicamente um <form>.
+const panelVariants = cva('flex w-full flex-col rounded-none border border-dashed border-border/60', {
+  variants: {
+    size: {
+      default: 'gap-4 p-4',
+      sm: 'gap-3 p-3',
+      xs: 'gap-2 p-2',
+    },
+  },
+  defaultVariants: {
+    size: 'default',
+  },
+});
+
+function Panel({
+  className,
+  size = 'default',
+  render,
+  ...props
+}: useRender.ComponentProps<'div'> & VariantProps<typeof panelVariants>) {
+  return useRender({
+    defaultTagName: 'div',
+    props: mergeProps<'div'>({ className: cn(panelVariants({ size, className })) }, props),
+    render,
+    state: { slot: 'panel', size },
+  });
 }
 
 function ItemSeparator({ className, ...props }: React.ComponentProps<typeof Separator>) {
@@ -24,12 +91,18 @@ function ItemSeparator({ className, ...props }: React.ComponentProps<typeof Sepa
 }
 
 const itemVariants = cva(
-  'group/item flex w-full flex-wrap items-center rounded-none border text-xs transition-colors duration-100 outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 [a]:transition-colors [a]:hover:bg-muted',
+  'group/item flex w-full flex-wrap items-center rounded-none text-xs transition-colors duration-100 outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 [a]:transition-colors [a]:hover:bg-muted',
   {
     variants: {
       variant: {
-        default: 'border-transparent',
-        outline: 'border-border',
+        // Sem utilitário de borda nenhum, de propósito: as linhas vêm do
+        // ItemGroup (`[&>*]:border-r` etc.). Um `border-0` aqui empataria em
+        // especificidade com esses seletores e a ordem no CSS decidiria quem
+        // ganha — sem nada no filho, o grupo manda sozinho.
+        default: '',
+        // Célula de grid avulsa, fora de um `ItemGroup variant="grid"`: mesmo
+        // desenho, só que auto-suficiente.
+        outline: '-mr-px -mb-px border-r border-b border-dashed border-border/60',
         muted: 'border-transparent bg-muted/50',
       },
       size: {
@@ -172,4 +245,5 @@ export {
   ItemMedia,
   ItemSeparator,
   ItemTitle,
+  Panel,
 };

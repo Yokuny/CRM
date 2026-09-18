@@ -6,6 +6,7 @@ import { DefaultFormLayout } from '@/components/default-form-layout.js';
 import { Button } from '@/components/ui/button.js';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form.js';
 import { Input } from '@/components/ui/input.js';
+import { Panel } from '@/components/ui/item.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 import {
   addColumnMutation,
@@ -93,7 +94,7 @@ function ColumnRow({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-2 rounded-md border p-3">
+      <Panel size="sm" className="grid gap-2" render={<form onSubmit={form.handleSubmit(onSubmit)} />}>
         <div className="flex items-end gap-2">
           <FormField
             control={form.control}
@@ -148,7 +149,7 @@ function ColumnRow({
             {t('remove')}
           </Button>
         </div>
-      </form>
+      </Panel>
     </Form>
   );
 }
@@ -199,7 +200,7 @@ export function ColumnManagerPanel({ onClose, boardId, columns }: ColumnManagerP
   };
 
   return (
-    <div className="grid gap-4 rounded-md border p-4">
+    <Panel className="grid gap-4">
       <PanelHeader title={t('kanban.column_manager.title')} onClose={onClose} />
       <DefaultFormLayout
         sections={[
@@ -248,6 +249,6 @@ export function ColumnManagerPanel({ onClose, boardId, columns }: ColumnManagerP
           },
         ]}
       />
-    </div>
+    </Panel>
   );
 }

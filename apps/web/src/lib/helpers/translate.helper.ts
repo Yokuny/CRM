@@ -353,6 +353,19 @@ const translations: Record<string, string> = {
   'kanban.column_manager.action': 'Colunas',
   'kanban.board.edit.error': 'Não foi possível salvar as alterações do quadro.',
   'kanban.card.move.error': 'Não foi possível mover o card. Tente novamente.',
+  // Menu do usuário (components/user-menu.tsx), no lugar do antigo
+  // CardDescription no cabeçalho de toda página `Card asPage`.
+  'user_menu.open': 'Menu do usuário',
+  'theme.label': 'Tema',
+  'theme.light': 'Claro',
+  'theme.dark': 'Escuro',
+  'theme.system': 'Sistema',
+  'text_size.label': 'Tamanho do texto',
+  'text_size.sm': 'Pequeno',
+  'text_size.md': 'Médio',
+  'text_size.lg': 'Grande',
+  'auth.signout': 'Sair',
+  'auth.signout.error': 'Não foi possível sair. Tente novamente.',
 };
 
 export const t = (key: string): string => translations[key] ?? key;

@@ -1,6 +1,7 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
 import { MobileDock } from '../components/mobile-dock.js';
+import { PageFrame } from '../components/page-frame.js';
 import { sessionQuery } from '../query/session.js';
 
 // Tech Decisions (design.md): beforeLoad + ensureQueryData(GET /auth/session),
@@ -23,7 +24,9 @@ export const Route = createFileRoute('/_private')({
   beforeLoad,
   component: () => (
     <>
-      <Outlet />
+      <PageFrame>
+        <Outlet />
+      </PageFrame>
       <MobileDock />
     </>
   ),

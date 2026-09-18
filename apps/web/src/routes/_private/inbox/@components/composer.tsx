@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button.js';
 import { Input } from '@/components/ui/input.js';
+import { Panel } from '@/components/ui/item.js';
 import { post } from '@/lib/api/client.api.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 import type { ConversationRecord } from '@/query/conversation.js';
@@ -47,7 +48,7 @@ export function Composer({ conversation }: ComposerProps) {
   if (!conversation.windowOpen) {
     const phone = customerQueryResult.data?.phone;
     return (
-      <div className="flex items-center justify-between gap-2 rounded-md border p-3">
+      <Panel size="sm" className="flex-row items-center justify-between">
         <p className="text-muted-foreground text-sm">{t('inbox.composer.window_closed')}</p>
         {/* `disabled` não é um atributo HTML válido em <a> — sem `phone`
             (customerQuery ainda carregando) o link simplesmente não tem
@@ -61,7 +62,7 @@ export function Composer({ conversation }: ComposerProps) {
             </a>
           }
         />
-      </div>
+      </Panel>
     );
   }
 

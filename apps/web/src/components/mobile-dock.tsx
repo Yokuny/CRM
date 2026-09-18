@@ -17,7 +17,7 @@ export function MobileDock() {
   return (
     <nav
       aria-label={t('nav.primary')}
-      className="fixed inset-x-0 bottom-0 z-50 flex h-16 items-stretch justify-around border-t bg-background md:hidden"
+      className="fixed inset-x-0 bottom-0 z-50 flex h-16 items-stretch justify-around border-t border-dashed border-border/60 bg-background md:hidden [&>*:not(:first-child)]:border-l [&>*:not(:first-child)]:border-dashed [&>*:not(:first-child)]:border-border/60"
     >
       <Link to="/" activeOptions={{ exact: true }} className={tileClassName}>
         <Home className="size-5" />

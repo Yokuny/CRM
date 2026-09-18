@@ -198,3 +198,26 @@
   --shadow-xl: 0 1px 3px 0px oklch(0 0 0 / 0.1), 0 8px 10px -1px oklch(0 0 0 / 0.1);
   --shadow-2xl: 0 1px 3px 0px oklch(0 0 0 / 0.25);
 }
+
+/* Tamanho do texto (menu do usuário, components/user-menu.tsx +
+   hooks/useTextSize.ts): sobrescreve só os tokens de fonte do Tailwind
+   (--text-xs/sm/base/lg — as utilities .text-xs/.text-sm/... leem
+   font-size:var(--text-xs) etc., conferido no CSS gerado). Fora de
+   `@layer`, então vence os tokens equivalentes que o Tailwind define dentro
+   de `@layer theme`, sem precisar de `!important`. `line-height` continua
+   como razão sem unidade (--text-*--line-height), então acompanha o
+   tamanho novo sozinho. `data-text-size="md"` nunca é escrito (é o
+   default, o hook remove o atributo) — só "sm"/"lg" aparecem aqui. */
+html[data-text-size="sm"] {
+  --text-xs: 0.6875rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.9375rem;
+  --text-lg: 1.0625rem;
+}
+
+html[data-text-size="lg"] {
+  --text-xs: 0.875rem;
+  --text-sm: 1rem;
+  --text-base: 1.125rem;
+  --text-lg: 1.25rem;
+}

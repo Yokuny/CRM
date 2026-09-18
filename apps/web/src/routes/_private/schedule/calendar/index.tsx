@@ -115,7 +115,7 @@ export function CalendarIndexPage() {
   return (
     <Card asPage>
       <CardHeader title={t('calendar.title')} />
-      <CardContent className="flex flex-col gap-4">
+      <CardContent>
         <div className="flex flex-wrap items-center gap-2">
           <ButtonGroup>
             <Button type="button" variant="basic" onClick={handlePrevious}>

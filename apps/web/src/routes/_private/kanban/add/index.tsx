@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button.js';
 import { Card, CardContent, CardHeader } from '@/components/ui/card.js';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form.js';
 import { Input } from '@/components/ui/input.js';
+import { Panel } from '@/components/ui/item.js';
 import { Label } from '@/components/ui/label.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 import { createBoardMutation } from '@/query/board.js';
@@ -91,7 +92,7 @@ export function KanbanAddPage() {
                   title: t('kanban.board.create.section.columns'),
                   description: t('kanban.board.create.section.columns_description'),
                   fields: [
-                    <div key="columns" className="grid gap-3 rounded-md border p-3">
+                    <Panel key="columns" className="grid gap-3">
                       <div className="flex items-center justify-between">
                         <Label>{t('kanban.board.columns.label')}</Label>
                         <Button type="button" variant="basic" onClick={() => append({ label: '' })}>
@@ -137,7 +138,7 @@ export function KanbanAddPage() {
                           <p className="font-medium text-destructive text-sm">{columnsMessage}</p>
                         ) : null;
                       })()}
-                    </div>,
+                    </Panel>,
                   ],
                 },
               ]}

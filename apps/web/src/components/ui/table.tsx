@@ -1,18 +1,31 @@
 'use client';
 
 import { cn } from 'cn';
+import { ChevronLeft as IconLeft, ChevronRight as IconRight } from 'lucide-react';
 import type * as React from 'react';
+
+import { Button } from '@/components/ui/button.js';
+import { t } from '@/lib/helpers/translate.helper.js';
 
 function Table({ className, ...props }: React.ComponentProps<'table'>) {
   return (
-    <div data-slot="table-container" className="relative w-full overflow-x-auto">
+    <div
+      data-slot="table-container"
+      className="relative w-full overflow-x-auto rounded-none border border-dashed border-border/60"
+    >
       <table data-slot="table" className={cn('w-full caption-bottom text-xs', className)} {...props} />
     </div>
   );
 }
 
 function TableHeader({ className, ...props }: React.ComponentProps<'thead'>) {
-  return <thead data-slot="table-header" className={cn('[&_tr]:border-b', className)} {...props} />;
+  return (
+    <thead
+      data-slot="table-header"
+      className={cn('[&_tr]:border-b [&_tr]:border-dashed [&_tr]:border-border/60', className)}
+      {...props}
+    />
+  );
 }
 
 function TableBody({ className, ...props }: React.ComponentProps<'tbody'>) {
@@ -23,7 +36,10 @@ function TableFooter({ className, ...props }: React.ComponentProps<'tfoot'>) {
   return (
     <tfoot
       data-slot="table-footer"
-      className={cn('border-t bg-muted/50 font-medium [&>tr]:last:border-b-0', className)}
+      className={cn(
+        'border-t border-dashed border-border/60 bg-muted/50 font-medium [&>tr]:last:border-b-0',
+        className,
+      )}
       {...props}
     />
   );
@@ -34,7 +50,7 @@ function TableRow({ className, ...props }: React.ComponentProps<'tr'>) {
     <tr
       data-slot="table-row"
       className={cn(
-        'border-b transition-colors hover:bg-muted/50 has-aria-expanded:bg-muted/50 data-[state=selected]:bg-muted',
+        'border-b border-dashed border-border/60 transition-colors hover:bg-muted/50 has-aria-expanded:bg-muted/50 data-[state=selected]:bg-muted',
         className,
       )}
       {...props}
@@ -71,4 +87,43 @@ function TableCaption({ className, ...props }: React.ComponentProps<'caption'>) 
   );
 }
 
-export { Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow };
+type TablePaginationProps = {
+  pageIndex: number;
+  pageSize: number;
+  pageCount: number;
+  onPaginationChange: (state: { pageIndex: number; pageSize: number }) => void;
+};
+
+// Contador + setas: era copiado verbatim nos seis `@components/*-table.tsx`
+// (customers, professionals, spaces, products, conversation, orders). Toda
+// tabela é server-driven (apps/web/CLAUDE.md), então só emite a nova página —
+// nunca fatia dados em memória.
+function TablePagination({ pageIndex, pageSize, pageCount, onPaginationChange }: TablePaginationProps) {
+  return (
+    <div data-slot="table-pagination" className="flex items-center justify-end gap-2">
+      <span className="text-muted-foreground text-sm">
+        {t('table.page')} {pageIndex + 1} / {Math.max(pageCount, 1)}
+      </span>
+      <Button
+        type="button"
+        variant="basic"
+        onClick={() => onPaginationChange({ pageIndex: pageIndex - 1, pageSize })}
+        disabled={pageIndex <= 0}
+        aria-label={t('previous.page')}
+      >
+        <IconLeft className="size-4" />
+      </Button>
+      <Button
+        type="button"
+        variant="basic"
+        onClick={() => onPaginationChange({ pageIndex: pageIndex + 1, pageSize })}
+        disabled={pageIndex + 1 >= pageCount}
+        aria-label={t('next.page')}
+      >
+        <IconRight className="size-4" />
+      </Button>
+    </div>
+  );
+}
+
+export { Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TablePagination, TableRow };

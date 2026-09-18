@@ -2,11 +2,13 @@ import { DEFAULT_CUSTOMER_TEMPLATE_KEY } from '@crm/field-engine';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, Link } from '@tanstack/react-router';
+import { List } from 'lucide-react';
 import type { MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from 'react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { DefaultLoading } from '@/components/default-loading.js';
-import { Card, CardContent, CardHeader } from '@/components/ui/card.js';
+import { Button } from '@/components/ui/button.js';
+import { Card, CardAction, CardContent, CardHeader } from '@/components/ui/card.js';
 import { KanbanBoard, KanbanCard, KanbanCards, KanbanHeader, KanbanProvider } from '@/components/ui/kanban.js';
 import { patch } from '@/lib/api/client.api.js';
 import { t } from '@/lib/helpers/translate.helper.js';
@@ -113,8 +115,19 @@ export function CustomersKanbanPage() {
 
   return (
     <Card asPage>
-      <CardHeader />
-
+      <CardHeader>
+        <CardAction>
+          <Button
+            variant="basic"
+            aria-label={t('customers.view.table')}
+            render={
+              <Link to="/customers/list">
+                <List />
+              </Link>
+            }
+          />
+        </CardAction>
+      </CardHeader>
       <CardContent>
         {isLoading ? (
           <DefaultLoading />

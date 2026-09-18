@@ -8,6 +8,7 @@ import { DefaultFormLayout } from '@/components/default-form-layout.js';
 import { Button } from '@/components/ui/button.js';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form.js';
 import { Input } from '@/components/ui/input.js';
+import { Panel } from '@/components/ui/item.js';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 import { type CardRecord, createCardMutation, deleteCardMutation, updateCardMutation } from '@/query/board.js';
@@ -45,13 +46,13 @@ export type CardPanelProps = {
 // sem introduzir endpoint/hook novo não pedido pela task.
 export function CardPanel({ onClose, boardId, columnId, card }: CardPanelProps) {
   return (
-    <div className="grid gap-4 rounded-md border p-4">
+    <Panel className="grid gap-4">
       {card ? (
         <CardEditForm boardId={boardId} card={card} onClose={onClose} />
       ) : (
         <CardCreateForm boardId={boardId} columnId={columnId as string} onClose={onClose} />
       )}
-    </div>
+    </Panel>
   );
 }
 

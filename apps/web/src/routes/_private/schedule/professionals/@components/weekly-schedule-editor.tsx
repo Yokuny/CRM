@@ -3,6 +3,7 @@ import { useFieldArray, useWatch } from 'react-hook-form';
 import { Button } from '@/components/ui/button.js';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form.js';
 import { Input } from '@/components/ui/input.js';
+import { Panel } from '@/components/ui/item.js';
 import { Label } from '@/components/ui/label.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 
@@ -54,11 +55,7 @@ export function WeeklyScheduleEditor({ control, name }: WeeklyScheduleEditorProp
       {WEEKDAYS.map((weekday) => {
         const windowsForDay = windows.filter((item) => item.weekday === weekday);
         return (
-          <div
-            key={weekday}
-            data-testid={`weekly-schedule-weekday-${weekday}`}
-            className="grid gap-3 rounded-md border p-3"
-          >
+          <Panel key={weekday} data-testid={`weekly-schedule-weekday-${weekday}`} className="grid gap-3">
             <div className="flex items-center justify-between">
               <Label>{t(`weekday.${weekday}`)}</Label>
               <Button type="button" variant="basic" onClick={() => handleAdd(weekday)}>
@@ -103,7 +100,7 @@ export function WeeklyScheduleEditor({ control, name }: WeeklyScheduleEditorProp
                 </Button>
               </div>
             ))}
-          </div>
+          </Panel>
         );
       })}
     </div>

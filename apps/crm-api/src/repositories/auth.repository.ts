@@ -50,3 +50,8 @@ export const createSession = async (data: {
       expiresAt: data.expiresAt,
     });
   });
+
+export const deleteSessionByTokenHash = async (tokenHash: string): Promise<void> =>
+  withDbTiming('auth.deleteSession', async () => {
+    await Session.deleteOne({ tokenHash });
+  });

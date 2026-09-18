@@ -5,8 +5,13 @@ import { tanstackRouter } from '@tanstack/router-plugin/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
-// Porta 5173 casa com CORS_ORIGIN do crm-api (.env.example) — o back-end só
-// aceita credentials:'include' dessa origem. envDir aponta pro .env único da
+// Porta 15173 casa com CORS_ORIGIN do crm-api (.env.example) — o back-end só
+// aceita credentials:'include' dessa origem. `strictPort` é obrigatório por
+// causa disso: sem ele o Vite cai em silêncio pra 15174 quando a 15173 está
+// ocupada (um dev server órfão basta), e aí TODA chamada morre com
+// "CORS Allow Origin Not Matching Origin" — erro que aponta pro back-end e
+// esconde a causa real. Com strictPort o dev server falha na cara, dizendo
+// qual porta está ocupada. envDir aponta pro .env único da
 // raiz do monorepo (mesmo arquivo que crm-api/ai-gateway leem via
 // process.env) — sem isso, client.api.ts não encontra VITE_API_URL e toda
 // chamada falha com "Não foi possível conectar ao servidor".
@@ -39,6 +44,6 @@ export default defineConfig({
     tailwindcss(),
   ],
   envDir: '../../',
-  server: { port: 5173 },
+  server: { port: 15173, strictPort: true },
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
 });

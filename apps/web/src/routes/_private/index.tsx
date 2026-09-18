@@ -2,7 +2,7 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { Calendar, Inbox, Kanban, Package, ShoppingCart, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '../../components/ui/card.js';
-import { Item, ItemContent, ItemDescription, ItemMedia, ItemTitle } from '../../components/ui/item.js';
+import { Item, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from '../../components/ui/item.js';
 import { t } from '../../lib/helpers/translate.helper.js';
 import { sessionQuery } from '../../query/session.js';
 
@@ -21,13 +21,12 @@ export function PrivateIndexPage() {
   return (
     <Card asPage>
       <CardHeader title={data.tenant?.name ?? ''} />
-      <CardContent className="flex flex-col gap-4">
+      <CardContent>
         <ItemDescription>
           {t('private.role')}: {data.role.join(', ')}
         </ItemDescription>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <ItemGroup variant="grid">
           <Item
-            variant="outline"
             render={
               <Link to="/customers">
                 <ItemMedia variant="icon">
@@ -40,7 +39,6 @@ export function PrivateIndexPage() {
             }
           />
           <Item
-            variant="outline"
             render={
               <Link to="/products">
                 <ItemMedia variant="icon">
@@ -53,7 +51,6 @@ export function PrivateIndexPage() {
             }
           />
           <Item
-            variant="outline"
             render={
               <Link to="/orders">
                 <ItemMedia variant="icon">
@@ -66,7 +63,6 @@ export function PrivateIndexPage() {
             }
           />
           <Item
-            variant="outline"
             render={
               <Link to="/inbox">
                 <ItemMedia variant="icon">
@@ -79,7 +75,6 @@ export function PrivateIndexPage() {
             }
           />
           <Item
-            variant="outline"
             render={
               <Link to="/kanban">
                 <ItemMedia variant="icon">
@@ -92,7 +87,6 @@ export function PrivateIndexPage() {
             }
           />
           <Item
-            variant="outline"
             render={
               <Link to="/schedule">
                 <ItemMedia variant="icon">
@@ -104,7 +98,7 @@ export function PrivateIndexPage() {
               </Link>
             }
           />
-        </div>
+        </ItemGroup>
       </CardContent>
     </Card>
   );

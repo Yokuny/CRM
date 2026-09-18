@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router';
 import { Card, CardContent, CardHeader } from '@/components/ui/card.js';
+import { Panel } from '@/components/ui/item.js';
 import { useInboxSocket } from '@/hooks/useInboxSocket.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 import { conversationsQuery } from '@/query/conversation.js';
@@ -50,7 +51,7 @@ export function InboxPage() {
       <CardHeader title={t('inbox.title')} />
       <CardContent className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
         <ConversationQueue onSelect={handleSelect} />
-        <div className="flex flex-col gap-4 rounded-lg border p-4" data-testid="inbox-thread-panel">
+        <Panel data-testid="inbox-thread-panel">
           {!search.id ? (
             <p className="text-muted-foreground text-sm">{t('inbox.thread.select_hint')}</p>
           ) : !conversation ? (
@@ -70,7 +71,7 @@ export function InboxPage() {
               <Composer conversation={conversation} />
             </>
           )}
-        </div>
+        </Panel>
       </CardContent>
     </Card>
   );

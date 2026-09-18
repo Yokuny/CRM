@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button.js';
-import { ItemDescription, ItemTitle } from '@/components/ui/item.js';
+import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item.js';
 import { weekdayIndexOfDisplayDate } from '@/lib/helpers/displayTime.helper.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 import type { AppointmentConfirmationRecord } from '@/query/appointmentConfirmation.js';
@@ -21,10 +21,12 @@ const ACTIONABLE_STATUSES: AppointmentConfirmationRecord['status'][] = ['pending
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-4 border-b pb-2">
-      <ItemDescription>{label}</ItemDescription>
-      <ItemDescription className="text-right font-medium text-foreground">{value}</ItemDescription>
-    </div>
+    <Item>
+      <ItemContent className="flex-row items-center justify-between gap-4">
+        <ItemDescription>{label}</ItemDescription>
+        <ItemDescription className="text-right font-medium text-foreground">{value}</ItemDescription>
+      </ItemContent>
+    </Item>
   );
 }
 
@@ -54,14 +56,14 @@ export function ConfirmationDetails({
         <ItemDescription>{t('appointment_confirmation.description')}</ItemDescription>
       </div>
 
-      <div className="grid gap-2">
+      <ItemGroup>
         <Row label={t('appointment.field.date')} value={`${weekday}, ${record.date}`} />
         <Row label={t('appointment.field.time')} value={record.time} />
         {record.professionalName && <Row label={t('appointment.field.professional')} value={record.professionalName} />}
         {record.spaceName && <Row label={t('appointment.field.space')} value={record.spaceName} />}
         {record.customerName && <Row label={t('appointment.field.customer')} value={record.customerName} />}
         <Row label={t('status')} value={t(`appointment.status.${record.status}`)} />
-      </div>
+      </ItemGroup>
 
       {isActionable && (
         <div className="flex gap-3">

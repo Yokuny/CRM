@@ -2,6 +2,7 @@ import { DEFAULT_CUSTOMER_TEMPLATE_KEY } from '@crm/field-engine';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, useNavigate, useSearch } from '@tanstack/react-router';
 import type { OnChangeFn, PaginationState, SortingState } from '@tanstack/react-table';
+import { Kanban } from 'lucide-react';
 import { useMemo } from 'react';
 import { DefaultEmptyData } from '@/components/default-empty-data.js';
 import { DefaultLoading } from '@/components/default-loading.js';
@@ -92,7 +93,16 @@ export function CustomersListPage() {
   return (
     <Card asPage>
       <CardHeader title={t('customers.list.title')}>
-        <CardAction>
+        <CardAction className="flex gap-2">
+          <Button
+            variant="basic"
+            aria-label={t('customers.view.kanban')}
+            render={
+              <Link to="/customers/kanban">
+                <Kanban />
+              </Link>
+            }
+          />
           <Button variant="basic" render={<Link to="/customers/add">{t('add')}</Link>} />
         </CardAction>
       </CardHeader>
@@ -100,7 +110,7 @@ export function CustomersListPage() {
         {query.isLoading ? (
           <DefaultLoading />
         ) : (
-          <div className="flex flex-col gap-4">
+          <>
             <Input
               placeholder={t('search.placeholder')}
               value={searchInput}
@@ -119,7 +129,7 @@ export function CustomersListPage() {
                 onRowClick={handleRowClick}
               />
             )}
-          </div>
+          </>
         )}
       </CardContent>
     </Card>

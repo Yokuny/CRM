@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { BadgeIndicator } from '@/components/ui/badge.js';
+import { Panel } from '@/components/ui/item.js';
 import { formatDisplayDate, formatDisplayTime } from '@/lib/helpers/displayTime.helper.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 import type { AppointmentStatus } from '@/query/appointment.js';
@@ -28,7 +29,7 @@ export function AppointmentCard({ customerId }: AppointmentCardProps) {
   if (!appointment) return null;
 
   return (
-    <div className="flex items-center gap-2 rounded-md border p-2">
+    <Panel size="xs" className="flex-row items-center">
       <BadgeIndicator variant={badgeVariantForStatus(appointment.status)}>
         {t(`appointment.status.${appointment.status}`)}
       </BadgeIndicator>
@@ -38,6 +39,6 @@ export function AppointmentCard({ customerId }: AppointmentCardProps) {
       {appointment.professionalName && (
         <span className="text-muted-foreground text-sm">{appointment.professionalName}</span>
       )}
-    </div>
+    </Panel>
   );
 }

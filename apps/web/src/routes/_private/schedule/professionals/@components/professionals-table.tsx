@@ -1,9 +1,15 @@
 import type { ColumnDef, OnChangeFn, PaginationState } from '@tanstack/react-table';
 import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
-import { ChevronLeft as IconLeft, ChevronRight as IconRight } from 'lucide-react';
 import { BadgeIndicator } from '@/components/ui/badge.js';
-import { Button } from '@/components/ui/button.js';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table.js';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TablePagination,
+  TableRow,
+} from '@/components/ui/table.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 import type { ProfessionalRecord } from '@/query/professional.js';
 
@@ -55,55 +61,35 @@ export function ProfessionalsTable({
   });
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="rounded-lg border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id} onClick={() => onRowClick(row.original)} className="cursor-pointer">
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
-                ))}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-
-      <div className="flex items-center justify-end gap-2">
-        <span className="text-muted-foreground text-sm">
-          {t('table.page')} {pageIndex + 1} / {Math.max(pageCount, 1)}
-        </span>
-        <Button
-          type="button"
-          variant="basic"
-          onClick={() => onPaginationChange({ pageIndex: pageIndex - 1, pageSize })}
-          disabled={pageIndex <= 0}
-          aria-label={t('previous.page')}
-        >
-          <IconLeft className="size-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="basic"
-          onClick={() => onPaginationChange({ pageIndex: pageIndex + 1, pageSize })}
-          disabled={pageIndex + 1 >= pageCount}
-          aria-label={t('next.page')}
-        >
-          <IconRight className="size-4" />
-        </Button>
-      </div>
-    </div>
+    <>
+      <Table>
+        <TableHeader>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <TableRow key={headerGroup.id}>
+              {headerGroup.headers.map((header) => (
+                <TableHead key={header.id}>
+                  {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                </TableHead>
+              ))}
+            </TableRow>
+          ))}
+        </TableHeader>
+        <TableBody>
+          {table.getRowModel().rows.map((row) => (
+            <TableRow key={row.id} onClick={() => onRowClick(row.original)} className="cursor-pointer">
+              {row.getVisibleCells().map((cell) => (
+                <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      <TablePagination
+        pageIndex={pageIndex}
+        pageSize={pageSize}
+        pageCount={pageCount}
+        onPaginationChange={onPaginationChange}
+      />
+    </>
   );
 }

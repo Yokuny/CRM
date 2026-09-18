@@ -11,6 +11,9 @@ export const createAuthRouter = (deps: AuthRouterDeps): Router => {
   const router = Router();
 
   router.post('/signin', signinRateLimit, validBody(signinSchema), authController.signin);
+  // Sem validToken: sair precisa funcionar (e limpar o cookie) mesmo com a
+  // sessão já inválida.
+  router.post('/signout', authController.signout);
   router.get('/session', deps.validToken, authController.session);
 
   return router;

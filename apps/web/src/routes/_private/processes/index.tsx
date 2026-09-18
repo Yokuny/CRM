@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { Users } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card.js';
-import { Item, ItemContent, ItemDescription, ItemMedia, ItemTitle } from '@/components/ui/item.js';
+import { Item, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from '@/components/ui/item.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 
 // Hub de navegação (mesmo padrão de settings/index.tsx de referência e de
@@ -13,21 +13,22 @@ export function ProcessesIndexPage() {
   return (
     <Card asPage>
       <CardHeader title={t('customer.processes.title')} />
-      <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <Item
-          variant="outline"
-          render={
-            <Link to="/customers">
-              <ItemMedia variant="icon">
-                <Users className="size-4" />
-              </ItemMedia>
-              <ItemContent>
-                <ItemTitle>{t('customers')}</ItemTitle>
-                <ItemDescription>{t('process.index.hint')}</ItemDescription>
-              </ItemContent>
-            </Link>
-          }
-        />
+      <CardContent>
+        <ItemGroup variant="grid">
+          <Item
+            render={
+              <Link to="/customers">
+                <ItemMedia variant="icon">
+                  <Users className="size-4" />
+                </ItemMedia>
+                <ItemContent>
+                  <ItemTitle>{t('customers')}</ItemTitle>
+                  <ItemDescription>{t('process.index.hint')}</ItemDescription>
+                </ItemContent>
+              </Link>
+            }
+          />
+        </ItemGroup>
       </CardContent>
     </Card>
   );

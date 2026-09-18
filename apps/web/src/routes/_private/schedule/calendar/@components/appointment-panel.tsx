@@ -14,7 +14,7 @@ import { DefaultFormLayout } from '@/components/default-form-layout.js';
 import { Button } from '@/components/ui/button.js';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form.js';
 import { Input } from '@/components/ui/input.js';
-import { ItemDescription } from '@/components/ui/item.js';
+import { ItemDescription, Panel } from '@/components/ui/item.js';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select.js';
 import { formatDisplayDate, formatDisplayTime, isPastInstant } from '@/lib/helpers/displayTime.helper.js';
 import { t } from '@/lib/helpers/translate.helper.js';
@@ -56,13 +56,13 @@ export type AppointmentPanelProps = {
 // o conteúdo abaixo dele, exatamente o efeito pedido.
 export function AppointmentPanel({ onClose, appointment }: AppointmentPanelProps) {
   return (
-    <div className="grid gap-4 rounded-md border p-4">
+    <Panel className="grid gap-4">
       {appointment ? (
         <AppointmentDetail appointment={appointment} onClose={onClose} />
       ) : (
         <AppointmentCreateForm onClose={onClose} />
       )}
-    </div>
+    </Panel>
   );
 }
 
@@ -371,7 +371,7 @@ function AppointmentDetail({ appointment, onClose }: AppointmentDetailProps) {
           }
         />
       )}
-      <div className="grid gap-1" data-testid="appointment-detail-info">
+      <Panel className="grid gap-1" data-testid="appointment-detail-info">
         <ItemDescription>
           {formatDisplayDate(appointment.start)} · {formatDisplayTime(appointment.start)}–
           {formatDisplayTime(appointment.end)}
@@ -379,14 +379,10 @@ function AppointmentDetail({ appointment, onClose }: AppointmentDetailProps) {
         {appointment.professionalName && <ItemDescription>{appointment.professionalName}</ItemDescription>}
         {appointment.spaceName && <ItemDescription>{appointment.spaceName}</ItemDescription>}
         <ItemDescription>{t(`appointment.status.${appointment.status}`)}</ItemDescription>
-      </div>
+      </Panel>
 
       <Form {...rescheduleForm}>
-        <form
-          noValidate
-          onSubmit={rescheduleForm.handleSubmit(onReschedule)}
-          className="grid gap-3 rounded-md border p-3"
-        >
+        <form noValidate onSubmit={rescheduleForm.handleSubmit(onReschedule)} className="grid gap-3">
           <DefaultFormLayout
             sections={[
               {
@@ -467,7 +463,7 @@ function AppointmentDetail({ appointment, onClose }: AppointmentDetailProps) {
         </form>
       </Form>
 
-      <div className="grid gap-2 rounded-md border p-3">
+      <Panel size="sm" className="grid gap-2">
         <ItemDescription>{t('appointment.action.cancel')}</ItemDescription>
         <Input
           placeholder={t('appointment.cancel.reason_placeholder')}
@@ -479,7 +475,7 @@ function AppointmentDetail({ appointment, onClose }: AppointmentDetailProps) {
             {t('appointment.action.cancel')}
           </Button>
         </div>
-      </div>
+      </Panel>
 
       <div className="flex flex-wrap gap-2">
         <Button

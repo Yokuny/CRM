@@ -1,6 +1,7 @@
 import { FileText, Image as ImageIcon } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button.js';
+import { Panel } from '@/components/ui/item.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 import { type MessageRecord, mediaUrl } from '@/query/message.js';
 
@@ -40,7 +41,7 @@ export function MediaCard({ conversationId, message }: MediaCardProps) {
   };
 
   return (
-    <div className="flex flex-col gap-2 rounded-md border p-2">
+    <Panel size="xs">
       <div className="flex items-center gap-2">
         <Icon className="size-4 shrink-0" />
         <span className="text-muted-foreground text-xs">{message.media?.mime ?? message.type}</span>
@@ -62,6 +63,6 @@ export function MediaCard({ conversationId, message }: MediaCardProps) {
             {t('inbox.media.download')}
           </a>
         ))}
-    </div>
+    </Panel>
   );
 }

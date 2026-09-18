@@ -7,6 +7,7 @@ import { DefaultFormLayout } from '@/components/default-form-layout.js';
 import { Button } from '@/components/ui/button.js';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form.js';
 import { Input } from '@/components/ui/input.js';
+import { Panel } from '@/components/ui/item.js';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select.js';
 import { formatDisplayDate, formatDisplayTime } from '@/lib/helpers/displayTime.helper.js';
 import { t } from '@/lib/helpers/translate.helper.js';
@@ -28,9 +29,9 @@ export type BlockPanelProps = {
 // do usuário). Ver o comentário equivalente em appointment-panel.tsx.
 export function BlockPanel({ onClose, block }: BlockPanelProps) {
   return (
-    <div className="grid gap-4 rounded-md border p-4">
+    <Panel className="grid gap-4">
       {block ? <BlockRemoveForm block={block} onClose={onClose} /> : <BlockCreateForm onClose={onClose} />}
-    </div>
+    </Panel>
   );
 }
 

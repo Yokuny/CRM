@@ -31,6 +31,15 @@ export const signin = async (data: SignIn, deviceInfo: string): Promise<string> 
   return sessionToken;
 };
 
+// Sem validação do token de propósito: logout tem que funcionar mesmo com a
+// sessão já expirada/revogada (o controller limpa o cookie de qualquer
+// jeito). Quem tem o token já podia usá-lo — apagar a sessão dele não dá a
+// ninguém acesso a mais nada.
+export const signout = async (token: string | undefined): Promise<void> => {
+  if (!token) return;
+  await authRepository.deleteSessionByTokenHash(hashToken(token));
+};
+
 export type SessionView = {
   tenant?: { id: string; name: string; status: string };
   user: { id: string; name: string; email: string };

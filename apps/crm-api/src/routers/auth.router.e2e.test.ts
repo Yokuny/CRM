@@ -159,4 +159,39 @@ describe('auth routes', () => {
       expect(res.status).toBe(401);
     });
   });
+
+  describe('POST /auth/signout', () => {
+    it('deletes the Session and clears the refreshToken cookie, revoking a later GET /auth/session', async () => {
+      await seedUser();
+      const app = buildTestApp();
+
+      const signinRes = await request(app)
+        .post('/auth/signin')
+        .set('User-Agent', DEVICE)
+        .send({ email: 'login@empresa.com', password: 'senhaCorreta123' });
+      const cookie = (signinRes.headers['set-cookie'] as unknown as string[])[0].split(';')[0];
+      const rawToken = cookie.split('=')[1];
+
+      const res = await request(app).post('/auth/signout').set('Cookie', cookie).set('User-Agent', DEVICE);
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ success: true, data: undefined, message: expect.stringMatching(/sucesso/i) });
+
+      const setCookie = res.headers['set-cookie'] as unknown as string[];
+      expect(setCookie?.[0]).toMatch(/refreshToken=;/);
+
+      expect(await Session.findOne({ tokenHash: hashToken(rawToken) }).lean()).toBeNull();
+
+      const sessionRes = await request(app).get('/auth/session').set('Cookie', cookie).set('User-Agent', DEVICE);
+      expect(sessionRes.status).toBe(401);
+    });
+
+    it('responds 200 even without a session cookie (idempotent, always clears the cookie)', async () => {
+      const res = await request(buildTestApp()).post('/auth/signout').set('User-Agent', DEVICE);
+
+      expect(res.status).toBe(200);
+      const setCookie = res.headers['set-cookie'] as unknown as string[];
+      expect(setCookie?.[0]).toMatch(/refreshToken=;/);
+    });
+  });
 });

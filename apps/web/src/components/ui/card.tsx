@@ -1,6 +1,6 @@
 import { Link, useLocation, useMatches, useRouter } from '@tanstack/react-router';
 import { cn } from 'cn';
-import { ArrowLeft as ArrowLeftIcon, HelpCircle as HelpIcon, Home as HomeIcon } from 'lucide-react';
+import { ArrowLeft as ArrowLeftIcon, Home as HomeIcon } from 'lucide-react';
 import * as React from 'react';
 import {
   Breadcrumb,
@@ -10,7 +10,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb.js';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip.js';
+import { UserMenu } from '@/components/user-menu.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 import { Button } from './button.js';
 
@@ -75,15 +75,15 @@ function Card({
       data-slot="card"
       data-size={size}
       className={cn(
-        'group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-none bg-card py-(--card-spacing) pb-24 text-xs/relaxed text-card-foreground ring-1 ring-foreground/10 [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-none *:[img:last-child]:rounded-none',
+        'group/card flex min-h-dvh flex-col gap-(--card-spacing) overflow-hidden rounded-none bg-card py-(--card-spacing) pb-24 text-xs/relaxed text-card-foreground [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-none *:[img:last-child]:rounded-none',
         className,
       )}
       {...props}
     >
       {asPage && (
-        <div className="-mb-2 flex items-center justify-between px-(--card-spacing)">
+        <div className="flex items-center justify-between border-border/60 border-b border-dashed px-(--card-spacing) pb-(--card-spacing)">
           <PageBreadcrumb />
-          <CardDescription />
+          <UserMenu />
         </div>
       )}
       {children}
@@ -115,7 +115,7 @@ function CardHeader({ className, title, children, ...props }: React.ComponentPro
     <div
       data-slot="card-header"
       className={cn(
-        'group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-none px-(--card-spacing) has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-(--card-spacing)',
+        'group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-none px-(--card-spacing) has-data-[slot=card-action]:grid-cols-[1fr_auto] [.border-b]:pb-(--card-spacing)',
         className,
       )}
       {...props}
@@ -141,31 +141,6 @@ function CardTitle({ className, ...props }: React.ComponentProps<'div'>) {
   );
 }
 
-function CardDescription({ className, ...props }: React.ComponentProps<'div'>) {
-  const matches = useMatches();
-  let description = '';
-  for (let i = matches.length - 1; i >= 0; i--) {
-    const match = matches[i];
-    if (match?.staticData && typeof match.staticData.description === 'string') {
-      description = match.staticData.description;
-      break;
-    }
-  }
-  if (!description) return null;
-  return (
-    <div data-slot="card-description" className={cn('flex items-center text-muted-foreground', className)} {...props}>
-      <Tooltip>
-        <TooltipTrigger type="button" className="cursor-help transition-colors hover:text-foreground">
-          <HelpIcon className="size-5" />
-        </TooltipTrigger>
-        <TooltipContent side="left" className="max-w-xs font-normal">
-          <p>{description}</p>
-        </TooltipContent>
-      </Tooltip>
-    </div>
-  );
-}
-
 function CardAction({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
@@ -176,18 +151,27 @@ function CardAction({ className, ...props }: React.ComponentProps<'div'>) {
   );
 }
 
+// Empilhar com `gap-4` é o que praticamente toda página quer — era isso que
+// cada rota repetia como `className="flex flex-col gap-4"`. Vira o default;
+// quem precisa de outro layout (ex.: inbox, grid de 2 colunas) sobrescreve
+// via className, que aí é layout local e não identidade visual.
 function CardContent({ className, ...props }: React.ComponentProps<'div'>) {
-  return <div data-slot="card-content" className={cn('px-(--card-spacing)', className)} {...props} />;
+  return (
+    <div data-slot="card-content" className={cn('flex flex-col gap-4 px-(--card-spacing)', className)} {...props} />
+  );
 }
 
 function CardFooter({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="card-footer"
-      className={cn('flex items-center rounded-none border-t p-(--card-spacing)', className)}
+      className={cn(
+        'flex items-center rounded-none border-border/60 border-t border-dashed p-(--card-spacing)',
+        className,
+      )}
       {...props}
     />
   );
 }
 
-export { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle };
+export { Card, CardAction, CardContent, CardFooter, CardHeader, CardTitle };

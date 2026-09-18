@@ -7,6 +7,7 @@ import { DefaultFormLayout } from '@/components/default-form-layout.js';
 import { Button } from '@/components/ui/button.js';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form.js';
 import { Input } from '@/components/ui/input.js';
+import { Panel } from '@/components/ui/item.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 import { type BoardRecord, updateBoardMutation } from '@/query/board.js';
 
@@ -43,7 +44,7 @@ export function BoardEditPanel({ board, onClose }: BoardEditPanelProps) {
   };
 
   return (
-    <div className="grid gap-4 rounded-md border p-4">
+    <Panel className="grid gap-4">
       <Form {...form}>
         <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
           <DefaultFormLayout
@@ -103,6 +104,6 @@ export function BoardEditPanel({ board, onClose }: BoardEditPanelProps) {
           </div>
         </form>
       </Form>
-    </div>
+    </Panel>
   );
 }

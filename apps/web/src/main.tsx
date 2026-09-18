@@ -3,6 +3,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtoolsPanel } from '@tanstack/react-query-devtools';
 import { RouterProvider } from '@tanstack/react-router';
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
+import { ThemeProvider } from 'next-themes';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Toaster } from './components/ui/sonner.js';
@@ -26,16 +27,24 @@ if (!rootElement) throw new Error('Elemento #root não encontrado.');
 // produção sozinho, sem guard de import.meta.env.DEV aqui.
 createRoot(rootElement).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-      <Toaster />
-      <TanStackDevtools
-        config={{ hideUntilHover: true }}
-        plugins={[
-          { name: 'TanStack Query', render: <ReactQueryDevtoolsPanel /> },
-          { name: 'TanStack Router', render: <TanStackRouterDevtoolsPanel router={router} /> },
-        ]}
-      />
-    </QueryClientProvider>
+    {/* attribute="class" casa com @custom-variant dark (&:is(.dark *)) de
+        index.css. defaultTheme="system" + enableSystem: quem nunca escolheu
+        segue o SO. disableTransitionOnChange evita transições CSS piscando
+        em cada elemento enquanto a classe muda. O flash no primeiro paint já
+        é evitado pelo script inline em index.html (roda antes deste bundle
+        montar). */}
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+        <Toaster />
+        <TanStackDevtools
+          config={{ hideUntilHover: true }}
+          plugins={[
+            { name: 'TanStack Query', render: <ReactQueryDevtoolsPanel /> },
+            { name: 'TanStack Router', render: <TanStackRouterDevtoolsPanel router={router} /> },
+          ]}
+        />
+      </QueryClientProvider>
+    </ThemeProvider>
   </StrictMode>,
 );
