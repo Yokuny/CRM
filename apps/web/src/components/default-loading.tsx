@@ -8,7 +8,7 @@ import { Spinner } from './ui/spinner.js';
 export function DefaultLoading() {
   return (
     <Skeleton className="flex h-48 w-full items-center justify-center">
-      <Spinner />
+      <Spinner className="text-primary" />
     </Skeleton>
   );
 }

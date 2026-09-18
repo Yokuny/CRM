@@ -24,6 +24,7 @@ export function CustomersIndexPage() {
         <ItemGroup variant="grid">
           {CUSTOMERS_SECTIONS.map(({ to, titleKey, icon: Icon }) => (
             <Item
+              className="md:p-6 py-4"
               key={to}
               render={
                 <Link to={to}>

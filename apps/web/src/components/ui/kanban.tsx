@@ -43,8 +43,10 @@ export const KanbanBoard = ({ id, children, className }: KanbanBoardProps) => {
   return (
     <div
       className={cn(
-        'flex min-h-40 w-[300px] shrink-0 flex-col gap-2 rounded-none border border-dashed border-border/60 bg-card p-3 text-xs transition-colors',
-        isOver && 'border-solid border-primary bg-muted/50',
+        // Coluna = trilho (muted, abaixo do canvas); cartão = --card por cima.
+        // Alvo de drop acende em menta com borda sólida na cor de ação.
+        'flex min-h-40 w-75 shrink-0 flex-col gap-2 rounded-none border border-dashed border-border/60 bg-muted/50 p-2 text-xs transition-colors',
+        isOver && 'border-solid border-primary bg-accent',
         className,
       )}
       ref={setNodeRef}
@@ -75,7 +77,7 @@ export const KanbanCard = <T extends KanbanItemProps = KanbanItemProps>({
       <div style={style} {...listeners} {...attributes} ref={setNodeRef}>
         <div
           className={cn(
-            'cursor-grab overflow-hidden rounded-none border border-dashed border-border/60 bg-background transition-colors hover:bg-muted',
+            'cursor-grab overflow-hidden rounded-none border border-dashed border-border/60 bg-card transition-colors hover:border-solid hover:border-ring',
             isDragging && 'pointer-events-none cursor-grabbing opacity-30',
             className,
           )}
@@ -87,7 +89,7 @@ export const KanbanCard = <T extends KanbanItemProps = KanbanItemProps>({
         <t.In>
           <div
             className={cn(
-              'cursor-grabbing overflow-hidden rounded-none border border-primary bg-background',
+              'cursor-grabbing overflow-hidden rounded-none border border-primary bg-card shadow-lg',
               className,
             )}
           >

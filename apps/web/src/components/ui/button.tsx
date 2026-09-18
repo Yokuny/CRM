@@ -7,21 +7,35 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground hover:bg-primary/80',
+        // Hover escurece (bg-primary-hover, index.css) em vez de `primary/80`: a
+        // transparência deixava o canvas cinza vazar e o verde ficava lavado.
+        default: 'bg-primary text-primary-foreground hover:bg-primary-hover',
         outline:
-          'border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50',
-        secondary:
-          'bg-secondary text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground',
+          'border-input bg-card hover:border-ring hover:bg-accent hover:text-accent-foreground aria-expanded:border-ring aria-expanded:bg-accent aria-expanded:text-accent-foreground',
+        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary-hover aria-expanded:bg-secondary-hover',
         ghost:
-          'hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50',
+          'hover:bg-accent hover:text-accent-foreground aria-expanded:bg-accent aria-expanded:text-accent-foreground',
         destructive:
           'bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40',
         link: 'text-primary underline-offset-4 hover:underline',
+        // Apesar do nome, é o estado SELECIONADO de um filtro segmentado
+        // (`variant={ativo ? 'primary' : 'basic'}` em pedidos e inbox). Tem de
+        // ser o segmento mais forte do grupo: menta + tinta verde + barra
+        // inferior na cor de ação. A barra é box-shadow inset, não borda,
+        // porque o ButtonGroup remove a border-l dos segmentos do meio.
         primary:
-          'border border-border bg-secondary hover:bg-background dark:border-border dark:bg-muted/25 dark:hover:bg-muted/50',
-        basic: 'border border-border bg-background text-secondary-foreground hover:bg-secondary',
+          'border border-input bg-secondary font-medium text-secondary-foreground shadow-[inset_0_-2px_0_var(--color-primary)] hover:bg-secondary-hover',
+        // O botão secundário do app (voltar, paginação, menu do usuário,
+        // "Adicionar"/"Editar" de cabeçalho — 39 usos). Branco (--card) sobre o
+        // canvas com texto neutro, pra não competir com o `default`; o verde
+        // só aparece na interação (menta + tinta verde + borda sálvia).
+        basic:
+          'border border-input bg-card text-foreground hover:border-ring hover:bg-accent hover:text-accent-foreground aria-expanded:border-ring aria-expanded:bg-accent aria-expanded:text-accent-foreground',
         info: 'border-none bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800',
-        success: 'border-none bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800',
+        // "Aprovar" (pedidos/inbox). Era o emerald-600 do Tailwind (#009966),
+        // um verde quase igual ao da marca — lado a lado com um botão
+        // `default` parecia erro. Agora é a própria cor de ação da marca.
+        success: 'border-none bg-primary text-primary-foreground hover:bg-primary-hover',
         blank: 'p-0!',
         financial:
           'justify-between border-input border-b-2 bg-transparent font-normal shadow-none ring-0 hover:bg-transparent dark:border-input dark:bg-transparent dark:hover:bg-transparent',

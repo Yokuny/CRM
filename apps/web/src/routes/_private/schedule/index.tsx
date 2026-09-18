@@ -27,6 +27,7 @@ export function ScheduleIndexPage() {
         <ItemGroup variant="grid">
           {SCHEDULE_SECTIONS.map(({ to, titleKey, icon: Icon }) => (
             <Item
+              className="md:p-6 py-4"
               key={to}
               render={
                 <Link to={to}>

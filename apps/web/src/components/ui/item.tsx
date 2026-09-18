@@ -17,7 +17,9 @@ import { Separator } from '@/components/ui/separator.js';
 // Item não traz utilitário de borda nenhum (nem `border`, nem `border-0`) —
 // sem utilitário no filho não há empate de especificidade com estes seletores
 // `[&>*]`, e a ordem das regras no CSS deixa de importar.
-const itemGroupVariants = cva('group/item-group w-full border border-dashed border-border/60', {
+// `bg-card`: o grupo é conteúdo, então sobe do canvas (#f3f1f3) pro branco —
+// sem isso o contêiner some na tela e só as linhas tracejadas o denunciam.
+const itemGroupVariants = cva('group/item-group w-full border border-dashed border-border/60 bg-card', {
   variants: {
     variant: {
       // Pilha vertical: divisória tracejada entre itens adjacentes.
@@ -59,7 +61,7 @@ function ItemGroup({
 // alinhamento) continua sendo className do caller — isso é layout local, não
 // identidade visual. `render` (mesma API do Item) cobre os casos em que o
 // painel é outro elemento, tipicamente um <form>.
-const panelVariants = cva('flex w-full flex-col rounded-none border border-dashed border-border/60', {
+const panelVariants = cva('flex w-full flex-col rounded-none border border-dashed border-border/60 bg-card', {
   variants: {
     size: {
       default: 'gap-4 p-4',
@@ -91,7 +93,7 @@ function ItemSeparator({ className, ...props }: React.ComponentProps<typeof Sepa
 }
 
 const itemVariants = cva(
-  'group/item flex w-full flex-wrap items-center rounded-none text-xs transition-colors duration-100 outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 [a]:transition-colors [a]:hover:bg-muted',
+  'group/item flex w-full flex-wrap items-center rounded-none text-xs transition-colors duration-100 outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 [a]:transition-colors [a]:hover:bg-accent [a]:hover:text-accent-foreground',
   {
     variants: {
       variant: {
@@ -103,7 +105,10 @@ const itemVariants = cva(
         // Célula de grid avulsa, fora de um `ItemGroup variant="grid"`: mesmo
         // desenho, só que auto-suficiente.
         outline: '-mr-px -mb-px border-r border-b border-dashed border-border/60',
-        muted: 'border-transparent bg-muted/50',
+        // Só o DefaultEmptyData usa: um "vão" esperando conteúdo, então fica
+        // num cinza abaixo do canvas em vez de subir pro --card como o
+        // conteúdo de verdade.
+        muted: 'bg-muted/60',
       },
       size: {
         default: 'gap-2.5 px-3 py-2.5',
@@ -148,7 +153,11 @@ const itemMediaVariants = cva(
     variants: {
       variant: {
         default: 'bg-transparent',
-        icon: "[&_svg:not([class*='size-'])]:size-4",
+        // Ladrilho menta com o ícone na cor de ação: é o que dá cor aos hubs
+        // de navegação. Quando o Item é um link, o hover do link inverte o
+        // ladrilho pra verde sólido — a única resposta de hover que muda de
+        // valor, não só de matiz, então lê como "clicável" mesmo em tela ruim.
+        icon: "size-8 bg-secondary text-primary transition-colors [a:hover_&]:bg-primary [a:hover_&]:text-primary-foreground [&_svg:not([class*='size-'])]:size-4",
         image:
           'size-10 overflow-hidden rounded-none group-data-[size=sm]/item:size-8 group-data-[size=xs]/item:size-6 [&_img]:size-full [&_img]:object-cover',
       },

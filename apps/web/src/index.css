@@ -1,10 +1,37 @@
 /* Identidade visual: "voz de sistema vs. voz humana" — IBM Plex Mono cobre
    nav/botões/títulos/dados (estrutura, controle), Karla cobre prosa
-   (mensagens do WhatsApp, descrições, empty states). Um único acento de
-   marca (verde-esmeralda, --primary, tema "lyra" via shadcnstudio.com) usado
-   sempre sólido em botão/link/foco — nunca como tint claro — pra nunca
-   colidir com o vocabulário extenso de cores de status dos badges
-   (@/components/ui/badge.tsx, não tocado aqui).
+   (mensagens do WhatsApp, descrições, empty states).
+
+   Cor (tema claro), cinco valores de marca com papéis fixos:
+     #f3f1f3  --background   tela (canvas). Tudo que é conteúdo (tabela,
+                             painel, grupo de itens, input, menu) fica em
+                             --card (quase branco) por cima, então a
+                             profundidade vem da própria paleta, não de sombra.
+     #e5f1ee  --secondary/   menta: superfície de interação e de informação —
+              --accent       hover/foco de item e menu, botão secundário,
+                             cabeçalho de tabela, "hoje" do calendário,
+                             ícone de hub. Sempre com --*-foreground (tinta
+                             verde-escura) por cima, nunca texto cinza.
+     #007a55  --primary      ação (CTA sólido), link, estado ativo/marcado.
+                             Passa AA sobre as três superfícies claras
+                             (4.6–5.3:1).
+     #66af99  --ring         foco e traço de destaque. NÃO é cor de texto no
+                             claro (2.3:1 sobre o canvas); no escuro vira o
+                             --primary (7.7:1 sobre #0c090c).
+     #0c090c  --foreground   texto principal.
+     #a89ea9  --subtle-foreground  placeholder, separador, ícone decorativo.
+                             2.3:1 sobre o canvas: reprova como texto de
+                             leitura, por isso o --muted-foreground (texto
+                             secundário de verdade) é o mesmo matiz mais
+                             escuro (5.4:1). No escuro inverte: #a89ea9 é o
+                             próprio --muted-foreground.
+   Contraste de todo par texto/fundo daqui foi medido (WCAG 2.x) antes de
+   entrar — mexeu num token de texto, remeça.
+
+   Menta × badges: os status "success/active/confirmed" do Badge também são
+   verdes-claros, mas em pílula pequena com ring inset; a menta aqui é sempre
+   superfície grande ou estado de hover, então os dois não se confundem.
+
    tw-animate-css é necessário: tooltip, dialog, select e dropdown-menu usam
    as classes animate-in, fade-in, zoom-in e slide-in-from que essa lib
    define. */
@@ -17,54 +44,106 @@
 :root {
   --radius: 0.625rem;
 
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0.008 326);
+  --background: oklch(0.96 0.003 325.6); /* #f3f1f3 */
+  --foreground: oklch(0.145 0.008 326); /* #0c090c */
 
-  --card: oklch(1 0 0);
+  --card: oklch(0.995 0.001 325);
   --card-foreground: oklch(0.145 0.008 326);
 
-  --popover: oklch(1 0 0);
+  --popover: oklch(0.995 0.001 325);
   --popover-foreground: oklch(0.145 0.008 326);
 
-  --primary: oklch(0.508 0.118 165.612);
-  --primary-foreground: oklch(0.979 0.021 166.113);
+  --primary: oklch(0.513 0.11 163.6); /* #007a55 */
+  --primary-foreground: oklch(0.985 0.012 175);
 
-  --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
+  --secondary: oklch(0.948 0.013 179.5); /* #e5f1ee */
+  --secondary-foreground: oklch(0.36 0.07 168);
 
-  --muted: oklch(0.96 0.003 325.6);
-  --muted-foreground: oklch(0.542 0.034 322.5);
+  --muted: oklch(0.925 0.006 325);
+  --muted-foreground: oklch(0.5 0.03 323);
+  --subtle-foreground: oklch(0.711 0.019 323); /* #a89ea9 */
 
-  --accent: oklch(0.96 0.003 325.6);
-  --accent-foreground: oklch(0.212 0.019 322.12);
+  --accent: oklch(0.948 0.013 179.5); /* #e5f1ee */
+  --accent-foreground: oklch(0.36 0.07 168);
 
   --destructive: oklch(0.577 0.245 27.325);
 
-  --border: oklch(0.922 0.005 325.62);
-  --input: oklch(0.922 0.005 325.62);
-  --ring: oklch(0.711 0.019 323.02);
-
-  /* Usado só por calendar.tsx (dia selecionado/hoje). */
-  --primary-blue: oklch(0.32 0.14 272);
+  /* A borda precisa aparecer sobre o canvas E sobre o --card: o valor antigo
+     (0.922) usado a 60% nas linhas tracejadas sumia no branco. */
+  --border: oklch(0.85 0.014 323);
+  --input: oklch(0.78 0.018 323);
+  --ring: oklch(0.7 0.081 172.5); /* #66af99 */
 
   --font-fallback-sans:
     "Karla Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji";
   --font-fallback-mono:
     "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  --chart-1: oklch(0.845 0.143 164.978);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.596 0.145 163.225);
-  --chart-4: oklch(0.508 0.118 165.612);
-  --chart-5: oklch(0.432 0.095 166.913);
-  --sidebar: oklch(0.985 0 0);
+
+  /* Rampa de marca pra gráfico: sálvia → esmeralda → tinta, com o malva como
+     série neutra (comparação/"outros"). */
+  --chart-1: oklch(0.7 0.081 172.5);
+  --chart-2: oklch(0.513 0.11 163.6);
+  --chart-3: oklch(0.36 0.07 168);
+  --chart-4: oklch(0.711 0.019 323);
+  --chart-5: oklch(0.85 0.05 175);
+
+  --sidebar: oklch(0.995 0.001 325);
   --sidebar-foreground: oklch(0.145 0.008 326);
-  --sidebar-primary: oklch(0.596 0.145 163.225);
-  --sidebar-primary-foreground: oklch(0.979 0.021 166.113);
-  --sidebar-accent: oklch(0.96 0.003 325.6);
-  --sidebar-accent-foreground: oklch(0.212 0.019 322.12);
-  --sidebar-border: oklch(0.922 0.005 325.62);
-  --sidebar-ring: oklch(0.711 0.019 323.02);
+  --sidebar-primary: oklch(0.513 0.11 163.6);
+  --sidebar-primary-foreground: oklch(0.985 0.012 175);
+  --sidebar-accent: oklch(0.948 0.013 179.5);
+  --sidebar-accent-foreground: oklch(0.36 0.07 168);
+  --sidebar-border: oklch(0.85 0.014 323);
+  --sidebar-ring: oklch(0.7 0.081 172.5);
+
+  --shadow-2xs: 0 1px 3px 0px oklch(0 0 0 / 0.05);
+  --shadow-xs: 0 1px 3px 0px oklch(0 0 0 / 0.05);
+  --shadow-sm: 0 1px 3px 0px oklch(0 0 0 / 0.1), 0 1px 2px -1px oklch(0 0 0 / 0.1);
+  --shadow: 0 1px 3px 0px oklch(0 0 0 / 0.1), 0 1px 2px -1px oklch(0 0 0 / 0.1);
+  --shadow-md: 0 1px 3px 0px oklch(0 0 0 / 0.1), 0 2px 4px -1px oklch(0 0 0 / 0.1);
+  --shadow-lg: 0 1px 3px 0px oklch(0 0 0 / 0.1), 0 4px 6px -1px oklch(0 0 0 / 0.1);
+  --shadow-xl: 0 1px 3px 0px oklch(0 0 0 / 0.1), 0 8px 10px -1px oklch(0 0 0 / 0.1);
+  --shadow-2xl: 0 1px 3px 0px oklch(0 0 0 / 0.25);
+}
+
+/* Escuro: mesma paleta invertida, não uma segunda paleta. O canvas é a
+   própria tinta #0c090c, o --card sobe um degrau; a sálvia #66af99 assume o
+   --primary (o #007a55 dá só 3.7:1 sobre fundo escuro) com texto #0c090c por
+   cima; a menta vira uma superfície verde-escura com texto #e5f1ee. */
+.dark {
+  --background: oklch(0.145 0.008 326); /* #0c090c */
+  --foreground: oklch(0.96 0.003 325.6); /* #f3f1f3 */
+  --card: oklch(0.185 0.011 326);
+  --card-foreground: oklch(0.96 0.003 325.6);
+  --popover: oklch(0.2 0.012 326);
+  --popover-foreground: oklch(0.96 0.003 325.6);
+  --primary: oklch(0.7 0.081 172.5); /* #66af99 */
+  --primary-foreground: oklch(0.145 0.008 326);
+  --secondary: oklch(0.29 0.04 172);
+  --secondary-foreground: oklch(0.948 0.013 179.5); /* #e5f1ee */
+  --muted: oklch(0.245 0.013 325);
+  --muted-foreground: oklch(0.711 0.019 323); /* #a89ea9 */
+  --subtle-foreground: oklch(0.56 0.02 323);
+  --accent: oklch(0.29 0.04 172);
+  --accent-foreground: oklch(0.948 0.013 179.5);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(0.34 0.014 325);
+  --input: oklch(0.4 0.016 325);
+  --ring: oklch(0.7 0.081 172.5);
+  --chart-1: oklch(0.7 0.081 172.5);
+  --chart-2: oklch(0.513 0.11 163.6);
+  --chart-3: oklch(0.85 0.05 175);
+  --chart-4: oklch(0.711 0.019 323);
+  --chart-5: oklch(0.36 0.07 168);
+  --sidebar: oklch(0.185 0.011 326);
+  --sidebar-foreground: oklch(0.96 0.003 325.6);
+  --sidebar-primary: oklch(0.7 0.081 172.5);
+  --sidebar-primary-foreground: oklch(0.145 0.008 326);
+  --sidebar-accent: oklch(0.29 0.04 172);
+  --sidebar-accent-foreground: oklch(0.948 0.013 179.5);
+  --sidebar-border: oklch(0.34 0.014 325);
+  --sidebar-ring: oklch(0.7 0.081 172.5);
 
   --shadow-2xs: 0 1px 3px 0px oklch(0 0 0 / 0.05);
   --shadow-xs: 0 1px 3px 0px oklch(0 0 0 / 0.05);
@@ -89,37 +168,46 @@
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
+  --color-subtle-foreground: var(--subtle-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-primary-blue: var(--primary-blue);
+
+  /* Hover derivado, não um token solto por tema: mistura com a própria cor de
+     texto, então escurece no claro e clareia no escuro sozinho. `oklab` (e
+     não `oklch`) porque misturar em coordenadas polares com o --foreground
+     (croma ~0) arrastaria o matiz do verde pro azul no meio do caminho. Ex.:
+     primary-hover no claro = #006244, 7.1:1 com o texto do botão. */
+  --color-primary-hover: color-mix(in oklab, var(--primary), var(--foreground) 16%);
+  --color-secondary-hover: color-mix(in oklab, var(--secondary), var(--primary) 8%);
 
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) * 1.4);
-
-  --font-sans: var(--font-fallback-sans);
-  --font-mono: var(--font-fallback-mono);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  --font-sans: var(--font-fallback-sans);
+  --font-mono: var(--font-fallback-mono);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
 
   --shadow-2xs: var(--shadow-2xs);
   --shadow-xs: var(--shadow-xs);
@@ -146,6 +234,10 @@
     @apply font-mono;
   }
 
+  ::selection {
+    @apply bg-secondary-hover text-secondary-foreground;
+  }
+
   /* Algarismos alinhados em coluna (preço, hora, telefone) — sem isso a IBM
      Plex Mono usa numerais proporcionais e uma tabela de valores fica
      desalinhada. */
@@ -154,49 +246,6 @@
       "tnum" 1,
       "zero" 1;
   }
-}
-
-.dark {
-  --background: oklch(0.145 0.008 326);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.212 0.019 322.12);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.212 0.019 322.12);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.432 0.095 166.913);
-  --primary-foreground: oklch(0.979 0.021 166.113);
-  --secondary: oklch(0.274 0.006 286.033);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.263 0.024 320.12);
-  --muted-foreground: oklch(0.711 0.019 323.02);
-  --accent: oklch(0.263 0.024 320.12);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.542 0.034 322.5);
-  --chart-1: oklch(0.845 0.143 164.978);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.596 0.145 163.225);
-  --chart-4: oklch(0.508 0.118 165.612);
-  --chart-5: oklch(0.432 0.095 166.913);
-  --sidebar: oklch(0.212 0.019 322.12);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.696 0.17 162.48);
-  --sidebar-primary-foreground: oklch(0.262 0.051 172.552);
-  --sidebar-accent: oklch(0.263 0.024 320.12);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.542 0.034 322.5);
-
-  --shadow-2xs: 0 1px 3px 0px oklch(0 0 0 / 0.05);
-  --shadow-xs: 0 1px 3px 0px oklch(0 0 0 / 0.05);
-  --shadow-sm: 0 1px 3px 0px oklch(0 0 0 / 0.1), 0 1px 2px -1px oklch(0 0 0 / 0.1);
-  --shadow: 0 1px 3px 0px oklch(0 0 0 / 0.1), 0 1px 2px -1px oklch(0 0 0 / 0.1);
-  --shadow-md: 0 1px 3px 0px oklch(0 0 0 / 0.1), 0 2px 4px -1px oklch(0 0 0 / 0.1);
-  --shadow-lg: 0 1px 3px 0px oklch(0 0 0 / 0.1), 0 4px 6px -1px oklch(0 0 0 / 0.1);
-  --shadow-xl: 0 1px 3px 0px oklch(0 0 0 / 0.1), 0 8px 10px -1px oklch(0 0 0 / 0.1);
-  --shadow-2xl: 0 1px 3px 0px oklch(0 0 0 / 0.25);
 }
 
 /* Tamanho do texto (menu do usuário, components/user-menu.tsx +

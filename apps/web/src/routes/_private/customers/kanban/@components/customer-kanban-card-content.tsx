@@ -28,8 +28,8 @@ const getInitials = (name: string): string => {
 // de <ul>/<ol> seria HTML semanticamente inválido aqui.
 export function CustomerKanbanCardContent({ name, phone, createdAt, actions }: CustomerKanbanCardContentProps) {
   return (
-    <div className="flex flex-col gap-2 px-3 py-2.5">
-      <div className="flex items-start gap-3">
+    <div className="flex flex-col gap-2 px-2 pb-1 pt-2.5">
+      <div className="flex items-start gap-2">
         <ItemMedia variant="icon" className="rounded-full bg-accent font-medium text-xs">
           {getInitials(name)}
         </ItemMedia>

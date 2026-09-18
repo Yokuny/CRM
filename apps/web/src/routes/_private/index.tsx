@@ -27,6 +27,7 @@ export function PrivateIndexPage() {
         </ItemDescription>
         <ItemGroup variant="grid">
           <Item
+            className="md:p-6 py-4"
             render={
               <Link to="/customers">
                 <ItemMedia variant="icon">
@@ -39,6 +40,7 @@ export function PrivateIndexPage() {
             }
           />
           <Item
+            className="md:p-6 py-4"
             render={
               <Link to="/products">
                 <ItemMedia variant="icon">
@@ -51,6 +53,7 @@ export function PrivateIndexPage() {
             }
           />
           <Item
+            className="md:p-6 py-4"
             render={
               <Link to="/orders">
                 <ItemMedia variant="icon">
@@ -63,6 +66,7 @@ export function PrivateIndexPage() {
             }
           />
           <Item
+            className="md:p-6 py-4"
             render={
               <Link to="/inbox">
                 <ItemMedia variant="icon">
@@ -75,6 +79,7 @@ export function PrivateIndexPage() {
             }
           />
           <Item
+            className="md:p-6 py-4"
             render={
               <Link to="/kanban">
                 <ItemMedia variant="icon">
@@ -87,6 +92,7 @@ export function PrivateIndexPage() {
             }
           />
           <Item
+            className="md:p-6 py-4"
             render={
               <Link to="/schedule">
                 <ItemMedia variant="icon">

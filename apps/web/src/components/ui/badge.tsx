@@ -13,12 +13,13 @@ const badgeVariants = cva(
     variants: {
       variant: {
         // ── Semânticas / UI ──────────────────────────────────────────────
-        default:
-          'bg-blue-50 text-blue-900 ring-1 ring-blue-500/30 ring-inset dark:bg-blue-400/10 dark:text-blue-400 dark:ring-blue-400/30',
-        secondary:
-          'bg-gray-50 text-gray-900 ring-1 ring-gray-500/30 ring-inset dark:bg-gray-400/10 dark:text-gray-400 dark:ring-gray-400/20',
-        outline: 'bg-transparent text-foreground ring-1 ring-border ring-inset',
-        muted: 'bg-transparent text-foreground ring-1 ring-border ring-inset',
+        // As quatro variantes sem significado de status seguem os tokens da
+        // marca (index.css); da lista de status em diante as cores são
+        // vocabulário operacional fixo e não acompanham o tema.
+        default: 'bg-secondary text-secondary-foreground ring-1 ring-primary/25 ring-inset',
+        secondary: 'bg-muted text-foreground ring-1 ring-border ring-inset',
+        outline: 'bg-card text-foreground ring-1 ring-border ring-inset',
+        muted: 'bg-transparent text-muted-foreground ring-1 ring-border ring-inset',
         success:
           'bg-emerald-50 text-emerald-900 ring-1 ring-emerald-600/30 ring-inset dark:bg-emerald-400/10 dark:text-emerald-400 dark:ring-emerald-400/20',
         active:
