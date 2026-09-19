@@ -4,6 +4,7 @@ import {
   Conversation,
   type ConversationDocument,
   type ConversationMode,
+  Customer,
   Message,
   type MessageDocument,
   tenantScoped,
@@ -84,6 +85,9 @@ export const release = async (id: string, tenantId: string): Promise<Conversatio
 export type ConversationListItem = {
   id: string;
   customer: string;
+  // Nome do Customer, best-effort (ausente se o Customer não existir mais) —
+  // resolvido em lote em listConversations, mesmo padrão de listOrders.
+  customerName?: string;
   mode: ConversationMode;
   assignee?: string;
   // INBOX-10/AC5 (Fix 1, validation.md): mesma nota de ConversationRecord
@@ -138,7 +142,21 @@ export const listConversations = async (
       Conversation.countDocuments(filter),
     ]);
 
-    return { items: docs.map(toListItem), total };
+    // Segunda consulta em lote, nunca populate() — mesmo motivo de
+    // order.repository.ts#listOrders: populate() trocaria o `Customer` por
+    // `null` se o cliente sumisse, perdendo o id.
+    const customerIds = [...new Set(docs.map((doc) => doc.Customer.toString()))];
+    const customers = customerIds.length
+      ? await Customer.find(tenantScoped({ Tenant: tenantId, _id: { $in: customerIds } }))
+          .select('name')
+          .lean()
+      : [];
+    const nameById = new Map(customers.map((customer) => [customer._id.toString(), customer.name]));
+
+    return {
+      items: docs.map((doc) => ({ ...toListItem(doc), customerName: nameById.get(doc.Customer.toString()) })),
+      total,
+    };
   });
 
 // Erros tipados (não CustomError/HTTP-aware) — o service (T38) é quem

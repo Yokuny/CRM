@@ -203,8 +203,7 @@ describe('AppointmentPanel — detail/action mode (T40, spec.md SCH-31/32/34/37)
     expect(screen.getByRole('heading', { name: 'João da Silva' })).toBeInTheDocument();
     const info = within(screen.getByTestId('appointment-detail-info'));
     expect(info.getByText('Dra. Ana')).toBeInTheDocument();
-    expect(info.getByText(/2099-01-01/)).toBeInTheDocument();
-    expect(info.getByText(/10:00–11:00/)).toBeInTheDocument();
+    expect(info.getByText('1 jan 2099 · 10:00–11:00')).toBeInTheDocument();
     expect(info.getByText('Pendente')).toBeInTheDocument();
   });
 

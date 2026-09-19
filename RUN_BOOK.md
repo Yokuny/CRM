@@ -108,6 +108,21 @@ Não existe usuário/tenant algum numa base nova — é preciso criar via API.
    Abra `http://localhost:15173/invite?token=...` no navegador com o token do
    log, defina nome/senha e você cai logado como admin do tenant.
 
+## Dados de demonstração
+
+Para ver todas as telas preenchidas sem cadastrar nada à mão, o seed de demo
+cria o tenant **Studio Aurora Estética** com clientes, processos, catálogo,
+conversas, pedidos, quadros de kanban e ~2,5 meses de agenda (datas relativas a
+hoje):
+
+```bash
+docker compose exec crm-api /app/node_modules/.bin/tsx scripts/seed-demo.ts
+```
+
+Logins (senha `aurora12345`, ou `SEED_PASSWORD`): `admin@aurora.example.com`,
+`gestor@aurora.example.com`, `operador@aurora.example.com`. Pode rodar de novo
+quando quiser: ele apaga só os dados desse tenant e recria.
+
 ## Comandos úteis
 
 ```bash
@@ -121,7 +136,8 @@ docker compose down -v          # idem, e apaga o volume do Mongo (reset total)
 
 - Sem botão de logout no `web` ainda — para testar um novo login, limpe os
   cookies e acesse `/auth` direto.
-- Templates de processo e profissionais **não são seedados** por tenant novo
-  — crie o primeiro em `/processes/add` → "Adicionar" e em
+- Tipos de processo e profissionais **não são seedados** por tenant novo
+  — crie o primeiro em `/custom_fields` → "Novo tipo de processo" (só admin;
+  também é onde se editam os campos extras do cadastro de cliente) e em
   `/schedule/professionals` → "Adicionar" antes de usar essas telas.
 - `/auth/signin` tem rate limit de 5 tentativas/15min por e-mail+IP.

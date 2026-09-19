@@ -5,7 +5,7 @@ const getMock = vi.fn();
 const postMock = vi.fn();
 vi.mock('../lib/api/client.api.js', () => ({ get: getMock, post: postMock }));
 
-const { ordersQuery, approveOrderMutation, rejectOrderMutation, orderKeys } = await import('./order.js');
+const { ordersQuery, orderQuery, approveOrderMutation, rejectOrderMutation, orderKeys } = await import('./order.js');
 
 const fakeQueryClient = (): QueryClient & { invalidateQueries: ReturnType<typeof vi.fn> } =>
   ({ invalidateQueries: vi.fn() }) as unknown as QueryClient & { invalidateQueries: ReturnType<typeof vi.fn> };
@@ -93,14 +93,17 @@ describe('approveOrderMutation (T22, spec.md P1 "Operador aprova ou rejeita"/AC4
     ).rejects.toThrow('Order já está em estado terminal');
   });
 
-  it('invalidates every cached ordersQuery on success — both the Pedidos screen and the Inbox card share the orderKeys.lists() prefix', () => {
+  it('invalidates every cached order query on success — lists (Pedidos screen, Inbox card) and the details page', () => {
     const queryClient = fakeQueryClient();
 
     approveOrderMutation(queryClient).onSuccess?.({ ...ORDER_RECORD, status: 'confirmed' }, { id: 'o1' }, undefined, {
       client: queryClient,
     } as never);
 
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: orderKeys.lists() });
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: orderKeys.all });
+    // `all` é prefixo de lists() e de detail(id).
+    expect(orderKeys.lists().slice(0, 1)).toEqual(orderKeys.all);
+    expect(orderKeys.detail('o1').slice(0, 1)).toEqual(orderKeys.all);
   });
 });
 
@@ -133,13 +136,35 @@ describe('rejectOrderMutation (T22, spec.md P1 "Operador aprova ou rejeita"/AC6)
     ).rejects.toThrow('Order já está em estado terminal');
   });
 
-  it('invalidates every cached ordersQuery on success — same prefix as approveOrderMutation', () => {
+  it('invalidates every cached order query on success — same prefix as approveOrderMutation', () => {
     const queryClient = fakeQueryClient();
 
     rejectOrderMutation(queryClient).onSuccess?.({ ...ORDER_RECORD, status: 'rejected' }, { id: 'o1' }, undefined, {
       client: queryClient,
     } as never);
 
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: orderKeys.lists() });
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: orderKeys.all });
+    // `all` é prefixo de lists() e de detail(id).
+    expect(orderKeys.lists().slice(0, 1)).toEqual(orderKeys.all);
+    expect(orderKeys.detail('o1').slice(0, 1)).toEqual(orderKeys.all);
+  });
+});
+
+describe('orderQuery (detalhe)', () => {
+  it('loads GET /orders/:id under orderKeys.detail(id)', async () => {
+    getMock.mockResolvedValueOnce({ success: true, data: ORDER_RECORD });
+
+    const options = orderQuery('o1');
+    const data = await options.queryFn?.({} as never);
+
+    expect(options.queryKey).toEqual(orderKeys.detail('o1'));
+    expect(getMock).toHaveBeenCalledWith('/orders/o1');
+    expect(data).toEqual(ORDER_RECORD);
+  });
+
+  it('throws the API message when the order does not exist (404)', async () => {
+    getMock.mockResolvedValueOnce({ success: false, message: 'Não encontrado.' });
+
+    await expect(orderQuery('nope').queryFn?.({} as never)).rejects.toThrow('Não encontrado.');
   });
 });

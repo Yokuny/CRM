@@ -6,7 +6,8 @@
   "exports": "./src/index.ts",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "seed:platform-admin": "tsx scripts/seed-platform-admin.ts"
+    "seed:platform-admin": "tsx scripts/seed-platform-admin.ts",
+    "seed:demo": "tsx scripts/seed-demo.ts"
   },
   "dependencies": {
     "@crm/ai-kit": "workspace:*",

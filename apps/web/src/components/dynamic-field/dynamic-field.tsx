@@ -14,6 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select.js';
 import { Switch } from '@/components/ui/switch.js';
 import { formatDate } from '@/lib/helpers/formatDate.helper.js';
+import { formatCurrency } from '@/lib/helpers/money.helper.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 import { cn } from '@/lib/utils.js';
 import { DynamicFieldArray } from './dynamic-field.array.js';
@@ -109,12 +110,7 @@ function NumberLeaf({ node, name, control }: LeafProps<'number'>) {
 function CurrencyLeaf({ node, name, control }: LeafProps<'currency'>) {
   const { field } = useController({ name, control });
   const cents = typeof field.value === 'number' ? field.value : 0;
-  const formatted = new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: node.code,
-    minimumFractionDigits: node.precision,
-    maximumFractionDigits: node.precision,
-  }).format(cents / 10 ** node.precision);
+  const formatted = formatCurrency(cents, node.code, node.precision);
 
   return (
     <div className="grid gap-2">
@@ -214,7 +210,7 @@ function DateLeaf({ node, name, control }: DateLeafProps) {
           render={
             <Button type="button" variant={selected ? undefined : 'primary'} className="justify-start font-normal">
               <IconCalendar className="mr-4 size-4" />
-              {selected ? <p className="font-mono">{formatDate(selected)}</p> : <span>{t('choose_day')}</span>}
+              {raw ? <p className="font-mono">{formatDate(raw)}</p> : <span>{t('choose_day')}</span>}
             </Button>
           }
         />
@@ -260,17 +256,18 @@ function SelectLeaf({ node, name, control }: LeafProps<'select'>) {
   // controlado/não-controlado dispara o warning do React e, mais grave,
   // deixa de refletir corretamente o valor após o primeiro onValueChange.
   const value = typeof field.value === 'string' ? field.value : '';
+  const items = node.options.map((option) => ({ value: option.key, label: option.label }));
   return (
     <div className="grid gap-2">
       <Label htmlFor={name}>{node.label}</Label>
-      <Select value={value} onValueChange={field.onChange}>
+      <Select items={items} value={value} onValueChange={field.onChange}>
         <SelectTrigger id={name}>
           <SelectValue placeholder={node.label} />
         </SelectTrigger>
         <SelectContent>
-          {node.options.map((option) => (
-            <SelectItem key={option.key} value={option.key}>
-              {option.label}
+          {items.map((item) => (
+            <SelectItem key={item.value} value={item.value}>
+              {item.label}
             </SelectItem>
           ))}
         </SelectContent>
@@ -282,23 +279,28 @@ function SelectLeaf({ node, name, control }: LeafProps<'select'>) {
 function StatusLeaf({ node, name, control }: LeafProps<'status'>) {
   const { field } = useController({ name, control });
   const value = typeof field.value === 'string' ? field.value : '';
+  // O rótulo leva a bolinha de cor, então o gatilho mostra a mesma coisa que a opção.
+  const items = node.options.map((option) => ({
+    value: option.key,
+    label: (
+      <>
+        <span aria-hidden className="inline-block size-2.5 rounded-full" style={{ backgroundColor: option.color }} />
+        {option.label}
+      </>
+    ),
+  }));
 
   return (
     <div className="grid gap-2">
       <Label htmlFor={name}>{node.label}</Label>
-      <Select value={value} onValueChange={field.onChange}>
+      <Select items={items} value={value} onValueChange={field.onChange}>
         <SelectTrigger id={name}>
           <SelectValue placeholder={node.label} />
         </SelectTrigger>
         <SelectContent>
-          {node.options.map((option) => (
-            <SelectItem key={option.key} value={option.key}>
-              <span
-                aria-hidden
-                className="inline-block size-2.5 rounded-full"
-                style={{ backgroundColor: option.color }}
-              />
-              {option.label}
+          {items.map((item) => (
+            <SelectItem key={item.value} value={item.value}>
+              {item.label}
             </SelectItem>
           ))}
         </SelectContent>

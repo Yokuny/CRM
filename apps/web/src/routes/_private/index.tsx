@@ -1,10 +1,10 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { Calendar, Inbox, Kanban, Package, ShoppingCart, Users } from 'lucide-react';
+import { Calendar, Inbox, Kanban, Package, ShoppingCart, SlidersHorizontal, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '../../components/ui/card.js';
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from '../../components/ui/item.js';
 import { t } from '../../lib/helpers/translate.helper.js';
-import { sessionQuery } from '../../query/session.js';
+import { isAdminSession, sessionQuery } from '../../query/session.js';
 
 // FND-10/AC2: shell mostra nome do Tenant e papel vindos de GET /auth/session.
 // useSuspenseQuery lê o cache já populado por ensureQueryData no beforeLoad
@@ -104,6 +104,22 @@ export function PrivateIndexPage() {
               </Link>
             }
           />
+          {/* Só admin: a rota em si é barrada por _admin.tsx pra os demais. */}
+          {isAdminSession(data) && (
+            <Item
+              className="md:p-6 py-4"
+              render={
+                <Link to="/custom_fields">
+                  <ItemMedia variant="icon">
+                    <SlidersHorizontal className="size-4" />
+                  </ItemMedia>
+                  <ItemContent>
+                    <ItemTitle>{t('custom_fields')}</ItemTitle>
+                  </ItemContent>
+                </Link>
+              }
+            />
+          )}
         </ItemGroup>
       </CardContent>
     </Card>

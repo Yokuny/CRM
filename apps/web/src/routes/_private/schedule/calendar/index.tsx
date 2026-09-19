@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import { z } from 'zod';
 import { DefaultEmptyData } from '@/components/default-empty-data.js';
@@ -101,6 +102,17 @@ export function CalendarIndexPage() {
   const query = useQuery(appointmentsQuery({ from, to, professional: search.professional, space: search.space }));
   const professionalsQueryResult = useQuery(professionalsQuery({ limit: 100 }));
   const spacesQueryResult = useQuery(spacesQuery({ limit: 100 }));
+  const professionalItems = [
+    { value: ALL_FILTER_VALUE, label: t('all') },
+    ...(professionalsQueryResult.data?.items ?? []).map((professional) => ({
+      value: professional.id,
+      label: professional.name,
+    })),
+  ];
+  const spaceItems = [
+    { value: ALL_FILTER_VALUE, label: t('all') },
+    ...(spacesQueryResult.data?.items ?? []).map((space) => ({ value: space.id, label: space.name })),
+  ];
 
   // AD-028: nunca recalcula o período no cliente e re-renderiza sem refazer
   // a consulta — todo novo `date`/`view` vem de `navigate()`,
@@ -149,52 +161,73 @@ export function CalendarIndexPage() {
               </Button>
             ))}
           </ButtonGroup>
+          {/* Só ícone: o texto vai pro aria-label (nome acessível) e pro
+              title (dica no hover). */}
           <ButtonGroup>
-            <Button type="button" variant="basic" onClick={handlePrevious}>
-              {t('previous')}
+            <Button
+              type="button"
+              variant="basic"
+              size="icon"
+              aria-label={t('previous')}
+              title={t('previous')}
+              onClick={handlePrevious}
+            >
+              <ChevronLeft />
             </Button>
-            <Button type="button" variant="basic" onClick={handleToday}>
+            <Button type="button" variant="basic" aria-label={t('today')} title={t('today')} onClick={handleToday}>
               {t('today')}
             </Button>
-            <Button type="button" variant="basic" onClick={handleNext}>
-              {t('next')}
+            <Button
+              type="button"
+              variant="basic"
+              size="icon"
+              aria-label={t('next')}
+              title={t('next')}
+              onClick={handleNext}
+            >
+              <ChevronRight />
             </Button>
           </ButtonGroup>
-          <Select value={search.professional ?? ALL_FILTER_VALUE} onValueChange={handleProfessionalChange}>
+          <Select
+            items={professionalItems}
+            value={search.professional ?? ALL_FILTER_VALUE}
+            onValueChange={handleProfessionalChange}
+          >
             <SelectTrigger>
               <SelectValue placeholder={t('professional')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL_FILTER_VALUE}>{t('all')}</SelectItem>
-              {(professionalsQueryResult.data?.items ?? []).map((professional) => (
-                <SelectItem key={professional.id} value={professional.id}>
-                  {professional.name}
+              {professionalItems.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <Select value={search.space ?? ALL_FILTER_VALUE} onValueChange={handleSpaceChange}>
+          <Select items={spaceItems} value={search.space ?? ALL_FILTER_VALUE} onValueChange={handleSpaceChange}>
             <SelectTrigger>
               <SelectValue placeholder={t('space')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL_FILTER_VALUE}>{t('all')}</SelectItem>
-              {(spacesQueryResult.data?.items ?? []).map((space) => (
-                <SelectItem key={space.id} value={space.id}>
-                  {space.name}
+              {spaceItems.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          {/* SCH-30/33: os dois gatilhos de criação — nunca abrem um Dialog
-              modal (feedback do usuário), só trocam `panel`, que é renderizado
-              INLINE logo abaixo, empurrando a grade pra baixo dele. */}
-          <Button type="button" onClick={() => setPanel({ kind: 'appointment-create' })}>
-            {t('new_appointment')}
-          </Button>
-          <Button type="button" variant="basic" onClick={() => setPanel({ kind: 'block-create' })}>
-            {t('new_block')}
-          </Button>
+          {/* SCH-30/33: os dois gatilhos de criação, empurrados pro fim da
+              linha (ml-auto) — nunca abrem um Dialog modal (feedback do
+              usuário), só trocam `panel`, que é renderizado INLINE logo
+              abaixo, empurrando a grade pra baixo dele. */}
+          <div className="ml-auto flex gap-2">
+            <Button type="button" onClick={() => setPanel({ kind: 'appointment-create' })}>
+              {t('new_appointment')}
+            </Button>
+            <Button type="button" variant="basic" onClick={() => setPanel({ kind: 'block-create' })}>
+              {t('new_block')}
+            </Button>
+          </div>
         </div>
         {panel?.kind === 'appointment-create' && <AppointmentPanel onClose={closePanel} />}
         {panel?.kind === 'appointment-detail' && (

@@ -124,6 +124,8 @@ describe('OrdersIndexPage (T23, spec.md P1 "Operador aprova ou rejeita um pedido
     await user.click(await screen.findByRole('button', { name: 'Aprovar' }));
 
     await waitFor(() => expect(postMock).toHaveBeenCalledWith('/orders/o1/approve'));
+    // O botão fica dentro da linha clicável — não pode abrir o detalhe.
+    expect(navigateMock).not.toHaveBeenCalled();
   });
 
   it('AC6: clicking Rejeitar calls POST /orders/:id/reject', async () => {
@@ -136,6 +138,18 @@ describe('OrdersIndexPage (T23, spec.md P1 "Operador aprova ou rejeita um pedido
     await user.click(await screen.findByRole('button', { name: 'Rejeitar' }));
 
     await waitFor(() => expect(postMock).toHaveBeenCalledWith('/orders/o1/reject', { reason: undefined }));
+    expect(navigateMock).not.toHaveBeenCalled();
+  });
+
+  it('clicking a row opens that order details (search: { id })', async () => {
+    searchMock.mockReturnValue(defaultSearch);
+    getMock.mockResolvedValue({ success: true, data: { items: [PENDING_ORDER], total: 1 } });
+    const user = userEvent.setup();
+
+    renderPage();
+    await user.click(await screen.findByText('Ana'));
+
+    expect(navigateMock).toHaveBeenCalledWith({ to: '/orders/details', search: { id: 'o1' } });
   });
 
   it('shows an explicit empty state (never a blank table) when the filtered status has no Orders', async () => {

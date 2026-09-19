@@ -2,6 +2,7 @@
 import '@testing-library/jest-dom/vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, render, screen } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const getMock = vi.fn();
@@ -24,6 +25,13 @@ vi.mock('../../../../lib/api/client.api.js', () => ({
     return getMock(path);
   },
 }));
+
+// <OrderCard> tem um <Link> ("Ver pedido") — stand-in mínimo sem
+// <RouterProvider>, mesmo padrão dos testes de página.
+vi.mock('@tanstack/react-router', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@tanstack/react-router')>();
+  return { ...actual, Link: ({ to, children }: { to: string; children?: ReactNode }) => <a href={to}>{children}</a> };
+});
 
 const { ConversationThread } = await import('./thread.js');
 const { messageKeys } = await import('../../../../query/message.js');

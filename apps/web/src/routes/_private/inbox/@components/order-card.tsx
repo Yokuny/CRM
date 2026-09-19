@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { BadgeIndicator } from '@/components/ui/badge.js';
 import { Button } from '@/components/ui/button.js';
@@ -42,6 +43,15 @@ export function OrderCard({ conversationId }: OrderCardProps) {
     <Panel size="xs" className="flex-row items-center">
       <BadgeIndicator variant="warning">{t('pending_approval')}</BadgeIndicator>
       <span className="text-sm">{formatMoney(order.totalPrice)}</span>
+      {/* Itens, cliente e pagamento ficam no detalhe (orders/details.tsx). */}
+      <Button
+        variant="basic"
+        render={
+          <Link to="/orders/details" search={{ id: order.id }}>
+            {t('view_order')}
+          </Link>
+        }
+      />
       <Button type="button" variant="success" onClick={handleApprove} disabled={approveMutation.isPending}>
         {t('approve')}
       </Button>

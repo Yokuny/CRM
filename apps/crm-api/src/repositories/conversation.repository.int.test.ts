@@ -272,6 +272,22 @@ describe('conversation.repository', () => {
       expect(result.items.map((item) => item.id)).toEqual([conversation._id.toString()]);
     });
 
+    it('resolves customerName in batch, keeping the customer id even when the Customer no longer exists', async () => {
+      const tenantId = randomId();
+      const [withCustomer, orphan] = await seedConversationsForTenant(tenantId, [
+        { lastActivityAt: new Date('2024-01-02T00:00:00.000Z') },
+        {},
+      ]);
+      await Customer.deleteOne({ _id: orphan?.Customer });
+
+      const result = await conversationRepository.listConversations(tenantId, {}, { page: 1, limit: 20 });
+
+      expect(result.items.map((item) => [item.customer, item.customerName])).toEqual([
+        [withCustomer?.Customer.toString(), 'Cliente Teste'],
+        [orphan?.Customer.toString(), undefined],
+      ]);
+    });
+
     it('filters by mode alone, returning only matching Conversations', async () => {
       const tenantId = randomId();
       const [botConversation] = await seedConversationsForTenant(tenantId, [

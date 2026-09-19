@@ -1,7 +1,7 @@
 import type { OrderStatus } from '@crm/db';
 import { rejectOrder as rejectOrderTransition, setOperatorApproved } from '@crm/db';
 import { KeyedError } from '../middlewares/errorHandler.middleware.js';
-import type { OrderRecord } from '../repositories/order.repository.js';
+import type { OrderDetailRecord, OrderRecord } from '../repositories/order.repository.js';
 import * as orderRepository from '../repositories/order.repository.js';
 
 export const DEFAULT_PAGE_SIZE = 20;
@@ -56,6 +56,14 @@ export const listOrders = async (
 // depois da pré-checagem ter confirmado pending_approval, é uma corrida rara
 // (o Order virou terminal entre as duas chamadas) — o único caso plausível
 // aqui, já que não existe delete de Order nesta feature.
+// Detalhe de um pedido do tenant da sessão — inexistente ou de outro tenant
+// são indistinguíveis (404 nos dois casos), mesma regra de approve/reject.
+export const getOrder = async (tenantId: string, orderId: string): Promise<OrderDetailRecord> => {
+  const order = await orderRepository.findDetailById(tenantId, orderId);
+  if (!order) throw new OrderNotFoundError('not_found');
+  return order;
+};
+
 const requirePendingOrder = async (tenantId: string, orderId: string): Promise<OrderRecord> => {
   const existing = await orderRepository.findById(tenantId, orderId);
   if (!existing) throw new OrderNotFoundError('not_found');

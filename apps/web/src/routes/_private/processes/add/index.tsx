@@ -32,6 +32,7 @@ export function ProcessAddPage() {
   // WEB-07 AC1: templates arquivados nunca aparecem selecionáveis — filtrados
   // fora da lista (nunca um item desabilitado que ainda "existe" no DOM).
   const availableTemplates = (templatesQuery.data?.items ?? []).filter((template) => !template.archived);
+  const templateItems = availableTemplates.map((template) => ({ value: template.key, label: template.label }));
 
   const mutation = useMutation({
     mutationFn: async (templateKey: string) => {
@@ -87,6 +88,7 @@ export function ProcessAddPage() {
                   fields: [
                     <Select
                       key="templateKey"
+                      items={templateItems}
                       value={selectedKey}
                       onValueChange={(value) => setSelectedKey(value ?? '')}
                     >
@@ -94,9 +96,9 @@ export function ProcessAddPage() {
                         <SelectValue placeholder={t('choose_process_type')} />
                       </SelectTrigger>
                       <SelectContent>
-                        {availableTemplates.map((template) => (
-                          <SelectItem key={template.key} value={template.key}>
-                            {template.label}
+                        {templateItems.map((item) => (
+                          <SelectItem key={item.value} value={item.value}>
+                            {item.label}
                           </SelectItem>
                         ))}
                       </SelectContent>

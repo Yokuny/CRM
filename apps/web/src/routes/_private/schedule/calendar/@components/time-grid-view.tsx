@@ -5,6 +5,7 @@ import {
   CalendarTimeGridHourLine,
 } from '@/components/ui/calendar-grid.js';
 import { weekdayIndexOfDisplayDate } from '@/lib/helpers/displayTime.helper.js';
+import { formatDate } from '@/lib/helpers/formatDate.helper.js';
 import { t, WEEKDAY_KEYS } from '@/lib/helpers/translate.helper.js';
 import type { AppointmentRecord } from '@/query/appointment.js';
 import { computePositionedItems, HOUR_HEIGHT_PX, HOURS_IN_DAY } from '../@utils/calendar-grid.utils.js';
@@ -46,7 +47,7 @@ export function TimeGridView({ days, items, onSelect }: TimeGridViewProps) {
             <div key={day} data-testid={`time-grid-day-${day}`}>
               <CalendarTimeGridHeader>
                 <div className="font-medium text-xs">{t(WEEKDAY_KEYS[weekdayIndexOfDisplayDate(day)])}</div>
-                <div className="text-[10px] text-muted-foreground">{day}</div>
+                <div className="text-[10px] text-muted-foreground">{formatDate(day)}</div>
               </CalendarTimeGridHeader>
               <div className="relative" style={{ height: HOURS_IN_DAY * HOUR_HEIGHT_PX }}>
                 {HOURS.slice(1).map((hour) => (

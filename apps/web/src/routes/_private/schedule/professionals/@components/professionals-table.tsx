@@ -78,7 +78,9 @@ export function ProfessionalsTable({
           {table.getRowModel().rows.map((row) => (
             <TableRow key={row.id} onClick={() => onRowClick(row.original)} className="cursor-pointer">
               {row.getVisibleCells().map((cell) => (
-                <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                <TableCell className="md:p-4 py-2" key={cell.id}>
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </TableCell>
               ))}
             </TableRow>
           ))}

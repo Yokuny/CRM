@@ -40,7 +40,7 @@ export function CustomerKanbanCardContent({ name, phone, createdAt, actions }: C
         </ItemContent>
       </div>
       <ItemFooter>
-        <span className="text-muted-foreground text-xs">{formatDistanceToNow(createdAt, { addSuffix: true })}</span>
+        <span className="text-muted-foreground text-xs">{formatDistanceToNow(createdAt)}</span>
       </ItemFooter>
     </div>
   );

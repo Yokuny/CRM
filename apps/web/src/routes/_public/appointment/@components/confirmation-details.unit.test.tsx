@@ -30,7 +30,7 @@ describe('ConfirmationDetails (T42, spec.md SCH-22/SCH-28)', () => {
 
     // 2026-09-15 é uma terça-feira — provado independentemente em
     // displayTime.helper.unit.test.ts (weekdayIndexOfDisplayDate).
-    expect(screen.getByText('Terça-feira, 2026-09-15')).toBeInTheDocument();
+    expect(screen.getByText('Terça-feira, 15 set 2026')).toBeInTheDocument();
     expect(screen.getByText('14:00')).toBeInTheDocument();
     expect(screen.getByText('Dra. Ana')).toBeInTheDocument();
     expect(screen.getByText('Sala 1')).toBeInTheDocument();

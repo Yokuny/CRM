@@ -26,6 +26,19 @@ export const listOrders = async (req: Request, res: Response, next: NextFunction
 // de req.tenantUser.user, nunca do corpo. Traduz os erros tipados do service
 // (T9) pro código HTTP certo (design.md Error Handling Strategy):
 // OrderNotFoundError->404, OrderAlreadyTerminalError->409.
+export const getOrder = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const result = await orderService.getOrder(req.tenantUser.tenant as string, req.params.id as string);
+    res.json(respObj({ data: result }));
+  } catch (e) {
+    if (e instanceof OrderNotFoundError) {
+      next(new CustomError(e.message, 404, e.detail));
+      return;
+    }
+    next(e);
+  }
+};
+
 export const approveOrder = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const result = await orderService.approveOrder(

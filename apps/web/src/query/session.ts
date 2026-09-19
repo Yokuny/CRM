@@ -11,6 +11,10 @@ export type SessionView = {
   role: Role[];
 };
 
+// Mesma regra de `isAdmin` do back-end (authorization.middleware.ts): o
+// papel `admin` na lista de papéis do usuário no tenant.
+export const isAdminSession = (session: SessionView): boolean => session.role.includes('admin');
+
 export const sessionKeys = {
   all: ['session'] as const,
   detail: () => [...sessionKeys.all, 'detail'] as const,

@@ -1,6 +1,6 @@
-import type { FieldDef, FieldTemplateTargetType } from '@crm/contracts';
-import { queryOptions } from '@tanstack/react-query';
-import { get } from '../lib/api/client.api.js';
+import type { BumpFieldTemplate, CreateFieldTemplate, FieldDef, FieldTemplateTargetType } from '@crm/contracts';
+import { type QueryClient, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
+import { get, post } from '../lib/api/client.api.js';
 import { t } from '../lib/helpers/translate.helper.js';
 
 // Espelha CurrentTemplate de apps/crm-api/src/services/fieldTemplate.service.ts
@@ -56,17 +56,63 @@ export const processTemplateVersionQuery = (templateId: string, version: number)
     },
   });
 
-// `key` é sempre a chave do template `customer` do tenant (um só por
-// tenant, DEFAULT_CUSTOMER_TEMPLATE_KEY em field-engine/constants.ts) — o
-// caller (T20/T22) resolve essa constante, este hook só monta a query.
-export const currentCustomerTemplateQuery = (key: string) =>
+// Versão corrente (id, versão, campos, etapas) de um template achado pelo par
+// (targetType, key) — o único jeito de chegar no `id` que bump/archive
+// exigem, já que a listagem (fieldTemplatesQuery) devolve só key/label.
+export const currentFieldTemplateQuery = (targetType: FieldTemplateTargetType, key: string) =>
   queryOptions({
-    queryKey: fieldTemplateKeys.current('customer', key),
+    queryKey: fieldTemplateKeys.current(targetType, key),
     queryFn: async (): Promise<CurrentFieldTemplate> => {
       const res = await get<CurrentFieldTemplate>(
-        `/field-templates/current?targetType=customer&key=${encodeURIComponent(key)}`,
+        `/field-templates/current?targetType=${encodeURIComponent(targetType)}&key=${encodeURIComponent(key)}`,
       );
       if (!res.success || !res.data) throw new Error(res.message ?? t('not_found'));
       return res.data;
     },
   });
+
+// `key` é sempre a chave do template `customer` do tenant (um só por
+// tenant, DEFAULT_CUSTOMER_TEMPLATE_KEY em field-engine/constants.ts) — o
+// caller (T20/T22) resolve essa constante, este hook só monta a query.
+export const currentCustomerTemplateQuery = (key: string) => currentFieldTemplateQuery('customer', key);
+
+// Criar/versionar/arquivar mexe em qualquer tela que leia templates (listas,
+// formulários de cliente/processo) — invalida o prefixo inteiro.
+const invalidateTemplates = (queryClient: QueryClient) =>
+  queryClient.invalidateQueries({ queryKey: fieldTemplateKeys.all });
+
+// Só admin (POST /field-templates, isAdmin no back-end).
+export const createFieldTemplateMutation = (
+  queryClient: QueryClient,
+): UseMutationOptions<{ id: string; currentVersion: number }, Error, CreateFieldTemplate> => ({
+  mutationFn: async (data) => {
+    const res = await post<{ id: string; currentVersion: number }>('/field-templates', data);
+    if (!res.success || !res.data) throw new Error(res.message ?? t('create_error'));
+    return res.data;
+  },
+  onSuccess: () => invalidateTemplates(queryClient),
+});
+
+// Nova versão dos campos/etapas (nunca edita a versão atual no lugar —
+// `expectedVersion` é a trava otimista do back-end). Só admin.
+export const bumpFieldTemplateMutation = (
+  queryClient: QueryClient,
+): UseMutationOptions<{ currentVersion: number }, Error, { id: string; data: BumpFieldTemplate }> => ({
+  mutationFn: async ({ id, data }) => {
+    const res = await post<{ currentVersion: number }>(`/field-templates/${encodeURIComponent(id)}/versions`, data);
+    if (!res.success || !res.data) throw new Error(res.message ?? t('save_error'));
+    return res.data;
+  },
+  onSuccess: () => invalidateTemplates(queryClient),
+});
+
+// Sem volta: não existe rota de desarquivar. Só admin.
+export const archiveFieldTemplateMutation = (
+  queryClient: QueryClient,
+): UseMutationOptions<void, Error, { id: string }> => ({
+  mutationFn: async ({ id }) => {
+    const res = await post<never>(`/field-templates/${encodeURIComponent(id)}/archive`);
+    if (!res.success) throw new Error(res.message ?? t('save_error'));
+  },
+  onSuccess: () => invalidateTemplates(queryClient),
+});

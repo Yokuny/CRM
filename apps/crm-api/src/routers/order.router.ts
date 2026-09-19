@@ -48,6 +48,17 @@ export const createOrderRouter = (deps: OrderRouterDeps): Router => {
 
   router.get('/', deps.validToken, tenantAssignmentCheck, canOperate, validListOrdersQuery, orderController.listOrders);
 
+  // Detalhe de um pedido (cliente, itens, pagamento, quem aprovou/rejeitou)
+  // — mesmo acesso da listagem.
+  router.get(
+    '/:id',
+    deps.validToken,
+    tenantAssignmentCheck,
+    canOperate,
+    validParams(orderIdParamSchema),
+    orderController.getOrder,
+  );
+
   router.post(
     '/:id/approve',
     deps.validToken,

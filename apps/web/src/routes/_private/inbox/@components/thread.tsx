@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { DefaultLoading } from '@/components/default-loading.js';
 import { BadgeIndicator } from '@/components/ui/badge.js';
-import { formatDate } from '@/lib/helpers/formatDate.helper.js';
+import { formatDateTime } from '@/lib/helpers/formatDate.helper.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 import { cn } from '@/lib/utils.js';
 import { type MessageRecord, messagesQuery } from '@/query/message.js';
@@ -86,7 +86,7 @@ export function ConversationThread({ conversationId, customerId, renderFailedAct
             className={cn('max-w-[80%] rounded-md border p-2', message.direction === 'out' ? 'ml-auto' : 'mr-auto')}
           >
             {renderMessageBody(message, conversationId)}
-            <p className="text-muted-foreground text-xs">{formatDate(message.createdAt, 'dd/MM HH:mm')}</p>
+            <p className="text-muted-foreground text-xs">{formatDateTime(message.createdAt)}</p>
             {message.status === 'failed' && (
               <div className="mt-1 flex items-center gap-2">
                 <BadgeIndicator variant="error">{t('failed')}</BadgeIndicator>

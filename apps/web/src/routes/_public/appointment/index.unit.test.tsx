@@ -101,7 +101,7 @@ describe('AppointmentConfirmationPage (T42, spec.md SCH-22/SCH-23/SCH-24/SCH-25/
 
     renderPage();
 
-    expect(await screen.findByText(/2026-09-15/)).toBeInTheDocument();
+    expect(await screen.findByText(/15 set 2026/)).toBeInTheDocument();
     expect(screen.getByText('14:00')).toBeInTheDocument();
     expect(screen.getByText('Dra. Ana')).toBeInTheDocument();
     expect(screen.getByText('Sala 1')).toBeInTheDocument();

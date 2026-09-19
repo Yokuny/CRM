@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button.js';
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item.js';
 import { weekdayIndexOfDisplayDate } from '@/lib/helpers/displayTime.helper.js';
+import { formatDate } from '@/lib/helpers/formatDate.helper.js';
 import { t, WEEKDAY_KEYS } from '@/lib/helpers/translate.helper.js';
 import type { AppointmentConfirmationRecord } from '@/query/appointmentConfirmation.js';
 
@@ -34,10 +35,10 @@ function Row({ label, value }: { label: string; value: string }) {
 // rodapé) de
 // ../DentalEase/DentalEase/src/routes/_public/schedule/$code/@components/confirmation-form.tsx
 // — SEM redirect pra `/auth` no sucesso (este cliente não tem conta, SCH-28)
-// e usando `date`/`time` exatamente como o back-end já devolve (hora de
-// exibição, AppointmentConfirmationPublicView) — nunca reformatados via
-// `formatDisplayDate`/`formatDisplayTime` (T38), que esperam um INSTANTE UTC;
-// aqui só o dia-da-semana é derivado (`weekdayIndexOfDisplayDate`, cálculo de
+// e usando `date`/`time` como o back-end já devolve (hora de exibição,
+// AppointmentConfirmationPublicView) — `date` é data de parede (YYYY-MM-DD),
+// então `formatDate` só a apresenta no padrão do idioma, sem conversão de
+// fuso; o dia-da-semana sai de `weekdayIndexOfDisplayDate` (cálculo de
 // calendário puro, seguro sobre uma data de parede já pronta).
 export function ConfirmationDetails({
   record,
@@ -57,7 +58,7 @@ export function ConfirmationDetails({
       </div>
 
       <ItemGroup>
-        <Row label={t('date')} value={`${weekday}, ${record.date}`} />
+        <Row label={t('date')} value={`${weekday}, ${formatDate(record.date)}`} />
         <Row label={t('time')} value={record.time} />
         {record.professionalName && <Row label={t('professional')} value={record.professionalName} />}
         {record.spaceName && <Row label={t('space')} value={record.spaceName} />}

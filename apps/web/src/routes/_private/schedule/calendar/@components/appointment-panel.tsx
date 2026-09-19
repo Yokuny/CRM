@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input.js';
 import { ItemDescription, Panel } from '@/components/ui/item.js';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select.js';
 import { formatDisplayDate, formatDisplayTime, isPastInstant } from '@/lib/helpers/displayTime.helper.js';
+import { formatDateTime, formatTime } from '@/lib/helpers/formatDate.helper.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 import {
   type AppointmentNotice,
@@ -94,6 +95,18 @@ function AppointmentCreateForm({ onClose }: WithOnClose) {
   const customersQueryResult = useQuery(customersQuery({ limit: QUERY_LIMIT }));
   const professionalsQueryResult = useQuery(professionalsQuery({ limit: QUERY_LIMIT }));
   const spacesQueryResult = useQuery(spacesQuery({ limit: QUERY_LIMIT }));
+  const customerItems = (customersQueryResult.data?.items ?? []).map((customer) => ({
+    value: customer.id,
+    label: customer.name,
+  }));
+  const professionalItems = (professionalsQueryResult.data?.items ?? []).map((professional) => ({
+    value: professional.id,
+    label: professional.name,
+  }));
+  const spaceItems = [
+    { value: UNSET_VALUE, label: t('none') },
+    ...(spacesQueryResult.data?.items ?? []).map((space) => ({ value: space.id, label: space.name })),
+  ];
 
   const form = useForm<CreateAppointment>({
     resolver: zodResolver(createAppointmentSchema),
@@ -137,16 +150,16 @@ function AppointmentCreateForm({ onClose }: WithOnClose) {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>{t('customer')}</FormLabel>
-                        <Select value={field.value} onValueChange={field.onChange}>
+                        <Select items={customerItems} value={field.value} onValueChange={field.onChange}>
                           <FormControl>
                             <SelectTrigger className="w-full">
                               <SelectValue placeholder={t('customer')} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {(customersQueryResult.data?.items ?? []).map((customer) => (
-                              <SelectItem key={customer.id} value={customer.id}>
-                                {customer.name}
+                            {customerItems.map((item) => (
+                              <SelectItem key={item.value} value={item.value}>
+                                {item.label}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -162,16 +175,16 @@ function AppointmentCreateForm({ onClose }: WithOnClose) {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>{t('professional')}</FormLabel>
-                        <Select value={field.value} onValueChange={field.onChange}>
+                        <Select items={professionalItems} value={field.value} onValueChange={field.onChange}>
                           <FormControl>
                             <SelectTrigger className="w-full">
                               <SelectValue placeholder={t('professional')} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {(professionalsQueryResult.data?.items ?? []).map((professional) => (
-                              <SelectItem key={professional.id} value={professional.id}>
-                                {professional.name}
+                            {professionalItems.map((item) => (
+                              <SelectItem key={item.value} value={item.value}>
+                                {item.label}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -216,6 +229,7 @@ function AppointmentCreateForm({ onClose }: WithOnClose) {
                       <FormItem>
                         <FormLabel>{t('space')}</FormLabel>
                         <Select
+                          items={spaceItems}
                           value={field.value ?? UNSET_VALUE}
                           onValueChange={(value) => field.onChange(value === UNSET_VALUE ? undefined : value)}
                         >
@@ -225,10 +239,9 @@ function AppointmentCreateForm({ onClose }: WithOnClose) {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value={UNSET_VALUE}>{t('none')}</SelectItem>
-                            {(spacesQueryResult.data?.items ?? []).map((space) => (
-                              <SelectItem key={space.id} value={space.id}>
-                                {space.name}
+                            {spaceItems.map((item) => (
+                              <SelectItem key={item.value} value={item.value}>
+                                {item.label}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -275,6 +288,14 @@ type AppointmentDetailProps = WithOnClose & { appointment: AppointmentRecord };
 function AppointmentDetail({ appointment, onClose }: AppointmentDetailProps) {
   const queryClient = useQueryClient();
   const professionalsQueryResult = useQuery(professionalsQuery({ limit: QUERY_LIMIT }));
+  // UNSET_VALUE = "manter o profissional atual" — o rótulo é o nome dele.
+  const rescheduleProfessionalItems = [
+    { value: UNSET_VALUE, label: appointment.professionalName ?? t('professional') },
+    ...(professionalsQueryResult.data?.items ?? []).map((professional) => ({
+      value: professional.id,
+      label: professional.name,
+    })),
+  ];
   const [reason, setReason] = useState('');
   // SCH-40/T45: `wa_me` mantém o painel aberto (o operador ainda precisa
   // clicar pra realmente avisar) — `queued` já foi enfileirado sozinho, só
@@ -370,8 +391,7 @@ function AppointmentDetail({ appointment, onClose }: AppointmentDetailProps) {
       )}
       <Panel className="grid gap-1" data-testid="appointment-detail-info">
         <ItemDescription>
-          {formatDisplayDate(appointment.start)} · {formatDisplayTime(appointment.start)}–
-          {formatDisplayTime(appointment.end)}
+          {formatDateTime(appointment.start)}–{formatTime(appointment.end)}
         </ItemDescription>
         {appointment.professionalName && <ItemDescription>{appointment.professionalName}</ItemDescription>}
         {appointment.spaceName && <ItemDescription>{appointment.spaceName}</ItemDescription>}
@@ -423,6 +443,7 @@ function AppointmentDetail({ appointment, onClose }: AppointmentDetailProps) {
                       <FormItem>
                         <FormLabel>{t('professional')}</FormLabel>
                         <Select
+                          items={rescheduleProfessionalItems}
                           value={field.value ?? UNSET_VALUE}
                           onValueChange={(value) => field.onChange(value === UNSET_VALUE ? undefined : value)}
                         >
@@ -432,12 +453,9 @@ function AppointmentDetail({ appointment, onClose }: AppointmentDetailProps) {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value={UNSET_VALUE}>
-                              {appointment.professionalName ?? t('professional')}
-                            </SelectItem>
-                            {(professionalsQueryResult.data?.items ?? []).map((professional) => (
-                              <SelectItem key={professional.id} value={professional.id}>
-                                {professional.name}
+                            {rescheduleProfessionalItems.map((item) => (
+                              <SelectItem key={item.value} value={item.value}>
+                                {item.label}
                               </SelectItem>
                             ))}
                           </SelectContent>

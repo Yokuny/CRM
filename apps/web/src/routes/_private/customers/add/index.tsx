@@ -103,7 +103,7 @@ function CustomerCreateForm({ fields }: CustomerCreateFormProps) {
   if (nodes.length > 0) {
     sections.push({
       title: t('additional_details'),
-      description: t('custom_fields'),
+      description: t('extra_fields_configured_by_company'),
       fields: nodes.map((node) => (
         <DynamicField key={node.fieldId} node={node} name={`values.${node.fieldId}`} control={control} />
       )),

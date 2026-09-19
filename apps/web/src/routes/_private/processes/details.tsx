@@ -78,7 +78,7 @@ function ProcessValuesForm({ process, fields, customerId }: ProcessValuesFormPro
         sections={[
           {
             title: t('values'),
-            description: t('custom_fields'),
+            description: t('extra_fields_configured_by_company'),
             fields: nodes.map((node) => (
               <DynamicField key={node.fieldId} node={node} name={node.fieldId} control={control} />
             )),
@@ -112,6 +112,8 @@ type ProcessStageControlProps = { process: ProcessRecord; stages: string[]; cust
 function ProcessStageControl({ process, stages, customerId }: ProcessStageControlProps) {
   const queryClient = useQueryClient();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  // A etapa já é o próprio texto exibido.
+  const stageItems = stages.map((stage) => ({ value: stage, label: stage }));
 
   const mutation = useMutation({
     mutationFn: async (stage: string) => {
@@ -139,14 +141,14 @@ function ProcessStageControl({ process, stages, customerId }: ProcessStageContro
   return (
     <div className="grid gap-2">
       <Label>{t('stage')}</Label>
-      <Select value={process.stage} onValueChange={onValueChange} disabled={mutation.isPending}>
+      <Select items={stageItems} value={process.stage} onValueChange={onValueChange} disabled={mutation.isPending}>
         <SelectTrigger>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          {stages.map((stage) => (
-            <SelectItem key={stage} value={stage}>
-              {stage}
+          {stageItems.map((item) => (
+            <SelectItem key={item.value} value={item.value}>
+              {item.label}
             </SelectItem>
           ))}
         </SelectContent>

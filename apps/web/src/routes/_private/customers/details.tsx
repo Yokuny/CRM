@@ -1,4 +1,4 @@
-import type { FieldDef, StatusOption } from '@crm/contracts';
+import type { FieldDef } from '@crm/contracts';
 import { DEFAULT_CUSTOMER_TEMPLATE_KEY, hydrate } from '@crm/field-engine';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, Link, useSearch } from '@tanstack/react-router';
@@ -11,7 +11,7 @@ import { DefaultFormLayout, type FormSection } from '@/components/default-form-l
 import { DefaultLoading } from '@/components/default-loading.js';
 import { DynamicField } from '@/components/dynamic-field/dynamic-field.js';
 import { renderNodesToDefaultValues } from '@/components/dynamic-field/dynamic-field.utils.js';
-import { BadgeIndicator } from '@/components/ui/badge.js';
+import { DynamicFieldValue } from '@/components/dynamic-field/dynamic-field-value.js';
 import { Button } from '@/components/ui/button.js';
 import { Card, CardAction, CardContent, CardHeader } from '@/components/ui/card.js';
 import { Input } from '@/components/ui/input.js';
@@ -20,7 +20,7 @@ import { Label } from '@/components/ui/label.js';
 import { patch } from '@/lib/api/client.api.js';
 import { formatDate } from '@/lib/helpers/formatDate.helper.js';
 import { t } from '@/lib/helpers/translate.helper.js';
-import { type CustomerRecord, customerKeys, customerQuery, customerStatusOptions } from '@/query/customer.js';
+import { type CustomerRecord, customerKeys, customerQuery } from '@/query/customer.js';
 import { currentCustomerTemplateQuery } from '@/query/fieldTemplate.js';
 import { processesQuery } from '@/query/process.js';
 
@@ -28,14 +28,19 @@ import { processesQuery } from '@/query/process.js';
 export const customerDetailsSearchSchema = z.object({ id: z.string().min(1) });
 export type CustomerDetailsSearch = z.infer<typeof customerDetailsSearchSchema>;
 
-type CustomerDetailsViewProps = { customer: CustomerRecord; statusOptions: StatusOption[] };
+// Referência estável enquanto o template carrega — um `[]` literal a cada
+// render invalidaria os `useMemo` da view.
+const NO_FIELDS: FieldDef[] = [];
 
-// `key==='status'` é o único campo com tratamento especial aqui — mesma
-// convenção de fieldId usada pelo template (customerStatusOptions,
-// query/customer.ts): resolve pra {label,color} (StatusOption) e usa o dot
-// colorido; qualquer outro campo dinâmico continua genérico (raw value).
-function CustomerDetailsView({ customer, statusOptions }: CustomerDetailsViewProps) {
+type CustomerDetailsViewProps = { customer: CustomerRecord; fields: FieldDef[] };
+
+// Cada valor dinâmico é exibido pelo seu FieldDef no template: título = o
+// `label` configurado (nunca o fieldId cru) e valor via <DynamicFieldValue>
+// (rótulo da opção, data no padrão do idioma, moeda...). Enquanto o template
+// carrega — ou para uma chave que não existe mais nele — cai no valor cru.
+function CustomerDetailsView({ customer, fields }: CustomerDetailsViewProps) {
   const processesQueryResult = useQuery(processesQuery(customer.id));
+  const fieldById = useMemo(() => new Map(fields.map((field) => [field.fieldId, field])), [fields]);
 
   return (
     <div className="grid gap-6">
@@ -61,21 +66,12 @@ function CustomerDetailsView({ customer, statusOptions }: CustomerDetailsViewPro
           </Item>
         )}
         {Object.entries(customer.values).map(([key, value]) => {
-          const statusOption =
-            key === 'status' && typeof value === 'string'
-              ? statusOptions.find((option) => option.key === value)
-              : undefined;
+          const def = fieldById.get(key);
           return (
             <Item key={key}>
               <ItemContent>
-                <ItemTitle>{key === 'status' ? t('status') : key}</ItemTitle>
-                <ItemDescription>
-                  {statusOption ? (
-                    <BadgeIndicator color={statusOption.color}>{statusOption.label}</BadgeIndicator>
-                  ) : (
-                    String(value)
-                  )}
-                </ItemDescription>
+                <ItemTitle>{def?.label ?? (key === 'status' ? t('status') : key)}</ItemTitle>
+                <ItemDescription>{def ? <DynamicFieldValue def={def} value={value} /> : String(value)}</ItemDescription>
               </ItemContent>
             </Item>
           );
@@ -217,7 +213,7 @@ function CustomerEditForm({ customer, fields, onSaved, onCancel }: CustomerEditF
   if (nodes.length > 0) {
     sections.push({
       title: t('additional_details'),
-      description: t('custom_fields'),
+      description: t('extra_fields_configured_by_company'),
       fields: nodes.map((node) => (
         <DynamicField key={node.fieldId} node={node} name={`values.${node.fieldId}`} control={control} />
       )),
@@ -251,13 +247,12 @@ export function CustomerDetailsPage() {
   const search = useSearch({ strict: false }) as CustomerDetailsSearch;
   const [isEditing, setIsEditing] = useState(false);
   const customerQueryResult = useQuery(customerQuery(search.id));
-  // Sempre busca (não só em modo edição, WEB-05): a visualização agora
-  // também precisa do template pra resolver a bolinha+cor do campo `status`
-  // (customerStatusOptions) — a view em si NUNCA bloqueia nela (fallback pro
-  // valor cru enquanto carrega), só o form de edição continua esperando
-  // (precisa do FieldDef inteiro pra montar os campos dinâmicos).
+  // Sempre busca (não só em modo edição, WEB-05): a visualização também
+  // precisa do template pra exibir cada valor pelo seu FieldDef (rótulo,
+  // opção, bolinha+cor do `status`) — a view em si NUNCA bloqueia nela
+  // (fallback pro valor cru enquanto carrega), só o form de edição continua
+  // esperando (precisa do FieldDef inteiro pra montar os campos dinâmicos).
   const templateQuery = useQuery(currentCustomerTemplateQuery(DEFAULT_CUSTOMER_TEMPLATE_KEY));
-  const statusOptions = useMemo(() => customerStatusOptions(templateQuery.data?.fields ?? []), [templateQuery.data]);
 
   const customer = customerQueryResult.data;
 
@@ -293,7 +288,7 @@ export function CustomerDetailsPage() {
             />
           )
         ) : (
-          <CustomerDetailsView customer={customer} statusOptions={statusOptions} />
+          <CustomerDetailsView customer={customer} fields={templateQuery.data?.fields ?? NO_FIELDS} />
         )}
       </CardContent>
     </Card>

@@ -45,6 +45,25 @@ export type OrderRecord = {
   updatedAt: string;
 };
 
+// Espelha OrderDetailRecord (order.repository.ts#findDetailById): o pedido
+// + o que ele só referencia por id, cada campo ausente quando a referência
+// não existe mais.
+export type OrderPaymentRecord = {
+  status: PaymentStatus;
+  value: number;
+  billingType: 'PIX';
+  pixPayload?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type OrderDetailRecord = OrderRecord & {
+  customerPhone?: string;
+  approvedByName?: string;
+  rejectedByName?: string;
+  payment?: OrderPaymentRecord;
+};
+
 export type OrdersQueryParams = {
   status?: OrderStatus;
   conversation?: string;
@@ -58,6 +77,8 @@ export const orderKeys = {
   all: ['order'] as const,
   lists: () => [...orderKeys.all, 'list'] as const,
   list: (params: OrdersQueryParams) => [...orderKeys.lists(), params] as const,
+  details: () => [...orderKeys.all, 'detail'] as const,
+  detail: (id: string) => [...orderKeys.details(), id] as const,
 };
 
 const buildQueryString = (params: OrdersQueryParams): string => {
@@ -89,6 +110,18 @@ export const ordersQuery = (params: OrdersQueryParams = {}) =>
     },
   });
 
+// Detalhe de um pedido (GET /orders/:id) — 404 (inexistente ou de outro
+// tenant) vira erro, e a tela mostra o estado vazio.
+export const orderQuery = (id: string) =>
+  queryOptions({
+    queryKey: orderKeys.detail(id),
+    queryFn: async (): Promise<OrderDetailRecord> => {
+      const res = await get<OrderDetailRecord>(`/orders/${encodeURIComponent(id)}`);
+      if (!res.success || !res.data) throw new Error(res.message ?? t('not_found'));
+      return res.data;
+    },
+  });
+
 // spec.md AC4 (P1 "Operador aprova ou rejeita"): aprova um Order
 // pending_approval (POST /orders/:id/approve, sem corpo — o controller já
 // não lê nada além do :id/tenantUser). Invalida QUALQUER ordersQuery já
@@ -96,6 +129,7 @@ export const ordersQuery = (params: OrdersQueryParams = {}) =>
 // status/conversation/página) — cobre tanto a tela de Pedidos (T23) quanto
 // o card do Inbox (T24) no mesmo golpe, então um Order aprovado some de
 // ambas as superfícies sem refresh manual em nenhuma delas.
+// `orderKeys.all` (não só lists) pra pegar também o detalhe (orders/details.tsx).
 export const approveOrderMutation = (
   queryClient: QueryClient,
 ): UseMutationOptions<OrderRecord, Error, { id: string }> => ({
@@ -105,7 +139,7 @@ export const approveOrderMutation = (
     return res.data;
   },
   onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
+    queryClient.invalidateQueries({ queryKey: orderKeys.all });
   },
 });
 
@@ -121,6 +155,6 @@ export const rejectOrderMutation = (
     return res.data;
   },
   onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
+    queryClient.invalidateQueries({ queryKey: orderKeys.all });
   },
 });

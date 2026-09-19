@@ -2,13 +2,14 @@ import { DISPLAY_TIMEZONE } from '@crm/contracts';
 
 // AD-036/design.md Risk: "operador com o navegador em outro fuso veria
 // horários diferentes dos que a IA manda, e a CI roda em UTC" — este arquivo
-// existe só para não repetir esse bug. `formatDate.helper.ts` (irmão) usa
-// date-fns no fuso LOCAL do navegador (certo pra tudo que já é wall-clock,
-// ex. campos de formulário); aqui é o oposto: todo instante (Date/ISO em
-// UTC) é formatado no fuso de EXIBIÇÃO fixo (`DISPLAY_TIMEZONE`,
+// existe só para não repetir esse bug: todo instante (Date/ISO em UTC) é
+// convertido no fuso de EXIBIÇÃO fixo (`DISPLAY_TIMEZONE`,
 // packages/contracts), o mesmo fuso que o back-end usa pra gerar
 // `dateInDisplayTz`/`timeInDisplayTz` (packages/db) — nunca `date-fns`, nunca
-// o fuso do `Intl` default do runtime.
+// o fuso do `Intl` default do runtime. Os `YYYY-MM-DD`/`HH:mm` daqui são
+// formato de DADO (search param, valor de <input>, chave de grade), nunca
+// texto de tela: o que é exibido passa por `formatDate.helper.ts` (irmão),
+// que usa estas mesmas conversões e aplica o padrão do idioma do usuário.
 const toDate = (value: Date | string): Date => (value instanceof Date ? value : new Date(value));
 
 // `en-CA` formata `{year, month, day}` como `YYYY-MM-DD` nativamente — sem

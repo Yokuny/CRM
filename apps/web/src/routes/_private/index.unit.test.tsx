@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
+import type { Role } from '@crm/contracts';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
@@ -84,5 +85,28 @@ describe('PrivateIndexPage', () => {
     expect(screen.getByRole('link', { name: /Pedidos/ })).toHaveAttribute('href', '/orders');
     expect(screen.getByRole('link', { name: /Caixa de entrada/ })).toHaveAttribute('href', '/inbox');
     expect(screen.getByRole('link', { name: /Quadros/ })).toHaveAttribute('href', '/kanban');
+  });
+
+  it.each<[Role[], boolean]>([
+    [['admin'], true],
+    [['gestor'], false],
+    [['operador'], false],
+  ])('shows the "Campos personalizados" entry only to admins (role %j → %s)', (role, visible) => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(sessionQuery.queryKey, {
+      tenant: { id: 't1', name: 'Empresa X', status: 'active' },
+      user: { id: 'u1', name: 'Pessoa', email: 'pessoa@empresa.com' },
+      role,
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <PrivateIndexPage />
+      </QueryClientProvider>,
+    );
+
+    const link = screen.queryByRole('link', { name: /Campos personalizados/ });
+    if (visible) expect(link).toHaveAttribute('href', '/custom_fields');
+    else expect(link).not.toBeInTheDocument();
   });
 });

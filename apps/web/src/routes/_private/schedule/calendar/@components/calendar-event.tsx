@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
-import { formatDisplayTime, isPastInstant } from '@/lib/helpers/displayTime.helper.js';
+import { isPastInstant } from '@/lib/helpers/displayTime.helper.js';
+import { formatTime } from '@/lib/helpers/formatDate.helper.js';
 import { cn } from '@/lib/utils.js';
 import type { AppointmentRecord } from '@/query/appointment.js';
 
@@ -58,13 +59,13 @@ export function CalendarEventChip({ item, onSelect, variant = 'timed', className
       {variant === 'timed' ? (
         <>
           <div className="font-medium">
-            {formatDisplayTime(item.start)}–{formatDisplayTime(item.end)}
+            {formatTime(item.start)}–{formatTime(item.end)}
           </div>
           <div className="truncate">{label}</div>
         </>
       ) : (
         <span>
-          <span className="font-medium">{formatDisplayTime(item.start)}</span> {label}
+          <span className="font-medium">{formatTime(item.start)}</span> {label}
         </span>
       )}
     </button>

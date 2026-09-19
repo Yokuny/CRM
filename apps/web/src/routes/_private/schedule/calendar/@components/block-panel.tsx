@@ -9,7 +9,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input.js';
 import { Panel } from '@/components/ui/item.js';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select.js';
-import { formatDisplayDate, formatDisplayTime } from '@/lib/helpers/displayTime.helper.js';
+import { formatDisplayDate } from '@/lib/helpers/displayTime.helper.js';
+import { formatDateTime, formatTime } from '@/lib/helpers/formatDate.helper.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 import { type AppointmentRecord, createBlockMutation, deleteBlockMutation } from '@/query/appointment.js';
 import { professionalsQuery } from '@/query/professional.js';
@@ -46,6 +47,10 @@ type WithOnClose = { onClose: () => void };
 function BlockCreateForm({ onClose }: WithOnClose) {
   const queryClient = useQueryClient();
   const professionalsQueryResult = useQuery(professionalsQuery({ limit: QUERY_LIMIT }));
+  const professionalItems = (professionalsQueryResult.data?.items ?? []).map((professional) => ({
+    value: professional.id,
+    label: professional.name,
+  }));
 
   const form = useForm<CreateBlock>({
     resolver: zodResolver(createBlockSchema),
@@ -83,16 +88,16 @@ function BlockCreateForm({ onClose }: WithOnClose) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>{t('professional')}</FormLabel>
-                      <Select value={field.value} onValueChange={field.onChange}>
+                      <Select items={professionalItems} value={field.value} onValueChange={field.onChange}>
                         <FormControl>
                           <SelectTrigger className="w-full">
                             <SelectValue placeholder={t('professional')} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {(professionalsQueryResult.data?.items ?? []).map((professional) => (
-                            <SelectItem key={professional.id} value={professional.id}>
-                              {professional.name}
+                          {professionalItems.map((item) => (
+                            <SelectItem key={item.value} value={item.value}>
+                              {item.label}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -204,17 +209,16 @@ function BlockRemoveForm({ block, onClose }: BlockRemoveFormProps) {
     );
   };
 
-  const startDate = formatDisplayDate(block.start);
-  const endDate = formatDisplayDate(block.end);
+  const isSameDay = formatDisplayDate(block.start) === formatDisplayDate(block.end);
 
   return (
     <>
       <div className="grid gap-1">
         <p className="font-medium text-sm">{block.title ?? t('block')}</p>
         <p className="text-muted-foreground text-sm">
-          {startDate === endDate
-            ? `${startDate} · ${formatDisplayTime(block.start)}–${formatDisplayTime(block.end)}`
-            : `${startDate} · ${formatDisplayTime(block.start)} – ${endDate} · ${formatDisplayTime(block.end)}`}
+          {isSameDay
+            ? `${formatDateTime(block.start)}–${formatTime(block.end)}`
+            : `${formatDateTime(block.start)} – ${formatDateTime(block.end)}`}
         </p>
         {block.professionalName && <p className="text-muted-foreground text-sm">{block.professionalName}</p>}
       </div>

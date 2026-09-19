@@ -148,6 +148,79 @@ describe('CustomerDetailsPage (T23 — WEB-05)', () => {
     expect(link?.getAttribute('href')).toBe('/processes/details?id=p1&customerId=c1');
   });
 
+  it('shows each value by its template FieldDef: label as title, option label, date/datetime in DISPLAY_TIMEZONE', async () => {
+    searchMock.mockReturnValue({ id: 'c1' });
+    getMock.mockImplementation((path: string) => {
+      if (path === '/customers/c1') {
+        return Promise.resolve({
+          success: true,
+          data: {
+            id: 'c1',
+            name: 'Ana',
+            phone: '119',
+            values: { birthday: '1990-06-01', lastVisit: '2026-06-01T02:00:00.000Z', source: 'referral' },
+          },
+        });
+      }
+      if (path === '/processes?customerId=c1') {
+        return Promise.resolve({
+          success: true,
+          data: {
+            items: [
+              {
+                id: 'p1',
+                customer: 'c1',
+                template: 't1',
+                templateVersion: 1,
+                stage: 'aberto',
+                values: {},
+                createdAt: '2026-01-01T00:00:00.000Z',
+                updatedAt: '2026-01-01T00:00:00.000Z',
+              },
+            ],
+          },
+        });
+      }
+      if (path === '/field-templates/current?targetType=customer&key=default') {
+        return Promise.resolve({
+          success: true,
+          data: {
+            template: { id: 't1', name: 'Cliente', currentVersion: 1, archived: false },
+            fields: [
+              { fieldId: 'birthday', label: 'Aniversário', type: 'date' },
+              { fieldId: 'lastVisit', label: 'Última visita', type: 'datetime' },
+              {
+                fieldId: 'source',
+                label: 'Origem',
+                type: 'select',
+                options: [
+                  { key: 'google', label: 'Google' },
+                  { key: 'referral', label: 'Indicação' },
+                ],
+              },
+            ],
+          },
+        });
+      }
+      throw new Error(`unexpected path ${path}`);
+    });
+
+    renderPage();
+
+    // Título = label do template, nunca o fieldId; select = label da opção.
+    expect(await screen.findByText('Aniversário')).toBeInTheDocument();
+    expect(screen.getByText('Última visita')).toBeInTheDocument();
+    expect(screen.getByText('Indicação')).toBeInTheDocument();
+    expect(screen.queryByText('birthday')).not.toBeInTheDocument();
+    expect(screen.queryByText('referral')).not.toBeInTheDocument();
+    // `date` é data de parede (sem fuso); `datetime` e `createdAt` são
+    // instantes — 02:00Z de 01/06 e 00:00Z de 01/01 ainda são o dia anterior
+    // em America/Sao_Paulo (UTC-3).
+    expect(screen.getByText('1 jun 1990')).toBeInTheDocument();
+    expect(screen.getByText('31 mai 2026 · 23:00')).toBeInTheDocument();
+    expect(await screen.findByText('31 dez 2025')).toBeInTheDocument();
+  });
+
   it('WEB-05 AC3: shows an explicit empty state ("nenhum Process ainda") when the Process list is empty', async () => {
     searchMock.mockReturnValue({ id: 'c1' });
     getMock.mockImplementation((path: string) => {

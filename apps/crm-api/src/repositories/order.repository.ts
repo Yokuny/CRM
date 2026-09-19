@@ -1,5 +1,5 @@
 import type { OrderDocument, OrderItem, OrderStatus, PaymentStatus } from '@crm/db';
-import { Customer, Order, Payment, tenantScoped } from '@crm/db';
+import { Customer, Order, Payment, tenantScoped, User } from '@crm/db';
 import { withDbTiming } from '../metrics/db.metric.js';
 
 export type OrderItemRecord = { product: string; name: string; unitPrice: number; quantity: number };
@@ -85,6 +85,68 @@ export const findById = async (tenantId: string, id: string): Promise<OrderRecor
       .select('status')
       .lean();
     return toRecord(doc, doc.customer.toString(), undefined, payment?.status);
+  });
+
+// Pagamento como a tela de detalhe precisa: sem o QR em base64 (pesado; o
+// copia-e-cola basta pra reenviar) e sem `pixExpirationDate`, que é a
+// validade do QR no Asaas, não a expiração que o sistema aplica.
+export type OrderPaymentRecord = {
+  status: PaymentStatus;
+  value: number;
+  billingType: 'PIX';
+  pixPayload?: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type OrderDetailRecord = OrderRecord & {
+  customerPhone?: string;
+  approvedByName?: string;
+  rejectedByName?: string;
+  payment?: OrderPaymentRecord;
+};
+
+// Tela de detalhe de UM pedido: o Order + o que ele só referencia por id
+// (cliente, pagamento, quem aprovou/rejeitou), cada um numa consulta
+// paralela e best-effort — referência que não existe mais vira campo
+// ausente, nunca erro (mesmo motivo de listOrders não usar populate()).
+export const findDetailById = async (tenantId: string, id: string): Promise<OrderDetailRecord | null> =>
+  withDbTiming('order.findDetailById', async () => {
+    const doc = await Order.findOne(tenantScoped({ Tenant: tenantId, _id: id })).lean();
+    if (!doc) return null;
+
+    const userIds = [doc.approvedBy, doc.rejectedBy].filter((userId) => userId !== undefined);
+    const [customer, payment, users] = await Promise.all([
+      Customer.findOne(tenantScoped({ Tenant: tenantId, _id: doc.customer }))
+        .select('name phone')
+        .lean(),
+      Payment.findOne(tenantScoped({ Tenant: tenantId, order: doc._id }))
+        .select('status value billingType pixPayload createdAt updatedAt')
+        .lean(),
+      userIds.length
+        ? User.find(tenantScoped({ Tenant: tenantId, _id: { $in: userIds } }))
+            .select('name')
+            .lean()
+        : [],
+    ]);
+    const userNameById = new Map(users.map((user) => [user._id.toString(), user.name]));
+
+    return {
+      ...toRecord(doc, doc.customer.toString(), customer?.name, payment?.status),
+      customerPhone: customer?.phone,
+      approvedByName: doc.approvedBy ? userNameById.get(doc.approvedBy.toString()) : undefined,
+      rejectedByName: doc.rejectedBy ? userNameById.get(doc.rejectedBy.toString()) : undefined,
+      payment: payment
+        ? {
+            status: payment.status,
+            value: payment.value,
+            billingType: payment.billingType,
+            pixPayload: payment.pixPayload,
+            createdAt: payment.createdAt,
+            updatedAt: payment.updatedAt,
+          }
+        : undefined,
+    };
   });
 
 export type ListOrdersInput = { page: number; limit: number; status?: OrderStatus; conversation?: string };

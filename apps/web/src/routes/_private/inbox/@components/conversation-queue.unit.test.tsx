@@ -46,6 +46,7 @@ describe('ConversationQueue (T22 — INBOX-01/03/10)', () => {
               {
                 id: 'c1',
                 customer: 'cust1',
+                customerName: 'Maria Souza',
                 mode: 'bot',
                 lastActivityAt: '2026-01-01T00:00:00.000Z',
                 unread: true,
@@ -62,7 +63,9 @@ describe('ConversationQueue (T22 — INBOX-01/03/10)', () => {
 
     renderQueue();
 
-    expect(await screen.findByText('cust1')).toBeInTheDocument();
+    // Nome do cliente (customerName, resolvido no back-end), nunca o id cru.
+    expect(await screen.findByText('Maria Souza')).toBeInTheDocument();
+    expect(screen.queryByText('cust1')).not.toBeInTheDocument();
     // getByRole('cell', ...), não getByText: o filtro "Bot" (botão) e a
     // célula da tabela têm o mesmo texto — o cell é a célula da linha, não o
     // botão de filtro.
@@ -82,6 +85,7 @@ describe('ConversationQueue (T22 — INBOX-01/03/10)', () => {
             {
               id: 'c1',
               customer: 'cust1',
+              customerName: 'Maria Souza',
               mode: 'human',
               assignee: 'u1',
               assigneeName: 'Ana',
@@ -111,6 +115,7 @@ describe('ConversationQueue (T22 — INBOX-01/03/10)', () => {
             {
               id: 'c1',
               customer: 'cust1',
+              customerName: 'Maria Souza',
               mode: 'human',
               assignee: 'someone-else',
               assigneeName: 'Carlos',
@@ -173,6 +178,7 @@ describe('ConversationQueue (T22 — INBOX-01/03/10)', () => {
             {
               id: 'c1',
               customer: 'cust1',
+              customerName: 'Maria Souza',
               mode: 'bot',
               lastActivityAt: '2026-01-01T00:00:00.000Z',
               unread: false,
@@ -186,9 +192,9 @@ describe('ConversationQueue (T22 — INBOX-01/03/10)', () => {
     const user = userEvent.setup();
 
     const { onSelect } = renderQueue();
-    await screen.findByText('cust1');
+    await screen.findByText('Maria Souza');
 
-    await user.click(screen.getByText('cust1'));
+    await user.click(screen.getByText('Maria Souza'));
 
     expect(onSelect).toHaveBeenCalledWith('c1');
   });

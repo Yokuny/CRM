@@ -23,7 +23,12 @@ const assigneeLabel = (conversation: ConversationRecord): string =>
   conversation.mode === 'human' && conversation.assigneeName ? conversation.assigneeName : '-';
 
 const conversationColumns: ColumnDef<ConversationRecord, unknown>[] = [
-  { accessorKey: 'customer', header: t('customer'), enableSorting: false },
+  {
+    id: 'customer',
+    header: t('customer'),
+    enableSorting: false,
+    cell: ({ row }) => row.original.customerName ?? '-',
+  },
   {
     id: 'mode',
     header: t('mode'),
@@ -44,7 +49,7 @@ const conversationColumns: ColumnDef<ConversationRecord, unknown>[] = [
     id: 'lastActivityAt',
     header: t('last_activity'),
     enableSorting: false,
-    cell: ({ row }) => formatDistanceToNow(row.original.lastActivityAt, { addSuffix: true }),
+    cell: ({ row }) => formatDistanceToNow(row.original.lastActivityAt),
   },
   {
     id: 'unread',
@@ -118,7 +123,9 @@ export function ConversationTable({
           {table.getRowModel().rows.map((row) => (
             <TableRow key={row.id} onClick={() => onRowClick(row.original)} className="cursor-pointer">
               {row.getVisibleCells().map((cell) => (
-                <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                <TableCell className="md:py-3 py-2" key={cell.id}>
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </TableCell>
               ))}
             </TableRow>
           ))}

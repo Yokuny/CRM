@@ -11,6 +11,20 @@ export function formatMoney(cents: number | null | undefined): string {
   return moneyFormatter.format(cents / MONEY_SCALE);
 }
 
+/**
+ * Exibe um valor inteiro na menor unidade (centavos, com `precision` casas)
+ * como moeda do `code` informado — o formato dos campos `currency` do
+ * field-engine, que variam de moeda/precisão por campo.
+ */
+export function formatCurrency(minorUnits: number, code: string, precision: number): string {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: code,
+    minimumFractionDigits: precision,
+    maximumFractionDigits: precision,
+  }).format(minorUnits / 10 ** precision);
+}
+
 /** Extrai apenas dígitos de uma string de entrada. */
 function digitsOnly(raw: string): string {
   return raw.replace(/\D/g, '');

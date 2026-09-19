@@ -40,6 +40,14 @@ describe('TimeGridView (dia/semana, spec.md SCH-29/SCH-35)', () => {
     expect(screen.queryByTestId('time-grid-day-2026-09-17')).not.toBeInTheDocument();
   });
 
+  it('shows each column date in the language format (formatDate), never the raw YYYY-MM-DD', () => {
+    render(<TimeGridView days={['2026-09-16']} items={[]} onSelect={vi.fn()} />);
+
+    const column = within(screen.getByTestId('time-grid-day-2026-09-16'));
+    expect(column.getByText('16 set 2026')).toBeInTheDocument();
+    expect(column.queryByText('2026-09-16')).not.toBeInTheDocument();
+  });
+
   // design.md/Done-when específico do T38 (herdado de WeekGrid): só passa se
   // a grade usar DISPLAY_TIMEZONE (America/Sao_Paulo, UTC-3), nunca o fuso do
   // executor de testes — 2026-09-16T00:00:00Z é 2026-09-15 21:00 em SP.

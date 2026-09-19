@@ -18,10 +18,10 @@ import {
   type OrderRecord,
   type OrderStatus,
   ordersQuery,
-  type PaymentStatus,
   rejectOrderMutation,
 } from '@/query/order.js';
 import { OrdersTable } from './@components/orders-table.js';
+import { ORDER_STATUS_BADGE_VARIANT, PAYMENT_STATUS_BADGE_VARIANT } from './@utils/order-status.js';
 
 // spec.md P1 "Operador aprova ou rejeita um pedido pendente"/AC1/AC2:
 // filtro por status via search (AD-030), default 'pending_approval' — a
@@ -48,25 +48,6 @@ const STATUS_FILTERS: { value: OrderStatus; label: string }[] = [
   { value: 'rejected', label: t('rejected') },
   { value: 'payment_expired', label: t('payment_expired') },
 ];
-
-const STATUS_BADGE_VARIANT: Record<OrderStatus, 'warning' | 'success' | 'error'> = {
-  pending_approval: 'warning',
-  confirmed: 'success',
-  rejected: 'error',
-  payment_expired: 'error',
-};
-
-// spec.md P2 AC1 (PAY-15/T31): status do Payment associado, quando existe —
-// só 3 valores têm estilo semântico próprio no texto literal da AC
-// (pending/paid/expired); refunded/canceled (Out of Scope: sem handling
-// automático, spec.md) caem num fallback neutro em vez de quebrar/sumir.
-const PAYMENT_BADGE_VARIANT: Record<PaymentStatus, 'warning' | 'success' | 'error' | 'neutral'> = {
-  pending: 'warning',
-  paid: 'success',
-  expired: 'error',
-  refunded: 'neutral',
-  canceled: 'neutral',
-};
 
 // design.md/T23: sem hub — index.tsx é a própria listagem (Pedidos só tem
 // esta tela, ao contrário de Customer). useSearch({strict:false}): mesmo
@@ -151,7 +132,9 @@ export function OrdersIndexPage() {
       header: t('status'),
       enableSorting: false,
       cell: ({ row }) => (
-        <BadgeIndicator variant={STATUS_BADGE_VARIANT[row.original.status]}>{t(row.original.status)}</BadgeIndicator>
+        <BadgeIndicator variant={ORDER_STATUS_BADGE_VARIANT[row.original.status]}>
+          {t(row.original.status)}
+        </BadgeIndicator>
       ),
     },
     {
@@ -162,7 +145,7 @@ export function OrdersIndexPage() {
       // um badge vazio) — só renderiza quando paymentStatus está presente.
       cell: ({ row }) =>
         row.original.paymentStatus ? (
-          <BadgeIndicator variant={PAYMENT_BADGE_VARIANT[row.original.paymentStatus]}>
+          <BadgeIndicator variant={PAYMENT_STATUS_BADGE_VARIANT[row.original.paymentStatus]}>
             {t(row.original.paymentStatus)}
           </BadgeIndicator>
         ) : null,
@@ -177,7 +160,10 @@ export function OrdersIndexPage() {
             <Button
               type="button"
               variant="success"
-              onClick={() => handleApprove(row.original.id)}
+              onClick={(event) => {
+                event.stopPropagation();
+                handleApprove(row.original.id);
+              }}
               disabled={approveMutation.isPending}
             >
               {t('approve')}
@@ -185,7 +171,10 @@ export function OrdersIndexPage() {
             <Button
               type="button"
               variant="destructive"
-              onClick={() => handleReject(row.original.id)}
+              onClick={(event) => {
+                event.stopPropagation();
+                handleReject(row.original.id);
+              }}
               disabled={rejectMutation.isPending}
             >
               {t('reject')}
@@ -226,6 +215,7 @@ export function OrdersIndexPage() {
                 pageIndex={search.page - 1}
                 pageSize={search.limit}
                 onPaginationChange={handlePaginationChange}
+                onRowClick={(order) => navigate({ to: '/orders/details', search: { id: order.id } })}
               />
             )}
           </div>

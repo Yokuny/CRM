@@ -109,6 +109,25 @@ describe('CalendarIndexPage (T39, spec.md SCH-29 — visões de dia/semana/mês)
     );
   });
 
+  it('filter triggers show the selected option text, never the raw id or the __all__ sentinel', async () => {
+    searchMock.mockReturnValue({ date: '2026-09-14', professional: 'p1' });
+    getMock.mockImplementation((path: string) => {
+      if (path.startsWith('/appointments')) return Promise.resolve({ success: true, data: [] });
+      if (path.startsWith('/professionals')) {
+        return Promise.resolve({ success: true, data: { items: [{ id: 'p1', name: 'Dra. Ana' }], total: 1 } });
+      }
+      return Promise.resolve({ success: true, data: { items: [], total: 0 } });
+    });
+
+    renderPage();
+
+    // professional=p1 -> nome do profissional; space ausente -> "Todos".
+    expect(await screen.findByText('Dra. Ana')).toBeInTheDocument();
+    expect(screen.getByText('Todos')).toBeInTheDocument();
+    expect(screen.queryByText('p1')).not.toBeInTheDocument();
+    expect(screen.queryByText('__all__')).not.toBeInTheDocument();
+  });
+
   it('view=day fetches a single-day range [date, date+1)', async () => {
     searchMock.mockReturnValue({ view: 'day', date: '2026-09-16' });
     mockEmptyEverything();

@@ -1,6 +1,18 @@
 import crypto from 'node:crypto';
 import type { Role } from '@crm/contracts';
-import { connect, disconnect, hashToken, Order, Product, Session, syncIndexes, Tenant, User } from '@crm/db';
+import {
+  Customer,
+  connect,
+  disconnect,
+  hashToken,
+  Order,
+  Payment,
+  Product,
+  Session,
+  syncIndexes,
+  Tenant,
+  User,
+} from '@crm/db';
 import cookieParser from 'cookie-parser';
 import express from 'express';
 import * as jwt from 'jsonwebtoken';
@@ -105,6 +117,8 @@ describe('order routes', () => {
 
   afterEach(async () => {
     await Promise.all([
+      Customer.deleteMany({}),
+      Payment.deleteMany({}),
       Order.deleteMany({}),
       Product.deleteMany({}),
       Session.deleteMany({}),
@@ -180,6 +194,100 @@ describe('order routes', () => {
         .set('User-Agent', DEVICE);
       expect(confirmedRes.body.data.total).toBe(1);
       expect(confirmedRes.body.data.items[0].status).toBe('confirmed');
+    });
+  });
+
+  describe('GET /orders/:id (detalhe do pedido)', () => {
+    it('responds 200 with the order plus customer name/phone, approver name and payment (without the QR image)', async () => {
+      const { tenant, user, cookie } = await seedTenantUser(['operador']);
+      const customer = await Customer.create({
+        Tenant: tenant._id,
+        name: 'Maria Souza',
+        phone: '5511999990000',
+        template: randomId(),
+        templateVersion: 1,
+        values: {},
+      });
+      const order = await seedOrder(tenant._id.toString(), {
+        customer: customer._id,
+        status: 'confirmed',
+        customerConfirmed: true,
+        operatorApproved: true,
+        approvedBy: user._id,
+        approvedAt: new Date('2026-09-10T15:00:00.000Z'),
+      });
+      await Payment.create({
+        Tenant: tenant._id,
+        order: order._id,
+        asaasChargeId: `pay_${randomId()}`,
+        asaasCustomerId: 'cus_1',
+        billingType: 'PIX',
+        value: 1000,
+        status: 'pending',
+        asaasStatus: 'PENDING',
+        pixPayload: '00020126pix-copia-e-cola',
+        pixEncodedImage: 'iVBORw0KGgo=',
+      });
+
+      const res = await request(buildTestApp())
+        .get(`/orders/${order._id.toString()}`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data).toMatchObject({
+        id: order._id.toString(),
+        customer: customer._id.toString(),
+        customerName: 'Maria Souza',
+        customerPhone: '5511999990000',
+        status: 'confirmed',
+        paymentStatus: 'pending',
+        approvedBy: user._id.toString(),
+        approvedByName: 'Fulano de Tal',
+        items: [{ name: 'Produto', unitPrice: 1000, quantity: 1 }],
+        payment: { status: 'pending', value: 1000, billingType: 'PIX', pixPayload: '00020126pix-copia-e-cola' },
+      });
+      expect(res.body.data.payment).not.toHaveProperty('pixEncodedImage');
+    });
+
+    it('keeps the order readable when the customer no longer exists — name/phone are simply absent', async () => {
+      const { tenant, cookie } = await seedTenantUser(['operador']);
+      const order = await seedOrder(tenant._id.toString());
+
+      const res = await request(buildTestApp())
+        .get(`/orders/${order._id.toString()}`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.customer).toBe(order.customer.toString());
+      expect(res.body.data).not.toHaveProperty('customerName');
+      expect(res.body.data).not.toHaveProperty('payment');
+    });
+
+    it('responds 404 for a non-existent id or one from another tenant', async () => {
+      const { cookie } = await seedTenantUser(['operador']);
+      const owner = await seedTenantUser(['admin']);
+      const foreignOrder = await seedOrder(owner.tenant._id.toString());
+      const app = buildTestApp();
+
+      for (const id of [randomId(), foreignOrder._id.toString()]) {
+        const res = await request(app).get(`/orders/${id}`).set('Cookie', cookie).set('User-Agent', DEVICE);
+        expect(res.status).toBe(404);
+        expect(res.body.data).toBeUndefined();
+      }
+    });
+
+    it('responds 403 for a caller without canOperate', async () => {
+      const { tenant, cookie } = await seedTenantUser([]);
+      const order = await seedOrder(tenant._id.toString());
+
+      const res = await request(buildTestApp())
+        .get(`/orders/${order._id.toString()}`)
+        .set('Cookie', cookie)
+        .set('User-Agent', DEVICE);
+
+      expect(res.status).toBe(403);
     });
   });
 

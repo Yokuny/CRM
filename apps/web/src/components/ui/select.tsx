@@ -5,7 +5,18 @@ import { cn } from 'cn';
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
 import type * as React from 'react';
 
-const Select = SelectPrimitive.Root;
+// Diferente do Radix, o Base UI não lê o texto do <SelectItem> escolhido pro
+// gatilho: sem `items`, o <SelectValue> mostra o valor cru (um id, um
+// sentinel como `__all__`). Por isso `items` é obrigatório aqui — a mesma
+// lista `{ value, label }` que gera os <SelectItem>, pra o texto do gatilho e
+// o da opção nunca divergirem.
+function Select<Value, Multiple extends boolean | undefined = false>(
+  props: SelectPrimitive.Root.Props<Value, Multiple> & {
+    items: NonNullable<SelectPrimitive.Root.Props<Value, Multiple>['items']>;
+  },
+) {
+  return <SelectPrimitive.Root {...props} />;
+}
 
 function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
   return <SelectPrimitive.Group data-slot="select-group" className={cn('scroll-my-1', className)} {...props} />;

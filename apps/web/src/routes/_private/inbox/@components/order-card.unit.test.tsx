@@ -3,9 +3,22 @@ import '@testing-library/jest-dom/vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
+import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('sonner', () => ({ toast: { error: vi.fn() } }));
+
+// "Ver pedido" é um <Link> — stand-in mínimo sem <RouterProvider>, com o
+// `search` na querystring pra afirmar o destino.
+vi.mock('@tanstack/react-router', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@tanstack/react-router')>();
+  return {
+    ...actual,
+    Link: ({ to, search, children }: { to: string; search?: Record<string, string>; children?: ReactNode }) => (
+      <a href={search ? `${to}?${new URLSearchParams(search).toString()}` : to}>{children}</a>
+    ),
+  };
+});
 
 const getMock = vi.fn();
 const postMock = vi.fn();
@@ -77,6 +90,7 @@ describe('OrderCard (T24, spec.md P1 "Operador aprova ou rejeita um pedido pende
       expect(getMock).toHaveBeenCalledWith('/orders?status=pending_approval&conversation=c1&limit=1'),
     );
     expect(await screen.findByText('R$ 20,00')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Ver pedido' })).toHaveAttribute('href', '/orders/details?id=o1');
     expect(screen.getByRole('button', { name: 'Aprovar' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Rejeitar' })).toBeInTheDocument();
   });

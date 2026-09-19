@@ -12,13 +12,19 @@ import { Panel } from '@/components/ui/item.js';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select.js';
 import { t } from '@/lib/helpers/translate.helper.js';
 import { type CardRecord, createCardMutation, deleteCardMutation, updateCardMutation } from '@/query/board.js';
-import { customersQuery } from '@/query/customer.js';
+import { type CustomerRecord, customersQuery } from '@/query/customer.js';
 
 // Sentinel de "sem cliente" pro <Select> opcional (Radix não aceita
 // `value=""`) — mesmo raciocínio de appointment-panel.tsx (UNSET_VALUE),
 // convertido de volta pra `undefined` no próprio `onValueChange`.
 const UNSET_VALUE = '__none__';
 const QUERY_LIMIT = 100;
+
+// Mesma lista nos formulários de criar e editar: "nenhum" + os clientes.
+const customerSelectItems = (customers: CustomerRecord[] = []) => [
+  { value: UNSET_VALUE, label: t('none') },
+  ...customers.map((customer) => ({ value: customer.id, label: customer.name })),
+];
 
 export type CardPanelProps = {
   onClose: () => void;
@@ -79,6 +85,7 @@ type CardCreateFormProps = WithOnClose & { boardId: string; columnId: string };
 function CardCreateForm({ boardId, columnId, onClose }: CardCreateFormProps) {
   const queryClient = useQueryClient();
   const customersQueryResult = useQuery(customersQuery({ limit: QUERY_LIMIT }));
+  const customerItems = customerSelectItems(customersQueryResult.data?.items);
 
   // Sem generic explícito em useForm: createCardSchema mistura campos
   // opcionais com `.transform()` (optionalRefIdSchema) — o tipo INPUT do
@@ -173,6 +180,7 @@ function CardCreateForm({ boardId, columnId, onClose }: CardCreateFormProps) {
                       <FormItem>
                         <FormLabel>{t('customer')}</FormLabel>
                         <Select
+                          items={customerItems}
                           value={field.value ?? UNSET_VALUE}
                           onValueChange={(value) => field.onChange(value === UNSET_VALUE ? undefined : value)}
                         >
@@ -182,10 +190,9 @@ function CardCreateForm({ boardId, columnId, onClose }: CardCreateFormProps) {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value={UNSET_VALUE}>{t('none')}</SelectItem>
-                            {(customersQueryResult.data?.items ?? []).map((customer) => (
-                              <SelectItem key={customer.id} value={customer.id}>
-                                {customer.name}
+                            {customerItems.map((item) => (
+                              <SelectItem key={item.value} value={item.value}>
+                                {item.label}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -258,6 +265,7 @@ type CardEditFormProps = WithOnClose & { boardId: string; card: CardRecord };
 function CardEditForm({ boardId, card, onClose }: CardEditFormProps) {
   const queryClient = useQueryClient();
   const customersQueryResult = useQuery(customersQuery({ limit: QUERY_LIMIT }));
+  const customerItems = customerSelectItems(customersQueryResult.data?.items);
 
   const form = useForm<UpdateCard>({
     resolver: zodResolver(updateCardSchema),
@@ -337,6 +345,7 @@ function CardEditForm({ boardId, card, onClose }: CardEditFormProps) {
                       <FormItem>
                         <FormLabel>{t('customer')}</FormLabel>
                         <Select
+                          items={customerItems}
                           value={field.value ?? UNSET_VALUE}
                           onValueChange={(value) => field.onChange(value === UNSET_VALUE ? undefined : value)}
                         >
@@ -346,10 +355,9 @@ function CardEditForm({ boardId, card, onClose }: CardEditFormProps) {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value={UNSET_VALUE}>{t('none')}</SelectItem>
-                            {(customersQueryResult.data?.items ?? []).map((customer) => (
-                              <SelectItem key={customer.id} value={customer.id}>
-                                {customer.name}
+                            {customerItems.map((item) => (
+                              <SelectItem key={item.value} value={item.value}>
+                                {item.label}
                               </SelectItem>
                             ))}
                           </SelectContent>

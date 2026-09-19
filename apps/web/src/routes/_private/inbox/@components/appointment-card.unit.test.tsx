@@ -66,7 +66,6 @@ describe('AppointmentCard (T46, spec.md P2 "Agendamento visível no Inbox"/SCH-3
     await waitFor(() => expect(getMock).toHaveBeenCalledWith('/appointments/upcoming?customer=cust1'));
     expect(await screen.findByText('Confirmado')).toBeInTheDocument();
     expect(screen.getByText('Dra. Ana')).toBeInTheDocument();
-    expect(screen.getByText(/2099-01-01/)).toBeInTheDocument();
-    expect(screen.getByText(/10:00/)).toBeInTheDocument();
+    expect(screen.getByText('1 jan 2099 · 10:00')).toBeInTheDocument();
   });
 });

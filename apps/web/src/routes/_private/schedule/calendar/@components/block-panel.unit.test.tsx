@@ -187,8 +187,7 @@ describe('BlockPanel — existing block mode (T41, spec.md SCH-33)', () => {
     renderPanel({ block: existingBlock });
 
     expect(screen.getByText('Almoço')).toBeInTheDocument();
-    expect(screen.getByText(/2026-09-16/)).toBeInTheDocument();
-    expect(screen.getByText(/12:00–13:00/)).toBeInTheDocument();
+    expect(screen.getByText('16 set 2026 · 12:00–13:00')).toBeInTheDocument();
     expect(screen.getByText('Dra. Ana')).toBeInTheDocument();
   });
 
@@ -198,7 +197,7 @@ describe('BlockPanel — existing block mode (T41, spec.md SCH-33)', () => {
     // 18/09 00:00 -> 19/09 23:59 em America/Sao_Paulo (UTC-3).
     renderPanel({ block: { ...existingBlock, start: '2026-09-18T03:00:00.000Z', end: '2026-09-20T02:59:00.000Z' } });
 
-    expect(screen.getByText('2026-09-18 · 00:00 – 2026-09-19 · 23:59')).toBeInTheDocument();
+    expect(screen.getByText('18 set 2026 · 00:00 – 19 set 2026 · 23:59')).toBeInTheDocument();
   });
 
   it('removes the block via deleteBlockMutation (DELETE /appointments/blocks/:id)', async () => {

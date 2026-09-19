@@ -12,6 +12,9 @@ export type ConversationMode = 'bot' | 'human';
 export type ConversationRecord = {
   id: string;
   customer: string;
+  // Nome do cliente, resolvido em lote no back-end (conversation.repository
+  // #listConversations) — ausente se o Customer não existir mais.
+  customerName?: string;
   mode: ConversationMode;
   assignee?: string;
   // INBOX-10/AC5 (Fix 1, validation.md): nome real do assignee, já resolvido
