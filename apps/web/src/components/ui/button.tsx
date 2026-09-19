@@ -35,7 +35,10 @@ const buttonVariants = cva(
         // "Aprovar" (pedidos/inbox). Era o emerald-600 do Tailwind (#009966),
         // um verde quase igual ao da marca — lado a lado com um botão
         // `default` parecia erro. Agora é a própria cor de ação da marca.
-        success: 'border-none bg-primary text-primary-foreground hover:bg-primary-hover',
+        // Sem `border-none`: mantém a borda transparente de 1px da base (como
+        // `destructive`), senão o preenchimento sólido ficava sem o mesmo
+        // recuo e parecia maior ao lado de variants com borda visível.
+        success: 'bg-primary text-primary-foreground hover:bg-primary-hover',
         blank: 'p-0!',
         financial:
           'justify-between border-input border-b-2 bg-transparent font-normal shadow-none ring-0 hover:bg-transparent dark:border-input dark:bg-transparent dark:hover:bg-transparent',

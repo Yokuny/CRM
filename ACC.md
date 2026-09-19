@@ -3,3 +3,6 @@
 | **Admin de plataforma** | `admin@platform.local` | `plataforma123` | Não é um tenant — é a conta usada via API para criar tenants/convites (não tem UI própria de login testada, mas o `/auth/signin` deve aceitar) |
 | **Operador — Clínica Teste** | `operador@teste.local` | `senha12345` | Tenant "Clínica Teste" — tem 1 cliente do teste inicial + os dados da 1ª rodada (Ana, Carlos, Fernanda — parou no rate limit) |
 | **Demo User — Clínica Demo** | `demo@teste.local` | `senha12345` | Tenant "Clínica Demo" — o mais completo: 4 clientes distribuídos no kanban, 2 processos criados, template "Atendimento Odontológico" |
+| **Admin — Studio Aurora Estética** | `admin@aurora.example.com` | `aurora12345` | Tenant "Studio Aurora Estética" — tenant de demonstração com todas as telas preenchidas (140 clientes, 90 processos, 32 produtos, ~48 conversas, ~55 pedidos, 3 quadros kanban, ~800 agendamentos/bloqueios). Recriado via `docker compose exec crm-api /app/node_modules/.bin/tsx scripts/seed-demo.ts` — apaga e recria só este tenant |
+| **Gestor — Studio Aurora Estética** | `gestor@aurora.example.com` | `aurora12345` | Mesmo tenant acima, papel `gestor` |
+| **Operador — Studio Aurora Estética** | `operador@aurora.example.com` | `aurora12345` | Mesmo tenant acima, papel `operador` — sem acesso a `/custom_fields` (só admin) |

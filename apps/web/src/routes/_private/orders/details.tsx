@@ -181,7 +181,7 @@ export function OrderDetailsPage() {
     <Card asPage>
       <CardHeader title={t('order')}>
         {order && (
-          <CardAction>
+          <CardAction className="flex gap-2">
             <Button
               variant="basic"
               render={
